@@ -1,0 +1,971 @@
+/* WeSpeak - Main Stylesheet */
+
+/* Fonts - Assistant for content, Secular for menus/headers */
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Secular+One&display=swap');
+
+/* CSS Variables */
+:root {
+    --color-primary: #4a90e2;
+    --color-primary-dark: #357abd;
+    --color-success: #5cb85c;
+    --color-danger: #d9534f;
+    --color-warning: #f0ad4e;
+    --color-text: #333;
+    --color-text-light: #666;
+    --color-bg: #f8f9fa;
+    --color-white: #ffffff;
+    --color-border: #ddd;
+    --font-content: 'Assistant', sans-serif;
+    --font-menu: 'Secular One', sans-serif;
+    --spacing: 1rem;
+}
+
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-content);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-menu);
+    margin-bottom: var(--spacing);
+    line-height: 1.2;
+}
+
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Header & Navigation */
+.header {
+    background-color: var(--color-white);
+    border-bottom: 2px solid var(--color-border);
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+}
+
+.admin-header {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+}
+
+.admin-header a {
+    color: var(--color-white);
+}
+
+.nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-brand a {
+    font-family: var(--font-menu);
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.nav-links a {
+    font-family: var(--font-menu);
+    text-decoration: none;
+}
+
+/* Main Content */
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing) 3rem;
+    min-height: calc(100vh - 200px);
+}
+
+.admin-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing) 3rem;
+    min-height: calc(100vh - 150px);
+}
+
+.container {
+    width: 100%;
+}
+
+/* Page Headers */
+.page-title {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.back-link {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: var(--color-white);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-content);
+    font-size: 1rem;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    background-color: var(--color-bg);
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    border-color: var(--color-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+    background-color: var(--color-text-light);
+    color: var(--color-white);
+    border-color: var(--color-text-light);
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-text);
+    border-color: var(--color-text);
+    color: var(--color-white);
+}
+
+.btn-danger {
+    background-color: var(--color-danger);
+    color: var(--color-white);
+    border-color: var(--color-danger);
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+    color: var(--color-white);
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.25rem;
+}
+
+/* Alerts */
+.alert {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    border-left: 4px solid;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: var(--color-success);
+    color: #155724;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    border-color: var(--color-danger);
+    color: #721c24;
+}
+
+.alert ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+/* Lesson Grid */
+.lesson-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.lesson-card {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.lesson-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.lesson-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.lesson-card p {
+    color: var(--color-text-light);
+    margin-bottom: 1rem;
+}
+
+/* Lesson Runner */
+.lesson-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: var(--color-border);
+    border-radius: 4px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--color-success);
+    transition: width 0.3s;
+}
+
+.prompt-step, .model-step, .completion-step {
+    background-color: var(--color-white);
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+.prompt-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.prompt-text {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+.prompt-audio-btn {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.prompt-audio-btn:hover {
+    background-color: var(--color-primary-dark);
+    transform: scale(1.05);
+}
+
+.prompt-audio-btn:active {
+    transform: scale(0.95);
+}
+
+.option-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.option-card {
+    background-color: var(--color-white);
+    border: 3px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    position: relative;
+}
+
+.option-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-8px);
+    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.15);
+}
+
+.option-card.selected {
+    border-color: var(--color-primary);
+    background-color: #f0f7ff;
+    box-shadow: 0 4px 16px rgba(74, 144, 226, 0.25);
+}
+
+.option-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.option-card img {
+    width: 100%;
+    height: 140px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+}
+
+.option-card-text {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--color-text);
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.option-card-label {
+    font-family: var(--font-menu);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-top: 0.5rem;
+}
+
+.option-card-audio {
+    margin-top: 0.5rem;
+}
+
+.option-card-audio button {
+    background-color: var(--color-success);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.option-card-audio button:hover {
+    background-color: #449d44;
+    transform: scale(1.1);
+}
+
+.option-card-audio button:active {
+    transform: scale(0.95);
+}
+
+/* Model Step */
+.model-sentence {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.model-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.practice-section {
+    border-top: 2px solid var(--color-border);
+    padding-top: 2rem;
+}
+
+.practice-section h3 {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.recorder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.recording-status {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+.completion-step {
+    text-align: center;
+}
+
+.completion-step h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Forms */
+.form {
+    max-width: 600px;
+    background-color: var(--color-white);
+    padding: 2rem;
+    border-radius: 8px;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-family: var(--font-content);
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--color-text-light);
+    font-size: 0.875rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* Tables */
+.table {
+    width: 100%;
+    background-color: var(--color-white);
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+}
+
+.table thead {
+    background-color: var(--color-bg);
+    font-family: var(--font-menu);
+}
+
+.table th,
+.table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.table th {
+    font-weight: 600;
+}
+
+.table tbody tr:hover {
+    background-color: var(--color-bg);
+}
+
+.table .actions {
+    white-space: nowrap;
+}
+
+.table .actions form {
+    display: inline;
+}
+
+/* Info Box */
+.info-box {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.info-box p {
+    margin-bottom: 0.5rem;
+}
+
+.info-box code {
+    background-color: var(--color-bg);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.9rem;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    font-family: var(--font-menu);
+}
+
+.stat-label {
+    color: var(--color-text-light);
+    margin-top: 0.5rem;
+}
+
+/* Dashboard Sections */
+.dashboard-sections {
+    display: grid;
+    gap: 2rem;
+}
+
+.dashboard-section {
+    background-color: var(--color-white);
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+.dashboard-section h2 {
+    margin-bottom: 1rem;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--color-text-light);
+}
+
+.empty-text {
+    color: var(--color-text-light);
+    font-style: italic;
+}
+
+/* Footer */
+.footer {
+    background-color: var(--color-white);
+    border-top: 1px solid var(--color-border);
+    padding: 2rem 0;
+    text-align: center;
+    color: var(--color-text-light);
+    font-size: 0.875rem;
+}
+
+/* Lesson Metadata */
+.lesson-metadata {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+.lesson-metadata span {
+    background: var(--color-primary);
+    color: var(--color-white);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.lesson-metadata .session-title {
+    background: var(--color-text-light);
+    color: var(--color-white);
+}
+
+/* Lesson Instructions */
+.lesson-instructions {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: left;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.lesson-instructions h3 {
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.lesson-instructions p {
+    color: var(--color-text);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Part Instructions */
+.part-instructions {
+    text-align: center;
+    padding: 3rem 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.part-header h2 {
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+    font-size: 2rem;
+}
+
+.part-header p {
+    color: var(--color-text);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+/* Vocabulary Section */
+.vocabulary-section {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: left;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.vocabulary-section h3 {
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.vocabulary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.vocabulary-item {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.vocabulary-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.vocab-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.vocab-word {
+    font-weight: 600;
+    color: var(--color-primary);
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.vocab-description {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    line-height: 1.4;
+}
+
+/* Management Page Styles */
+.management-section {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.section-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.section-header h2 {
+    margin: 0;
+    color: var(--color-primary);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.info-item label {
+    font-weight: 600;
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+}
+
+.info-item span, .info-item p {
+    color: var(--color-text);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.vocabulary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.vocabulary-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.vocabulary-card .vocab-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.vocab-content h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--color-primary);
+}
+
+.vocab-content p {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin-bottom: 1rem;
+}
+
+.vocab-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.parts-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.part-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.part-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.part-header h4 {
+    margin: 0;
+    color: var(--color-primary);
+}
+
+.part-status {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.part-status.active {
+    background: var(--color-success);
+    color: white;
+}
+
+.part-status.inactive {
+    background: var(--color-text-light);
+    color: white;
+}
+
+.part-description {
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.part-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--color-text-light);
+    margin-bottom: 1rem;
+}
+
+.part-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .nav {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav-links {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .lesson-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .option-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem;
+    }
+}
+
