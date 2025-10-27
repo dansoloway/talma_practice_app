@@ -102,8 +102,8 @@ class GenerateVocabularyTts extends Command
 
                     file_put_contents($fullPath, $response->body());
 
-                    // Update vocabulary record
-                    $vocab->update(['word_audio_path' => "/storage/{$relativePath}"]);
+                    // Update vocabulary record (without /storage/ prefix - Laravel's asset() will add it)
+                    $vocab->update(['word_audio_path' => $relativePath]);
 
                     $generated++;
                 } else {
