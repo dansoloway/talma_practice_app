@@ -31,7 +31,7 @@ class LessonController extends Controller
             });
         }
         
-        $lessons = $query->get();
+        $lessons = $query->with(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames'])->get();
         
         // Get available grade levels for filter dropdown
         $gradeLevels = Lesson::active()

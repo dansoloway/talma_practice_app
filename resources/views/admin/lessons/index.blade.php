@@ -60,10 +60,12 @@
             <thead>
                 <tr>
                     <th>Title</th>
+                    <th>Grade</th>
+                    <th>Session</th>
+                    <th>Session Title</th>
                     <th>Slug</th>
-                    <th>Prompts</th>
+                    <th>Activities</th>
                     <th>Active</th>
-                    <th>Sort</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -71,10 +73,21 @@
                 @foreach($lessons as $lesson)
                     <tr>
                         <td><strong>{{ $lesson->title }}</strong></td>
-                        <td>{{ $lesson->slug }}</td>
-                        <td>{{ $lesson->prompts->count() }}</td>
+                        <td>{{ $lesson->grade_level ? 'Grade ' . $lesson->grade_level : '-' }}</td>
+                        <td>{{ $lesson->session_number ? 'Session ' . $lesson->session_number : '-' }}</td>
+                        <td>{{ $lesson->session_title ?? '-' }}</td>
+                        <td><code>{{ $lesson->slug }}</code></td>
+                        <td>
+                            @php
+                                $activityCount = $lesson->prompts->count() + $lesson->matchingGames->count() + $lesson->flashcardGames->count();
+                                $vocabCount = $lesson->vocabulary->count();
+                            @endphp
+                            {{ $activityCount }} activities
+                            @if($vocabCount > 0)
+                                <br><small>{{ $vocabCount }} vocab words</small>
+                            @endif
+                        </td>
                         <td>{{ $lesson->is_active ? '✓' : '✗' }}</td>
-                        <td>{{ $lesson->sort_order }}</td>
                         <td class="actions">
                             <a href="{{ route('admin.lessons.show', $lesson) }}" class="btn btn-sm">View</a>
                             <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn btn-sm">Edit</a>
