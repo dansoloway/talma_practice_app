@@ -32,41 +32,11 @@
                                     @enderror
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="part_id" class="form-label">Part (Optional)</label>
-                                    <select class="form-select @error('part_id') is-invalid @enderror" id="part_id" name="part_id">
-                                        <option value="">No specific part</option>
-                                        @foreach($parts as $part)
-                                            <option value="{{ $part->id }}" {{ old('part_id') == $part->id ? 'selected' : '' }}>
-                                                {{ $part->title }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('part_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label">Game Types</label>
-                                    <div class="row">
-                                        @foreach($gameTypes as $key => $label)
-                                            <div class="col-md-6 mb-2">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                           name="game_types[]" value="{{ $key }}" 
-                                                           id="game_type_{{ $key }}"
-                                                           {{ in_array($key, old('game_types', [])) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="game_type_{{ $key }}">
-                                                        {{ $label }}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        @endforeach
+                                    <div class="alert alert-info">
+                                        <strong>Game Types:</strong> All flashcard types will be included automatically (Image → Word, Image → Audio, Audio → Image, Audio → Word)
                                     </div>
-                                    @error('game_types')
-                                        <div class="text-danger small">{{ $message }}</div>
-                                    @enderror
                                 </div>
 
                                 <div class="mb-3">
@@ -128,31 +98,6 @@
                     </div>
                 </div>
 
-                <div class="col-lg-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">Game Types Explained</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <strong>Image → Word</strong>
-                                <p class="small text-muted mb-2">Student sees an image and says the word</p>
-                            </div>
-                            <div class="mb-3">
-                                <strong>Image → Audio</strong>
-                                <p class="small text-muted mb-2">Student sees an image and chooses correct audio</p>
-                            </div>
-                            <div class="mb-3">
-                                <strong>Audio → Image</strong>
-                                <p class="small text-muted mb-2">Student hears a word and chooses correct image</p>
-                            </div>
-                            <div class="mb-3">
-                                <strong>Audio → Word</strong>
-                                <p class="small text-muted mb-2">Student hears a word and chooses correct word</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

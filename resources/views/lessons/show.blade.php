@@ -53,29 +53,22 @@
         @endif
 
         @php
-            // Get all activities in order
+            // Get all activities in order (no vocabulary activity since it's already shown above)
             $allActivities = collect();
             
-            // Always add vocabulary presentation as first activity if vocabulary exists
-            if($lesson->vocabulary && $lesson->vocabulary->count() > 0) {
+            // Add prompts as a single group if there are any
+            if($lesson->prompts->count() > 0) {
+                $activePrompts = $lesson->prompts->where('is_active', true);
+                $minSortOrder = $lesson->prompts->min('sort_order') ?? 999;
+                
                 $allActivities->push((object)[
-                    'id' => 'vocab',
-                    'type' => 'vocabulary',
-                    'title' => 'Learn New Words',
-                    'sort_order' => 0, // Always first
-                    'is_active' => true,
-                    'model' => null
-                ]);
-            }
-            
-            foreach($lesson->prompts as $prompt) {
-                $allActivities->push((object)[
-                    'id' => $prompt->id,
-                    'type' => 'prompt',
-                    'title' => $prompt->prompt_text,
-                    'sort_order' => $prompt->sort_order ?? 999,
-                    'is_active' => $prompt->is_active ?? true,
-                    'model' => $prompt
+                    'id' => 'prompts',
+                    'type' => 'prompts',
+                    'title' => 'Sentence Completion (' . $activePrompts->count() . ' questions)',
+                    'sort_order' => $minSortOrder,
+                    'is_active' => $activePrompts->count() > 0,
+                    'model' => $lesson->prompts,
+                    'count' => $activePrompts->count()
                 ]);
             }
             
@@ -115,10 +108,8 @@
                             <div class="activity-menu-content">
                                 <div class="activity-menu-type">{{ ucfirst($activity->type) }} Activity</div>
                                 <div class="activity-menu-title">{{ $activity->title }}</div>
-                                @if($activity->type === 'vocabulary')
-                                    <div class="activity-menu-details">{{ $lesson->vocabulary->count() }} vocabulary words</div>
-                                @elseif($activity->type === 'prompt' && $activity->model && $activity->model->options->count() > 0)
-                                    <div class="activity-menu-details">{{ $activity->model->options->count() }} answer choices</div>
+                                @if($activity->type === 'prompts')
+                                    <div class="activity-menu-details">Complete sentences with the correct words</div>
                                 @elseif($activity->type === 'matching')
                                     <div class="activity-menu-details">{{ $activity->model->grid_size }}x{{ $activity->model->grid_size }} matching grid</div>
                                 @elseif($activity->type === 'flashcard')
@@ -136,44 +127,6 @@
     </div>
 
 
-    <!-- Vocabulary Presentation Modal -->
-    <div id="vocabulary-presentation" class="vocabulary-presentation hidden">
-        <div class="vocab-presentation-header">
-            <h1>{{ $lesson->title }} - Vocabulary</h1>
-            <button class="close-vocab-btn" onclick="closeVocabularyPresentation()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <div class="vocab-presentation-content">
-            @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
-                <div class="vocab-presentation-grid">
-                    @foreach($lesson->vocabulary as $vocab)
-                        <div class="vocab-presentation-item">
-                            @if($vocab->image_path)
-                                <div class="vocab-image-container">
-                                    <img src="{{ asset('storage/' . $vocab->image_path) }}" alt="{{ $vocab->english_word }}" class="vocab-presentation-image">
-                                </div>
-                            @endif
-                            <div class="vocab-presentation-word">{{ $vocab->english_word }}</div>
-                            @if($vocab->word_audio_path)
-                                <button class="vocab-presentation-audio" onclick="playVocabAudio('{{ asset('storage/' . $vocab->word_audio_path) }}')" title="Listen to word">
-                                    <i class="fas fa-volume-up"></i>
-                                    <span>Listen</span>
-                                </button>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-                
-                <div class="vocab-presentation-footer">
-                    <button class="btn btn-primary btn-large" onclick="closeVocabularyPresentation()">
-                        Continue to Activities
-                    </button>
-                </div>
-            @endif
-        </div>
-    </div>
 </div>
 
 <audio id="prompt-audio" preload="auto"></audio>
@@ -195,13 +148,9 @@ function playVocabAudio(audioPath) {
 // Activity selection function
 function startActivity(type, id) {
     switch(type) {
-        case 'vocabulary':
-            // Show vocabulary presentation modal
-            showVocabularyPresentation();
-            break;
-        case 'prompt':
-            // Start the lesson runner with this specific prompt
-            window.location.href = `{{ route('lessons.show', $lesson->slug) }}?start_prompt=${id}`;
+        case 'prompts':
+            // Go to prompts activity (all prompts for this lesson)
+            window.location.href = `/lessons/{{ $lesson->id }}/prompts/play`;
             break;
         case 'matching':
             // Go to matching game
@@ -214,29 +163,6 @@ function startActivity(type, id) {
     }
 }
 
-// Show vocabulary presentation
-function showVocabularyPresentation() {
-    // Hide the main lesson content
-    document.querySelector('.lesson-header').style.display = 'none';
-    
-    // Show vocabulary presentation
-    const vocabPresentation = document.getElementById('vocabulary-presentation');
-    if (vocabPresentation) {
-        vocabPresentation.classList.remove('hidden');
-    }
-}
-
-// Close vocabulary presentation
-function closeVocabularyPresentation() {
-    // Show the main lesson content
-    document.querySelector('.lesson-header').style.display = 'block';
-    
-    // Hide vocabulary presentation
-    const vocabPresentation = document.getElementById('vocabulary-presentation');
-    if (vocabPresentation) {
-        vocabPresentation.classList.add('hidden');
-    }
-}
 </script>
 @endsection
 

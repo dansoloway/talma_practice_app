@@ -31,5 +31,38 @@ class PromptController extends Controller
             }),
         ]);
     }
+
+    /**
+     * Play all prompts for a lesson (sentence completion activity).
+     */
+    public function play($lessonId)
+    {
+        $lesson = \App\Models\Lesson::with([
+            'prompts' => function ($query) {
+                $query->where('is_active', true)
+                      ->orderBy('sort_order')
+                      ->with(['options' => function ($opt) {
+                          $opt->where('is_active', true)->orderBy('sort_order');
+                      }]);
+            }
+        ])->findOrFail($lessonId);
+
+        // Add full URLs for audio paths
+        $lesson->prompts->each(function ($prompt) {
+            if ($prompt->prompt_audio_path) {
+                $prompt->prompt_audio_path = asset($prompt->prompt_audio_path);
+            }
+            $prompt->options->each(function ($option) {
+                if ($option->word_audio_path) {
+                    $option->word_audio_path = asset($option->word_audio_path);
+                }
+                if ($option->sentence_audio_path) {
+                    $option->sentence_audio_path = asset($option->sentence_audio_path);
+                }
+            });
+        });
+
+        return view('prompts.play', compact('lesson'));
+    }
 }
 

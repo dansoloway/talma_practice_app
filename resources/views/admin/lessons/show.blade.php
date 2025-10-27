@@ -38,14 +38,19 @@
             // Get all activities in order
             $allActivities = collect();
             
-            foreach($lesson->prompts as $prompt) {
+            // Add prompts as a single group if there are any
+            if($lesson->prompts->count() > 0) {
+                $activePrompts = $lesson->prompts->where('is_active', true);
+                $minSortOrder = $lesson->prompts->min('sort_order') ?? 999;
+                
                 $allActivities->push((object)[
-                    'id' => $prompt->id,
-                    'type' => 'prompt',
-                    'title' => $prompt->prompt_text,
-                    'sort_order' => $prompt->sort_order ?? 999,
-                    'is_active' => $prompt->is_active ?? true,
-                    'model' => $prompt
+                    'id' => 'prompts',
+                    'type' => 'prompts',
+                    'title' => 'Sentence Completion (' . $activePrompts->count() . ' questions)',
+                    'sort_order' => $minSortOrder,
+                    'is_active' => $activePrompts->count() > 0,
+                    'model' => $lesson->prompts,
+                    'count' => $activePrompts->count()
                 ]);
             }
             
@@ -83,22 +88,33 @@
                             <div class="activity-number">{{ $index + 1 }}</div>
                             <div class="activity-preview-content">
                                 <div class="activity-type-badge {{ $activity->type }}">
-                                    {{ ucfirst($activity->type) }}
+                                    @if($activity->type === 'prompts')
+                                        PROMPTS
+                                    @else
+                                        {{ strtoupper($activity->type) }}
+                                    @endif
                                 </div>
                                 <h3 class="activity-preview-title">{{ $activity->title }}</h3>
                                 
-                                @if($activity->type === 'prompt')
+                                @if($activity->type === 'prompts')
                                     <div class="activity-details">
-                                        <p><strong>Template:</strong> {{ $activity->model->template }}</p>
-                                        @if($activity->model->options->count() > 0)
-                                            <p><strong>Options:</strong> 
-                                                @foreach($activity->model->options->take(3) as $option)
-                                                    <span class="option-preview">{{ $option->label }}</span>
-                                                @endforeach
-                                                @if($activity->model->options->count() > 3)
-                                                    <span class="more-options">+{{ $activity->model->options->count() - 3 }} more</span>
-                                                @endif
-                                            </p>
+                                        <p><strong>Questions:</strong> {{ $activity->count }}</p>
+                                        @if($activity->model->count() > 0)
+                                            @php
+                                                $firstPrompt = $activity->model->first();
+                                                $allOptions = $activity->model->flatMap->options->unique('label');
+                                            @endphp
+                                            <p><strong>Example:</strong> {{ $firstPrompt->template ?? 'Complete the sentence with the correct word' }}</p>
+                                            @if($allOptions->count() > 0)
+                                                <p><strong>Word Options:</strong> 
+                                                    @foreach($allOptions->take(4) as $option)
+                                                        <span class="option-preview">{{ $option->label }}</span>
+                                                    @endforeach
+                                                    @if($allOptions->count() > 4)
+                                                        <span class="more-options">+{{ $allOptions->count() - 4 }} more</span>
+                                                    @endif
+                                                </p>
+                                            @endif
                                         @endif
                                     </div>
                                 @elseif($activity->type === 'matching')

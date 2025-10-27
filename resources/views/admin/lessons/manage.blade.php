@@ -5,8 +5,24 @@
 @section('content')
 <div class="container">
     <div class="page-header">
-        <h1 class="page-title">Manage Lesson: {{ $lesson->title }}</h1>
-        <a href="{{ route('admin.lessons.index') }}" class="btn">Back to Lessons</a>
+        <div>
+            <h1 class="page-title">Manage Lesson: {{ $lesson->title }}</h1>
+            <div class="lesson-metadata">
+                @if($lesson->grade_level)
+                    <span class="metadata-item">Grade {{ $lesson->grade_level }}</span>
+                @endif
+                @if($lesson->session_number)
+                    <span class="metadata-item">Session {{ $lesson->session_number }}</span>
+                @endif
+                @if($lesson->session_title)
+                    <span class="metadata-item">"{{ $lesson->session_title }}"</span>
+                @endif
+            </div>
+        </div>
+        <div class="page-actions">
+            <a href="{{ route('admin.lessons.index') }}" class="btn">Back to Lessons</a>
+            <button onclick="archiveLesson()" class="btn btn-warning">Archive Lesson</button>
+        </div>
     </div>
 
     <!-- Lesson Details Section -->
@@ -133,7 +149,7 @@
         <div class="section-header">
             <h2>Vocabulary ({{ $lesson->vocabulary->count() }})</h2>
             <div class="section-actions">
-                <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="btn btn-primary btn-sm">Add Vocabulary</a>
+                <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="btn btn-primary btn-sm">Edit Vocabulary</a>
                 <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="btn btn-secondary btn-sm">Upload CSV</a>
                 <a href="{{ route('admin.lessons.vocabulary.auto-images', $lesson) }}" class="btn btn-success btn-sm">🔍 Auto-Find Images</a>
             </div>
@@ -148,14 +164,6 @@
                         @endif
                         <div class="vocab-content">
                             <h4>{{ $vocab->english_word }}</h4>
-                            <div class="vocab-actions">
-                                <a href="{{ route('admin.lessons.vocabulary.edit', [$lesson, $vocab]) }}" class="btn btn-sm">Edit</a>
-                                <form action="{{ route('admin.lessons.vocabulary.destroy', [$lesson, $vocab]) }}" method="POST" class="inline-form">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this vocabulary item?')">Delete</button>
-                                </form>
-                            </div>
                         </div>
                     </div>
                 @endforeach
@@ -183,15 +191,20 @@
             // Collect all activities with their sort orders
             $allActivities = collect();
             
-            // Add prompts
-            foreach($lesson->prompts as $prompt) {
+            // Add prompts as a single group if there are any
+            if($lesson->prompts->count() > 0) {
+                $activePrompts = $lesson->prompts->where('is_active', true);
+                $minSortOrder = $lesson->prompts->min('sort_order') ?? 999;
+                
                 $allActivities->push((object)[
-                    'id' => $prompt->id,
-                    'type' => 'prompt',
-                    'title' => $prompt->prompt_text,
-                    'sort_order' => $prompt->sort_order ?? 999,
-                    'is_active' => $prompt->is_active ?? true,
-                    'model' => $prompt
+                    'id' => 'prompts',
+                    'type' => 'prompts',
+                    'title' => 'Prompts (' . $lesson->prompts->count() . ')',
+                    'sort_order' => $minSortOrder,
+                    'is_active' => $activePrompts->count() > 0,
+                    'model' => $lesson->prompts,
+                    'count' => $lesson->prompts->count(),
+                    'active_count' => $activePrompts->count()
                 ]);
             }
             
@@ -245,16 +258,21 @@
                             </div>
                         </div>
                         <div class="activity-actions">
-                            @if($activity->type === 'prompt')
-                                <a href="{{ route('admin.prompts.edit', $activity->model) }}" class="btn btn-xs">Edit</a>
+                            @if($activity->type === 'prompts')
+                                <a href="{{ route('admin.lessons.prompts.create', $lesson) }}" class="btn btn-xs">Add Prompt</a>
+                                <a href="{{ route('admin.lessons.prompts.import', $lesson) }}" class="btn btn-xs btn-secondary">Import CSV</a>
+                                @if($activity->count > 0)
+                                    <button class="btn btn-xs btn-danger" onclick="deleteAllPrompts('{{ addslashes($activity->title) }}')">Delete All</button>
+                                @endif
                             @elseif($activity->type === 'matching')
                                 <a href="{{ route('admin.lessons.matching-games.edit', [$lesson, $activity->model]) }}" class="btn btn-xs">Edit</a>
                                 <a href="{{ route('matching-games.play', [$lesson, $activity->model]) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
+                                <button class="btn btn-xs btn-danger" onclick="deleteActivity('{{ $activity->type }}', {{ $activity->id }}, '{{ addslashes($activity->title) }}')">Delete</button>
                             @elseif($activity->type === 'flashcard')
                                 <a href="{{ route('admin.lessons.flashcard-games.edit', [$lesson, $activity->model]) }}" class="btn btn-xs">Edit</a>
                                 <a href="{{ route('flashcard-games.play', [$lesson, $activity->model]) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
+                                <button class="btn btn-xs btn-danger" onclick="deleteActivity('{{ $activity->type }}', {{ $activity->id }}, '{{ addslashes($activity->title) }}')">Delete</button>
                             @endif
-                            <button class="btn btn-xs btn-danger" onclick="deleteActivity('{{ $activity->type }}', {{ $activity->id }}, '{{ addslashes($activity->title) }}')">Delete</button>
                         </div>
                     </div>
                 @endforeach
@@ -296,9 +314,10 @@ function saveActivityOrder() {
     const activityItems = document.querySelectorAll('.activity-item');
     
     activityItems.forEach((item, index) => {
+        const activityId = item.dataset.id;
         activities.push({
             type: item.dataset.type,
-            id: parseInt(item.dataset.id),
+            id: activityId === 'prompts' ? 'prompts' : parseInt(activityId),
             sort_order: index + 1
         });
     });
@@ -433,5 +452,49 @@ function deleteActivity(type, activityId, title) {
         alert('Error deleting activity');
     });
 }
+
+function archiveLesson() {
+    if (confirm('Are you sure you want to archive this lesson? Students will no longer be able to access it, but it can be restored from the archived lessons page.')) {
+        document.getElementById('archive-form').submit();
+    }
+}
+
+// Delete all prompts function
+function deleteAllPrompts(title) {
+    if (!confirm(`Are you sure you want to delete all prompts in "${title}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    // Make AJAX request to delete all prompts
+    fetch(`/admin/lessons/{{ $lesson->id }}/delete-activity`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            activity_type: 'prompts',
+            activity_id: 'all'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Refresh to show updated list
+        } else {
+            alert('Error deleting prompts: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting prompts');
+    });
+}
 </script>
+
+<!-- Hidden form for archiving -->
+<form id="archive-form" action="{{ route('admin.lessons.archive', $lesson) }}" method="POST" style="display: none;">
+    @csrf
+</form>
+
 @endsection

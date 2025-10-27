@@ -15,6 +15,8 @@ class Option extends Model
         'prompt_id',
         'label',
         'image_path',
+        'word_audio_path',
+        'sentence_audio_path',
         'is_active',
         'sort_order',
     ];

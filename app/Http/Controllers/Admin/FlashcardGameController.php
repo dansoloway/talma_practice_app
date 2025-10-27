@@ -25,11 +25,9 @@ class FlashcardGameController extends Controller
      */
     public function create(Lesson $lesson)
     {
-        $parts = $lesson->parts()->where('is_active', true)->orderBy('sort_order')->get();
         $vocabulary = $lesson->vocabulary()->where('is_active', true)->orderBy('sort_order')->get();
-        $gameTypes = FlashcardGame::getGameTypes();
         
-        return view('admin.flashcard-games.create', compact('lesson', 'parts', 'vocabulary', 'gameTypes'));
+        return view('admin.flashcard-games.create', compact('lesson', 'vocabulary'));
     }
 
     /**
@@ -38,27 +36,24 @@ class FlashcardGameController extends Controller
     public function store(Request $request, Lesson $lesson)
     {
         $validated = $request->validate([
-            'part_id' => 'nullable|exists:parts,id',
             'title' => 'required|string|max:255',
-            'game_types' => 'required|array|min:1',
-            'game_types.*' => 'in:image_to_word,image_to_audio,audio_to_image,audio_to_word',
             'vocabulary_ids' => 'required|array|min:1',
             'vocabulary_ids.*' => 'exists:vocabulary,id',
             'cards_per_game' => 'integer|min:1|max:50',
-            'is_active' => 'boolean',
         ]);
 
         $validated['lesson_id'] = $lesson->id;
+        
+        // Always include all game types - no need for admin to choose
+        $validated['game_types'] = ['image_to_word', 'image_to_audio', 'audio_to_image', 'audio_to_word'];
         
         // Default to all vocabulary words if none are selected
         if (empty($validated['vocabulary_ids'])) {
             $validated['vocabulary_ids'] = $lesson->vocabulary()->pluck('id')->toArray();
         }
         
-        // Note: Parts are no longer used, activities belong directly to lessons
-        
-        // Default to active if not explicitly set
-        $validated['is_active'] = $request->has('is_active');
+        // Default to active
+        $validated['is_active'] = $request->input('is_active', '1') == '1';
 
         $flashcardGame = FlashcardGame::create($validated);
 
@@ -81,11 +76,9 @@ class FlashcardGameController extends Controller
      */
     public function edit(Lesson $lesson, FlashcardGame $flashcardGame)
     {
-        $parts = $lesson->parts()->where('is_active', true)->orderBy('sort_order')->get();
         $vocabulary = $lesson->vocabulary()->where('is_active', true)->orderBy('sort_order')->get();
-        $gameTypes = FlashcardGame::getGameTypes();
         
-        return view('admin.flashcard-games.edit', compact('lesson', 'flashcardGame', 'parts', 'vocabulary', 'gameTypes'));
+        return view('admin.flashcard-games.edit', compact('lesson', 'flashcardGame', 'vocabulary'));
     }
 
     /**
@@ -94,22 +87,22 @@ class FlashcardGameController extends Controller
     public function update(Request $request, Lesson $lesson, FlashcardGame $flashcardGame)
     {
         $validated = $request->validate([
-            'part_id' => 'nullable|exists:parts,id',
             'title' => 'required|string|max:255',
-            'game_types' => 'required|array|min:1',
-            'game_types.*' => 'in:image_to_word,image_to_audio,audio_to_image,audio_to_word',
             'vocabulary_ids' => 'required|array|min:1',
             'vocabulary_ids.*' => 'exists:vocabulary,id',
             'cards_per_game' => 'integer|min:1|max:50',
-            'is_active' => 'boolean',
         ]);
 
-        $validated['is_active'] = $request->has('is_active');
+        // Always include all game types - no need for admin to choose
+        $validated['game_types'] = ['image_to_word', 'image_to_audio', 'audio_to_image', 'audio_to_word'];
+        
+        // Handle checkbox properly - convert to boolean
+        $validated['is_active'] = $request->input('is_active') == '1';
 
         $flashcardGame->update($validated);
 
         return redirect()
-            ->route('admin.lessons.flashcard-games.show', [$lesson, $flashcardGame])
+            ->route('admin.lessons.manage', $lesson)
             ->with('success', 'Flashcard game updated successfully!');
     }
 

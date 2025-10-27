@@ -22,7 +22,8 @@ class LessonController extends Controller
      */
     public function show(string $slug)
     {
-        $lesson = Lesson::where('slug', $slug)
+        $lesson = Lesson::active()
+            ->where('slug', $slug)
             ->where('is_active', true)
             ->with([
                 'vocabulary' => function ($query) {

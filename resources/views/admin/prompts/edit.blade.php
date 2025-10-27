@@ -21,7 +21,7 @@
         <div class="form-group">
             <label for="template">Template *</label>
             <input type="text" id="template" name="template" value="{{ old('template', $prompt->template) }}" required class="form-control">
-            <small>Use @{{ '{' }}{{ '{answer}' }}{{ '}' }} as placeholder</small>
+            <small>Use <code>{}</code> as placeholder for the answer</small>
         </div>
 
         <div class="form-group">

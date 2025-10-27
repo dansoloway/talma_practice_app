@@ -59,7 +59,7 @@ class BuildTtsAssets extends Command
             $this->info("Processing: {$prompt->lesson->title} → {$prompt->prompt_text}");
             
             foreach ($prompt->options as $option) {
-                $sentence = Str::of($prompt->template)->replace('{{answer}}', $option->label);
+                $sentence = Str::of($prompt->template)->replace('{}', $option->label);
                 
                 $filename = "p{$prompt->id}_o{$option->id}.mp3";
                 $relativePath = "tts/lesson{$prompt->lesson_id}/{$filename}";

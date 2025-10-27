@@ -140,10 +140,17 @@ class VocabularyController extends Controller
     {
         $request->validate([
             'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+            'import_mode' => 'required|in:add,replace',
         ]);
 
         $file = $request->file('csv_file');
         $csvData = array_map('str_getcsv', file($file->getRealPath()));
+        $importMode = $request->input('import_mode');
+        
+        // If replace mode, delete existing vocabulary
+        if ($importMode === 'replace') {
+            $lesson->vocabulary()->delete();
+        }
         
         $imported = 0;
         $errors = [];
@@ -171,7 +178,8 @@ class VocabularyController extends Controller
             }
         }
 
-        $message = "Successfully imported {$imported} vocabulary items.";
+        $action = $importMode === 'replace' ? 'replaced with' : 'added';
+        $message = "Successfully {$action} {$imported} vocabulary items.";
         if (!empty($errors)) {
             $message .= " Errors: " . implode(', ', $errors);
         }

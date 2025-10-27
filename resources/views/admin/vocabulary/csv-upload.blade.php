@@ -54,6 +54,26 @@
                 <small>Choose a CSV or TXT file containing your vocabulary words</small>
             </div>
 
+            <div class="form-group">
+                <label>Import Mode *</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="mode_add" name="import_mode" value="add" checked>
+                        <label for="mode_add">
+                            <strong>Add to existing vocabulary</strong>
+                            <small>Keep current vocabulary and add new words from CSV</small>
+                        </label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="mode_replace" name="import_mode" value="replace">
+                        <label for="mode_replace">
+                            <strong>Replace all vocabulary</strong>
+                            <small>Delete all current vocabulary and import only CSV words</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Upload and Import</button>
                 <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="btn">Cancel</a>

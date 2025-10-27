@@ -4,6 +4,7 @@ use App\Http\Controllers\LessonController;
 use App\Http\Controllers\PromptController;
 use App\Http\Controllers\PromptModelController;
 use App\Http\Controllers\ResponseController;
+use App\Http\Controllers\StudentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\Admin\PartController as AdminPartController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Admin\VocabularyController as AdminVocabularyController
 use App\Http\Controllers\Admin\PromptController as AdminPromptController;
 use App\Http\Controllers\Admin\OptionController as AdminOptionController;
 use App\Http\Controllers\Admin\FlashcardGameController as AdminFlashcardGameController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,12 +21,12 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return redirect()->route('lessons.index');
-});
+// Student Homepage
+Route::get('/', [StudentController::class, 'index'])->name('student.index');
+Route::get('/lessons', [StudentController::class, 'index'])->name('lessons.index');
+Route::get('/grade/{gradeLevel}', [StudentController::class, 'grade'])->name('student.grade');
 
-// Lessons
-Route::get('/lessons', [LessonController::class, 'index'])->name('lessons.index');
+// Individual Lessons
 Route::get('/lessons/{slug}', [LessonController::class, 'show'])->name('lessons.show');
 
 // Matching Games (public)
@@ -37,6 +39,7 @@ Route::get('/lessons/{lesson}/flashcard-games/{flashcard_game}/play', [App\Http\
 
 // Prompts (JSON API)
 Route::get('/prompts/{id}', [PromptController::class, 'show'])->name('prompts.show');
+Route::get('/lessons/{lesson}/prompts/play', [PromptController::class, 'play'])->name('prompts.play');
 Route::get('/prompts/{promptId}/options/{optionId}/model', [PromptModelController::class, 'show'])
     ->name('prompts.model');
 
@@ -49,10 +52,30 @@ Route::post('/responses', [ResponseController::class, 'store'])->name('responses
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('admin')->name('admin.')->group(function () {
+// Admin login route (handles both showing login form and processing login)
+Route::get('/admin', [DashboardController::class, 'index'])
+    ->name('admin.dashboard')
+    ->middleware('admin.auth');
+
+Route::post('/admin/login', function (Request $request) {
+    $password = $request->input('admin_password');
+    $correctPassword = env('ADMIN_PASSWORD', 'admin123');
     
-    // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    if ($password === $correctPassword) {
+        session(['admin_authenticated' => true]);
+        return redirect()->route('admin.dashboard');
+    } else {
+        return redirect()->route('admin.dashboard')->with('error', 'Incorrect password. Please try again.');
+    }
+})->name('admin.login');
+
+Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
+    
+    // Logout
+    Route::post('/logout', function () {
+        session()->forget('admin_authenticated');
+        return response()->json(['success' => true]);
+    })->name('logout');
     
     // Lessons
     Route::resource('lessons', AdminLessonController::class);
@@ -62,6 +85,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         ->name('lessons.update-activity-order');
     Route::post('lessons/{lesson}/delete-activity', [AdminLessonController::class, 'deleteActivity'])
         ->name('lessons.delete-activity');
+    
+    // Archive functionality
+    Route::post('lessons/{lesson}/archive', [AdminLessonController::class, 'archive'])
+        ->name('lessons.archive');
+    Route::post('lessons/{lesson}/unarchive', [AdminLessonController::class, 'unarchive'])
+        ->name('lessons.unarchive');
+    Route::get('lessons-archived', [AdminLessonController::class, 'archived'])
+        ->name('lessons.archived');
     
     // Parts
     Route::get('lessons/{lesson}/parts', [AdminPartController::class, 'index'])
@@ -126,8 +157,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         ->name('lessons.prompts.store');
     Route::get('lessons/{lesson}/prompts/import', [AdminPromptController::class, 'showImport'])
         ->name('lessons.prompts.import');
-    Route::post('lessons/{lesson}/prompts/import', [AdminPromptController::class, 'import'])
-        ->name('lessons.prompts.import.store');
+    Route::post('lessons/{lesson}/prompts/preview', [AdminPromptController::class, 'previewCsv'])
+        ->name('lessons.prompts.preview');
+    Route::post('lessons/{lesson}/prompts/confirm-import', [AdminPromptController::class, 'confirmImport'])
+        ->name('lessons.prompts.confirm-import');
+    Route::get('lessons/prompts/csv/template', [AdminPromptController::class, 'csvTemplate'])
+        ->name('lessons.prompts.csv.template');
+    Route::post('lessons/{lesson}/prompts/generate-word-tts', [AdminPromptController::class, 'generateWordTts'])
+        ->name('lessons.prompts.generate-word-tts');
+    Route::post('lessons/{lesson}/prompts/generate-sentence-tts', [AdminPromptController::class, 'generateSentenceTts'])
+        ->name('lessons.prompts.generate-sentence-tts');
     Route::get('prompts/{prompt}', [AdminPromptController::class, 'show'])
         ->name('prompts.show');
     Route::get('prompts/{prompt}/edit', [AdminPromptController::class, 'edit'])

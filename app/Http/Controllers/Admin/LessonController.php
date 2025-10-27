@@ -12,11 +12,35 @@ class LessonController extends Controller
     /**
      * Display a listing of all lessons.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $lessons = Lesson::ordered()->get();
+        $query = Lesson::active()->ordered();
         
-        return view('admin.lessons.index', compact('lessons'));
+        // Filter by grade level
+        if ($request->filled('grade_level')) {
+            $query->where('grade_level', $request->grade_level);
+        }
+        
+        // Filter by search text (title, session_title, instructions)
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('session_title', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('instructions', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+        
+        $lessons = $query->get();
+        
+        // Get available grade levels for filter dropdown
+        $gradeLevels = Lesson::active()
+            ->whereNotNull('grade_level')
+            ->distinct()
+            ->orderBy('grade_level')
+            ->pluck('grade_level');
+        
+        return view('admin.lessons.index', compact('lessons', 'gradeLevels'));
     }
 
     /**
@@ -126,8 +150,8 @@ class LessonController extends Controller
     {
         $validated = $request->validate([
             'activities' => 'required|array',
-            'activities.*.type' => 'required|in:prompt,matching,flashcard',
-            'activities.*.id' => 'required|integer',
+            'activities.*.type' => 'required|in:prompt,prompts,matching,flashcard',
+            'activities.*.id' => 'required',
             'activities.*.sort_order' => 'required|integer',
         ]);
 
@@ -136,16 +160,21 @@ class LessonController extends Controller
                 switch ($activityData['type']) {
                     case 'prompt':
                         $activity = $lesson->prompts()->findOrFail($activityData['id']);
+                        $activity->update(['sort_order' => $activityData['sort_order']]);
+                        break;
+                    case 'prompts':
+                        // Update all prompts in this lesson with the new sort order
+                        $lesson->prompts()->update(['sort_order' => $activityData['sort_order']]);
                         break;
                     case 'matching':
                         $activity = $lesson->matchingGames()->findOrFail($activityData['id']);
+                        $activity->update(['sort_order' => $activityData['sort_order']]);
                         break;
                     case 'flashcard':
                         $activity = $lesson->flashcardGames()->findOrFail($activityData['id']);
+                        $activity->update(['sort_order' => $activityData['sort_order']]);
                         break;
                 }
-
-                $activity->update(['sort_order' => $activityData['sort_order']]);
             }
 
             return response()->json(['success' => true]);
@@ -160,29 +189,68 @@ class LessonController extends Controller
     public function deleteActivity(Request $request, Lesson $lesson)
     {
         $validated = $request->validate([
-            'activity_type' => 'required|in:prompt,matching,flashcard',
-            'activity_id' => 'required|integer',
+            'activity_type' => 'required|in:prompt,prompts,matching,flashcard',
+            'activity_id' => 'required',
         ]);
 
         try {
             switch ($validated['activity_type']) {
                 case 'prompt':
                     $activity = $lesson->prompts()->findOrFail($validated['activity_id']);
+                    $activity->delete();
+                    break;
+                case 'prompts':
+                    if ($validated['activity_id'] === 'all') {
+                        // Delete all prompts for this lesson
+                        $lesson->prompts()->delete();
+                    }
                     break;
                 case 'matching':
                     $activity = $lesson->matchingGames()->findOrFail($validated['activity_id']);
+                    $activity->delete();
                     break;
                 case 'flashcard':
                     $activity = $lesson->flashcardGames()->findOrFail($validated['activity_id']);
+                    $activity->delete();
                     break;
             }
-
-            $activity->delete();
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Archive a lesson.
+     */
+    public function archive(Lesson $lesson)
+    {
+        $lesson->archive();
+        
+        return redirect()->route('admin.lessons.index')
+            ->with('success', 'Lesson "' . $lesson->title . '" has been archived.');
+    }
+
+    /**
+     * Unarchive a lesson.
+     */
+    public function unarchive(Lesson $lesson)
+    {
+        $lesson->unarchive();
+        
+        return redirect()->route('admin.lessons.archived')
+            ->with('success', 'Lesson "' . $lesson->title . '" has been unarchived.');
+    }
+
+    /**
+     * Display archived lessons.
+     */
+    public function archived()
+    {
+        $lessons = Lesson::archived()->ordered()->get();
+        
+        return view('admin.lessons.archived', compact('lessons'));
     }
 }
 

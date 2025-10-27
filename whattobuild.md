@@ -27,7 +27,7 @@ prompts
 	•	id PK
 	•	lesson_id FK → lessons.id (cascade)
 	•	prompt_text varchar(255)           // e.g., “What is your favorite color?”
-	•	template varchar(255)              // e.g., “My favorite color is {{answer}}.”
+	•	template varchar(255)              // e.g., "My favorite color is {}."
 	•	tts_voice varchar(64)              // which ElevenLabs voice was used
 	•	sort_order int
 
@@ -170,7 +170,7 @@ public function handle() {
   $prompts = Prompt::with('options')->get();
   foreach ($prompts as $prompt) {
     foreach ($prompt->options as $opt) {
-      $sentence = Str::of($prompt->template)->replace('{{answer}}', $opt->label);
+      $sentence = Str::of($prompt->template)->replace('{}', $opt->label);
       $file = "tts/lesson{$prompt->lesson_id}/p{$prompt->id}_o{$opt->id}.mp3";
 
       // (1) call local script that already generated MP3s or

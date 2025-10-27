@@ -19,10 +19,12 @@ class Lesson extends Model
         'session_title',
         'is_active',
         'sort_order',
+        'archived_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'archived_at' => 'datetime',
     ];
 
     /**
@@ -73,11 +75,11 @@ class Lesson extends Model
     }
 
     /**
-     * Scope to only active lessons.
+     * Scope to only active, non-archived lessons.
      */
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('is_active', true)->whereNull('archived_at');
     }
 
     /**
@@ -122,6 +124,39 @@ class Lesson extends Model
         }
         
         return $lastPart;
+    }
+
+
+    /**
+     * Scope to get only archived lessons.
+     */
+    public function scopeArchived($query)
+    {
+        return $query->whereNotNull('archived_at');
+    }
+
+    /**
+     * Check if the lesson is archived.
+     */
+    public function isArchived(): bool
+    {
+        return !is_null($this->archived_at);
+    }
+
+    /**
+     * Archive the lesson.
+     */
+    public function archive(): bool
+    {
+        return $this->update(['archived_at' => now()]);
+    }
+
+    /**
+     * Unarchive the lesson.
+     */
+    public function unarchive(): bool
+    {
+        return $this->update(['archived_at' => null]);
     }
 }
 

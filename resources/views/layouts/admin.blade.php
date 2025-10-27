@@ -17,7 +17,9 @@
             <div class="nav-links">
                 <a href="{{ route('admin.dashboard') }}">Dashboard</a>
                 <a href="{{ route('admin.lessons.index') }}">Lessons</a>
-                <a href="{{ route('lessons.index') }}">View Site</a>
+                <a href="{{ route('admin.lessons.archived') }}">Archived</a>
+                <a href="{{ route('lessons.index') }}">Student View</a>
+                <a href="#" onclick="logout()" class="logout-link">Logout</a>
             </div>
         </nav>
     </header>
@@ -49,6 +51,22 @@
     </main>
 
     @stack('scripts')
+    
+    <script>
+    function logout() {
+        if (confirm('Are you sure you want to logout?')) {
+            fetch('{{ route('admin.logout') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                },
+            }).then(() => {
+                window.location.href = '{{ route('lessons.index') }}';
+            });
+        }
+    }
+    </script>
 </body>
 </html>
 

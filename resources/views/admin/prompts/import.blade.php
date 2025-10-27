@@ -23,28 +23,23 @@
                 <h4>Required Columns:</h4>
                 <ol>
                     <li><strong>Prompt Text</strong> - The question or instruction shown to students</li>
-                    <li><strong>Template</strong> - The sentence template with <code>{{answer}}</code> placeholder</li>
-                </ol>
-                
-                <h4>Optional Columns:</h4>
-                <ol start="3">
-                    <li><strong>TTS Voice</strong> - Voice for text-to-speech (default: "default")</li>
+                    <li><strong>Template</strong> - The sentence template with <code>{}</code> placeholder</li>
                     <li><strong>Option 1, Option 2, Option 3...</strong> - Answer choices for students</li>
                 </ol>
             </div>
 
             <div class="csv-example">
                 <h4>Example CSV Content:</h4>
-                <pre class="code-block">Prompt Text,Template,TTS Voice,Option 1,Option 2,Option 3,Option 4
-What is your favorite color?,My favorite color is {{answer}}.,default,red,blue,green,yellow
-What do you like to eat?,I like to eat {{answer}}.,default,pizza,salad,soup,sandwich
-Where do you live?,I live in {{answer}}.,default,New York,London,Tokyo,Paris</pre>
+                <pre class="code-block">Prompt Text,Template,Option 1,Option 2,Option 3,Option 4
+What rolled the farthest?,The {} rolled the farthest,ball,cube,cylinder,sphere
+What object is the softest?,The {} is the softest,cotton,sponge,fabric,pillow
+What object is the hardest?,The {} is the hardest,rock,metal,wood,glass</pre>
             </div>
 
             <div class="important-notes">
                 <h4>Important Notes:</h4>
                 <ul>
-                    <li>The template <strong>must</strong> contain <code>{{answer}}</code> placeholder</li>
+                    <li>The template <strong>must</strong> contain <code>{}</code> as placeholder for the answer</li>
                     <li>You can include as many option columns as needed</li>
                     <li>Empty rows will be skipped</li>
                     <li>The first row is treated as headers and will be ignored</li>
@@ -59,7 +54,7 @@ Where do you live?,I live in {{answer}}.,default,New York,London,Tokyo,Paris</pr
             <h2 class="card-title">Upload CSV File</h2>
         </div>
         <div class="card-body">
-            <form action="{{ route('admin.lessons.prompts.import.store', $lesson) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('admin.lessons.prompts.preview', $lesson) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 
                 <div class="form-group">
@@ -71,8 +66,28 @@ Where do you live?,I live in {{answer}}.,default,New York,London,Tokyo,Paris</pr
                     @enderror
                 </div>
 
+                <div class="form-group">
+                    <label>Import Mode</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="prompt_mode_add" name="import_mode" value="add" checked>
+                            <label for="prompt_mode_add">
+                                <strong>Add to existing prompts</strong>
+                                <small>Keep current prompts and add new ones from CSV</small>
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="prompt_mode_replace" name="import_mode" value="replace">
+                            <label for="prompt_mode_replace">
+                                <strong>Replace all prompts</strong>
+                                <small>Delete all current prompts and import only CSV prompts</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Import Prompts</button>
+                    <button type="submit" class="btn btn-primary">Preview Import</button>
                     <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
@@ -94,6 +109,19 @@ Where do you live?,I live in {{answer}}.,default,New York,London,Tokyo,Paris</pr
             </div>
         </div>
     @endif
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Need a Template?</h2>
+        </div>
+        <div class="card-body">
+            <p>Download a sample CSV file to see the correct format and get started quickly:</p>
+            <a href="{{ route('admin.lessons.prompts.csv.template') }}" class="btn btn-secondary">
+                <i class="fas fa-download"></i> Download Sample CSV
+            </a>
+            <p class="mt-3"><small>The template includes example prompts with the correct {} placeholder format and multiple answer options.</small></p>
+        </div>
+    </div>
 </div>
 @endsection
 
