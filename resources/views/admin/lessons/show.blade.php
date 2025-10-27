@@ -38,6 +38,19 @@
             // Get all activities in order
             $allActivities = collect();
             
+            // Add vocabulary presentation as first activity if there are vocabulary words
+            if($lesson->vocabulary->count() > 0) {
+                $allActivities->push((object)[
+                    'id' => 'vocabulary',
+                    'type' => 'vocabulary',
+                    'title' => 'Vocabulary Presentation (' . $lesson->vocabulary->count() . ' words)',
+                    'sort_order' => 0, // Always first
+                    'is_active' => true,
+                    'model' => $lesson->vocabulary,
+                    'count' => $lesson->vocabulary->count()
+                ]);
+            }
+            
             // Add prompts as a single group if there are any
             if($lesson->prompts->count() > 0) {
                 $activePrompts = $lesson->prompts->where('is_active', true);
@@ -90,13 +103,34 @@
                                 <div class="activity-type-badge {{ $activity->type }}">
                                     @if($activity->type === 'prompts')
                                         PROMPTS
+                                    @elseif($activity->type === 'vocabulary')
+                                        VOCABULARY
                                     @else
                                         {{ strtoupper($activity->type) }}
                                     @endif
                                 </div>
                                 <h3 class="activity-preview-title">{{ $activity->title }}</h3>
                                 
-                                @if($activity->type === 'prompts')
+                                @if($activity->type === 'vocabulary')
+                                    <div class="activity-details">
+                                        <p><strong>Words:</strong> {{ $activity->count }}</p>
+                                        @if($activity->model->count() > 0)
+                                            <p><strong>Sample Words:</strong> 
+                                                @foreach($activity->model->take(6) as $vocab)
+                                                    <span class="option-preview">{{ $vocab->english_word }}</span>
+                                                @endforeach
+                                                @if($activity->model->count() > 6)
+                                                    <span class="more-options">+{{ $activity->model->count() - 6 }} more</span>
+                                                @endif
+                                            </p>
+                                            @php
+                                                $wordsWithImages = $activity->model->whereNotNull('image_path')->count();
+                                                $wordsWithAudio = $activity->model->whereNotNull('word_audio_path')->count();
+                                            @endphp
+                                            <p><strong>Media:</strong> {{ $wordsWithImages }} images, {{ $wordsWithAudio }} audio files</p>
+                                        @endif
+                                    </div>
+                                @elseif($activity->type === 'prompts')
                                     <div class="activity-details">
                                         <p><strong>Questions:</strong> {{ $activity->count }}</p>
                                         @if($activity->model->count() > 0)
