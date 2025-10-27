@@ -18,39 +18,44 @@ class LessonController extends Controller
     }
 
     /**
-     * Display the specified lesson with its prompts.
+     * Display the specified lesson with its activities.
      */
     public function show(string $slug)
     {
         $lesson = Lesson::where('slug', $slug)
             ->where('is_active', true)
-            ->with(['parts' => function ($query) {
-                $query->where('is_active', true)
-                      ->orderBy('sort_order')
-                      ->with(['prompts' => function ($q) {
-                          $q->with(['options' => function ($opt) {
-                              $opt->where('is_active', true);
+            ->with([
+                'vocabulary' => function ($query) {
+                    $query->where('is_active', true)->orderBy('sort_order');
+                },
+                'prompts' => function ($query) {
+                    $query->where('is_active', true)
+                          ->orderBy('sort_order')
+                          ->with(['options' => function ($opt) {
+                              $opt->where('is_active', true)->orderBy('sort_order');
                           }]);
-                      }]);
-            }, 'vocabulary' => function ($query) {
-                $query->where('is_active', true)->orderBy('sort_order');
-            }])
+                },
+                'matchingGames' => function ($query) {
+                    $query->where('is_active', true)->orderBy('sort_order');
+                },
+                'flashcardGames' => function ($query) {
+                    $query->where('is_active', true)->orderBy('sort_order');
+                }
+            ])
             ->firstOrFail();
         
-        // Add full URLs for audio paths
-        $lesson->parts->each(function ($part) {
-            $part->prompts->each(function ($prompt) {
-                if ($prompt->prompt_audio_path) {
-                    $prompt->prompt_audio_path = asset($prompt->prompt_audio_path);
+        // Add full URLs for audio paths in prompts
+        $lesson->prompts->each(function ($prompt) {
+            if ($prompt->prompt_audio_path) {
+                $prompt->prompt_audio_path = asset($prompt->prompt_audio_path);
+            }
+            $prompt->options->each(function ($option) {
+                if ($option->word_audio_path) {
+                    $option->word_audio_path = asset($option->word_audio_path);
                 }
-                $prompt->options->each(function ($option) {
-                    if ($option->word_audio_path) {
-                        $option->word_audio_path = asset($option->word_audio_path);
-                    }
-                    if ($option->image_path) {
-                        $option->image_path = asset($option->image_path);
-                    }
-                });
+                if ($option->image_path) {
+                    $option->image_path = asset($option->image_path);
+                }
             });
         });
 

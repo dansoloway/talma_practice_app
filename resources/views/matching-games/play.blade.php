@@ -33,11 +33,11 @@
                             <img src="{{ $card['content'] }}" alt="{{ $card['word'] }}" class="card-image">
                         @else
                             <div class="card-word">{{ $card['content'] }}</div>
-                        @endif
-                        @if($card['audio_path'])
-                            <button class="play-audio-btn" data-audio="{{ $card['audio_path'] }}" title="Play audio">
-                                🔊
-                            </button>
+                            @if($card['audio_path'])
+                                <button class="play-audio-btn" data-audio="{{ $card['audio_path'] }}" title="Play audio">
+                                    🔊
+                                </button>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -147,6 +147,12 @@
 }
 
 .game-card.selected {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light, #e3f2fd);
+    transform: scale(1.02);
+}
+
+.game-card.correct {
     border-color: var(--color-success);
     background: var(--color-success-light, #d4edda);
     transform: scale(1.05);
@@ -155,13 +161,13 @@
 .game-card.incorrect {
     border-color: var(--color-danger);
     background: var(--color-danger-light, #f8d7da);
-    animation: shake 0.5s ease-in-out;
+    animation: shake 0.3s ease-in-out;
 }
 
 .game-card.matched {
     opacity: 0;
     transform: scale(0.8);
-    transition: all 0.5s ease;
+    transition: all 0.3s ease;
 }
 
 @keyframes shake {
@@ -195,30 +201,24 @@
 
 .play-audio-btn {
     position: absolute;
-    top: 0.25rem;
-    right: 0.25rem;
+    top: 0;
+    left: 0;
+    right: 0;
     background: var(--color-primary);
     color: white;
     border: none;
-    border-radius: 50%;
-    width: 2rem;
-    height: 2rem;
+    height: 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 0.875rem;
-    transition: all 0.2s;
+    font-size: 0.75rem;
     z-index: 10;
-}
-
-.play-audio-btn:hover {
-    background: var(--color-primary-dark);
-    transform: scale(1.1);
+    width: 100%;
 }
 
 .play-audio-btn:active {
-    transform: scale(0.95);
+    background: var(--color-primary-dark);
 }
 
 .game-completion {
@@ -315,13 +315,13 @@ class MatchingGame {
             return;
         }
         
-        // Add selection highlight
+        // Add selection highlight (blue for first selection)
         card.classList.add('selected');
         this.flippedCards.push(card);
         
         // Check for match when 2 cards are selected
         if (this.flippedCards.length === 2) {
-            setTimeout(() => this.checkMatch(), 1000);
+            setTimeout(() => this.checkMatch(), 300);
         }
     }
     
@@ -331,18 +331,26 @@ class MatchingGame {
         const vocabId2 = card2.dataset.vocabId;
         
         if (vocabId1 === vocabId2) {
-            // Match found! Mark as matched and hide
+            // Match found! Show green highlight first
             card1.classList.remove('selected');
             card2.classList.remove('selected');
-            card1.classList.add('matched');
-            card2.classList.add('matched');
-            this.matches++;
-            this.updateStats();
+            card1.classList.add('correct');
+            card2.classList.add('correct');
             
-            // Check if game is complete
-            if (this.matches === this.cards.length / 2) {
-                this.completeGame();
-            }
+            // After showing green, mark as matched and hide
+            setTimeout(() => {
+                card1.classList.remove('correct');
+                card2.classList.remove('correct');
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                this.matches++;
+                this.updateStats();
+                
+                // Check if game is complete
+                if (this.matches === this.cards.length / 2) {
+                    this.completeGame();
+                }
+            }, 400);
         } else {
             // No match - show red highlight and shake
             card1.classList.add('incorrect');
@@ -352,7 +360,7 @@ class MatchingGame {
             setTimeout(() => {
                 card1.classList.remove('incorrect', 'selected');
                 card2.classList.remove('incorrect', 'selected');
-            }, 500);
+            }, 300);
         }
         
         this.flippedCards = [];

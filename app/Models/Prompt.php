@@ -19,6 +19,11 @@ class Prompt extends Model
         'tts_voice',
         'prompt_audio_path',
         'sort_order',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     /**

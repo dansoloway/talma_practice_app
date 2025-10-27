@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\PartController as AdminPartController;
 use App\Http\Controllers\Admin\VocabularyController as AdminVocabularyController;
 use App\Http\Controllers\Admin\PromptController as AdminPromptController;
 use App\Http\Controllers\Admin\OptionController as AdminOptionController;
+use App\Http\Controllers\Admin\FlashcardGameController as AdminFlashcardGameController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -29,6 +30,10 @@ Route::get('/lessons/{slug}', [LessonController::class, 'show'])->name('lessons.
 // Matching Games (public)
 Route::get('/lessons/{lesson}/matching-games/{matching_game}/play', [App\Http\Controllers\Admin\MatchingGameController::class, 'play'])
     ->name('matching-games.play');
+
+// Flashcard Games (public)
+Route::get('/lessons/{lesson}/flashcard-games/{flashcard_game}/play', [App\Http\Controllers\Admin\FlashcardGameController::class, 'play'])
+    ->name('flashcard-games.play');
 
 // Prompts (JSON API)
 Route::get('/prompts/{id}', [PromptController::class, 'show'])->name('prompts.show');
@@ -53,6 +58,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('lessons', AdminLessonController::class);
     Route::get('lessons/{lesson}/manage', [AdminLessonController::class, 'manage'])
         ->name('lessons.manage');
+    Route::post('lessons/{lesson}/update-activity-order', [AdminLessonController::class, 'updateActivityOrder'])
+        ->name('lessons.update-activity-order');
+    Route::post('lessons/{lesson}/delete-activity', [AdminLessonController::class, 'deleteActivity'])
+        ->name('lessons.delete-activity');
     
     // Parts
     Route::get('lessons/{lesson}/parts', [AdminPartController::class, 'index'])
@@ -107,11 +116,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Matching Games
     Route::resource('lessons.matching-games', App\Http\Controllers\Admin\MatchingGameController::class);
     
+    // Flashcard Games
+    Route::resource('lessons.flashcard-games', App\Http\Controllers\Admin\FlashcardGameController::class);
+    
     // Prompts
     Route::get('lessons/{lesson}/prompts/create', [AdminPromptController::class, 'create'])
         ->name('lessons.prompts.create');
     Route::post('lessons/{lesson}/prompts', [AdminPromptController::class, 'store'])
         ->name('lessons.prompts.store');
+    Route::get('lessons/{lesson}/prompts/import', [AdminPromptController::class, 'showImport'])
+        ->name('lessons.prompts.import');
+    Route::post('lessons/{lesson}/prompts/import', [AdminPromptController::class, 'import'])
+        ->name('lessons.prompts.import.store');
     Route::get('prompts/{prompt}', [AdminPromptController::class, 'show'])
         ->name('prompts.show');
     Route::get('prompts/{prompt}/edit', [AdminPromptController::class, 'edit'])

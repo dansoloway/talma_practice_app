@@ -121,12 +121,16 @@ function renderPrompt() {
         promptAudio.play();
     });
 
-    // Render options
+    // Set up drag and drop sentence
+    setupDragAndDropSentence();
+    
+    // Render draggable options
     optionGrid.innerHTML = '';
     currentPrompt.options.forEach(option => {
         const optionCard = document.createElement('div');
         optionCard.className = 'option-card';
         optionCard.dataset.optionId = option.id;
+        optionCard.draggable = true;
         
         let contentHTML = '<div class="option-card-content">';
         
@@ -153,30 +157,173 @@ function renderPrompt() {
         contentHTML += '</div>';
         optionCard.innerHTML = contentHTML;
         
-        optionCard.addEventListener('click', () => selectOption(option));
+        // Set up drag events
+        setupDragEvents(optionCard, option);
         optionGrid.appendChild(optionCard);
     });
 }
 
-// Select an option
-function selectOption(option) {
-    currentOption = option;
+// Set up drag and drop sentence
+function setupDragAndDropSentence() {
+    const sentenceText = document.getElementById('sentence-text');
+    const dropZone = document.getElementById('drop-zone');
+    const checkBtn = document.getElementById('check-answer-btn');
+    const clearBtn = document.getElementById('clear-answer-btn');
     
-    // Remove previous selections
-    document.querySelectorAll('.option-card').forEach(card => {
-        card.classList.remove('selected');
+    // Split the template into parts
+    const template = currentPrompt.template;
+    const parts = template.split('{{answer}}');
+    
+    // Display the sentence with the drop zone in the middle
+    sentenceText.innerHTML = parts[0];
+    dropZone.innerHTML = '<span class="drop-placeholder">Drop your answer here</span>';
+    
+    // Clear any previous state
+    dropZone.classList.remove('has-answer', 'incorrect', 'correct');
+    checkBtn.classList.add('hidden');
+    clearBtn.classList.add('hidden');
+    
+    // Set up drop zone events
+    dropZone.addEventListener('dragover', handleDragOver);
+    dropZone.addEventListener('drop', handleDrop);
+    dropZone.addEventListener('dragenter', handleDragEnter);
+    dropZone.addEventListener('dragleave', handleDragLeave);
+    
+    // Set up control buttons
+    checkBtn.addEventListener('click', checkAnswer);
+    clearBtn.addEventListener('click', clearAnswer);
+}
+
+// Set up drag events for option cards
+function setupDragEvents(card, option) {
+    card.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+            id: option.id,
+            label: option.label,
+            option: option
+        }));
+        card.classList.add('dragging');
     });
     
-    // Mark selected option
-    document.querySelector(`[data-option-id="${option.id}"]`).classList.add('selected');
+    card.addEventListener('dragend', (e) => {
+        card.classList.remove('dragging');
+    });
+}
+
+// Handle drag over
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+// Handle drag enter
+function handleDragEnter(e) {
+    e.preventDefault();
+    e.target.closest('.drop-zone').classList.add('drag-over');
+}
+
+// Handle drag leave
+function handleDragLeave(e) {
+    e.target.closest('.drop-zone').classList.remove('drag-over');
+}
+
+// Handle drop
+function handleDrop(e) {
+    e.preventDefault();
+    const dropZone = e.target.closest('.drop-zone');
+    dropZone.classList.remove('drag-over');
     
-    // Show model step
+    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+    
+    // Mark the dragged card as used
+    const draggedCard = document.querySelector(`[data-option-id="${data.id}"]`);
+    if (draggedCard) {
+        draggedCard.classList.add('used');
+    }
+    
+    // Display the dropped answer
+    dropZone.innerHTML = `
+        <div class="dropped-answer" data-option-id="${data.id}">
+            ${data.label}
+            <button onclick="removeAnswer()" class="btn-remove">×</button>
+        </div>
+    `;
+    
+    dropZone.classList.add('has-answer');
+    
+    // Show control buttons
+    document.getElementById('check-answer-btn').classList.remove('hidden');
+    document.getElementById('clear-answer-btn').classList.remove('hidden');
+}
+
+// Check answer
+function checkAnswer() {
+    const dropZone = document.getElementById('drop-zone');
+    const droppedAnswer = dropZone.querySelector('.dropped-answer');
+    
+    if (!droppedAnswer) return;
+    
+    const optionId = parseInt(droppedAnswer.dataset.optionId);
+    const correctOption = currentPrompt.options.find(opt => opt.id === optionId);
+    
+    if (correctOption) {
+        // Correct answer
+        droppedAnswer.classList.add('correct');
+        dropZone.classList.add('correct');
+        
+        // Show model step after a delay
+        setTimeout(() => {
+            showModelStep(correctOption);
+        }, 1000);
+    } else {
+        // Incorrect answer
+        droppedAnswer.classList.add('incorrect');
+        dropZone.classList.add('incorrect');
+        
+        // Reset after animation
+        setTimeout(() => {
+            dropZone.classList.remove('incorrect');
+            droppedAnswer.classList.remove('incorrect');
+        }, 1000);
+    }
+}
+
+// Clear answer
+function clearAnswer() {
+    const dropZone = document.getElementById('drop-zone');
+    const droppedAnswer = dropZone.querySelector('.dropped-answer');
+    
+    if (droppedAnswer) {
+        const optionId = droppedAnswer.dataset.optionId;
+        const card = document.querySelector(`[data-option-id="${optionId}"]`);
+        if (card) {
+            card.classList.remove('used');
+        }
+    }
+    
+    dropZone.innerHTML = '<span class="drop-placeholder">Drop your answer here</span>';
+    dropZone.classList.remove('has-answer', 'correct', 'incorrect');
+    
+    document.getElementById('check-answer-btn').classList.add('hidden');
+    document.getElementById('clear-answer-btn').classList.add('hidden');
+}
+
+// Remove answer (called from the × button)
+function removeAnswer() {
+    clearAnswer();
+}
+
+// Show model step
+function showModelStep(option) {
+    currentOption = option;
+    
+    // Hide prompt step and show model step
     hideAllScreens();
-    modelStep.classList.remove('hidden');
+    document.getElementById('model-step').classList.remove('hidden');
     
     // Generate and display model sentence
     const modelSentence = currentPrompt.template.replace('{{answer}}', option.label);
-    modelText.textContent = modelSentence;
+    document.getElementById('model-text').textContent = modelSentence;
     
     // Set up model audio
     if (currentPrompt.assets && currentPrompt.assets.length > 0) {
@@ -197,6 +344,9 @@ function selectOption(option) {
         modelAudio.play();
     });
 }
+
+// Legacy selectOption function - now handled by drag and drop
+// This is kept for backward compatibility but not used in drag-and-drop mode
 
 // Play word audio
 let wordAudio = new Audio();

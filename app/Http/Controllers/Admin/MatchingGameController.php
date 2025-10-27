@@ -49,11 +49,13 @@ class MatchingGameController extends Controller
 
         $validated['lesson_id'] = $lesson->id;
         $validated['vocabulary_ids'] = array_slice($validated['vocabulary_ids'], 0, $requiredPairs);
+        
+        // Note: Parts are no longer used, activities belong directly to lessons
 
         MatchingGame::create($validated);
 
         return redirect()
-            ->route('admin.lessons.matching-games.index', $lesson)
+            ->route('admin.lessons.manage', $lesson)
             ->with('success', 'Matching game created successfully!');
     }
 

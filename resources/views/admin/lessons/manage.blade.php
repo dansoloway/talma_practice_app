@@ -167,88 +167,107 @@
         @endif
     </div>
 
-    <!-- Parts Section -->
+    <!-- Activities Section -->
     <div class="management-section">
         <div class="section-header">
-            <h2>Parts ({{ $lesson->parts->count() }})</h2>
-            <a href="{{ route('admin.lessons.parts.create', $lesson) }}" class="btn btn-primary btn-sm">Add Part</a>
+            <h2>Activities</h2>
+            <div class="section-actions">
+                <a href="{{ route('admin.lessons.prompts.create', $lesson) }}" class="btn btn-primary btn-sm">+ Prompt</a>
+                <a href="{{ route('admin.lessons.prompts.import', $lesson) }}" class="btn btn-secondary btn-sm">Import CSV</a>
+                <a href="{{ route('admin.lessons.matching-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Matching</a>
+                <a href="{{ route('admin.lessons.flashcard-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Flashcard</a>
+            </div>
         </div>
 
-        @if($lesson->parts->count() > 0)
-            <div class="parts-list">
-                @foreach($lesson->parts as $part)
-                    <div class="part-card">
-                        <div class="part-header">
-                            <h4>{{ $part->title }}</h4>
-                            <span class="part-status {{ $part->is_active ? 'active' : 'inactive' }}">
-                                {{ $part->is_active ? 'Active' : 'Inactive' }}
-                            </span>
+        @php
+            // Collect all activities with their sort orders
+            $allActivities = collect();
+            
+            // Add prompts
+            foreach($lesson->prompts as $prompt) {
+                $allActivities->push((object)[
+                    'id' => $prompt->id,
+                    'type' => 'prompt',
+                    'title' => $prompt->prompt_text,
+                    'sort_order' => $prompt->sort_order ?? 999,
+                    'is_active' => $prompt->is_active ?? true,
+                    'model' => $prompt
+                ]);
+            }
+            
+            // Add matching games
+            foreach($lesson->matchingGames as $game) {
+                $allActivities->push((object)[
+                    'id' => $game->id,
+                    'type' => 'matching',
+                    'title' => $game->title,
+                    'sort_order' => $game->sort_order ?? 999,
+                    'is_active' => $game->is_active ?? true,
+                    'model' => $game
+                ]);
+            }
+            
+            // Add flashcard games
+            foreach($lesson->flashcardGames as $game) {
+                $allActivities->push((object)[
+                    'id' => $game->id,
+                    'type' => 'flashcard',
+                    'title' => $game->title,
+                    'sort_order' => $game->sort_order ?? 999,
+                    'is_active' => $game->is_active ?? true,
+                    'model' => $game
+                ]);
+            }
+            
+            // Sort by sort_order
+            $allActivities = $allActivities->sortBy('sort_order');
+        @endphp
+
+        @if($allActivities->count() > 0)
+            <div class="activities-list" id="activities-list">
+                @foreach($allActivities as $index => $activity)
+                    <div class="activity-item" data-type="{{ $activity->type }}" data-id="{{ $activity->id }}" data-order="{{ $index + 1 }}">
+                        <div class="activity-handle">
+                            <i class="fas fa-grip-vertical"></i>
                         </div>
-                        @if($part->description)
-                            <p class="part-description">{{ $part->description }}</p>
-                        @endif
-                        <div class="part-stats">
-                            <span>{{ $part->prompts->count() }} prompts</span>
-                            <span>Sort: {{ $part->sort_order }}</span>
+                        <div class="activity-content">
+                            <div class="activity-header">
+                                <span class="activity-type-badge {{ $activity->type }}">
+                                    {{ ucfirst($activity->type) }}
+                                </span>
+                                <h4 class="activity-title">{{ $activity->title }}</h4>
+                                <span class="activity-status {{ $activity->is_active ? 'active' : 'inactive' }}">
+                                    {{ $activity->is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="activity-order">
+                                Order: {{ $index + 1 }}
+                            </div>
                         </div>
-                        <div class="part-actions">
-                            <a href="{{ route('admin.lessons.parts.show', [$lesson, $part]) }}" class="btn btn-sm">View</a>
-                            <a href="{{ route('admin.lessons.parts.edit', [$lesson, $part]) }}" class="btn btn-sm">Edit</a>
-                            <form action="{{ route('admin.lessons.parts.destroy', [$lesson, $part]) }}" method="POST" class="inline-form">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this part?')">Delete</button>
-                            </form>
+                        <div class="activity-actions">
+                            @if($activity->type === 'prompt')
+                                <a href="{{ route('admin.prompts.edit', $activity->model) }}" class="btn btn-xs">Edit</a>
+                            @elseif($activity->type === 'matching')
+                                <a href="{{ route('admin.lessons.matching-games.edit', [$lesson, $activity->model]) }}" class="btn btn-xs">Edit</a>
+                                <a href="{{ route('matching-games.play', [$lesson, $activity->model]) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
+                            @elseif($activity->type === 'flashcard')
+                                <a href="{{ route('admin.lessons.flashcard-games.edit', [$lesson, $activity->model]) }}" class="btn btn-xs">Edit</a>
+                                <a href="{{ route('flashcard-games.play', [$lesson, $activity->model]) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
+                            @endif
+                            <button class="btn btn-xs btn-danger" onclick="deleteActivity('{{ $activity->type }}', {{ $activity->id }}, '{{ addslashes($activity->title) }}')">Delete</button>
                         </div>
                     </div>
                 @endforeach
+            </div>
+            
+            <div class="activity-order-controls">
+                <button class="btn btn-primary" onclick="saveActivityOrder()">Save Order</button>
+                <span class="order-status" id="order-status"></span>
             </div>
         @else
             <div class="empty-state">
-                <p>No parts yet. <a href="{{ route('admin.lessons.parts.create', $lesson) }}">Create the first part</a>.</p>
+                <p>No activities yet. Create your first activity using the buttons above.</p>
             </div>
-        @endif
-    </div>
-
-    <!-- Matching Games Section -->
-    <div class="management-section">
-        <div class="section-header">
-            <h2>Matching Games ({{ $lesson->matchingGames->count() }})</h2>
-            <div class="section-actions">
-                <a href="{{ route('admin.lessons.matching-games.create', $lesson) }}" class="btn btn-primary btn-sm">Create Matching Game</a>
-            </div>
-        </div>
-
-        @if($lesson->matchingGames->count() > 0)
-            <div class="matching-games-grid">
-                @foreach($lesson->matchingGames as $game)
-                    <div class="matching-game-card">
-                        <div class="game-header">
-                            <h3>{{ $game->title }}</h3>
-                            <span class="game-status {{ $game->is_active ? 'active' : 'inactive' }}">
-                                {{ $game->is_active ? 'Active' : 'Inactive' }}
-                            </span>
-                        </div>
-                        <div class="game-info">
-                            <div class="game-stat">
-                                <span class="stat-label">Grid:</span>
-                                <span class="stat-value">{{ $game->grid_size }}x{{ $game->grid_size }}</span>
-                            </div>
-                            <div class="game-stat">
-                                <span class="stat-label">Words:</span>
-                                <span class="stat-value">{{ count($game->vocabulary_ids) }}</span>
-                            </div>
-                        </div>
-                        <div class="game-actions">
-                            <a href="{{ route('admin.lessons.matching-games.show', [$lesson, $game]) }}" class="btn btn-sm">View</a>
-                            <a href="{{ route('admin.lessons.matching-games.edit', [$lesson, $game]) }}" class="btn btn-sm">Edit</a>
-                            <a href="{{ route('matching-games.play', [$lesson, $game]) }}" class="btn btn-sm btn-success" target="_blank">Play</a>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <p class="empty-text">No matching games yet. Create vocabulary matching games to help students learn!</p>
         @endif
     </div>
 </div>
@@ -270,5 +289,149 @@ document.addEventListener('DOMContentLoaded', function() {
         editForm.classList.add('hidden');
     });
 });
+
+// Activity ordering functions
+function saveActivityOrder() {
+    const activities = [];
+    const activityItems = document.querySelectorAll('.activity-item');
+    
+    activityItems.forEach((item, index) => {
+        activities.push({
+            type: item.dataset.type,
+            id: parseInt(item.dataset.id),
+            sort_order: index + 1
+        });
+    });
+    
+    const statusElement = document.getElementById('order-status');
+    statusElement.textContent = 'Saving...';
+    
+    // Make AJAX request to save activity order
+    fetch(`/admin/lessons/{{ $lesson->id }}/update-activity-order`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            activities: activities
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusElement.textContent = 'Order saved!';
+            statusElement.style.color = 'green';
+            setTimeout(() => {
+                statusElement.textContent = '';
+            }, 3000);
+        } else {
+            statusElement.textContent = 'Error saving order';
+            statusElement.style.color = 'red';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        statusElement.textContent = 'Error saving order';
+        statusElement.style.color = 'red';
+    });
+}
+
+// Make activities sortable (simple drag and drop)
+document.addEventListener('DOMContentLoaded', function() {
+    const activitiesList = document.getElementById('activities-list');
+    if (activitiesList) {
+        // Simple drag and drop implementation
+        let draggedElement = null;
+        
+        activitiesList.addEventListener('dragstart', function(e) {
+            if (e.target.closest('.activity-item')) {
+                draggedElement = e.target.closest('.activity-item');
+                e.dataTransfer.effectAllowed = 'move';
+                draggedElement.style.opacity = '0.5';
+            }
+        });
+        
+        activitiesList.addEventListener('dragend', function(e) {
+            if (draggedElement) {
+                draggedElement.style.opacity = '';
+                draggedElement = null;
+            }
+        });
+        
+        activitiesList.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+        
+        activitiesList.addEventListener('drop', function(e) {
+            e.preventDefault();
+            if (draggedElement) {
+                const dropTarget = e.target.closest('.activity-item');
+                if (dropTarget && dropTarget !== draggedElement) {
+                    const rect = dropTarget.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    
+                    if (e.clientY < midpoint) {
+                        activitiesList.insertBefore(draggedElement, dropTarget);
+                    } else {
+                        activitiesList.insertBefore(draggedElement, dropTarget.nextSibling);
+                    }
+                    
+                    // Update order numbers
+                    updateOrderNumbers();
+                }
+            }
+        });
+        
+        // Make activity items draggable
+        activitiesList.querySelectorAll('.activity-item').forEach(item => {
+            item.draggable = true;
+        });
+    }
+});
+
+function updateOrderNumbers() {
+    const activityItems = document.querySelectorAll('.activity-item');
+    activityItems.forEach((item, index) => {
+        const orderElement = item.querySelector('.activity-order');
+        if (orderElement) {
+            orderElement.textContent = `Order: ${index + 1}`;
+        }
+        item.dataset.order = index + 1;
+    });
+}
+
+// Delete activity function
+function deleteActivity(type, activityId, title) {
+    if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    // Make AJAX request to delete activity
+    fetch(`/admin/lessons/{{ $lesson->id }}/delete-activity`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            activity_type: type,
+            activity_id: parseInt(activityId)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Refresh to show updated list
+        } else {
+            alert('Error deleting activity: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting activity');
+    });
+}
 </script>
 @endsection

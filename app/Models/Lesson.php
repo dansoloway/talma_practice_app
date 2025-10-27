@@ -54,6 +54,16 @@ class Lesson extends Model
         return $this->hasMany(MatchingGame::class)->orderBy('sort_order');
     }
 
+    public function flashcardGames(): HasMany
+    {
+        return $this->hasMany(FlashcardGame::class)->orderBy('sort_order');
+    }
+
+    public function vocabularyPresentations(): HasMany
+    {
+        return $this->hasMany(VocabularyPresentation::class)->orderBy('sort_order');
+    }
+
     /**
      * Get all responses for this lesson.
      */
@@ -76,6 +86,42 @@ class Lesson extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order');
+    }
+
+    /**
+     * Get or create a default part for this lesson.
+     * This ensures all content has a part to belong to.
+     */
+    public function getOrCreateDefaultPart()
+    {
+        // Check if lesson has any parts
+        $existingPart = $this->parts()->first();
+        
+        if ($existingPart) {
+            return $existingPart;
+        }
+
+        // Create a default part
+        return $this->parts()->create([
+            'title' => 'Main Activities',
+            'description' => 'Practice activities for this lesson',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+    }
+
+    /**
+     * Get the last part for this lesson (for adding new content).
+     */
+    public function getLastPart()
+    {
+        $lastPart = $this->parts()->orderBy('sort_order', 'desc')->first();
+        
+        if (!$lastPart) {
+            return $this->getOrCreateDefaultPart();
+        }
+        
+        return $lastPart;
     }
 }
 

@@ -56,11 +56,11 @@ class LessonController extends Controller
     }
 
     /**
-     * Display the specified lesson with its prompts.
+     * Display the specified lesson with its activities (student preview).
      */
     public function show(Lesson $lesson)
     {
-        $lesson->load(['prompts', 'parts', 'vocabulary']);
+        $lesson->load(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames']);
         
         return view('admin.lessons.show', compact('lesson'));
     }
@@ -70,17 +70,18 @@ class LessonController extends Controller
      */
     public function manage(Lesson $lesson)
     {
-        $lesson->load(['prompts', 'parts', 'vocabulary']);
+        $lesson->load(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames']);
         
         return view('admin.lessons.manage', compact('lesson'));
     }
 
     /**
      * Show the form for editing the lesson.
+     * Redirects to the comprehensive manage page.
      */
     public function edit(Lesson $lesson)
     {
-        return view('admin.lessons.edit', compact('lesson'));
+        return redirect()->route('admin.lessons.manage', $lesson);
     }
 
     /**
@@ -102,7 +103,7 @@ class LessonController extends Controller
         $lesson->update($validated);
 
         return redirect()
-            ->route('admin.lessons.show', $lesson)
+            ->route('admin.lessons.manage', $lesson)
             ->with('success', 'Lesson updated successfully!');
     }
 
@@ -116,6 +117,72 @@ class LessonController extends Controller
         return redirect()
             ->route('admin.lessons.index')
             ->with('success', 'Lesson deleted successfully!');
+    }
+
+    /**
+     * Update the order of activities in a lesson.
+     */
+    public function updateActivityOrder(Request $request, Lesson $lesson)
+    {
+        $validated = $request->validate([
+            'activities' => 'required|array',
+            'activities.*.type' => 'required|in:prompt,matching,flashcard',
+            'activities.*.id' => 'required|integer',
+            'activities.*.sort_order' => 'required|integer',
+        ]);
+
+        try {
+            foreach ($validated['activities'] as $activityData) {
+                switch ($activityData['type']) {
+                    case 'prompt':
+                        $activity = $lesson->prompts()->findOrFail($activityData['id']);
+                        break;
+                    case 'matching':
+                        $activity = $lesson->matchingGames()->findOrFail($activityData['id']);
+                        break;
+                    case 'flashcard':
+                        $activity = $lesson->flashcardGames()->findOrFail($activityData['id']);
+                        break;
+                }
+
+                $activity->update(['sort_order' => $activityData['sort_order']]);
+            }
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Delete an activity from a lesson.
+     */
+    public function deleteActivity(Request $request, Lesson $lesson)
+    {
+        $validated = $request->validate([
+            'activity_type' => 'required|in:prompt,matching,flashcard',
+            'activity_id' => 'required|integer',
+        ]);
+
+        try {
+            switch ($validated['activity_type']) {
+                case 'prompt':
+                    $activity = $lesson->prompts()->findOrFail($validated['activity_id']);
+                    break;
+                case 'matching':
+                    $activity = $lesson->matchingGames()->findOrFail($validated['activity_id']);
+                    break;
+                case 'flashcard':
+                    $activity = $lesson->flashcardGames()->findOrFail($validated['activity_id']);
+                    break;
+            }
+
+            $activity->delete();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
 }
 
