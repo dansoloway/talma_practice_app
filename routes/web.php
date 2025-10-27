@@ -52,10 +52,10 @@ Route::post('/responses', [ResponseController::class, 'store'])->name('responses
 |--------------------------------------------------------------------------
 */
 
-// Admin login route (handles both showing login form and processing login)
-Route::get('/admin', [DashboardController::class, 'index'])
-    ->name('admin.dashboard')
-    ->middleware('admin.auth');
+// Admin login route (redirects to lessons management)
+Route::get('/admin', function () {
+    return redirect()->route('admin.lessons.index');
+})->name('admin.dashboard')->middleware('admin.auth');
 
 Route::post('/admin/login', function (Request $request) {
     $password = $request->input('admin_password');
