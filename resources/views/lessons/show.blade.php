@@ -40,7 +40,17 @@
                             @endif
                             <div class="vocab-content">
                                 <div class="vocab-word">{{ $vocab->english_word }}</div>
-                                    @if($vocab->word_audio_path)
+                                @if($vocab->hebrew_translation || $vocab->arabic_translation)
+                                    <div class="vocab-translations">
+                                        @if($vocab->hebrew_translation)
+                                            <div class="translation hebrew">{{ $vocab->hebrew_translation }}</div>
+                                        @endif
+                                        @if($vocab->arabic_translation)
+                                            <div class="translation arabic">{{ $vocab->arabic_translation }}</div>
+                                        @endif
+                                    </div>
+                                @endif
+                                @if($vocab->word_audio_path)
                                     <button class="vocab-audio-btn" onclick="playVocabAudio('{{ asset('storage/' . $vocab->word_audio_path) }}')" title="Listen to word">
                                         <i class="fas fa-volume-up"></i>
                                     </button>
