@@ -284,6 +284,7 @@ function handleWordSelection(optionIndex, selectedWord) {
     // Debug logging
     console.log('Selected option:', selectedOptionData);
     console.log('Sentence audio path:', selectedOptionData.sentence_audio_path);
+    console.log('Next button should be enabled');
     
     // Reset recording state when new word is selected
     resetRecordingState();
@@ -294,8 +295,10 @@ function handleWordSelection(optionIndex, selectedWord) {
     // Enable next/finish button
     if (currentPromptIndex === prompts.length - 1) {
         document.getElementById('finish-btn').disabled = false;
+        console.log('Finish button enabled');
     } else {
         document.getElementById('next-btn').disabled = false;
+        console.log('Next button enabled, current index:', currentPromptIndex, 'total prompts:', prompts.length);
     }
 }
 
