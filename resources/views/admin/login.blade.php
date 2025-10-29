@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Teacher Login - WeSpeak')
+@section('title', 'Admin Login - WeSpeak')
 
 @section('content')
 <div class="container">
     <div class="admin-login">
         <div class="login-card">
             <div class="login-header">
-                <h1>Teacher Login</h1>
-                <p>Enter the admin password to access the teacher dashboard</p>
+                <h1>Admin Login</h1>
+                <p>Enter the admin password to access the admin dashboard</p>
             </div>
 
             @if(session('error'))
@@ -26,7 +26,7 @@
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-large">
-                    Access Teacher Dashboard
+                    Access Admin Dashboard
                 </button>
             </form>
 

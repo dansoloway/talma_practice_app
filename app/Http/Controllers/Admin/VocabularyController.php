@@ -47,7 +47,7 @@ class VocabularyController extends Controller
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
             $path = $image->storeAs('public/images/vocabulary', $filename);
-            $validated['image_path'] = 'storage/images/vocabulary/' . $filename;
+            $validated['image_path'] = 'images/vocabulary/' . $filename;
         }
 
         $vocabulary = Vocabulary::create($validated);
@@ -91,14 +91,14 @@ class VocabularyController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             // Delete old image if exists
-            if ($vocabulary->image_path && Storage::exists(str_replace('storage/', 'public/', $vocabulary->image_path))) {
-                Storage::delete(str_replace('storage/', 'public/', $vocabulary->image_path));
+            if ($vocabulary->image_path && Storage::disk('public')->exists($vocabulary->image_path)) {
+                Storage::disk('public')->delete($vocabulary->image_path);
             }
             
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
             $path = $image->storeAs('public/images/vocabulary', $filename);
-            $validated['image_path'] = 'storage/images/vocabulary/' . $filename;
+            $validated['image_path'] = 'images/vocabulary/' . $filename;
         }
 
         $vocabulary->update($validated);
@@ -114,8 +114,8 @@ class VocabularyController extends Controller
     public function destroy(Lesson $lesson, Vocabulary $vocabulary)
     {
         // Delete image if exists
-        if ($vocabulary->image_path && Storage::exists(str_replace('storage/', 'public/', $vocabulary->image_path))) {
-            Storage::delete(str_replace('storage/', 'public/', $vocabulary->image_path));
+        if ($vocabulary->image_path && Storage::disk('public')->exists($vocabulary->image_path)) {
+            Storage::disk('public')->delete($vocabulary->image_path);
         }
 
         $vocabulary->delete();
@@ -217,9 +217,11 @@ class VocabularyController extends Controller
         }
 
         // Store new image
-        $imagePath = $request->file('image')->store('vocabulary', 'public');
+        $image = $request->file('image');
+        $filename = time() . '_' . $image->getClientOriginalName();
+        $path = $image->storeAs('public/images/vocabulary', $filename);
         
-        $vocabulary->update(['image_path' => $imagePath]);
+        $vocabulary->update(['image_path' => 'images/vocabulary/' . $filename]);
 
         return redirect()
             ->route('admin.lessons.vocabulary.index', $lesson)
