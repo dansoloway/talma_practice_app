@@ -46,7 +46,7 @@ class VocabularyController extends Controller
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
-            $path = $image->storeAs('public/images/vocabulary', $filename);
+            $path = $image->storeAs('images/vocabulary', $filename, 'public');
             $validated['image_path'] = 'images/vocabulary/' . $filename;
         }
 
@@ -97,7 +97,7 @@ class VocabularyController extends Controller
             
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
-            $path = $image->storeAs('public/images/vocabulary', $filename);
+            $path = $image->storeAs('images/vocabulary', $filename, 'public');
             $validated['image_path'] = 'images/vocabulary/' . $filename;
         }
 
@@ -219,7 +219,7 @@ class VocabularyController extends Controller
         // Store new image
         $image = $request->file('image');
         $filename = time() . '_' . $image->getClientOriginalName();
-        $path = $image->storeAs('public/images/vocabulary', $filename);
+        $path = $image->storeAs('images/vocabulary', $filename, 'public');
         
         $vocabulary->update(['image_path' => 'images/vocabulary/' . $filename]);
 
