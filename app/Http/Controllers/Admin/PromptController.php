@@ -159,8 +159,15 @@ class PromptController extends Controller
                     continue;
                 }
 
-                // Extract options
+                // Extract options and correct answer
                 $optionColumns = array_slice($row, 2);
+                $correctAnswer = null;
+                
+                // Check if the last column is a number (correct answer)
+                if (count($optionColumns) > 4 && is_numeric(trim(end($optionColumns)))) {
+                    $correctAnswer = (int) trim(array_pop($optionColumns));
+                }
+                
                 $options = [];
                 foreach ($optionColumns as $optionText) {
                     $optionText = trim($optionText);
@@ -174,11 +181,18 @@ class PromptController extends Controller
                     continue;
                 }
 
+                // Validate correct answer if provided
+                if ($correctAnswer !== null && ($correctAnswer < 1 || $correctAnswer > count($options))) {
+                    $validationErrors[] = "Row {$rowNumber}: Correct answer must be between 1 and " . count($options);
+                    continue;
+                }
+
                 $previewData[] = [
                     'row_number' => $rowNumber,
                     'prompt_text' => $promptText,
                     'template' => $template,
                     'options' => $options,
+                    'correct_answer' => $correctAnswer,
                     'generated_sentences' => array_map(function($option) use ($template) {
                         return str_replace('{}', $option, $template);
                     }, $options)
@@ -244,6 +258,7 @@ class PromptController extends Controller
                     'prompt_text' => $item['prompt_text'],
                     'template' => $item['template'],
                     'tts_voice' => 'default',
+                    'correct_answer' => $item['correct_answer'] ?? null,
                     'sort_order' => $importedCount + 1,
                 ]);
                 

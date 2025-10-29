@@ -18,6 +18,7 @@ class Prompt extends Model
         'template',
         'tts_voice',
         'prompt_audio_path',
+        'correct_answer',
         'sort_order',
         'is_active',
     ];
