@@ -50,11 +50,17 @@ class WeSpeak_LessonsSeeder extends Seeder
         while (($data = fgetcsv($handle)) !== FALSE) {
             $sessionId = $data[0];
             $word = trim($data[1]);
+            $hebrew = isset($data[2]) ? trim($data[2]) : null;
+            $arabic = isset($data[3]) ? trim($data[3]) : null;
             
             if (!isset($vocabulary[$sessionId])) {
                 $vocabulary[$sessionId] = [];
             }
-            $vocabulary[$sessionId][] = $word;
+            $vocabulary[$sessionId][] = [
+                'word' => $word,
+                'hebrew' => $hebrew,
+                'arabic' => $arabic,
+            ];
         }
         fclose($handle);
 
@@ -89,10 +95,12 @@ class WeSpeak_LessonsSeeder extends Seeder
             if (isset($vocabulary[$sessionId])) {
                 $this->command->info("  Adding " . count($vocabulary[$sessionId]) . " vocabulary words");
                 
-                foreach ($vocabulary[$sessionId] as $index => $word) {
+                foreach ($vocabulary[$sessionId] as $index => $vocabData) {
                     Vocabulary::create([
                         'lesson_id' => $lesson->id,
-                        'english_word' => $word,
+                        'english_word' => $vocabData['word'],
+                        'hebrew_translation' => $vocabData['hebrew'],
+                        'arabic_translation' => $vocabData['arabic'],
                         'sort_order' => $index + 1,
                         'is_active' => true,
                     ]);
