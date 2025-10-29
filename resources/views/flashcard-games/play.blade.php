@@ -208,7 +208,16 @@ function generateCardHTML(card) {
                         <img src="${card.image_path}" alt="${card.english_word}" />
                     </div>
                     <div class="card-prompt">What is this word?</div>
-                    <div class="card-answer hidden" id="card-answer">${imageAnswer}</div>
+                    <div class="card-answer hidden" id="card-answer">
+                        <div class="answer-content">
+                            <span class="answer-text">${imageAnswer}</span>
+                            ${card.audio_path ? `
+                                <button class="play-answer-audio-btn" data-audio="${card.audio_path}" title="Listen to word">
+                                    <i class="fas fa-volume-up"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
                 </div>
             `;
         case 'image_to_audio':
@@ -259,6 +268,16 @@ function generateCardHTML(card) {
 function setupCardEvents(card) {
     // Audio playback
     document.querySelectorAll('.play-audio-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const audioPath = this.dataset.audio;
+            if (audioPath) {
+                playAudio(audioPath);
+            }
+        });
+    });
+
+    // Answer audio playback (for image_to_word mode)
+    document.querySelectorAll('.play-answer-audio-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const audioPath = this.dataset.audio;
             if (audioPath) {
@@ -616,6 +635,44 @@ function playAudio(audioPath) {
     height: 100px;
     object-fit: cover;
     border-radius: 4px;
+}
+
+/* Answer content styling */
+.answer-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.answer-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.play-answer-audio-btn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.play-answer-audio-btn:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.1);
+}
+
+.play-answer-audio-btn i {
+    font-size: 1rem;
 }
 
 .game-controls {
