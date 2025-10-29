@@ -223,15 +223,21 @@ class PromptController extends Controller
             $importMode = $previewData['import_mode'];
             $data = $previewData['data'];
             
+            \Log::info("Starting CSV import for lesson {$lesson->id} in {$importMode} mode");
+            \Log::info("Data items to import: " . count($data));
+            
             // If replace mode, delete existing prompts and their options
             if ($importMode === 'replace') {
+                \Log::info("Deleting existing prompts for lesson {$lesson->id}");
                 $lesson->prompts()->delete(); // This will cascade delete options too
             }
             
             $importedCount = 0;
             $createdOptions = [];
 
-            foreach ($data as $item) {
+            foreach ($data as $index => $item) {
+                \Log::info("Creating prompt " . ($index + 1) . ": '{$item['prompt_text']}'");
+                
                 // Create the prompt
                 $prompt = Prompt::create([
                     'lesson_id' => $lesson->id,
@@ -240,16 +246,21 @@ class PromptController extends Controller
                     'tts_voice' => 'default',
                     'sort_order' => $importedCount + 1,
                 ]);
+                
+                \Log::info("Created prompt ID: {$prompt->id}");
 
                 // Create options
                 $optionOrder = 1;
                 foreach ($item['options'] as $optionText) {
+                    \Log::info("Creating option: '{$optionText}'");
                     $option = $prompt->options()->create([
                         'label' => $optionText,
                         'image_path' => '', // Can be added later
                         'is_active' => true,
                         'sort_order' => $optionOrder++,
                     ]);
+                    
+                    \Log::info("Created option ID: {$option->id}");
                     
                     // Collect options for TTS generation
                     $createdOptions[] = $option;
