@@ -369,9 +369,13 @@ document.getElementById('prev-btn').addEventListener('click', function() {
 });
 
 document.getElementById('next-btn').addEventListener('click', function() {
+    console.log('Next button clicked! Current index:', currentPromptIndex, 'Total prompts:', prompts.length);
     if (currentPromptIndex < prompts.length - 1) {
         currentPromptIndex++;
+        console.log('Moving to next prompt, new index:', currentPromptIndex);
         loadPrompt(currentPromptIndex);
+    } else {
+        console.log('Already at last prompt');
     }
 });
 
