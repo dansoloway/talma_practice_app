@@ -15,6 +15,8 @@ class Vocabulary extends Model
     protected $fillable = [
         'lesson_id',
         'english_word',
+        'hebrew_translation',
+        'arabic_translation',
         'image_path',
         'word_audio_path',
         'sort_order',

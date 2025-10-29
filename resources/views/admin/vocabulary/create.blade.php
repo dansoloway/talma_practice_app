@@ -14,7 +14,19 @@
 
         <div class="form-group">
             <label for="english_word">English Word *</label>
-            <input type="text" id="english_word" name="english_word" value="{{ old('english_word') }}" required class="form-control" placeholder="e.g., cat, dog, house...">
+            <input type="text" id="english_word" name="english_word" value="{{ old('english_word') }}" required class="form-control" placeholder="e.g., variable, conclusion, hypothesis...">
+        </div>
+
+        <div class="form-group">
+            <label for="hebrew_translation">Hebrew Translation</label>
+            <input type="text" id="hebrew_translation" name="hebrew_translation" value="{{ old('hebrew_translation') }}" class="form-control" placeholder="e.g., משתנה, מסקנה, השערה...">
+            <small>Enter the Hebrew translation of the word</small>
+        </div>
+
+        <div class="form-group">
+            <label for="arabic_translation">Arabic Translation</label>
+            <input type="text" id="arabic_translation" name="arabic_translation" value="{{ old('arabic_translation') }}" class="form-control" placeholder="e.g., متغير، استنتاج، فرضية...">
+            <small>Enter the Arabic translation of the word</small>
         </div>
 
         <div class="form-group">

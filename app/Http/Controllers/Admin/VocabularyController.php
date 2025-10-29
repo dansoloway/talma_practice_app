@@ -35,6 +35,8 @@ class VocabularyController extends Controller
     {
         $validated = $request->validate([
             'english_word' => 'required|string|max:255',
+            'hebrew_translation' => 'nullable|string|max:255',
+            'arabic_translation' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
@@ -83,6 +85,8 @@ class VocabularyController extends Controller
     {
         $validated = $request->validate([
             'english_word' => 'required|string|max:255',
+            'hebrew_translation' => 'nullable|string|max:255',
+            'arabic_translation' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
@@ -169,6 +173,8 @@ class VocabularyController extends Controller
                 Vocabulary::create([
                     'lesson_id' => $lesson->id,
                     'english_word' => trim($row[0]),
+                    'hebrew_translation' => isset($row[1]) ? trim($row[1]) : null,
+                    'arabic_translation' => isset($row[2]) ? trim($row[2]) : null,
                     'sort_order' => $imported + 1,
                     'is_active' => true,
                 ]);
@@ -194,11 +200,11 @@ class VocabularyController extends Controller
      */
     public function csvTemplate()
     {
-        $csvContent = "English Word\n";
-        $csvContent .= "air pollution\n";
-        $csvContent .= "water pollution\n";
-        $csvContent .= "soil pollution\n";
-        $csvContent .= "noise pollution\n";
+        $csvContent = "English Word,Hebrew Translation,Arabic Translation\n";
+        $csvContent .= "variable,משתנה,متغير\n";
+        $csvContent .= "conclusion,מסקנה,استنتاج\n";
+        $csvContent .= "hypothesis,השערה,فرضية\n";
+        $csvContent .= "experiment,ניסוי,تجربة\n";
 
         return response($csvContent)
             ->header('Content-Type', 'text/csv')

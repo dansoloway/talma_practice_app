@@ -20,6 +20,8 @@
                 <thead>
                     <tr>
                         <th>English Word</th>
+                        <th>Hebrew Translation</th>
+                        <th>Arabic Translation</th>
                         <th>Image</th>
                         <th>Sort Order</th>
                         <th>Status</th>
@@ -30,6 +32,20 @@
                     @foreach($vocabulary as $item)
                         <tr>
                             <td><strong>{{ $item->english_word }}</strong></td>
+                            <td>
+                                @if($item->hebrew_translation)
+                                    <span class="translation hebrew">{{ $item->hebrew_translation }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($item->arabic_translation)
+                                    <span class="translation arabic">{{ $item->arabic_translation }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($item->image_path)
                                     <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->english_word }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
@@ -77,3 +93,31 @@
     @endif
 </div>
 @endsection
+
+@push('styles')
+<style>
+.translation {
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.translation.hebrew {
+    background-color: #e8f4fd;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.translation.arabic {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.text-muted {
+    color: #6b7280;
+    font-style: italic;
+}
+</style>
+@endpush
