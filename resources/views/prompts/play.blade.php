@@ -8,7 +8,6 @@
         <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
         <h1 class="game-title">Sentence Completion</h1>
         <p class="game-subtitle">{{ $lesson->title }}</p>
-        <div id="progress-display" class="progress-display">Score: 0/0 (0%)</div>
     </div>
 
 
@@ -264,23 +263,23 @@ function handleWordSelection(optionIndex, selectedWord) {
     const selectedOptionData = prompt.options[optionIndex];
     window.currentSentenceAudioPath = selectedOptionData.sentence_audio_path;
     
-    // Check if the answer is correct
-    const isCorrect = checkAnswer(optionIndex + 1, prompt.correct_answer);
+    // Check if the answer is correct (disabled for now)
+    // const isCorrect = checkAnswer(optionIndex + 1, prompt.correct_answer);
     
-    // Update score if this is the first time answering this question
-    if (!prompt.answered) {
-        if (isCorrect === true) {
-            score++;
-        }
-        answeredQuestions++;
-        prompt.answered = true;
-    }
+    // Update score if this is the first time answering this question (disabled for now)
+    // if (!prompt.answered) {
+    //     if (isCorrect === true) {
+    //         score++;
+    //     }
+    //     answeredQuestions++;
+    //     prompt.answered = true;
+    // }
     
-    // Show feedback
-    showAnswerFeedback(isCorrect, selectedOption);
+    // Show feedback (disabled for now)
+    // showAnswerFeedback(isCorrect, selectedOption);
     
-    // Update progress display
-    updateProgressDisplay();
+    // Update progress display (disabled for now)
+    // updateProgressDisplay();
     
     // Debug logging
     console.log('Selected option:', selectedOptionData);
