@@ -477,7 +477,7 @@ class PromptController extends Controller
 
         foreach ($options as $index => $option) {
             try {
-                \Log::info("Processing word TTS {$index + 1}/{$options->count()} in batch: '{$option->label}' (Option ID: {$option->id})");
+                \Log::info("Processing word TTS " . ($index + 1) . "/" . $options->count() . " in batch: '{$option->label}' (Option ID: {$option->id})");
                 $this->generateSingleWordTts($option);
                 $processed++;
                 \Log::info("Successfully generated word TTS for '{$option->label}'");
@@ -539,7 +539,7 @@ class PromptController extends Controller
 
         foreach ($options as $index => $option) {
             try {
-                \Log::info("Processing sentence TTS {$index + 1}/{$options->count()} in batch: '{$option->label}' (Option ID: {$option->id})");
+                \Log::info("Processing sentence TTS " . ($index + 1) . "/" . $options->count() . " in batch: '{$option->label}' (Option ID: {$option->id})");
                 $this->generateSingleSentenceTts($option);
                 $processed++;
                 \Log::info("Successfully generated sentence TTS for '{$option->label}'");
