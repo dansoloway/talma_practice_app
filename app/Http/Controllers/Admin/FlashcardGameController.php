@@ -121,25 +121,35 @@ class FlashcardGameController extends Controller
     /**
      * Play the flashcard game
      */
-    public function play(Lesson $lesson, FlashcardGame $flashcardGame)
+    public function play(Lesson $lesson, FlashcardGame $flashcardGame, Request $request)
     {
         // Get vocabulary items
         $vocabularyIds = $flashcardGame->vocabulary_ids ?? [];
         $vocabulary = Vocabulary::whereIn('id', $vocabularyIds)->get();
         
-        // Generate game data
-        $gameData = $this->generateGameData($flashcardGame, $vocabulary);
+        // Get the display mode (default to first available mode)
+        $mode = $request->get('mode');
+        if (!$mode) {
+            $availableModes = $this->getAvailableModes($vocabulary);
+            $mode = array_key_first($availableModes) ?: 'image';
+        }
         
-        return view('flashcard-games.play', compact('lesson', 'flashcardGame', 'gameData'));
+        // Generate game data based on the selected mode
+        $gameData = $this->generateGameData($flashcardGame, $vocabulary, $mode);
+        
+        return view('flashcard-games.play', compact('lesson', 'flashcardGame', 'gameData', 'mode'));
     }
 
-    private function generateGameData(FlashcardGame $flashcardGame, $vocabulary)
+    private function generateGameData(FlashcardGame $flashcardGame, $vocabulary, $mode = 'image')
     {
         $gameTypes = $flashcardGame->game_types;
         $cardsPerGame = $flashcardGame->cards_per_game;
         
+        // Filter vocabulary based on what's available for the selected mode
+        $availableVocab = $this->filterVocabularyForMode($vocabulary, $mode);
+        
         // Select random vocabulary items
-        $selectedVocab = $vocabulary->shuffle()->take($cardsPerGame);
+        $selectedVocab = $availableVocab->shuffle()->take($cardsPerGame);
         
         $cards = [];
         
@@ -147,6 +157,8 @@ class FlashcardGameController extends Controller
             $cards[] = [
                 'id' => $vocab->id,
                 'english_word' => $vocab->english_word,
+                'hebrew_translation' => $vocab->hebrew_translation,
+                'arabic_translation' => $vocab->arabic_translation,
                 'image_path' => $vocab->image_path ? asset('storage/' . $vocab->image_path) : null,
                 'audio_path' => $vocab->word_audio_path ? asset('storage/' . $vocab->word_audio_path) : null,
             ];
@@ -156,6 +168,46 @@ class FlashcardGameController extends Controller
             'cards' => $cards,
             'game_types' => $gameTypes,
             'cards_per_game' => $cardsPerGame,
+            'mode' => $mode,
+            'available_modes' => $this->getAvailableModes($vocabulary),
         ];
+    }
+
+    /**
+     * Filter vocabulary based on what's available for the selected mode
+     */
+    private function filterVocabularyForMode($vocabulary, $mode)
+    {
+        return $vocabulary->filter(function ($vocab) use ($mode) {
+            switch ($mode) {
+                case 'hebrew':
+                    return !empty($vocab->hebrew_translation);
+                case 'arabic':
+                    return !empty($vocab->arabic_translation);
+                case 'image':
+                default:
+                    return !empty($vocab->image_path);
+            }
+        });
+    }
+
+    /**
+     * Get available modes based on vocabulary data
+     */
+    private function getAvailableModes($vocabulary)
+    {
+        $modes = [];
+        
+        if ($vocabulary->whereNotNull('image_path')->count() > 0) {
+            $modes['image'] = 'Images';
+        }
+        if ($vocabulary->whereNotNull('hebrew_translation')->count() > 0) {
+            $modes['hebrew'] = 'Hebrew';
+        }
+        if ($vocabulary->whereNotNull('arabic_translation')->count() > 0) {
+            $modes['arabic'] = 'Arabic';
+        }
+        
+        return $modes;
     }
 }
