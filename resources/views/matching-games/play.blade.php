@@ -164,9 +164,10 @@
 }
 
 .game-card.selected {
-    border-color: var(--color-primary);
+    border: 4px solid var(--color-primary);
     background: var(--color-primary-light, #e3f2fd);
-    transform: scale(1.02);
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
 }
 
 .game-card.correct {
@@ -210,10 +211,15 @@
 }
 
 .card-word {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--color-text);
-    padding: 0.5rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1f2937;
+    padding: 1rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
 }
 
 .play-audio-btn {
@@ -499,8 +505,9 @@ function changeMode(mode) {
 }
 
 .game-card[data-type="word"] .card-content {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border: 2px solid #f59e0b;
+    background: white;
+    border: 2px solid #e5e7eb;
+    color: #374151;
 }
 </style>
 @endsection
