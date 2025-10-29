@@ -122,8 +122,12 @@ class MatchingGameController extends Controller
         $vocabularyIds = $matching_game->vocabulary_ids ?? [];
         $vocabulary = Vocabulary::whereIn('id', $vocabularyIds)->get();
         
-        // Get the matching mode (default to 'image' for backward compatibility)
-        $mode = $request->get('mode', 'image');
+        // Get the matching mode (default to first available mode)
+        $mode = $request->get('mode');
+        if (!$mode) {
+            $availableModes = $this->getAvailableModes($vocabulary);
+            $mode = array_key_first($availableModes) ?: 'image';
+        }
         
         // Generate game data based on the selected mode
         $gameData = $this->generateGameData($matching_game, $vocabulary, $mode);
