@@ -485,6 +485,10 @@ class PromptController extends Controller
         
         \Log::info("Starting word TTS batch generation for lesson {$lesson->id} - Batch size: {$batchSize}, Offset: {$offset}");
         \Log::info("Processing " . $options->count() . " options in this batch");
+        
+        // Create dedicated TTS log file
+        $ttsLogFile = storage_path('logs/tts_generation.log');
+        file_put_contents($ttsLogFile, "[" . now() . "] Starting word TTS batch generation for lesson {$lesson->id}\n", FILE_APPEND);
 
         foreach ($options as $index => $option) {
             try {
@@ -635,6 +639,10 @@ class PromptController extends Controller
 
         $voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice
         \Log::info("Making API call to ElevenLabs for word: '{$option->label}'");
+        
+        // Log to dedicated TTS file
+        $ttsLogFile = storage_path('logs/tts_generation.log');
+        file_put_contents($ttsLogFile, "[" . now() . "] Making API call for word: '{$option->label}'\n", FILE_APPEND);
 
         $response = \Http::withHeaders([
             'xi-api-key' => $apiKey,
@@ -752,6 +760,10 @@ class PromptController extends Controller
         // Get the prompt for this option
         $prompt = $option->prompt;
         $completeSentence = str_replace('{}', $option->label, $prompt->template);
+        
+        // Log to dedicated TTS file
+        $ttsLogFile = storage_path('logs/tts_generation.log');
+        file_put_contents($ttsLogFile, "[" . now() . "] Making API call for sentence: '{$completeSentence}'\n", FILE_APPEND);
 
         $response = \Http::withHeaders([
             'xi-api-key' => $apiKey,
@@ -764,6 +776,9 @@ class PromptController extends Controller
                 'similarity_boost' => 0.75,
             ]
         ]);
+        
+        // Log API response
+        file_put_contents($ttsLogFile, "[" . now() . "] API response status: " . $response->status() . " for sentence: '{$completeSentence}'\n", FILE_APPEND);
         
         if ($response->successful()) {
             // Save the audio file with a unique name
