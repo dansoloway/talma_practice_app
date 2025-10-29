@@ -284,7 +284,6 @@ function handleWordSelection(optionIndex, selectedWord) {
     // Debug logging
     console.log('Selected option:', selectedOptionData);
     console.log('Sentence audio path:', selectedOptionData.sentence_audio_path);
-    console.log('Is correct:', isCorrect);
     
     // Reset recording state when new word is selected
     resetRecordingState();
