@@ -44,8 +44,8 @@ class FlashcardGameController extends Controller
 
         $validated['lesson_id'] = $lesson->id;
         
-        // Always include all game types - no need for admin to choose
-        $validated['game_types'] = ['image_to_word', 'image_to_audio', 'audio_to_image', 'audio_to_word'];
+        // Only include audio-based game types
+        $validated['game_types'] = ['audio_to_image', 'audio_to_word'];
         
         // Default to all vocabulary words if none are selected
         if (empty($validated['vocabulary_ids'])) {
@@ -93,8 +93,8 @@ class FlashcardGameController extends Controller
             'cards_per_game' => 'integer|min:1|max:50',
         ]);
 
-        // Always include all game types - no need for admin to choose
-        $validated['game_types'] = ['image_to_word', 'image_to_audio', 'audio_to_image', 'audio_to_word'];
+        // Only include audio-based game types
+        $validated['game_types'] = ['audio_to_image', 'audio_to_word'];
         
         // Handle checkbox properly - convert to boolean
         $validated['is_active'] = $request->input('is_active') == '1';

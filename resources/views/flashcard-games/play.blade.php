@@ -78,16 +78,6 @@
             <div class="completion-content">
                 <h2>🎉 Game Complete!</h2>
                 <p>Great job practicing your vocabulary!</p>
-                <div class="completion-stats">
-                    <div class="stat">
-                        <span class="stat-value" id="correct-count">0</span>
-                        <span class="stat-label">Correct</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-value" id="total-count">{{ $gameData['cards_per_game'] }}</span>
-                        <span class="stat-label">Total</span>
-                    </div>
-                </div>
                 <div class="completion-actions">
                     <button id="play-again-btn" class="btn btn-primary">Play Again</button>
                     <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-secondary">Back to Lesson</a>
@@ -108,8 +98,6 @@ let currentGameType = null;
 let currentCardIndex = 0;
 let currentMode = '{{ $mode }}';
 let gameCards = [];
-let correctAnswers = 0;
-let userAnswers = [];
 
 // DOM elements
 const gameSelection = document.getElementById('game-selection');
@@ -122,8 +110,6 @@ const totalCardsSpan = document.getElementById('total-cards');
 const nextBtn = document.getElementById('next-btn');
 const restartBtn = document.getElementById('restart-btn');
 const playAgainBtn = document.getElementById('play-again-btn');
-const correctCountSpan = document.getElementById('correct-count');
-const totalCountSpan = document.getElementById('total-count');
 
 // Mode change functionality
 function changeMode(mode) {
