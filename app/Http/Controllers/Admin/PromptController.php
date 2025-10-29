@@ -471,13 +471,21 @@ class PromptController extends Controller
 
         $processed = 0;
         $errors = [];
+        
+        \Log::info("Starting word TTS batch generation for lesson {$lesson->id} - Batch size: {$batchSize}, Offset: {$offset}");
+        \Log::info("Processing " . $options->count() . " options in this batch");
 
-        foreach ($options as $option) {
+        foreach ($options as $index => $option) {
             try {
+                \Log::info("Processing word TTS {$index + 1}/{$options->count()} in batch: '{$option->label}' (Option ID: {$option->id})");
                 $this->generateSingleWordTts($option);
                 $processed++;
+                \Log::info("Successfully generated word TTS for '{$option->label}'");
             } catch (\Exception $e) {
-                $errors[] = "Failed to generate TTS for '{$option->label}': " . $e->getMessage();
+                $errorMsg = "Failed to generate TTS for '{$option->label}': " . $e->getMessage();
+                \Log::error($errorMsg);
+                \Log::error("Stack trace: " . $e->getTraceAsString());
+                $errors[] = $errorMsg;
             }
         }
 
@@ -503,6 +511,8 @@ class PromptController extends Controller
      */
     public function generateSentenceTts(Request $request, Lesson $lesson)
     {
+        \Log::info("Starting sentence TTS generation for lesson {$lesson->id}");
+        
         $validated = $request->validate([
             'batch_size' => 'integer|min:1|max:5',
             'offset' => 'integer|min:0'
@@ -523,13 +533,21 @@ class PromptController extends Controller
 
         $processed = 0;
         $errors = [];
+        
+        \Log::info("Starting sentence TTS batch generation for lesson {$lesson->id} - Batch size: {$batchSize}, Offset: {$offset}");
+        \Log::info("Processing " . $options->count() . " options in this batch");
 
-        foreach ($options as $option) {
+        foreach ($options as $index => $option) {
             try {
+                \Log::info("Processing sentence TTS {$index + 1}/{$options->count()} in batch: '{$option->label}' (Option ID: {$option->id})");
                 $this->generateSingleSentenceTts($option);
                 $processed++;
+                \Log::info("Successfully generated sentence TTS for '{$option->label}'");
             } catch (\Exception $e) {
-                $errors[] = "Failed to generate sentence TTS for '{$option->label}': " . $e->getMessage();
+                $errorMsg = "Failed to generate sentence TTS for '{$option->label}': " . $e->getMessage();
+                \Log::error($errorMsg);
+                \Log::error("Stack trace: " . $e->getTraceAsString());
+                $errors[] = $errorMsg;
             }
         }
 
@@ -555,12 +573,17 @@ class PromptController extends Controller
      */
     private function generateSingleWordTts($option)
     {
+        \Log::info("Starting TTS generation for word: '{$option->label}' (Option ID: {$option->id})");
+        
         // Check if audio already exists for this option
         if ($option->word_audio_path) {
             $fullPath = public_path(ltrim($option->word_audio_path, '/'));
+            \Log::info("Checking existing audio path: {$fullPath}");
             if (file_exists($fullPath)) {
                 \Log::info("Word TTS already exists for option: {$option->label}");
                 return; // Skip generation
+            } else {
+                \Log::warning("Audio path exists in DB but file not found: {$fullPath}");
             }
         }
 
@@ -595,10 +618,12 @@ class PromptController extends Controller
         $apiKey = env('ELEVENLABS_API_KEY');
         
         if (!$apiKey) {
+            \Log::error('ELEVENLABS_API_KEY not found in environment');
             throw new \Exception('ELEVENLABS_API_KEY not found');
         }
 
         $voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice
+        \Log::info("Making API call to ElevenLabs for word: '{$option->label}'");
 
         $response = \Http::withHeaders([
             'xi-api-key' => $apiKey,
@@ -612,25 +637,45 @@ class PromptController extends Controller
             ]
         ]);
         
+        \Log::info("API response status: " . $response->status());
+        if (!$response->successful()) {
+            \Log::error("API error response: " . $response->body());
+        }
+        
         if ($response->successful()) {
             // Save the audio file
             $filename = "word_o{$option->id}.mp3";
             $relativePath = "tts/words/{$filename}";
             $fullPath = storage_path("app/public/{$relativePath}");
             
+            \Log::info("Saving audio file to: {$fullPath}");
+            
             // Create directory if needed
             $dir = dirname($fullPath);
             if (!file_exists($dir)) {
+                \Log::info("Creating directory: {$dir}");
                 mkdir($dir, 0755, true);
             }
             
-            file_put_contents($fullPath, $response->body());
+            $audioData = $response->body();
+            \Log::info("Audio data size: " . strlen($audioData) . " bytes");
+            
+            $saved = file_put_contents($fullPath, $audioData);
+            if ($saved === false) {
+                \Log::error("Failed to save audio file to: {$fullPath}");
+                throw new \Exception("Failed to save audio file");
+            }
+            
+            \Log::info("Successfully saved audio file, bytes written: {$saved}");
             
             // Update option with audio path
-            $option->update(['word_audio_path' => "/storage/{$relativePath}"]);
+            $dbPath = "/storage/{$relativePath}";
+            \Log::info("Updating option {$option->id} with audio path: {$dbPath}");
+            $option->update(['word_audio_path' => $dbPath]);
             
             \Log::info("Generated TTS for option: {$option->label}");
         } else {
+            \Log::error("TTS API Error: " . $response->status() . " - " . $response->body());
             throw new \Exception("TTS API Error: " . $response->status());
         }
     }
