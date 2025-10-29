@@ -116,45 +116,41 @@ class MatchingGameController extends Controller
     /**
      * Play the matching game (student-facing)
      */
-    public function play(Lesson $lesson, MatchingGame $matching_game)
+    public function play(Lesson $lesson, MatchingGame $matching_game, Request $request)
     {
         // Get vocabulary items directly from the IDs
         $vocabularyIds = $matching_game->vocabulary_ids ?? [];
         $vocabulary = Vocabulary::whereIn('id', $vocabularyIds)->get();
         
-        // Generate game data
-        $gameData = $this->generateGameData($matching_game, $vocabulary);
+        // Get the matching mode (default to 'image' for backward compatibility)
+        $mode = $request->get('mode', 'image');
         
-        return view('matching-games.play', compact('lesson', 'matching_game', 'gameData'));
+        // Generate game data based on the selected mode
+        $gameData = $this->generateGameData($matching_game, $vocabulary, $mode);
+        
+        return view('matching-games.play', compact('lesson', 'matching_game', 'gameData', 'mode'));
     }
 
     /**
      * Generate the game grid with shuffled cards
      */
-    private function generateGameData(MatchingGame $matchingGame, $vocabulary)
+    private function generateGameData(MatchingGame $matchingGame, $vocabulary, $mode = 'image')
     {
         $gridSize = $matchingGame->grid_size;
         $totalCards = $gridSize * $gridSize;
         $pairs = $totalCards / 2;
 
+        // Filter vocabulary based on what's available for the selected mode
+        $availableVocab = $this->filterVocabularyForMode($vocabulary, $mode);
+        
         // Take only the number of pairs we need
-        $selectedVocab = $vocabulary->take($pairs);
+        $selectedVocab = $availableVocab->take($pairs);
         
         $cards = [];
         
-        // Create pairs: one image card, one word card for each vocabulary item
+        // Create pairs based on the selected mode
         foreach ($selectedVocab as $vocab) {
-            // Image card
-            $cards[] = [
-                'id' => 'img_' . $vocab->id,
-                'type' => 'image',
-                'content' => $vocab->image_path ? asset('storage/' . $vocab->image_path) : null,
-                'word' => $vocab->english_word,
-                'vocab_id' => $vocab->id,
-                'audio_path' => $vocab->word_audio_path ? asset('storage/' . $vocab->word_audio_path) : null,
-            ];
-            
-            // Word card
+            // English word card (always the same)
             $cards[] = [
                 'id' => 'word_' . $vocab->id,
                 'type' => 'word',
@@ -163,26 +159,98 @@ class MatchingGameController extends Controller
                 'vocab_id' => $vocab->id,
                 'audio_path' => $vocab->word_audio_path ? asset('storage/' . $vocab->word_audio_path) : null,
             ];
+            
+            // Matching card based on mode
+            $matchingCard = $this->createMatchingCard($vocab, $mode);
+            if ($matchingCard) {
+                $cards[] = $matchingCard;
+            }
         }
 
         // Shuffle the cards
         shuffle($cards);
 
-        // Debug logging
-        \Log::info('Matching Game Debug', [
-            'grid_size' => $gridSize,
-            'total_cards' => $totalCards,
-            'pairs' => $pairs,
-            'vocabulary_count' => $vocabulary->count(),
-            'selected_vocab_count' => $selectedVocab->count(),
-            'cards_count' => count($cards),
-            'first_card' => $cards[0] ?? 'none'
-        ]);
-
         return [
             'cards' => $cards,
             'grid_size' => $gridSize,
             'total_cards' => $totalCards,
+            'mode' => $mode,
+            'available_modes' => $this->getAvailableModes($vocabulary),
         ];
+    }
+
+    /**
+     * Filter vocabulary based on what's available for the selected mode
+     */
+    private function filterVocabularyForMode($vocabulary, $mode)
+    {
+        return $vocabulary->filter(function ($vocab) use ($mode) {
+            switch ($mode) {
+                case 'hebrew':
+                    return !empty($vocab->hebrew_translation);
+                case 'arabic':
+                    return !empty($vocab->arabic_translation);
+                case 'image':
+                default:
+                    return !empty($vocab->image_path);
+            }
+        });
+    }
+
+    /**
+     * Create a matching card based on the mode
+     */
+    private function createMatchingCard($vocab, $mode)
+    {
+        switch ($mode) {
+            case 'hebrew':
+                return [
+                    'id' => 'hebrew_' . $vocab->id,
+                    'type' => 'hebrew',
+                    'content' => $vocab->hebrew_translation,
+                    'word' => $vocab->english_word,
+                    'vocab_id' => $vocab->id,
+                    'audio_path' => null, // No audio for translations
+                ];
+            case 'arabic':
+                return [
+                    'id' => 'arabic_' . $vocab->id,
+                    'type' => 'arabic',
+                    'content' => $vocab->arabic_translation,
+                    'word' => $vocab->english_word,
+                    'vocab_id' => $vocab->id,
+                    'audio_path' => null, // No audio for translations
+                ];
+            case 'image':
+            default:
+                return [
+                    'id' => 'img_' . $vocab->id,
+                    'type' => 'image',
+                    'content' => $vocab->image_path ? asset('storage/' . $vocab->image_path) : null,
+                    'word' => $vocab->english_word,
+                    'vocab_id' => $vocab->id,
+                    'audio_path' => null, // No audio for images
+                ];
+        }
+    }
+
+    /**
+     * Get available modes based on vocabulary data
+     */
+    private function getAvailableModes($vocabulary)
+    {
+        $modes = [];
+        
+        if ($vocabulary->whereNotNull('image_path')->count() > 0) {
+            $modes['image'] = 'Images';
+        }
+        if ($vocabulary->whereNotNull('hebrew_translation')->count() > 0) {
+            $modes['hebrew'] = 'Hebrew';
+        }
+        if ($vocabulary->whereNotNull('arabic_translation')->count() > 0) {
+            $modes['arabic'] = 'Arabic';
+        }
+        
+        return $modes;
     }
 }

@@ -7,6 +7,19 @@
     <div class="game-header">
         <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
         <h1 class="game-title">{{ $matching_game->title }}</h1>
+        
+        @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
+            <div class="mode-selector">
+                <label for="mode-select">Match English with:</label>
+                <select id="mode-select" onchange="changeMode(this.value)">
+                    @foreach($gameData['available_modes'] as $modeKey => $modeLabel)
+                        <option value="{{ $modeKey }}" {{ $mode === $modeKey ? 'selected' : '' }}>
+                            {{ $modeLabel }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
     </div>
 
     <div class="game-stats">
@@ -31,6 +44,10 @@
                     <div class="card-content">
                         @if($card['type'] === 'image' && $card['content'])
                             <img src="{{ $card['content'] }}" alt="{{ $card['word'] }}" class="card-image">
+                        @elseif($card['type'] === 'hebrew')
+                            <div class="card-translation hebrew">{{ $card['content'] }}</div>
+                        @elseif($card['type'] === 'arabic')
+                            <div class="card-translation arabic">{{ $card['content'] }}</div>
                         @else
                             <div class="card-word">{{ $card['content'] }}</div>
                             @if($card['audio_path'])
@@ -407,5 +424,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Function to change matching mode
+function changeMode(mode) {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('mode', mode);
+    window.location.href = currentUrl.toString();
+}
 </script>
+
+<style>
+.mode-selector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.mode-selector label {
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+}
+
+.mode-selector select {
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.mode-selector select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.card-translation {
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 8px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-translation.hebrew {
+    background-color: #e8f4fd;
+    color: #1e40af;
+    border: 2px solid #bfdbfe;
+}
+
+.card-translation.arabic {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 2px solid #bbf7d0;
+}
+
+.game-card[data-type="hebrew"] .card-content {
+    background: linear-gradient(135deg, #e8f4fd 0%, #dbeafe 100%);
+}
+
+.game-card[data-type="arabic"] .card-content {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.game-card[data-type="word"] .card-content {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+}
+</style>
 @endsection
