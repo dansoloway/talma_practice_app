@@ -360,27 +360,25 @@ function updateProgressDisplay() {
     }
 }
 
-// Navigation functions
-document.getElementById('prev-btn').addEventListener('click', function() {
-    if (currentPromptIndex > 0) {
-        currentPromptIndex--;
-        loadPrompt(currentPromptIndex);
+// Navigation functions using event delegation
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.id === 'prev-btn') {
+        if (currentPromptIndex > 0) {
+            currentPromptIndex--;
+            loadPrompt(currentPromptIndex);
+        }
+    } else if (e.target && e.target.id === 'next-btn') {
+        console.log('Next button clicked! Current index:', currentPromptIndex, 'Total prompts:', prompts.length);
+        if (currentPromptIndex < prompts.length - 1) {
+            currentPromptIndex++;
+            console.log('Moving to next prompt, new index:', currentPromptIndex);
+            loadPrompt(currentPromptIndex);
+        } else {
+            console.log('Already at last prompt');
+        }
+    } else if (e.target && e.target.id === 'finish-btn') {
+        finishGame();
     }
-});
-
-document.getElementById('next-btn').addEventListener('click', function() {
-    console.log('Next button clicked! Current index:', currentPromptIndex, 'Total prompts:', prompts.length);
-    if (currentPromptIndex < prompts.length - 1) {
-        currentPromptIndex++;
-        console.log('Moving to next prompt, new index:', currentPromptIndex);
-        loadPrompt(currentPromptIndex);
-    } else {
-        console.log('Already at last prompt');
-    }
-});
-
-document.getElementById('finish-btn').addEventListener('click', function() {
-    finishGame();
 });
 
 document.getElementById('restart-btn').addEventListener('click', function() {
