@@ -8,6 +8,7 @@
         <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
         <h1 class="game-title">Sentence Completion</h1>
         <p class="game-subtitle">{{ $lesson->title }}</p>
+        <div id="progress-display" class="progress-display">Score: 0/0 (0%)</div>
     </div>
 
 
@@ -26,6 +27,10 @@
             <div class="results-header">
                 <h2>Great Job!</h2>
                 <p>You completed all the sentence completion questions!</p>
+                <div class="final-score" id="final-score">
+                    <h3>Final Score: <span id="score-display">0/0</span></h3>
+                    <p id="score-percentage">0%</p>
+                </div>
             </div>
             <div class="results-actions">
                 <button id="restart-btn" class="btn btn-primary">Try Again</button>
@@ -48,6 +53,9 @@
 const lessonData = @json($lesson);
 const prompts = lessonData.prompts;
 let currentPromptIndex = 0;
+let score = 0;
+let totalQuestions = prompts.length;
+let answeredQuestions = 0;
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', function() {
@@ -256,9 +264,28 @@ function handleWordSelection(optionIndex, selectedWord) {
     const selectedOptionData = prompt.options[optionIndex];
     window.currentSentenceAudioPath = selectedOptionData.sentence_audio_path;
     
+    // Check if the answer is correct
+    const isCorrect = checkAnswer(optionIndex + 1, prompt.correct_answer);
+    
+    // Update score if this is the first time answering this question
+    if (!prompt.answered) {
+        if (isCorrect === true) {
+            score++;
+        }
+        answeredQuestions++;
+        prompt.answered = true;
+    }
+    
+    // Show feedback
+    showAnswerFeedback(isCorrect, selectedOption);
+    
+    // Update progress display
+    updateProgressDisplay();
+    
     // Debug logging
     console.log('Selected option:', selectedOptionData);
     console.log('Sentence audio path:', selectedOptionData.sentence_audio_path);
+    console.log('Is correct:', isCorrect);
     
     // Reset recording state when new word is selected
     resetRecordingState();
@@ -271,6 +298,64 @@ function handleWordSelection(optionIndex, selectedWord) {
         document.getElementById('finish-btn').disabled = false;
     } else {
         document.getElementById('next-btn').disabled = false;
+    }
+}
+
+// Check if the selected answer is correct
+function checkAnswer(selectedOptionNumber, correctAnswer) {
+    if (correctAnswer === null || correctAnswer === undefined) {
+        return null; // No correct answer defined
+    }
+    return selectedOptionNumber === correctAnswer;
+}
+
+// Show feedback for the answer
+function showAnswerFeedback(isCorrect, selectedOption) {
+    // Remove any existing feedback classes
+    selectedOption.classList.remove('correct', 'incorrect');
+    
+    // Add appropriate feedback class
+    if (isCorrect === true) {
+        selectedOption.classList.add('correct');
+        showFeedbackMessage('Correct! 🎉', 'success');
+    } else if (isCorrect === false) {
+        selectedOption.classList.add('incorrect');
+        showFeedbackMessage('Try again! 💪', 'error');
+    }
+    // If isCorrect is null, no feedback is shown
+}
+
+// Show feedback message
+function showFeedbackMessage(message, type) {
+    // Remove existing feedback message
+    const existingFeedback = document.getElementById('answer-feedback');
+    if (existingFeedback) {
+        existingFeedback.remove();
+    }
+    
+    // Create new feedback message
+    const feedback = document.createElement('div');
+    feedback.id = 'answer-feedback';
+    feedback.className = `feedback-message ${type}`;
+    feedback.textContent = message;
+    
+    // Insert after the completed sentence
+    const completedSentence = document.getElementById('completed-sentence');
+    completedSentence.parentNode.insertBefore(feedback, completedSentence.nextSibling);
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        if (feedback.parentNode) {
+            feedback.remove();
+        }
+    }, 3000);
+}
+
+// Update progress display
+function updateProgressDisplay() {
+    const progressText = document.getElementById('progress-display');
+    if (progressText) {
+        progressText.textContent = `Score: ${score}/${answeredQuestions} (${Math.round((score/answeredQuestions)*100)}%)`;
     }
 }
 
@@ -467,6 +552,13 @@ function playRecording() {
 
 // Finish the game
 function finishGame() {
+    // Calculate final score
+    const percentage = Math.round((score / totalQuestions) * 100);
+    
+    // Update score display
+    document.getElementById('score-display').textContent = `${score}/${totalQuestions}`;
+    document.getElementById('score-percentage').textContent = `${percentage}%`;
+    
     // Show results
     document.getElementById('prompt-container').style.display = 'none';
     document.querySelector('.game-controls').style.display = 'none';
@@ -476,11 +568,21 @@ function finishGame() {
 // Restart the game
 function restartGame() {
     currentPromptIndex = 0;
+    score = 0;
+    answeredQuestions = 0;
+    
+    // Reset all prompts as unanswered
+    prompts.forEach(prompt => {
+        prompt.answered = false;
+    });
     
     // Reset display
     document.getElementById('prompt-container').style.display = 'block';
     document.querySelector('.game-controls').style.display = 'block';
     document.getElementById('game-results').style.display = 'none';
+    
+    // Reset progress display
+    updateProgressDisplay();
     
     // Load first prompt
     loadPrompt(currentPromptIndex);
@@ -747,6 +849,75 @@ function playOptionAudio(event, audioPath) {
 
 .feedback-message.incorrect {
     color: var(--color-danger);
+}
+
+/* Option card feedback styles */
+.option-card.correct {
+    background: #d4edda;
+    border-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
+    transform: scale(1.02);
+}
+
+.option-card.incorrect {
+    background: #f8d7da;
+    border-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+    transform: scale(1.02);
+}
+
+.option-card.correct::after {
+    content: "✓";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #28a745;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.option-card.incorrect::after {
+    content: "✗";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Progress display styles */
+.progress-display {
+    background: var(--color-primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+/* Final score styles */
+.final-score {
+    background: var(--color-gray-50);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    margin: 2rem 0;
+    text-align: center;
+    border: 2px solid var(--color-primary);
+}
+
+.final-score h3 {
+    color: var(--color-primary);
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.final-score p {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
 }
 
 .sentence-result {
