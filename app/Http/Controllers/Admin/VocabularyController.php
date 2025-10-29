@@ -158,6 +158,7 @@ class VocabularyController extends Controller
         
         $imported = 0;
         $errors = [];
+        $processedWords = []; // Track words to prevent duplicates within CSV
 
         foreach ($csvData as $index => $row) {
             // Skip header row if it exists
@@ -169,15 +170,33 @@ class VocabularyController extends Controller
                 continue;
             }
 
+            $englishWord = trim($row[0]);
+            
+            // Check for duplicate within the CSV
+            if (in_array(strtolower($englishWord), $processedWords)) {
+                $errors[] = "Row " . ($index + 1) . ": Duplicate word '{$englishWord}' found in CSV";
+                continue;
+            }
+            
+            // Check for duplicate in existing database (for replace mode)
+            if ($importMode === 'replace') {
+                $existingWord = $lesson->vocabulary()->where('english_word', $englishWord)->first();
+                if ($existingWord) {
+                    $errors[] = "Row " . ($index + 1) . ": Word '{$englishWord}' already exists in the database. Use 'Add' mode to add new words or update existing ones.";
+                    continue;
+                }
+            }
+
             try {
                 Vocabulary::create([
                     'lesson_id' => $lesson->id,
-                    'english_word' => trim($row[0]),
+                    'english_word' => $englishWord,
                     'hebrew_translation' => isset($row[1]) ? trim($row[1]) : null,
                     'arabic_translation' => isset($row[2]) ? trim($row[2]) : null,
                     'sort_order' => $imported + 1,
                     'is_active' => true,
                 ]);
+                $processedWords[] = strtolower($englishWord);
                 $imported++;
             } catch (\Exception $e) {
                 $errors[] = "Row " . ($index + 1) . ": " . $e->getMessage();

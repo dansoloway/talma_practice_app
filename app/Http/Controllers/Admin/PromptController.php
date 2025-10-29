@@ -187,6 +187,29 @@ class PromptController extends Controller
                     continue;
                 }
 
+                // Check for duplicate templates within the CSV
+                $isDuplicate = false;
+                foreach ($previewData as $existingItem) {
+                    if ($existingItem['template'] === $template) {
+                        $validationErrors[] = "Row {$rowNumber}: Duplicate template found. Template '{$template}' already exists in row {$existingItem['row_number']}";
+                        $isDuplicate = true;
+                        break;
+                    }
+                }
+                
+                if ($isDuplicate) {
+                    continue;
+                }
+
+                // Check for duplicate templates in existing database (for replace mode)
+                if ($importMode === 'replace') {
+                    $existingPrompt = $lesson->prompts()->where('template', $template)->first();
+                    if ($existingPrompt) {
+                        $validationErrors[] = "Row {$rowNumber}: Template '{$template}' already exists in the database. Use 'Add' mode to add new prompts or update existing ones.";
+                        continue;
+                    }
+                }
+
                 $previewData[] = [
                     'row_number' => $rowNumber,
                     'prompt_text' => $promptText,
