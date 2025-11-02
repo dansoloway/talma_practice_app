@@ -262,6 +262,16 @@ function setupCardEvents(card) {
         });
     });
 
+    // Big play button (for audio_to_image mode)
+    document.querySelectorAll('.big-play-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const audioPath = this.dataset.audio;
+            if (audioPath) {
+                playAudio(audioPath);
+            }
+        });
+    });
+
     // Answer audio playback (for image_to_word mode)
     document.querySelectorAll('.play-answer-audio-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -669,6 +679,37 @@ function playAudio(audioPath) {
 
 .play-answer-audio-btn i {
     font-size: 1rem;
+}
+
+.card-audio {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.big-play-btn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    margin: 0 auto;
+}
+
+.big-play-btn:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.big-play-btn i {
+    font-size: 2rem;
 }
 
 .game-controls {
