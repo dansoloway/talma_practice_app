@@ -124,6 +124,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.game-type-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             currentGameType = this.dataset.type;
+            // Hide mode selector for audio_to_image mode since answers are always images
+            const modeSelector = document.querySelector('.mode-selector');
+            if (modeSelector && currentGameType === 'audio_to_image') {
+                modeSelector.style.display = 'none';
+            } else if (modeSelector) {
+                modeSelector.style.display = 'block';
+            }
             startGame();
         });
     });
@@ -425,6 +432,12 @@ function restartGame() {
     gameSelection.classList.remove('hidden');
     gameScreen.classList.add('hidden');
     gameComplete.classList.add('hidden');
+    
+    // Show mode selector again
+    const modeSelector = document.querySelector('.mode-selector');
+    if (modeSelector) {
+        modeSelector.style.display = 'block';
+    }
 }
 
 function updateProgress() {
