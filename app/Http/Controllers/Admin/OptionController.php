@@ -93,6 +93,9 @@ class OptionController extends Controller
             $filename = time() . '_' . $image->getClientOriginalName();
             $path = $image->storeAs('public/images/options', $filename);
             $validated['image_path'] = 'storage/images/options/' . $filename;
+        } else {
+            // If no new image uploaded, don't update image_path (keep existing value)
+            unset($validated['image_path']);
         }
 
         // Check if label changed - if so, regenerate sentence TTS
