@@ -61,19 +61,34 @@ class SyncPromptAudioPaths extends Command
                 continue;
             }
 
-            // Check if audio file exists
-            $expectedPath = "tts/prompts/prompt_{$prompt->id}.mp3";
-            $fullPath = storage_path("app/public/{$expectedPath}");
+            // Check multiple possible locations for audio file
+            $possiblePaths = [
+                "tts/prompts/prompt_{$prompt->id}.mp3",
+                "vocabulary-audio/prompt_{$prompt->id}.mp3",
+                "tts/vocabulary-audio/prompt_{$prompt->id}.mp3",
+            ];
 
-            if (file_exists($fullPath)) {
-                if (!$this->option('dry-run')) {
-                    $prompt->update(['prompt_audio_path' => "/storage/{$expectedPath}"]);
+            $foundPath = null;
+            foreach ($possiblePaths as $expectedPath) {
+                $fullPath = storage_path("app/public/{$expectedPath}");
+                if (file_exists($fullPath)) {
+                    $foundPath = $expectedPath;
+                    break;
                 }
-                $this->line("  ✓ Synced prompt {$prompt->id}: {$prompt->prompt_text}");
+            }
+
+            if ($foundPath) {
+                if (!$this->option('dry-run')) {
+                    $prompt->update(['prompt_audio_path' => "/storage/{$foundPath}"]);
+                }
+                $this->line("  ✓ Synced prompt {$prompt->id}: {$prompt->prompt_text} (found at: {$foundPath})");
                 $synced++;
             } else {
+                $this->warn("  ✗ Missing audio for prompt {$prompt->id}: {$prompt->prompt_text}");
                 if ($this->output->isVerbose()) {
-                    $this->warn("  ✗ Missing audio for prompt {$prompt->id}: {$expectedPath}");
+                    foreach ($possiblePaths as $path) {
+                        $this->line("    Checked: storage/app/public/{$path}");
+                    }
                 }
                 $missing++;
             }
