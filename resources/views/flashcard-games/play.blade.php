@@ -382,8 +382,11 @@ function checkAnswer(selectedOption) {
         showFeedback('correct');
     } else {
         selectedOption.classList.add('incorrect');
-        // Show correct answer
-        document.querySelector(`[data-correct="true"]`).classList.add('correct-feedback');
+        // Only show correct answer feedback for certain game types
+        // For audio_to_image mode, don't show the correct answer - make them keep trying
+        if (currentGameType !== 'audio_to_image') {
+            document.querySelector(`[data-correct="true"]`).classList.add('correct-feedback');
+        }
         showFeedback('incorrect');
     }
     
