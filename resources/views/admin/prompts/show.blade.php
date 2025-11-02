@@ -6,7 +6,7 @@
 <div class="container">
     <div class="page-header">
         <div>
-            <a href="{{ route('admin.lessons.show', $prompt->lesson) }}" class="back-link">&larr; Back to {{ $prompt->lesson->title }}</a>
+            <a href="{{ route('admin.lessons.manage', $prompt->lesson) }}" class="back-link">&larr; Back to {{ $prompt->lesson->title }}</a>
             <h1 class="page-title">{{ $prompt->prompt_text }}</h1>
         </div>
         <div>
