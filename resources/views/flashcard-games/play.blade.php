@@ -472,9 +472,19 @@ function playAudio(audioPath) {
 
 .game-type-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     margin-top: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 640px) {
+    .game-type-grid {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+    }
 }
 
 .game-type-btn {

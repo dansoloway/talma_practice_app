@@ -28,6 +28,7 @@
                         <th>#</th>
                         <th>Prompt Text</th>
                         <th>Template</th>
+                        <th>TTS</th>
                         <th>Correct</th>
                         <th>Options</th>
                         <th>Active</th>
@@ -40,6 +41,17 @@
                             <td>{{ $idx + 1 }}</td>
                             <td>{{ $prompt->prompt_text }}</td>
                             <td><code>{{ $prompt->template }}</code></td>
+                            <td>
+                                @if($prompt->prompt_audio_path)
+                                    <span class="badge badge-success">✓ Generated</span>
+                                    <br>
+                                    <a href="{{ asset($prompt->prompt_audio_path) }}" target="_blank" class="audio-link" title="Play audio">
+                                        🔊
+                                    </a>
+                                @else
+                                    <span class="badge badge-warning">Not Generated</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($prompt->correct_answer)
                                     {{ $prompt->correct_answer }}
@@ -85,6 +97,11 @@ table.table th, table.table td { vertical-align: top; }
 code { background: var(--color-gray-100); padding: 0.1em 0.3em; border-radius: 4px; }
 .option-chips { margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.25rem; }
 .chip { background: var(--color-gray-200); padding: 0.1rem 0.4rem; border-radius: 999px; font-size: 0.8rem; }
+.badge { display: inline-block; padding: 0.25em 0.6em; border-radius: 0.25rem; font-size: 0.85em; font-weight: 500; }
+.badge-success { background-color: #d4edda; color: #155724; }
+.badge-warning { background-color: #fff3cd; color: #856404; }
+.audio-link { display: inline-block; margin-top: 0.25rem; font-size: 1.2em; text-decoration: none; opacity: 0.8; transition: opacity 0.2s; }
+.audio-link:hover { opacity: 1; }
 </style>
 @endpush
 
