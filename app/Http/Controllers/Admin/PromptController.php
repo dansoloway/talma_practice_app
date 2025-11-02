@@ -97,7 +97,7 @@ class PromptController extends Controller
         $prompt->update($validated);
 
         return redirect()
-            ->route('admin.prompts.show', $prompt)
+            ->route('admin.lessons.prompts.index', $prompt->lesson)
             ->with('success', 'Prompt updated successfully!');
     }
 
