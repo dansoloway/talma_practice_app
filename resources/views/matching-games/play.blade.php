@@ -7,8 +7,10 @@
     <div class="game-header">
         <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
         <h1 class="game-title">{{ $matching_game->title }}</h1>
-        
-        @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
+    </div>
+    
+    @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
+        <div class="mode-selector-container">
             <div class="mode-selector">
                 <label for="mode-select">Match English with:</label>
                 <select id="mode-select" onchange="changeMode(this.value)">
@@ -19,8 +21,8 @@
                     @endforeach
                 </select>
             </div>
-        @endif
-    </div>
+        </div>
+    @endif
 
     <div class="game-stats">
         <div class="stat">
@@ -440,11 +442,16 @@ function changeMode(mode) {
 </script>
 
 <style>
+.mode-selector-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
 .mode-selector {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-top: 1rem;
     padding: 1rem;
     background: #f8fafc;
     border-radius: 8px;

@@ -124,9 +124,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.game-type-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             currentGameType = this.dataset.type;
-            // Hide mode selector for audio_to_image mode since answers are always images
+            // Hide mode selector for audio_to_image and audio_to_word modes since answers are always images/words
             const modeSelector = document.querySelector('.mode-selector');
-            if (modeSelector && currentGameType === 'audio_to_image') {
+            if (modeSelector && (currentGameType === 'audio_to_image' || currentGameType === 'audio_to_word')) {
                 modeSelector.style.display = 'none';
             } else if (modeSelector) {
                 modeSelector.style.display = 'block';
