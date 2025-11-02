@@ -266,16 +266,26 @@ function handleWordSelection(optionIndex, selectedWord) {
     const selectedOption = options[optionIndex];
     selectedOption.classList.add('selected');
     
+    // Check if the answer is correct using 1-based index
+    const isCorrect = checkAnswer(optionIndex + 1, prompt.correct_answer);
+    
+    // Determine which option to use for sentence and audio display
+    // If there's a correct answer and we got it wrong, use the correct option
+    let displayOptionData = prompt.options[optionIndex];
+    let displayWord = selectedWord;
+    
+    if (isCorrect === false && typeof prompt.correct_answer === 'number') {
+        const correctIdx = prompt.correct_answer - 1;
+        displayOptionData = prompt.options[correctIdx];
+        displayWord = displayOptionData.label;
+    }
+    
     // Show the completed sentence
-    const fullSentence = prompt.template.replace('{}', selectedWord);
+    const fullSentence = prompt.template.replace('{}', displayWord);
     completedSentence.textContent = fullSentence;
     
     // Store the pre-generated sentence audio path
-    const selectedOptionData = prompt.options[optionIndex];
-    window.currentSentenceAudioPath = selectedOptionData.sentence_audio_path;
-    
-    // Check if the answer is correct using 1-based index
-    const isCorrect = checkAnswer(optionIndex + 1, prompt.correct_answer);
+    window.currentSentenceAudioPath = displayOptionData.sentence_audio_path;
     
     // Update score if this is the first time answering this question
     if (!prompt.answered) {
