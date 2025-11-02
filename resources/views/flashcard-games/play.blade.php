@@ -8,8 +8,10 @@
         <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
         <h1 class="page-title">{{ $flashcardGame->title }}</h1>
         <p class="game-description">Practice vocabulary with interactive flashcards</p>
-        
-        @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
+    </div>
+    
+    @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
+        <div class="mode-selector-container">
             <div class="mode-selector">
                 <label for="mode-select">Practice with:</label>
                 <select id="mode-select" onchange="changeMode(this.value)">
@@ -20,8 +22,8 @@
                     @endforeach
                 </select>
             </div>
-        @endif
-    </div>
+        </div>
+    @endif
 
     <div id="flashcard-app" class="flashcard-container">
         <!-- Game Selection Screen -->
@@ -472,8 +474,13 @@ function playAudio(audioPath) {
     padding: 1rem;
 }
 
+.mode-selector-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
 .mode-selector {
-    margin-top: 1rem;
     padding: 0.75rem;
     background: #f8f9fa;
     border-radius: 8px;

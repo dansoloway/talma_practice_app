@@ -49,12 +49,25 @@ class FlashcardGameController extends Controller
         $missingImages = Vocabulary::whereIn('id', $selectedIds)
             ->where(function($q){ $q->whereNull('image_path')->orWhere('image_path', ''); })
             ->count();
-        if ($missingImages > 0) {
-            // If some selected words lack images, disable image-based games
+        $missingAudio = Vocabulary::whereIn('id', $selectedIds)
+            ->whereNull('word_audio_path')
+            ->count();
+        
+        if ($missingImages > 0 && $missingAudio > 0) {
+            // If some selected words lack both images and audio, disable those game types
+            $validated['game_types'] = [];
+            session()->flash('warning', "Some selected vocabulary items are missing images ({$missingImages}) and audio ({$missingAudio}). Game types were disabled.");
+        } elseif ($missingImages > 0) {
+            // If some selected words lack images, enable only audio-based games
             $validated['game_types'] = ['audio_to_word'];
             session()->flash('warning', "Some selected vocabulary items are missing images ({$missingImages}). Image-based game types were disabled.");
+        } elseif ($missingAudio > 0) {
+            // If some selected words lack audio, enable only image-based games
+            $validated['game_types'] = ['image_to_word'];
+            session()->flash('warning', "Some selected vocabulary items are missing audio ({$missingAudio}). Audio-based game types were disabled.");
         } else {
-            $validated['game_types'] = ['audio_to_image', 'audio_to_word'];
+            // All assets available, enable all game types
+            $validated['game_types'] = ['image_to_word', 'image_to_audio', 'audio_to_image', 'audio_to_word'];
         }
         
         // Default to all vocabulary words if none are selected
@@ -108,11 +121,25 @@ class FlashcardGameController extends Controller
         $missingImages = Vocabulary::whereIn('id', $selectedIds)
             ->where(function($q){ $q->whereNull('image_path')->orWhere('image_path', ''); })
             ->count();
-        if ($missingImages > 0) {
+        $missingAudio = Vocabulary::whereIn('id', $selectedIds)
+            ->whereNull('word_audio_path')
+            ->count();
+        
+        if ($missingImages > 0 && $missingAudio > 0) {
+            // If some selected words lack both images and audio, disable those game types
+            $validated['game_types'] = [];
+            session()->flash('warning', "Some selected vocabulary items are missing images ({$missingImages}) and audio ({$missingAudio}). Game types were disabled.");
+        } elseif ($missingImages > 0) {
+            // If some selected words lack images, enable only audio-based games
             $validated['game_types'] = ['audio_to_word'];
             session()->flash('warning', "Some selected vocabulary items are missing images ({$missingImages}). Image-based game types were disabled.");
+        } elseif ($missingAudio > 0) {
+            // If some selected words lack audio, enable only image-based games
+            $validated['game_types'] = ['image_to_word'];
+            session()->flash('warning', "Some selected vocabulary items are missing audio ({$missingAudio}). Audio-based game types were disabled.");
         } else {
-            $validated['game_types'] = ['audio_to_image', 'audio_to_word'];
+            // All assets available, enable all game types
+            $validated['game_types'] = ['image_to_word', 'image_to_audio', 'audio_to_image', 'audio_to_word'];
         }
         
         // Handle checkbox properly - convert to boolean
