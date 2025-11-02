@@ -42,14 +42,25 @@
                             <td>{{ $prompt->prompt_text }}</td>
                             <td><code>{{ $prompt->template }}</code></td>
                             <td>
-                                @if($prompt->prompt_audio_path)
+                                @php
+                                    $hasSentenceAudio = $prompt->options->contains(function($option) {
+                                        return !empty($option->sentence_audio_path);
+                                    });
+                                    $hasPromptAudio = !empty($prompt->prompt_audio_path);
+                                @endphp
+                                
+                                @if($hasSentenceAudio)
+                                    <span class="badge badge-success">✓ Generated</span>
+                                    <br>
+                                    <span class="text-muted" style="font-size: 0.75em;">{{ $prompt->options->where('sentence_audio_path', '!=', null)->count() }}/{{ $prompt->options->count() }} sentences</span>
+                                @elseif($hasPromptAudio)
                                     <span class="badge badge-success">✓ Generated</span>
                                     <br>
                                     <a href="{{ asset($prompt->prompt_audio_path) }}" target="_blank" class="audio-link" title="Play audio">
                                         🔊
                                     </a>
                                 @else
-                                    <span class="text-muted" style="font-size: 0.85em;">Not used</span>
+                                    <span class="badge badge-warning">Not Generated</span>
                                 @endif
                             </td>
                             <td>
