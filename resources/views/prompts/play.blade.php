@@ -82,6 +82,17 @@ function setupDragAndDrop() {
         draggables.forEach(draggable => {
             draggable.addEventListener('dragstart', handleDragStart);
             draggable.addEventListener('dragend', handleDragEnd);
+            // Also allow click-to-select for accessibility and touch devices
+            draggable.addEventListener('click', function() {
+                const optionLabel = this.dataset.optionLabel;
+                const optionIndex = parseInt(this.dataset.optionIndex);
+                if (!dropZone || dropZone.classList.contains('filled')) return;
+                dropZone.textContent = optionLabel;
+                dropZone.classList.add('filled');
+                this.style.opacity = '0.3';
+                this.draggable = false;
+                handleWordSelection(optionIndex, optionLabel);
+            });
         });
         
         // Setup drop zone
@@ -263,23 +274,34 @@ function handleWordSelection(optionIndex, selectedWord) {
     const selectedOptionData = prompt.options[optionIndex];
     window.currentSentenceAudioPath = selectedOptionData.sentence_audio_path;
     
-    // Check if the answer is correct (disabled for now)
-    // const isCorrect = checkAnswer(optionIndex + 1, prompt.correct_answer);
+    // Check if the answer is correct using 1-based index
+    const isCorrect = checkAnswer(optionIndex + 1, prompt.correct_answer);
     
-    // Update score if this is the first time answering this question (disabled for now)
-    // if (!prompt.answered) {
-    //     if (isCorrect === true) {
-    //         score++;
-    //     }
-    //     answeredQuestions++;
-    //     prompt.answered = true;
-    // }
+    // Update score if this is the first time answering this question
+    if (!prompt.answered) {
+        if (isCorrect === true) {
+            score++;
+        }
+        answeredQuestions++;
+        prompt.answered = true;
+    }
     
-    // Show feedback (disabled for now)
-    // showAnswerFeedback(isCorrect, selectedOption);
+    // Show feedback and highlight selection
+    showAnswerFeedback(isCorrect, selectedOption);
+
+    // Highlight the correct option if answered incorrectly
+    if (isCorrect === false && typeof prompt.correct_answer === 'number') {
+        const correctIdx = prompt.correct_answer - 1;
+        if (options[correctIdx]) {
+            options[correctIdx].classList.add('correct');
+        }
+        selectedOption.classList.add('incorrect');
+    } else if (isCorrect === true) {
+        selectedOption.classList.add('correct');
+    }
     
-    // Update progress display (disabled for now)
-    // updateProgressDisplay();
+    // Update progress display
+    updateProgressDisplay();
     
     // Debug logging
     console.log('Selected option:', selectedOptionData);

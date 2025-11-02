@@ -26,14 +26,18 @@
                     <li><strong>Template</strong> - The sentence template with <code>{}</code> placeholder</li>
                     <li><strong>Option 1, Option 2, Option 3...</strong> - Answer choices for students</li>
                 </ol>
+                <h4>Optional Column:</h4>
+                <ul>
+                    <li><strong>Correct</strong> - A number indicating the correct option's position (e.g. 1 for Option 1). If provided as the last column, it will be used to set the correct answer.</li>
+                </ul>
             </div>
 
             <div class="csv-example">
                 <h4>Example CSV Content:</h4>
-                <pre class="code-block">Prompt Text,Template,Option 1,Option 2,Option 3,Option 4
-What rolled the farthest?,The {} rolled the farthest,ball,cube,cylinder,sphere
-What object is the softest?,The {} is the softest,cotton,sponge,fabric,pillow
-What object is the hardest?,The {} is the hardest,rock,metal,wood,glass</pre>
+                <pre class="code-block">Prompt Text,Template,Option 1,Option 2,Option 3,Option 4,Correct
+What rolled the farthest?,The {} rolled the farthest,ball,cube,cylinder,sphere,4
+What object is the softest?,The {} is the softest,cotton,sponge,fabric,pillow,2
+What object is the hardest?,The {} is the hardest,rock,metal,wood,glass,2</pre>
             </div>
 
             <div class="important-notes">
@@ -41,6 +45,8 @@ What object is the hardest?,The {} is the hardest,rock,metal,wood,glass</pre>
                 <ul>
                     <li>The template <strong>must</strong> contain <code>{}</code> as placeholder for the answer</li>
                     <li>You can include as many option columns as needed</li>
+                    <li>If you include a <strong>Correct</strong> column at the end, it must be a number between 1 and the number of options in that row</li>
+                    <li>If the <strong>Correct</strong> column is omitted, no correct answer will be pre-set</li>
                     <li>Empty rows will be skipped</li>
                     <li>The first row is treated as headers and will be ignored</li>
                     <li>Prompts will be automatically assigned to the lesson</li>

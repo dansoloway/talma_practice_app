@@ -151,6 +151,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::resource('lessons.flashcard-games', App\Http\Controllers\Admin\FlashcardGameController::class);
     
     // Prompts
+    Route::get('lessons/{lesson}/prompts', [AdminPromptController::class, 'index'])
+        ->name('lessons.prompts.index');
     Route::get('lessons/{lesson}/prompts/create', [AdminPromptController::class, 'create'])
         ->name('lessons.prompts.create');
     Route::post('lessons/{lesson}/prompts', [AdminPromptController::class, 'store'])

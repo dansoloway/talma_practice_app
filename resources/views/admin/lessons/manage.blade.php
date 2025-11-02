@@ -259,19 +259,21 @@
                         </div>
                         <div class="activity-actions">
                             @if($activity->type === 'prompts')
+                                <a href="{{ route('admin.lessons.prompts.index', $lesson) }}" class="btn btn-xs btn-secondary">View Prompts</a>
                                 <a href="{{ route('admin.lessons.prompts.create', $lesson) }}" class="btn btn-xs">Add Prompt</a>
                                 <a href="{{ route('admin.lessons.prompts.import', $lesson) }}" class="btn btn-xs btn-secondary">Import CSV</a>
                                 @if($activity->count > 0)
+                                    <a href="{{ route('prompts.play', $lesson) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
                                     <button class="btn btn-xs btn-danger" onclick="deleteAllPrompts('{{ addslashes($activity->title) }}')">Delete All</button>
                                 @endif
                             @elseif($activity->type === 'matching')
                                 <a href="{{ route('admin.lessons.matching-games.edit', [$lesson, $activity->model]) }}" class="btn btn-xs">Edit</a>
                                 <a href="{{ route('matching-games.play', [$lesson, $activity->model]) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
-                                <button class="btn btn-xs btn-danger" onclick="deleteActivity('{{ $activity->type }}', {{ $activity->id }}, '{{ addslashes($activity->title) }}')">Delete</button>
+                                <button class="btn btn-xs btn-danger delete-activity-btn" data-type="{{ $activity->type }}" data-id="{{ $activity->id }}" data-title="{{ addslashes($activity->title) }}">Delete</button>
                             @elseif($activity->type === 'flashcard')
                                 <a href="{{ route('admin.lessons.flashcard-games.edit', [$lesson, $activity->model]) }}" class="btn btn-xs">Edit</a>
                                 <a href="{{ route('flashcard-games.play', [$lesson, $activity->model]) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
-                                <button class="btn btn-xs btn-danger" onclick="deleteActivity('{{ $activity->type }}', {{ $activity->id }}, '{{ addslashes($activity->title) }}')">Delete</button>
+                                <button class="btn btn-xs btn-danger delete-activity-btn" data-type="{{ $activity->type }}" data-id="{{ $activity->id }}" data-title="{{ addslashes($activity->title) }}">Delete</button>
                             @endif
                         </div>
                     </div>
@@ -290,6 +292,8 @@
     </div>
 </div>
 
+<span id="start-tts-flag" data-start="0" style="display:none;"></span>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const editBtn = document.getElementById('edit-lesson-btn');
@@ -305,6 +309,15 @@ document.addEventListener('DOMContentLoaded', function() {
     cancelBtn.addEventListener('click', function() {
         lessonInfo.classList.remove('hidden');
         editForm.classList.add('hidden');
+    });
+    // Bind delete activity buttons
+    document.querySelectorAll('.delete-activity-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const type = this.getAttribute('data-type');
+            const id = this.getAttribute('data-id');
+            const title = this.getAttribute('data-title');
+            deleteActivity(type, id, title);
+        });
     });
 });
 

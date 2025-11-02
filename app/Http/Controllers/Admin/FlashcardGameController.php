@@ -44,8 +44,18 @@ class FlashcardGameController extends Controller
 
         $validated['lesson_id'] = $lesson->id;
         
-        // Only include audio-based game types
-        $validated['game_types'] = ['audio_to_image', 'audio_to_word'];
+        // Determine game types based on selected vocabulary assets
+        $selectedIds = $validated['vocabulary_ids'] ?? [];
+        $missingImages = Vocabulary::whereIn('id', $selectedIds)
+            ->where(function($q){ $q->whereNull('image_path')->orWhere('image_path', ''); })
+            ->count();
+        if ($missingImages > 0) {
+            // If some selected words lack images, disable image-based games
+            $validated['game_types'] = ['audio_to_word'];
+            session()->flash('warning', "Some selected vocabulary items are missing images ({$missingImages}). Image-based game types were disabled.");
+        } else {
+            $validated['game_types'] = ['audio_to_image', 'audio_to_word'];
+        }
         
         // Default to all vocabulary words if none are selected
         if (empty($validated['vocabulary_ids'])) {
@@ -93,8 +103,17 @@ class FlashcardGameController extends Controller
             'cards_per_game' => 'integer|min:1|max:50',
         ]);
 
-        // Only include audio-based game types
-        $validated['game_types'] = ['audio_to_image', 'audio_to_word'];
+        // Determine game types based on selected vocabulary assets
+        $selectedIds = $validated['vocabulary_ids'] ?? [];
+        $missingImages = Vocabulary::whereIn('id', $selectedIds)
+            ->where(function($q){ $q->whereNull('image_path')->orWhere('image_path', ''); })
+            ->count();
+        if ($missingImages > 0) {
+            $validated['game_types'] = ['audio_to_word'];
+            session()->flash('warning', "Some selected vocabulary items are missing images ({$missingImages}). Image-based game types were disabled.");
+        } else {
+            $validated['game_types'] = ['audio_to_image', 'audio_to_word'];
+        }
         
         // Handle checkbox properly - convert to boolean
         $validated['is_active'] = $request->input('is_active') == '1';

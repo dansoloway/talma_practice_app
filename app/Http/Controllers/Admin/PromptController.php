@@ -6,9 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\Prompt;
 use Illuminate\Http\Request;
+// (intentionally using fully qualified facade names inline to satisfy static analysis)
 
 class PromptController extends Controller
 {
+    /**
+     * List all prompts for a lesson.
+     */
+    public function index(Lesson $lesson)
+    {
+        $prompts = $lesson->prompts()->with('options')->orderBy('sort_order')->get();
+        return view('admin.prompts.index', compact('lesson', 'prompts'));
+    }
     /**
      * Show the form for creating a new prompt.
      */
@@ -57,7 +66,7 @@ class PromptController extends Controller
      */
     public function edit(Prompt $prompt)
     {
-        $prompt->load('lesson');
+        $prompt->load(['lesson', 'options']);
         
         return view('admin.prompts.edit', compact('prompt'));
     }
@@ -71,10 +80,19 @@ class PromptController extends Controller
             'prompt_text' => 'required|string|max:255',
             'template' => 'required|string|max:255',
             'tts_voice' => 'nullable|string|max:64',
+            'correct_answer' => 'nullable|integer|min:1',
             'sort_order' => 'integer',
         ]);
 
         $validated['tts_voice'] = $validated['tts_voice'] ?? 'default';
+
+        // Ensure correct_answer does not exceed options count
+        if (isset($validated['correct_answer'])) {
+            $optionsCount = $prompt->options()->count();
+            if ($validated['correct_answer'] > $optionsCount) {
+                unset($validated['correct_answer']);
+            }
+        }
 
         $prompt->update($validated);
 
@@ -124,6 +142,7 @@ class PromptController extends Controller
             
             $previewData = [];
             $validationErrors = [];
+            $warningMessages = [];
 
             foreach ($csvData as $index => $row) {
                 $rowNumber = $index + 2; // +2 because we removed header and arrays are 0-indexed
@@ -187,27 +206,24 @@ class PromptController extends Controller
                     continue;
                 }
 
-                // Check for duplicate templates within the CSV
+                // Skip duplicates within the CSV (do not block import)
                 $isDuplicate = false;
                 foreach ($previewData as $existingItem) {
                     if ($existingItem['template'] === $template) {
-                        $validationErrors[] = "Row {$rowNumber}: Duplicate template found. Template '{$template}' already exists in row {$existingItem['row_number']}";
                         $isDuplicate = true;
                         break;
                     }
                 }
-                
                 if ($isDuplicate) {
+                    $warningMessages[] = "Row {$rowNumber}: Duplicate template in CSV skipped ('{$template}').";
                     continue;
                 }
 
-                // Check for duplicate templates in existing database (for replace mode)
-                if ($importMode === 'replace') {
-                    $existingPrompt = $lesson->prompts()->where('template', $template)->first();
-                    if ($existingPrompt) {
-                        $validationErrors[] = "Row {$rowNumber}: Template '{$template}' already exists in the database. Use 'Add' mode to add new prompts or update existing ones.";
-                        continue;
-                    }
+                // Skip rows that already exist in DB (both modes) without blocking import
+                $existingPrompt = $lesson->prompts()->where('template', $template)->first();
+                if ($existingPrompt) {
+                    $warningMessages[] = "Row {$rowNumber}: Template already exists in database, skipped ('{$template}').";
+                    continue;
                 }
 
                 $previewData[] = [
@@ -229,7 +245,7 @@ class PromptController extends Controller
                 'data' => $previewData
             ]]);
 
-            return view('admin.prompts.preview', compact('lesson', 'previewData', 'validationErrors', 'importMode'));
+            return view('admin.prompts.preview', compact('lesson', 'previewData', 'validationErrors', 'warningMessages', 'importMode'));
 
         } catch (\Exception $e) {
             return redirect()
@@ -260,12 +276,12 @@ class PromptController extends Controller
             $importMode = $previewData['import_mode'];
             $data = $previewData['data'];
             
-            \Log::info("Starting CSV import for lesson {$lesson->id} in {$importMode} mode");
-            \Log::info("Data items to import: " . count($data));
+            \Illuminate\Support\Facades\Log::info("Starting CSV import for lesson {$lesson->id} in {$importMode} mode");
+            \Illuminate\Support\Facades\Log::info("Data items to import: " . count($data));
             
             // If replace mode, delete existing prompts and their options
             if ($importMode === 'replace') {
-                \Log::info("Deleting existing prompts for lesson {$lesson->id}");
+                \Illuminate\Support\Facades\Log::info("Deleting existing prompts for lesson {$lesson->id}");
                 $lesson->prompts()->delete(); // This will cascade delete options too
             }
             
@@ -273,7 +289,7 @@ class PromptController extends Controller
             $createdOptions = [];
 
             foreach ($data as $index => $item) {
-                \Log::info("Creating prompt " . ($index + 1) . ": '{$item['prompt_text']}'");
+                \Illuminate\Support\Facades\Log::info("Creating prompt " . ($index + 1) . ": '{$item['prompt_text']}'");
                 
                 // Create the prompt
                 $prompt = Prompt::create([
@@ -285,12 +301,12 @@ class PromptController extends Controller
                     'sort_order' => $importedCount + 1,
                 ]);
                 
-                \Log::info("Created prompt ID: {$prompt->id}");
+                \Illuminate\Support\Facades\Log::info("Created prompt ID: {$prompt->id}");
 
                 // Create options
                 $optionOrder = 1;
                 foreach ($item['options'] as $optionText) {
-                    \Log::info("Creating option: '{$optionText}'");
+                    \Illuminate\Support\Facades\Log::info("Creating option: '{$optionText}'");
                     $option = $prompt->options()->create([
                         'label' => $optionText,
                         'image_path' => '', // Can be added later
@@ -298,7 +314,7 @@ class PromptController extends Controller
                         'sort_order' => $optionOrder++,
                     ]);
                     
-                    \Log::info("Created option ID: {$option->id}");
+                    \Illuminate\Support\Facades\Log::info("Created option ID: {$option->id}");
                     
                     // Collect options for TTS generation
                     $createdOptions[] = $option;
@@ -311,7 +327,8 @@ class PromptController extends Controller
             session()->forget('csv_preview_data');
 
             $action = $importMode === 'replace' ? 'replaced with' : 'imported';
-            $message = "Successfully {$action} {$importedCount} prompts. TTS generation will continue in the background.";
+            $message = "Successfully {$action} {$importedCount} prompts.";
+            $startTts = (bool) $request->input('generate_tts', false);
 
             // Return JSON response for AJAX handling
             if ($request->expectsJson()) {
@@ -324,9 +341,13 @@ class PromptController extends Controller
                 ]);
             }
 
-            return redirect()
+            $redirect = redirect()
                 ->route('admin.lessons.manage', $lesson)
                 ->with('success', $message);
+            if ($startTts) {
+                $redirect->with('start_tts', true);
+            }
+            return $redirect;
 
         } catch (\Exception $e) {
             return redirect()
@@ -341,12 +362,12 @@ class PromptController extends Controller
     public function csvTemplate()
     {
         $csvData = [
-            ['Prompt Text', 'Template', 'Option 1', 'Option 2', 'Option 3', 'Option 4'],
-            ['What rolled the farthest?', 'The {} rolled the farthest', 'ball', 'cube', 'cylinder', 'sphere'],
-            ['What object is the softest?', 'The {} is the softest', 'cotton', 'sponge', 'fabric', 'pillow'],
-            ['What object is the hardest?', 'The {} is the hardest', 'rock', 'metal', 'wood', 'glass'],
-            ['What absorbs the most water?', 'The {} absorbs the most water', 'sponge', 'paper towel', 'cloth', 'cotton'],
-            ['What absorbs the least water?', 'The {} absorbs the least water', 'plastic', 'metal', 'glass', 'rubber'],
+            ['Prompt Text', 'Template', 'Option 1', 'Option 2', 'Option 3', 'Option 4', 'Correct'],
+            ['What rolled the farthest?', 'The {} rolled the farthest', 'ball', 'cube', 'cylinder', 'sphere', '4'],
+            ['What object is the softest?', 'The {} is the softest', 'cotton', 'sponge', 'fabric', 'pillow', '2'],
+            ['What object is the hardest?', 'The {} is the hardest', 'rock', 'metal', 'wood', 'glass', '2'],
+            ['What absorbs the most water?', 'The {} absorbs the most water', 'sponge', 'paper towel', 'cloth', 'cotton', '1'],
+            ['What absorbs the least water?', 'The {} absorbs the least water', 'plastic', 'metal', 'glass', 'rubber', '4'],
         ];
 
         $filename = 'prompts_template.csv';
@@ -375,7 +396,7 @@ class PromptController extends Controller
         $apiKey = env('ELEVENLABS_API_KEY');
         
         if (!$apiKey) {
-            \Log::warning('ELEVENLABS_API_KEY not found, skipping TTS generation');
+            \Illuminate\Support\Facades\Log::warning('ELEVENLABS_API_KEY not found, skipping TTS generation');
             return;
         }
 
@@ -384,7 +405,7 @@ class PromptController extends Controller
         foreach ($options as $option) {
             try {
                 // Call ElevenLabs API
-                $response = \Http::withHeaders([
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
                     'xi-api-key' => $apiKey,
                     'Content-Type' => 'application/json',
                 ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
@@ -413,16 +434,16 @@ class PromptController extends Controller
                     // Update option with audio path
                     $option->update(['word_audio_path' => "/storage/{$relativePath}"]);
                     
-                    \Log::info("Generated TTS for option: {$option->label}");
+                    \Illuminate\Support\Facades\Log::info("Generated TTS for option: {$option->label}");
                 } else {
-                    \Log::error("TTS API Error for option {$option->label}: " . $response->status());
+                    \Illuminate\Support\Facades\Log::error("TTS API Error for option {$option->label}: " . $response->status());
                 }
                 
                 // Rate limiting
                 usleep(200000); // 0.2 seconds
                 
             } catch (\Exception $e) {
-                \Log::error("TTS Error for option {$option->label}: " . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error("TTS Error for option {$option->label}: " . $e->getMessage());
             }
         }
     }
@@ -435,7 +456,7 @@ class PromptController extends Controller
         $apiKey = env('ELEVENLABS_API_KEY');
         
         if (!$apiKey) {
-            \Log::warning('ELEVENLABS_API_KEY not found, skipping sentence TTS generation');
+            \Illuminate\Support\Facades\Log::warning('ELEVENLABS_API_KEY not found, skipping sentence TTS generation');
             return;
         }
 
@@ -451,7 +472,7 @@ class PromptController extends Controller
                     $completeSentence = str_replace('{}', $option->label, $prompt->template);
                     
                     // Call ElevenLabs API
-                    $response = \Http::withHeaders([
+                    $response = \Illuminate\Support\Facades\Http::withHeaders([
                         'xi-api-key' => $apiKey,
                         'Content-Type' => 'application/json',
                     ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
@@ -480,16 +501,16 @@ class PromptController extends Controller
                         // Store the sentence audio path in the option (we'll add a new field for this)
                         $option->update(['sentence_audio_path' => "/storage/{$relativePath}"]);
                         
-                        \Log::info("Generated sentence TTS: {$completeSentence}");
+                        \Illuminate\Support\Facades\Log::info("Generated sentence TTS: {$completeSentence}");
                     } else {
-                        \Log::error("Sentence TTS API Error for '{$completeSentence}': " . $response->status());
+                        \Illuminate\Support\Facades\Log::error("Sentence TTS API Error for '{$completeSentence}': " . $response->status());
                     }
                     
                     // Small delay to avoid rate limiting
                     usleep(50000); // 0.05 seconds
                     
                 } catch (\Exception $e) {
-                    \Log::error("Sentence TTS generation failed for '{$completeSentence}': " . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::error("Sentence TTS generation failed for '{$completeSentence}': " . $e->getMessage());
                 }
             }
         }
@@ -500,55 +521,54 @@ class PromptController extends Controller
      */
     public function generateWordTts(Request $request, Lesson $lesson)
     {
-        $validated = $request->validate([
-            'batch_size' => 'integer|min:1|max:10',
-            'offset' => 'integer|min:0'
-        ]);
+        // Per-lesson lock to prevent overlapping requests
+        $lock = \Illuminate\Support\Facades\Cache::lock('lesson:' . $lesson->id . ':word_tts', 5);
+        if (!$lock->get()) {
+            return response()->json([
+                'success' => true,
+                'processed' => 0,
+                'errors' => [],
+                'remaining' => \App\Models\Option::whereHas('prompt', function ($q) use ($lesson) { $q->where('lesson_id', $lesson->id); })
+                    ->whereNull('word_audio_path')
+                    ->count(),
+                'completed' => false,
+                'locked' => true,
+            ]);
+        }
 
-        $batchSize = $validated['batch_size'] ?? 5;
-        $offset = $validated['offset'] ?? 0;
-
-        // Get options that need word TTS
-        $options = $lesson->prompts()
-            ->with('options')
-            ->get()
-            ->pluck('options')
-            ->flatten()
+        try {
+        // Always process exactly 1 item to avoid duplicates/repeats
+        $option = \App\Models\Option::whereHas('prompt', function ($q) use ($lesson) {
+                $q->where('lesson_id', $lesson->id);
+            })
             ->whereNull('word_audio_path')
-            ->skip($offset)
-            ->take($batchSize);
+            ->orderBy('id')
+            ->first();
 
         $processed = 0;
         $errors = [];
         
-        \Log::info("Starting word TTS batch generation for lesson {$lesson->id} - Batch size: {$batchSize}, Offset: {$offset}");
-        \Log::info("Processing " . $options->count() . " options in this batch");
-        
         // Create dedicated TTS log file
         $ttsLogFile = storage_path('logs/tts_generation.log');
-        file_put_contents($ttsLogFile, "[" . now() . "] Starting word TTS batch generation for lesson {$lesson->id}\n", FILE_APPEND);
-
-        foreach ($options as $index => $option) {
+        if ($option) {
+            file_put_contents($ttsLogFile, "[" . now() . "] Starting single word TTS for lesson {$lesson->id} | option_id={$option->id} label='{$option->label}'\n", FILE_APPEND);
             try {
-                \Log::info("Processing word TTS " . ($index + 1) . "/" . $options->count() . " in batch: '{$option->label}' (Option ID: {$option->id})");
                 $this->generateSingleWordTts($option);
-                $processed++;
-                \Log::info("Successfully generated word TTS for '{$option->label}'");
+                $processed = 1;
+                \Illuminate\Support\Facades\Log::info("Successfully generated word TTS for '{$option->label}' (Option ID: {$option->id})");
             } catch (\Exception $e) {
                 $errorMsg = "Failed to generate TTS for '{$option->label}': " . $e->getMessage();
-                \Log::error($errorMsg);
-                \Log::error("Stack trace: " . $e->getTraceAsString());
+                \Illuminate\Support\Facades\Log::error($errorMsg);
+                \Illuminate\Support\Facades\Log::error("Stack trace: " . $e->getTraceAsString());
                 $errors[] = $errorMsg;
             }
         }
 
-        $totalRemaining = $lesson->prompts()
-            ->with('options')
-            ->get()
-            ->pluck('options')
-            ->flatten()
+        $totalRemaining = \App\Models\Option::whereHas('prompt', function ($q) use ($lesson) {
+                $q->where('lesson_id', $lesson->id);
+            })
             ->whereNull('word_audio_path')
-            ->count() - $processed;
+            ->count();
 
         return response()->json([
             'success' => true,
@@ -557,6 +577,9 @@ class PromptController extends Controller
             'remaining' => max(0, $totalRemaining),
             'completed' => $totalRemaining <= 0
         ]);
+        } finally {
+            optional($lock)->release();
+        }
     }
 
     /**
@@ -564,53 +587,53 @@ class PromptController extends Controller
      */
     public function generateSentenceTts(Request $request, Lesson $lesson)
     {
-        \Log::info("Starting sentence TTS generation for lesson {$lesson->id}");
-        
-        $validated = $request->validate([
-            'batch_size' => 'integer|min:1|max:5',
-            'offset' => 'integer|min:0'
-        ]);
+        \Illuminate\Support\Facades\Log::info("Starting sentence TTS generation for lesson {$lesson->id}");
+        // Per-lesson lock to prevent overlapping requests
+        $lock = \Illuminate\Support\Facades\Cache::lock('lesson:' . $lesson->id . ':sentence_tts', 5);
+        if (!$lock->get()) {
+            return response()->json([
+                'success' => true,
+                'processed' => 0,
+                'errors' => [],
+                'remaining' => \App\Models\Option::whereHas('prompt', function ($q) use ($lesson) { $q->where('lesson_id', $lesson->id); })
+                    ->whereNull('sentence_audio_path')
+                    ->count(),
+                'completed' => false,
+                'locked' => true,
+            ]);
+        }
 
-        $batchSize = $validated['batch_size'] ?? 3;
-        $offset = $validated['offset'] ?? 0;
-
-        // Get options that need sentence TTS
-        $options = $lesson->prompts()
-            ->with('options')
-            ->get()
-            ->pluck('options')
-            ->flatten()
+        try {
+        // Always process exactly 1 item to avoid duplicates/repeats
+        $option = \App\Models\Option::whereHas('prompt', function ($q) use ($lesson) {
+                $q->where('lesson_id', $lesson->id);
+            })
             ->whereNull('sentence_audio_path')
-            ->skip($offset)
-            ->take($batchSize);
+            ->orderBy('id')
+            ->first();
 
         $processed = 0;
         $errors = [];
         
-        \Log::info("Starting sentence TTS batch generation for lesson {$lesson->id} - Batch size: {$batchSize}, Offset: {$offset}");
-        \Log::info("Processing " . $options->count() . " options in this batch");
-
-        foreach ($options as $index => $option) {
+        if ($option) {
             try {
-                \Log::info("Processing sentence TTS " . ($index + 1) . "/" . $options->count() . " in batch: '{$option->label}' (Option ID: {$option->id})");
+                \Illuminate\Support\Facades\Log::info("Processing single sentence TTS for option '{$option->label}' (Option ID: {$option->id})");
                 $this->generateSingleSentenceTts($option);
-                $processed++;
-                \Log::info("Successfully generated sentence TTS for '{$option->label}'");
+                $processed = 1;
+                \Illuminate\Support\Facades\Log::info("Successfully generated sentence TTS for '{$option->label}'");
             } catch (\Exception $e) {
                 $errorMsg = "Failed to generate sentence TTS for '{$option->label}': " . $e->getMessage();
-                \Log::error($errorMsg);
-                \Log::error("Stack trace: " . $e->getTraceAsString());
+                \Illuminate\Support\Facades\Log::error($errorMsg);
+                \Illuminate\Support\Facades\Log::error("Stack trace: " . $e->getTraceAsString());
                 $errors[] = $errorMsg;
             }
         }
 
-        $totalRemaining = $lesson->prompts()
-            ->with('options')
-            ->get()
-            ->pluck('options')
-            ->flatten()
+        $totalRemaining = \App\Models\Option::whereHas('prompt', function ($q) use ($lesson) {
+                $q->where('lesson_id', $lesson->id);
+            })
             ->whereNull('sentence_audio_path')
-            ->count() - $processed;
+            ->count();
 
         return response()->json([
             'success' => true,
@@ -619,6 +642,9 @@ class PromptController extends Controller
             'remaining' => max(0, $totalRemaining),
             'completed' => $totalRemaining <= 0
         ]);
+        } finally {
+            optional($lock)->release();
+        }
     }
 
     /**
@@ -626,17 +652,17 @@ class PromptController extends Controller
      */
     private function generateSingleWordTts($option)
     {
-        \Log::info("Starting TTS generation for word: '{$option->label}' (Option ID: {$option->id})");
+        \Illuminate\Support\Facades\Log::info("Starting TTS generation for word: '{$option->label}' (Option ID: {$option->id})");
         
         // Check if audio already exists for this option
         if ($option->word_audio_path) {
             $fullPath = public_path(ltrim($option->word_audio_path, '/'));
-            \Log::info("Checking existing audio path: {$fullPath}");
+            \Illuminate\Support\Facades\Log::info("Checking existing audio path: {$fullPath}");
             if (file_exists($fullPath)) {
-                \Log::info("Word TTS already exists for option: {$option->label}");
+                \Illuminate\Support\Facades\Log::info("Word TTS already exists for option: {$option->label}");
                 return; // Skip generation
             } else {
-                \Log::warning("Audio path exists in DB but file not found: {$fullPath}");
+                \Illuminate\Support\Facades\Log::warning("Audio path exists in DB but file not found: {$fullPath}");
             }
         }
 
@@ -663,7 +689,7 @@ class PromptController extends Controller
                 copy($existingPath, $newPath);
                 $option->update(['word_audio_path' => "/storage/{$relativePath}"]);
                 
-                \Log::info("Reused existing TTS for word: {$option->label}");
+                \Illuminate\Support\Facades\Log::info("Reused existing TTS for word: {$option->label}");
                 return; // Skip API generation
             }
         }
@@ -671,18 +697,18 @@ class PromptController extends Controller
         $apiKey = env('ELEVENLABS_API_KEY');
         
         if (!$apiKey) {
-            \Log::error('ELEVENLABS_API_KEY not found in environment');
+            \Illuminate\Support\Facades\Log::error('ELEVENLABS_API_KEY not found in environment');
             throw new \Exception('ELEVENLABS_API_KEY not found');
         }
 
         $voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice
-        \Log::info("Making API call to ElevenLabs for word: '{$option->label}'");
+        \Illuminate\Support\Facades\Log::info("Making API call to ElevenLabs for word: '{$option->label}'");
         
         // Log to dedicated TTS file
         $ttsLogFile = storage_path('logs/tts_generation.log');
         file_put_contents($ttsLogFile, "[" . now() . "] Making API call for word: '{$option->label}'\n", FILE_APPEND);
 
-        $response = \Http::withHeaders([
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
             'xi-api-key' => $apiKey,
             'Content-Type' => 'application/json',
         ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
@@ -694,9 +720,9 @@ class PromptController extends Controller
             ]
         ]);
         
-        \Log::info("API response status: " . $response->status());
+        \Illuminate\Support\Facades\Log::info("API response status: " . $response->status());
         if (!$response->successful()) {
-            \Log::error("API error response: " . $response->body());
+            \Illuminate\Support\Facades\Log::error("API error response: " . $response->body());
         }
         
         if ($response->successful()) {
@@ -705,34 +731,34 @@ class PromptController extends Controller
             $relativePath = "tts/words/{$filename}";
             $fullPath = storage_path("app/public/{$relativePath}");
             
-            \Log::info("Saving audio file to: {$fullPath}");
+            \Illuminate\Support\Facades\Log::info("Saving audio file to: {$fullPath}");
             
             // Create directory if needed
             $dir = dirname($fullPath);
             if (!file_exists($dir)) {
-                \Log::info("Creating directory: {$dir}");
+                \Illuminate\Support\Facades\Log::info("Creating directory: {$dir}");
                 mkdir($dir, 0755, true);
             }
             
             $audioData = $response->body();
-            \Log::info("Audio data size: " . strlen($audioData) . " bytes");
+            \Illuminate\Support\Facades\Log::info("Audio data size: " . strlen($audioData) . " bytes");
             
             $saved = file_put_contents($fullPath, $audioData);
             if ($saved === false) {
-                \Log::error("Failed to save audio file to: {$fullPath}");
+                \Illuminate\Support\Facades\Log::error("Failed to save audio file to: {$fullPath}");
                 throw new \Exception("Failed to save audio file");
             }
             
-            \Log::info("Successfully saved audio file, bytes written: {$saved}");
+            \Illuminate\Support\Facades\Log::info("Successfully saved audio file, bytes written: {$saved}");
             
             // Update option with audio path
             $dbPath = "/storage/{$relativePath}";
-            \Log::info("Updating option {$option->id} with audio path: {$dbPath}");
+            \Illuminate\Support\Facades\Log::info("Updating option {$option->id} with audio path: {$dbPath}");
             $option->update(['word_audio_path' => $dbPath]);
             
-            \Log::info("Generated TTS for option: {$option->label}");
+            \Illuminate\Support\Facades\Log::info("Generated TTS for option: {$option->label}");
         } else {
-            \Log::error("TTS API Error: " . $response->status() . " - " . $response->body());
+            \Illuminate\Support\Facades\Log::error("TTS API Error: " . $response->status() . " - " . $response->body());
             throw new \Exception("TTS API Error: " . $response->status());
         }
     }
@@ -750,7 +776,7 @@ class PromptController extends Controller
         if ($option->sentence_audio_path) {
             $fullPath = public_path(ltrim($option->sentence_audio_path, '/'));
             if (file_exists($fullPath)) {
-                \Log::info("Sentence TTS already exists: {$completeSentence}");
+                \Illuminate\Support\Facades\Log::info("Sentence TTS already exists: {$completeSentence}");
                 return; // Skip generation
             }
         }
@@ -782,7 +808,7 @@ class PromptController extends Controller
                 copy($existingPath, $newPath);
                 $option->update(['sentence_audio_path' => "/storage/{$relativePath}"]);
                 
-                \Log::info("Reused existing sentence TTS: {$completeSentence}");
+                \Illuminate\Support\Facades\Log::info("Reused existing sentence TTS: {$completeSentence}");
                 return; // Skip API generation
             }
         }
@@ -803,7 +829,7 @@ class PromptController extends Controller
         $ttsLogFile = storage_path('logs/tts_generation.log');
         file_put_contents($ttsLogFile, "[" . now() . "] Making API call for sentence: '{$completeSentence}'\n", FILE_APPEND);
 
-        $response = \Http::withHeaders([
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
             'xi-api-key' => $apiKey,
             'Content-Type' => 'application/json',
         ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
@@ -835,7 +861,7 @@ class PromptController extends Controller
             // Store the sentence audio path in the option
             $option->update(['sentence_audio_path' => "/storage/{$relativePath}"]);
             
-            \Log::info("Generated sentence TTS: {$completeSentence}");
+            \Illuminate\Support\Facades\Log::info("Generated sentence TTS: {$completeSentence}");
         } else {
             throw new \Exception("Sentence TTS API Error: " . $response->status());
         }

@@ -31,6 +31,22 @@
         </div>
     @endif
 
+    @if(!empty($warningMessages))
+        <div class="card" style="border-left:4px solid var(--color-warning); margin-bottom: 2rem;">
+            <div class="card-header">
+                <h2 class="card-title" style="color: var(--color-warning-dark);">Import Warnings</h2>
+            </div>
+            <div class="card-body">
+                <p>The following rows will be skipped:</p>
+                <ul class="error-list">
+                    @foreach($warningMessages as $warn)
+                        <li>{{ $warn }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
+
     @if(!empty($previewData))
         <div class="card">
             <div class="card-header">
@@ -66,6 +82,18 @@
                                         </div>
                                     @endforeach
                                 </div>
+                                @if(isset($item['correct_answer']) && $item['correct_answer'])
+                                    <div class="correct-answer">
+                                        <strong>Correct:</strong>
+                                        Option {{ $item['correct_answer'] }}
+                                        @php
+                                            $correctIndex = $item['correct_answer'] - 1;
+                                        @endphp
+                                        @if(isset($item['options'][$correctIndex]))
+                                            — "{{ $item['options'][$correctIndex] }}"
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     @endforeach
@@ -73,50 +101,23 @@
 
                 @if(empty($validationErrors))
                     <div class="preview-actions">
-                        <form id="import-form">
+                        <form id="import-form" action="{{ route('admin.lessons.prompts.confirm-import', $lesson) }}" method="POST">
                             @csrf
                             <input type="hidden" name="import_mode" value="{{ $importMode }}">
-                            <button type="submit" class="btn btn-success btn-large" id="import-btn">
-                                <span class="btn-content">
-                                    <i class="fas fa-check"></i> Confirm Import & Generate TTS
-                                </span>
-                                <span class="btn-loading" style="display: none;">
-                                    <i class="fas fa-spinner fa-spin"></i> Importing...
-                                </span>
+                            <input type="hidden" id="generate_tts" name="generate_tts" value="0">
+                            <button type="button" class="btn btn-success btn-large" id="import-and-tts-btn">
+                                Confirm Import + Start TTS
                             </button>
                             <a href="{{ route('admin.lessons.prompts.import', $lesson) }}" class="btn btn-secondary" id="edit-btn">
                                 <i class="fas fa-edit"></i> Edit CSV
                             </a>
                         </form>
                         
-                        <!-- Progress Display -->
-                        <div class="progress-container" id="progress-container" style="display: none;">
-                            <h3>Generating TTS Audio</h3>
-                            <div class="progress-section">
-                                <h4>Word Audio</h4>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="word-progress"></div>
-                                </div>
-                                <div class="progress-text" id="word-status">Waiting...</div>
-                            </div>
-                            <div class="progress-section">
-                                <h4>Sentence Audio</h4>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="sentence-progress"></div>
-                                </div>
-                                <div class="progress-text" id="sentence-status">Waiting...</div>
-                            </div>
-                            <div class="progress-actions" id="progress-actions" style="display: none;">
-                                <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn btn-primary">Continue to Lesson</a>
-                            </div>
-                        </div>
-                        
                         <div class="import-note">
                             <p><strong>What happens next:</strong></p>
                             <ul>
                                 <li>{{ count($previewData) }} prompts will be created</li>
                                 <li>{{ array_sum(array_map(function($item) { return count($item['options']); }, $previewData)) }} options will be created</li>
-                                <li>TTS audio will be generated automatically for all options</li>
                                 @if($importMode === 'replace')
                                     <li><strong>Warning:</strong> All existing prompts will be deleted first</li>
                                 @endif
@@ -384,169 +385,16 @@
 
 @push('scripts')
 <script>
-document.getElementById('import-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // Get the button and form elements
-    const importBtn = document.getElementById('import-btn');
-    const editBtn = document.getElementById('edit-btn');
-    const btnContent = importBtn.querySelector('.btn-content');
-    const btnLoading = importBtn.querySelector('.btn-loading');
-    const progressContainer = document.getElementById('progress-container');
-    
-    // Show loading state
-    btnContent.style.display = 'none';
-    btnLoading.style.display = 'flex';
-    
-    // Disable buttons
-    importBtn.disabled = true;
-    editBtn.style.opacity = '0.5';
-    editBtn.style.pointerEvents = 'none';
-    
-    // Start the import process
-    const formData = new FormData(this);
-    
-    fetch('{{ route('admin.lessons.prompts.confirm-import', $lesson) }}', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Hide form and show progress
-            document.querySelector('.preview-actions form').style.display = 'none';
-            document.querySelector('.import-note').style.display = 'none';
-            progressContainer.style.display = 'block';
-            
-            // Start TTS generation
-            startTtsGeneration({{ $lesson->id }});
-        } else {
-            alert('Error: ' + (data.message || 'Import failed'));
-            resetForm();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error importing prompts');
-        resetForm();
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    var importAndTtsBtn = document.getElementById('import-and-tts-btn');
+    var importForm = document.getElementById('import-form');
+    var generateTtsInput = document.getElementById('generate_tts');
+    if (importAndTtsBtn && importForm && generateTtsInput) {
+        importAndTtsBtn.addEventListener('click', function() {
+            generateTtsInput.value = '1';
+            importForm.submit();
+        });
+    }
 });
-
-function resetForm() {
-    const importBtn = document.getElementById('import-btn');
-    const editBtn = document.getElementById('edit-btn');
-    const btnContent = importBtn.querySelector('.btn-content');
-    const btnLoading = importBtn.querySelector('.btn-loading');
-    
-    btnContent.style.display = 'flex';
-    btnLoading.style.display = 'none';
-    importBtn.disabled = false;
-    editBtn.style.opacity = '1';
-    editBtn.style.pointerEvents = 'auto';
-}
-
-function startTtsGeneration(lessonId) {
-    let wordOffset = 0;
-    let sentenceOffset = 0;
-    
-    // Start generating word TTS
-    generateWordTts(lessonId, wordOffset);
-}
-
-function generateWordTts(lessonId, offset) {
-    const wordStatus = document.getElementById('word-status');
-    const wordProgress = document.getElementById('word-progress');
-    
-    wordStatus.textContent = 'Generating word audio...';
-    
-    fetch(`/admin/lessons/${lessonId}/prompts/generate-word-tts`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-            batch_size: 5,
-            offset: offset
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update progress
-            const totalProcessed = offset + data.processed;
-            const totalWords = totalProcessed + data.remaining;
-            const percentage = totalWords > 0 ? (totalProcessed / totalWords) * 100 : 100;
-            
-            wordProgress.style.width = percentage + '%';
-            wordStatus.textContent = `Generated ${totalProcessed} of ${totalWords} word audio files`;
-            
-            if (!data.completed && data.remaining > 0) {
-                // Continue with next batch
-                setTimeout(() => generateWordTts(lessonId, offset + data.processed), 1000);
-            } else {
-                // Word TTS complete, start sentence TTS
-                wordStatus.textContent = 'Word audio complete!';
-                generateSentenceTts(lessonId, 0);
-            }
-        } else {
-            wordStatus.textContent = 'Error generating word audio';
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        wordStatus.textContent = 'Error generating word audio';
-    });
-}
-
-function generateSentenceTts(lessonId, offset) {
-    const sentenceStatus = document.getElementById('sentence-status');
-    const sentenceProgress = document.getElementById('sentence-progress');
-    
-    sentenceStatus.textContent = 'Generating sentence audio...';
-    
-    fetch(`/admin/lessons/${lessonId}/prompts/generate-sentence-tts`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-            batch_size: 3,
-            offset: offset
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update progress
-            const totalProcessed = offset + data.processed;
-            const totalSentences = totalProcessed + data.remaining;
-            const percentage = totalSentences > 0 ? (totalProcessed / totalSentences) * 100 : 100;
-            
-            sentenceProgress.style.width = percentage + '%';
-            sentenceStatus.textContent = `Generated ${totalProcessed} of ${totalSentences} sentence audio files`;
-            
-            if (!data.completed && data.remaining > 0) {
-                // Continue with next batch
-                setTimeout(() => generateSentenceTts(lessonId, offset + data.processed), 1000);
-            } else {
-                // All TTS complete
-                sentenceStatus.textContent = 'Sentence audio complete!';
-                document.getElementById('progress-actions').style.display = 'block';
-            }
-        } else {
-            sentenceStatus.textContent = 'Error generating sentence audio';
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        sentenceStatus.textContent = 'Error generating sentence audio';
-    });
-}
 </script>
 @endpush

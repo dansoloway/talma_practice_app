@@ -222,8 +222,8 @@ function generateCardHTML(card) {
             return `
                 <div class="card-content">
                     <div class="card-audio">
-                        <button class="play-audio-btn" data-audio="${card.audio_path}">
-                            <i class="fas fa-play"></i> Play Word
+                        <button class="big-play-btn" data-audio="${card.audio_path}" title="Play Word">
+                            <i class="fas fa-play"></i>
                         </button>
                     </div>
                     <div class="card-prompt">Choose the correct image for this word:</div>

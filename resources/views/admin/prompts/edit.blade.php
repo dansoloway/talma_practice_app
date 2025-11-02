@@ -30,6 +30,19 @@
         </div>
 
         <div class="form-group">
+            <label for="correct_answer">Correct Answer</label>
+            <select id="correct_answer" name="correct_answer" class="form-control">
+                <option value="">— None —</option>
+                @foreach($prompt->options as $index => $opt)
+                    <option value="{{ $index + 1 }}" {{ (string)old('correct_answer', $prompt->correct_answer) === (string)($index + 1) ? 'selected' : '' }}>
+                        {{ $index + 1 }} — {{ $opt->label }}
+                    </option>
+                @endforeach
+            </select>
+            <small>Select the 1-based option number that is correct, or leave empty.</small>
+        </div>
+
+        <div class="form-group">
             <label for="sort_order">Sort Order</label>
             <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $prompt->sort_order) }}" class="form-control">
         </div>
