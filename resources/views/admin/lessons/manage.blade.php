@@ -21,6 +21,7 @@
         </div>
         <div class="page-actions">
             <a href="{{ route('admin.lessons.index') }}" class="btn">Back to Lessons</a>
+            <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-success" target="_blank">Play as Student</a>
             <button onclick="archiveLesson()" class="btn btn-warning">Archive Lesson</button>
         </div>
     </div>
