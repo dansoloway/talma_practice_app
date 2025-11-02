@@ -243,8 +243,8 @@ function generateCardHTML(card) {
             return `
                 <div class="card-content">
                     <div class="card-audio">
-                        <button class="play-audio-btn" data-audio="${card.audio_path}">
-                            <i class="fas fa-play"></i> Play Word
+                        <button class="big-audio-btn" data-audio="${card.audio_path}" title="Play Word">
+                            <i class="fas fa-volume-up"></i>
                         </button>
                     </div>
                     <div class="card-prompt">Choose the correct ${currentMode === 'hebrew' ? 'Hebrew' : currentMode === 'arabic' ? 'Arabic' : 'word'}:</div>
@@ -271,6 +271,16 @@ function setupCardEvents(card) {
 
     // Big play button (for audio_to_image mode)
     document.querySelectorAll('.big-play-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const audioPath = this.dataset.audio;
+            if (audioPath) {
+                playAudio(audioPath);
+            }
+        });
+    });
+
+    // Big audio button (for audio_to_word mode)
+    document.querySelectorAll('.big-audio-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const audioPath = this.dataset.audio;
             if (audioPath) {
@@ -459,12 +469,12 @@ function playAudio(audioPath) {
 .flashcard-container {
     max-width: 600px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1rem;
 }
 
 .mode-selector {
     margin-top: 1rem;
-    padding: 1rem;
+    padding: 0.75rem;
     background: #f8f9fa;
     border-radius: 8px;
     display: inline-block;
@@ -493,14 +503,14 @@ function playAudio(audioPath) {
 
 .game-selection {
     text-align: center;
-    padding: 2rem;
+    padding: 1rem;
 }
 
 .game-type-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
-    margin-top: 2rem;
+    margin-top: 1.5rem;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
@@ -540,7 +550,7 @@ function playAudio(audioPath) {
 }
 
 .game-progress {
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .progress-bar {
@@ -568,8 +578,8 @@ function playAudio(audioPath) {
     background: var(--color-white);
     border: 1px solid var(--color-border);
     border-radius: 12px;
-    padding: 2rem;
-    margin-bottom: 2rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
     min-height: 300px;
     display: flex;
     align-items: center;
@@ -586,13 +596,13 @@ function playAudio(audioPath) {
     max-width: 200px;
     max-height: 200px;
     border-radius: 8px;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .card-prompt {
     font-size: 1.2rem;
     font-weight: 500;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     color: var(--color-text);
 }
 
@@ -699,7 +709,7 @@ function playAudio(audioPath) {
 
 .card-audio {
     text-align: center;
-    margin: 2rem 0;
+    margin: 1rem 0;
 }
 
 .big-play-btn {
@@ -728,6 +738,32 @@ function playAudio(audioPath) {
     font-size: 2rem;
 }
 
+.big-audio-btn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    margin: 0 auto;
+}
+
+.big-audio-btn:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.big-audio-btn i {
+    font-size: 2rem;
+}
+
 .game-controls {
     text-align: center;
 }
@@ -737,7 +773,7 @@ function playAudio(audioPath) {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    padding: 1rem 2rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 8px;
     font-weight: bold;
     font-size: 1.2rem;
