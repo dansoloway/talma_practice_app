@@ -314,15 +314,17 @@ function handleWordSelection(optionIndex, selectedWord) {
     updateProgressDisplay();
     
     // Debug logging
-    console.log('Selected option:', selectedOptionData);
-    console.log('Sentence audio path:', selectedOptionData.sentence_audio_path);
+    console.log('Selected option:', displayOptionData);
+    console.log('Sentence audio path:', displayOptionData.sentence_audio_path);
     console.log('Next button should be enabled');
     
     // Reset recording state when new word is selected
     resetRecordingState();
     
     // Show audio controls
-    audioControls.style.display = 'block';
+    if (audioControls) {
+        audioControls.style.display = 'block';
+    }
     
     // Enable next/finish button
     if (currentPromptIndex === prompts.length - 1) {
