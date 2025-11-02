@@ -49,7 +49,7 @@
                                         🔊
                                     </a>
                                 @else
-                                    <span class="badge badge-warning">Not Generated</span>
+                                    <span class="text-muted" style="font-size: 0.85em;">Not used</span>
                                 @endif
                             </td>
                             <td>
