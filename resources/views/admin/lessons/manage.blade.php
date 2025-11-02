@@ -180,8 +180,6 @@
         <div class="section-header">
             <h2>Activities</h2>
             <div class="section-actions">
-                <a href="{{ route('admin.lessons.prompts.create', $lesson) }}" class="btn btn-primary btn-sm">+ Prompt</a>
-                <a href="{{ route('admin.lessons.prompts.import', $lesson) }}" class="btn btn-secondary btn-sm">Import CSV</a>
                 <a href="{{ route('admin.lessons.matching-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Matching</a>
                 <a href="{{ route('admin.lessons.flashcard-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Flashcard</a>
             </div>
@@ -259,9 +257,7 @@
                         </div>
                         <div class="activity-actions">
                             @if($activity->type === 'prompts')
-                                <a href="{{ route('admin.lessons.prompts.index', $lesson) }}" class="btn btn-xs btn-secondary">View Prompts</a>
-                                <a href="{{ route('admin.lessons.prompts.create', $lesson) }}" class="btn btn-xs">Add Prompt</a>
-                                <a href="{{ route('admin.lessons.prompts.import', $lesson) }}" class="btn btn-xs btn-secondary">Import CSV</a>
+                                <a href="{{ route('admin.lessons.prompts.index', $lesson) }}" class="btn btn-xs">Edit</a>
                                 @if($activity->count > 0)
                                     <a href="{{ route('prompts.play', $lesson) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
                                     <button class="btn btn-xs btn-danger" onclick="deleteAllPrompts('{{ addslashes($activity->title) }}')">Delete All</button>
