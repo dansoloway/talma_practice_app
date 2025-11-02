@@ -36,6 +36,7 @@
                 <tr>
                     <th>Sort</th>
                     <th>Label</th>
+                    <th>TTS Status</th>
                     <th>Image Path</th>
                     <th>Active</th>
                     <th>Generated Sentence</th>
@@ -47,6 +48,23 @@
                     <tr>
                         <td>{{ $option->sort_order }}</td>
                         <td><strong>{{ $option->label }}</strong></td>
+                        <td>
+                            @if(!empty($option->word_audio_path))
+                                <span class="badge badge-success">✓ Word</span>
+                            @else
+                                <span class="badge badge-warning">No Word Audio</span>
+                            @endif
+                            <br>
+                            @if(!empty($option->sentence_audio_path))
+                                <span class="badge badge-success">✓ Sentence</span>
+                                <br>
+                                <a href="{{ asset($option->sentence_audio_path) }}" target="_blank" class="audio-link" title="Play audio">
+                                    🔊
+                                </a>
+                            @else
+                                <span class="badge badge-warning">No Sentence Audio</span>
+                            @endif
+                        </td>
                         <td><code>{{ $option->image_path }}</code></td>
                         <td>{{ $option->is_active ? '✓' : '✗' }}</td>
                         <td>{{ Str::of($prompt->template)->replace('{' . '{answer}' . '}', $option->label) }}</td>
@@ -65,4 +83,14 @@
     @endif
 </div>
 @endsection
+
+@push('styles')
+<style>
+.badge { display: inline-block; padding: 0.25em 0.6em; border-radius: 0.25rem; font-size: 0.85em; font-weight: 500; }
+.badge-success { background-color: #d4edda; color: #155724; }
+.badge-warning { background-color: #fff3cd; color: #856404; }
+.audio-link { display: inline-block; margin-top: 0.25rem; font-size: 1.2em; text-decoration: none; opacity: 0.8; transition: opacity 0.2s; }
+.audio-link:hover { opacity: 1; }
+</style>
+@endpush
 
