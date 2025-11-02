@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 
 class OptionController extends Controller
 {
+    use \App\Http\Controllers\Admin\GeneratesTtsAudio;
     /**
      * Show the form for creating a new option.
      */
@@ -48,6 +49,14 @@ class OptionController extends Controller
 
         $option = Option::create($validated);
 
+        // Generate TTS audio for the new option
+        try {
+            $this->generateSingleWordTts($option);
+            $this->generateSingleSentenceTts($option);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to generate TTS for new option {$option->id}: " . $e->getMessage());
+        }
+
         return redirect()
             ->route('admin.prompts.show', $prompt)
             ->with('success', 'Option created successfully!');
@@ -86,7 +95,20 @@ class OptionController extends Controller
             $validated['image_path'] = 'storage/images/options/' . $filename;
         }
 
+        // Check if label changed - if so, regenerate sentence TTS
+        $labelChanged = isset($validated['label']) && $option->label !== $validated['label'];
+
         $option->update($validated);
+
+        // If label changed, regenerate both word and sentence TTS
+        if ($labelChanged) {
+            try {
+                $this->generateSingleWordTts($option);
+                $this->generateSingleSentenceTts($option);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to regenerate TTS for updated option {$option->id}: " . $e->getMessage());
+            }
+        }
 
         return redirect()
             ->route('admin.prompts.show', $option->prompt_id)
