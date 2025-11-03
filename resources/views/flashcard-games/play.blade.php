@@ -115,9 +115,21 @@ const playAgainBtn = document.getElementById('play-again-btn');
 
 // Mode change functionality
 function changeMode(mode) {
-    const url = new URL(window.location);
-    url.searchParams.set('mode', mode);
-    window.location.href = url.toString();
+    // If we're already in a game, restart it with the new mode
+    if (currentGameType) {
+        currentMode = mode;
+        // Reload the page with new mode but keep the current game type
+        // We'll need to trigger the game start again after reload
+        const url = new URL(window.location);
+        url.searchParams.set('mode', mode);
+        url.searchParams.set('gameType', currentGameType);
+        window.location.href = url.toString();
+    } else {
+        // If not in a game yet, just reload the page with new mode
+        const url = new URL(window.location);
+        url.searchParams.set('mode', mode);
+        window.location.href = url.toString();
+    }
 }
 
 // Initialize game
@@ -142,6 +154,25 @@ document.addEventListener('DOMContentLoaded', function() {
     nextBtn.addEventListener('click', nextCard);
     restartBtn.addEventListener('click', restartGame);
     playAgainBtn.addEventListener('click', restartGame);
+    
+    // Check if there's a gameType in the URL (from mode change during game)
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameTypeFromUrl = urlParams.get('gameType');
+    if (gameTypeFromUrl && gameData.game_types.includes(gameTypeFromUrl)) {
+        // Auto-start the game with the specified type
+        currentGameType = gameTypeFromUrl;
+        // Hide/show mode selector appropriately
+        const modeSelector = document.querySelector('.mode-selector');
+        if (modeSelector && currentGameType === 'audio_to_word') {
+            modeSelector.style.display = 'block';
+        } else if (modeSelector) {
+            modeSelector.style.display = 'none';
+        }
+        startGame();
+        // Clean up the URL
+        urlParams.delete('gameType');
+        window.history.replaceState({}, '', window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : ''));
+    }
 });
 
 function startGame() {
