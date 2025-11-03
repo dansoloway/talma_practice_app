@@ -439,9 +439,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle audio playback
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('play-audio-btn')) {
+        // Check if click is on button or icon inside button
+        const btn = e.target.closest('.play-audio-btn');
+        if (btn) {
             e.stopPropagation(); // Prevent card selection
-            const audioPath = e.target.dataset.audio;
+            const audioPath = btn.dataset.audio;
             if (audioPath) {
                 const audio = new Audio(audioPath);
                 audio.play().catch(err => console.log('Audio play failed:', err));
