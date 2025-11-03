@@ -70,6 +70,17 @@ class LessonController extends Controller
         // Auto-generate slug if not provided
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['title']);
+        } else {
+            // Normalize manually entered slug
+            $validated['slug'] = Str::slug($validated['slug']);
+        }
+        
+        // Ensure slug is unique
+        $baseSlug = $validated['slug'];
+        $counter = 1;
+        while (Lesson::where('slug', $validated['slug'])->exists()) {
+            $validated['slug'] = $baseSlug . '-' . $counter;
+            $counter++;
         }
 
         $lesson = Lesson::create($validated);
@@ -123,6 +134,17 @@ class LessonController extends Controller
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ]);
+        
+        // Normalize slug to ensure proper formatting
+        $validated['slug'] = Str::slug($validated['slug']);
+        
+        // Ensure slug is unique
+        $baseSlug = $validated['slug'];
+        $counter = 1;
+        while (Lesson::where('slug', $validated['slug'])->where('id', '!=', $lesson->id)->exists()) {
+            $validated['slug'] = $baseSlug . '-' . $counter;
+            $counter++;
+        }
 
         $lesson->update($validated);
 
