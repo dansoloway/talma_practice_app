@@ -152,7 +152,6 @@
             <div class="section-actions">
                 <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="btn btn-primary btn-sm">Edit Vocabulary</a>
                 <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="btn btn-secondary btn-sm">Upload CSV</a>
-                <a href="{{ route('admin.lessons.vocabulary.auto-images', $lesson) }}" class="btn btn-success btn-sm">🔍 Auto-Find Images</a>
             </div>
         </div>
 
