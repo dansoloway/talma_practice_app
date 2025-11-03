@@ -197,6 +197,7 @@
 }
 
 .card-content {
+    position: relative;
     width: 100%;
     height: 100%;
     display: flex;
@@ -332,6 +333,11 @@ class MatchingGame {
     flipCard(card) {
         // Don't select if already matched
         if (card.classList.contains('matched')) {
+            return;
+        }
+        
+        // Don't select if already selected
+        if (card.classList.contains('selected')) {
             return;
         }
         
