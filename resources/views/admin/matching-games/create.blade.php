@@ -27,19 +27,6 @@
         <input type="hidden" name="title" value="{{ $lesson->session_title ?: 'Vocabulary Matching Game' }}">
 
         <div class="form-group">
-            <label for="part_id">Part (Optional)</label>
-            <select id="part_id" name="part_id" class="form-control">
-                <option value="">No specific part</option>
-                @foreach($parts as $part)
-                    <option value="{{ $part->id }}" {{ old('part_id') == $part->id ? 'selected' : '' }}>
-                        {{ $part->title }}
-                    </option>
-                @endforeach
-            </select>
-            <small>Associate this game with a specific lesson part</small>
-        </div>
-
-        <div class="form-group">
             <label for="grid_size">Grid Size</label>
             <select id="grid_size" name="grid_size" class="form-control" onchange="updateVocabularyRequirement()">
                 <option value="4" {{ old('grid_size', 4) == 4 ? 'selected' : '' }}>4x4 (8 pairs)</option>
