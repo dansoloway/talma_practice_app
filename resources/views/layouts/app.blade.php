@@ -73,7 +73,7 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; {{ date('Y') }} WeSpeak. All rights reserved.</p>
+        <p>&copy; {{ date('Y') }} TALMA. All rights reserved.</p>
     </footer>
 
     @stack('scripts')

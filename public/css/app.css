@@ -1877,6 +1877,12 @@ a:focus {
     font-size: 0.875rem;
 }
 
+@media (max-width: 768px) {
+    .footer {
+        display: none;
+    }
+}
+
 /* Lesson Metadata */
 .lesson-metadata {
     display: flex;
