@@ -245,15 +245,19 @@
                         <div class="activity-content">
                             <div class="activity-header">
                                 <span class="activity-type-badge {{ $activity->type }}">
+                                    @if($activity->type === 'prompts')
+                                        📝
+                                    @elseif($activity->type === 'matching')
+                                        🔗
+                                    @elseif($activity->type === 'flashcard')
+                                        🎴
+                                    @endif
                                     {{ ucfirst($activity->type) }}
                                 </span>
                                 <h4 class="activity-title">{{ $activity->title }}</h4>
                                 <span class="activity-status {{ $activity->is_active ? 'active' : 'inactive' }}">
                                     {{ $activity->is_active ? 'Active' : 'Inactive' }}
                                 </span>
-                            </div>
-                            <div class="activity-order">
-                                Order: {{ $index + 1 }}
                             </div>
                         </div>
                         <div class="activity-actions">
@@ -423,10 +427,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateOrderNumbers() {
     const activityItems = document.querySelectorAll('.activity-item');
     activityItems.forEach((item, index) => {
-        const orderElement = item.querySelector('.activity-order');
-        if (orderElement) {
-            orderElement.textContent = `Order: ${index + 1}`;
-        }
         item.dataset.order = index + 1;
     });
 }

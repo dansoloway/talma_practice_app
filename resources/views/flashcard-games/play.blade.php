@@ -9,21 +9,6 @@
         <h1 class="page-title">{{ $flashcardGame->title }}</h1>
         <p class="game-description">Practice vocabulary with interactive flashcards</p>
     </div>
-    
-    @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
-        <div class="mode-selector-container">
-            <div class="mode-selector">
-                <label for="mode-select">Practice with:</label>
-                <select id="mode-select" onchange="changeMode(this.value)">
-                    @foreach($gameData['available_modes'] as $modeKey => $modeLabel)
-                        <option value="{{ $modeKey }}" {{ $mode === $modeKey ? 'selected' : '' }}>
-                            {{ $modeLabel }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-    @endif
 
     <div id="flashcard-app" class="flashcard-container">
         <!-- Game Selection Screen -->
@@ -54,6 +39,20 @@
 
         <!-- Game Screen -->
         <div class="game-screen hidden" id="game-screen">
+            @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
+                <div class="mode-selector-container">
+                    <div class="mode-selector" id="mode-selector">
+                        <label for="mode-select">Practice with:</label>
+                        <select id="mode-select" onchange="changeMode(this.value)">
+                            @foreach($gameData['available_modes'] as $modeKey => $modeLabel)
+                                <option value="{{ $modeKey }}" {{ $mode === $modeKey ? 'selected' : '' }}>
+                                    {{ $modeLabel }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            @endif
             <div class="game-progress">
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill"></div>
@@ -502,12 +501,6 @@ function restartGame() {
     gameSelection.classList.remove('hidden');
     gameScreen.classList.add('hidden');
     gameComplete.classList.add('hidden');
-    
-    // Show mode selector again
-    const modeSelector = document.querySelector('.mode-selector');
-    if (modeSelector) {
-        modeSelector.style.display = 'block';
-    }
 }
 
 function updateProgress() {
