@@ -100,7 +100,7 @@ class MatchingGameController extends Controller
         $matchingGame->update($validated);
 
         return redirect()
-            ->route('admin.lessons.matching-games.index', $lesson)
+            ->route('admin.lessons.manage', $lesson)
             ->with('success', 'Matching game updated successfully!');
     }
 
@@ -109,7 +109,7 @@ class MatchingGameController extends Controller
         $matchingGame->delete();
 
         return redirect()
-            ->route('admin.lessons.matching-games.index', $lesson)
+            ->route('admin.lessons.manage', $lesson)
             ->with('success', 'Matching game deleted successfully!');
     }
 

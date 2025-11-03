@@ -160,7 +160,7 @@ class FlashcardGameController extends Controller
         $flashcardGame->delete();
 
         return redirect()
-            ->route('admin.lessons.flashcard-games.index', $lesson)
+            ->route('admin.lessons.manage', $lesson)
             ->with('success', 'Flashcard game deleted successfully!');
     }
 
