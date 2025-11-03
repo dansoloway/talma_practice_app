@@ -180,6 +180,7 @@
         <div class="section-header">
             <h2>Activities</h2>
             <div class="section-actions">
+                <a href="{{ route('admin.lessons.prompts.create', $lesson) }}" class="btn btn-primary btn-sm">+ Prompts</a>
                 <a href="{{ route('admin.lessons.matching-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Matching</a>
                 <a href="{{ route('admin.lessons.flashcard-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Flashcard</a>
             </div>
