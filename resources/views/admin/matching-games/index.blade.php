@@ -8,7 +8,7 @@
         <h1 class="page-title">Matching Games for: {{ $lesson->title }}</h1>
         <div class="page-actions">
             <a href="{{ route('admin.lessons.matching-games.create', $lesson) }}" class="btn btn-primary">Create Matching Game</a>
-            <a href="{{ route('admin.lessons.show', $lesson) }}" class="btn">Back to Lesson</a>
+            <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn">Back to Lesson</a>
         </div>
     </div>
 

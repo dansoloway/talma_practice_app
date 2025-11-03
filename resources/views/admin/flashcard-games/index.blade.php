@@ -12,7 +12,7 @@
                     <p class="text-muted mb-0">{{ $lesson->title }}</p>
                 </div>
                 <div>
-                    <a href="{{ route('admin.lessons.show', $lesson) }}" class="btn btn-secondary">
+                    <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Back to Lesson
                     </a>
                     <a href="{{ route('admin.lessons.flashcard-games.create', $lesson) }}" class="btn btn-primary">
