@@ -293,7 +293,7 @@
     </div>
 </div>
 
-<span id="start-tts-flag" data-start="@if(session('start_tts'))1@else 0@endif" style="display:none;"></span>
+<span id="start-tts-flag" data-start="{{ session('start_tts') ? 1 : 0 }}" style="display:none;"></span>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
