@@ -45,10 +45,10 @@ class FlashcardGame extends Model
     public static function getGameTypes(): array
     {
         return [
-            'image_to_word' => 'Image → Word (Say the word)',
-            'image_to_audio' => 'Image → Audio (Choose correct audio)',
-            'audio_to_image' => 'Audio → Image (Choose correct image)',
-            'audio_to_word' => 'Audio → Word (Choose correct word)',
+            'image_to_word' => 'Image → Word',
+            'image_to_audio' => 'Image → Audio',
+            'audio_to_image' => 'Audio → Image',
+            'audio_to_word' => 'Audio → Word',
         ];
     }
 }

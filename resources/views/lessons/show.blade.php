@@ -39,21 +39,27 @@
                                 <img src="{{ asset('storage/' . $vocab->image_path) }}" alt="{{ $vocab->english_word }}" class="vocab-image">
                             @endif
                             <div class="vocab-content">
-                                <div class="vocab-word">{{ $vocab->english_word }}</div>
-                                @if($vocab->hebrew_translation || $vocab->arabic_translation)
-                                    <div class="vocab-translations">
-                                        @if($vocab->hebrew_translation)
-                                            <div class="translation hebrew">{{ $vocab->hebrew_translation }}</div>
-                                        @endif
-                                        @if($vocab->arabic_translation)
-                                            <div class="translation arabic">{{ $vocab->arabic_translation }}</div>
-                                        @endif
-                                    </div>
-                                @endif
                                 @if($vocab->word_audio_path)
                                     <button class="vocab-audio-btn" onclick="playVocabAudio('{{ asset('storage/' . $vocab->word_audio_path) }}')" title="Listen to word">
                                         <i class="fas fa-volume-up"></i>
                                     </button>
+                                @endif
+                                <div class="vocab-word">{{ $vocab->english_word }}</div>
+                                @if($vocab->hebrew_translation || $vocab->arabic_translation)
+                                    <div class="vocab-translations">
+                                        @if($vocab->hebrew_translation)
+                                            <button class="translation-toggle-btn hebrew" onclick="toggleTranslation(this, 'hebrew')">
+                                                עברית
+                                            </button>
+                                            <div class="translation hebrew" style="display: none;">{{ $vocab->hebrew_translation }}</div>
+                                        @endif
+                                        @if($vocab->arabic_translation)
+                                            <button class="translation-toggle-btn arabic" onclick="toggleTranslation(this, 'arabic')">
+                                                عربي
+                                            </button>
+                                            <div class="translation arabic" style="display: none;">{{ $vocab->arabic_translation }}</div>
+                                        @endif
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -161,6 +167,20 @@ function playVocabAudio(audioPath) {
     audio.play().catch(error => {
         console.error('Error playing audio:', error);
     });
+}
+
+// Toggle translation display
+function toggleTranslation(btn, lang) {
+    const translation = btn.nextElementSibling;
+    if (translation && translation.classList.contains('translation') && translation.classList.contains(lang)) {
+        if (translation.style.display === 'none') {
+            translation.style.display = 'block';
+            btn.classList.add('active');
+        } else {
+            translation.style.display = 'none';
+            btn.classList.remove('active');
+        }
+    }
 }
 
 // Activity selection function

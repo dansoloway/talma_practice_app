@@ -3,6 +3,27 @@
 @section('title', 'Vocabulary Matching Game')
 
 @section('content')
+<style>
+/* Hide footer on game pages for mobile */
+@media (max-width: 768px) {
+    .footer {
+        display: none;
+    }
+    
+    .game-header {
+        padding: 0.5rem 0;
+    }
+    
+    .game-title {
+        font-size: 1.2rem;
+        margin: 0.5rem 0;
+    }
+    
+    .game-header .back-link {
+        font-size: 0.9rem;
+    }
+}
+</style>
 <div class="matching-game-container">
     <div class="game-header">
         <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
