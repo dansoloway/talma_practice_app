@@ -293,10 +293,18 @@
     </div>
 </div>
 
-<span id="start-tts-flag" data-start="0" style="display:none;"></span>
+<span id="start-tts-flag" data-start="@if(session('start_tts'))1@else 0@endif" style="display:none;"></span>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if TTS generation should start
+    const startTtsFlag = document.getElementById('start-tts-flag');
+    if (startTtsFlag && startTtsFlag.dataset.start === '1') {
+        // Start TTS generation process
+        console.log('Starting TTS generation...');
+        startTtsGeneration({{ $lesson->id }});
+    }
+    
     const editBtn = document.getElementById('edit-lesson-btn');
     const cancelBtn = document.getElementById('cancel-edit-btn');
     const lessonInfo = document.getElementById('lesson-info');
@@ -321,6 +329,68 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+function startTtsGeneration(lessonId) {
+    // Generate word TTS first
+    generateWordTtsBatch(lessonId, function() {
+        // Then generate sentence TTS
+        generateSentenceTtsBatch(lessonId);
+    });
+}
+
+function generateWordTtsBatch(lessonId, callback) {
+    fetch('/admin/lessons/' + lessonId + '/prompts/generate-word-tts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.completed || data.locked) {
+            console.log('Word TTS completed or locked');
+            if (callback) callback();
+        } else {
+            console.log('Processed word TTS, ' + data.remaining + ' remaining');
+            if (data.remaining > 0) {
+                setTimeout(() => generateWordTtsBatch(lessonId, callback), 2000);
+            } else {
+                if (callback) callback();
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error generating word TTS:', error);
+        if (callback) callback();
+    });
+}
+
+function generateSentenceTtsBatch(lessonId) {
+    fetch('/admin/lessons/' + lessonId + '/prompts/generate-sentence-tts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.completed || data.locked) {
+            console.log('Sentence TTS completed or locked');
+        } else {
+            console.log('Processed sentence TTS, ' + data.remaining + ' remaining');
+            if (data.remaining > 0) {
+                setTimeout(() => generateSentenceTtsBatch(lessonId), 2000);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error generating sentence TTS:', error);
+    });
+}
 
 // Activity ordering functions
 function saveActivityOrder() {

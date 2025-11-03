@@ -335,6 +335,18 @@ class PromptController extends Controller
                     
                     // Collect options for TTS generation
                     $createdOptions[] = $option;
+                    
+                    // Generate TTS audio for this option if requested
+                    $startTts = (bool) $request->input('generate_tts', false);
+                    if ($startTts) {
+                        try {
+                            $this->generateSingleWordTts($option);
+                            $this->generateSingleSentenceTts($option);
+                            \Illuminate\Support\Facades\Log::info("Generated TTS for option: {$option->label}");
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::error("Failed to generate TTS for option {$option->id}: " . $e->getMessage());
+                        }
+                    }
                 }
 
                 $importedCount++;
