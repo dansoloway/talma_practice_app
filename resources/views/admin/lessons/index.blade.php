@@ -79,7 +79,7 @@
                         <td><code>{{ $lesson->slug }}</code></td>
                         <td>
                             @php
-                                $activityCount = $lesson->prompts->count() + $lesson->matchingGames->count() + $lesson->flashcardGames->count();
+                                $activityCount = ($lesson->prompts->count() > 0 ? 1 : 0) + $lesson->matchingGames->count() + $lesson->flashcardGames->count();
                                 $vocabCount = $lesson->vocabulary->count();
                             @endphp
                             {{ $activityCount }} activities
