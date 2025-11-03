@@ -1272,6 +1272,17 @@ a:focus {
     flex-shrink: 0;
 }
 
+.activity-menu-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-right: var(--spacing-xl);
+    flex-shrink: 0;
+}
+
 .activity-menu-content {
     flex: 1;
 }
@@ -1425,6 +1436,17 @@ a:focus {
     justify-content: center;
     font-weight: 700;
     font-size: 1.25rem;
+    margin-right: var(--spacing-xl);
+    flex-shrink: 0;
+}
+
+.activity-menu-icon {
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
     margin-right: var(--spacing-xl);
     flex-shrink: 0;
 }
@@ -2318,6 +2340,13 @@ a:focus {
         width: 2.5rem;
         height: 2.5rem;
         font-size: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .activity-menu-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1.25rem;
         flex-shrink: 0;
     }
     

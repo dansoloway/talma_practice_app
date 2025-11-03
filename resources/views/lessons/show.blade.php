@@ -114,7 +114,15 @@
                 <div class="activities-menu">
                     @foreach($allActivities as $index => $activity)
                         <div class="activity-menu-item" onclick="startActivity('{{ $activity->type }}', '{{ $activity->id }}')">
-                            <div class="activity-menu-number">{{ $index + 1 }}</div>
+                            <div class="activity-menu-icon">
+                                @if($activity->type === 'prompts')
+                                    📝
+                                @elseif($activity->type === 'matching')
+                                    🔗
+                                @elseif($activity->type === 'flashcard')
+                                    🎴
+                                @endif
+                            </div>
                             <div class="activity-menu-content">
                                 <div class="activity-menu-type">{{ ucfirst($activity->type) }} Activity</div>
                                 <div class="activity-menu-title">{{ $activity->title }}</div>
