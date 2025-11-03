@@ -31,7 +31,25 @@
 
         @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
             <div class="vocabulary-section">
-                <h3>Vocabulary for this lesson</h3>
+                <div class="vocab-header">
+                    <h3>Vocabulary for this lesson</h3>
+                    @php
+                        $hasHebrew = $lesson->vocabulary->contains(fn($v) => !empty($v->hebrew_translation));
+                        $hasArabic = $lesson->vocabulary->contains(fn($v) => !empty($v->arabic_translation));
+                    @endphp
+                    <div class="vocab-translation-buttons">
+                        @if($hasHebrew)
+                            <button class="vocab-lang-toggle-btn" data-lang="hebrew" onclick="toggleVocabLanguage('hebrew')">
+                                עברית
+                            </button>
+                        @endif
+                        @if($hasArabic)
+                            <button class="vocab-lang-toggle-btn" data-lang="arabic" onclick="toggleVocabLanguage('arabic')">
+                                عربي
+                            </button>
+                        @endif
+                    </div>
+                </div>
                 <div class="vocabulary-grid">
                     @foreach($lesson->vocabulary as $vocab)
                         <div class="vocabulary-item">
@@ -45,21 +63,11 @@
                                     </button>
                                 @endif
                                 <div class="vocab-word">{{ $vocab->english_word }}</div>
-                                @if($vocab->hebrew_translation || $vocab->arabic_translation)
-                                    <div class="vocab-translations">
-                                        @if($vocab->hebrew_translation)
-                                            <button class="translation-toggle-btn hebrew" onclick="toggleTranslation(this, 'hebrew')">
-                                                עברית
-                                            </button>
-                                            <div class="translation hebrew" style="display: none;">{{ $vocab->hebrew_translation }}</div>
-                                        @endif
-                                        @if($vocab->arabic_translation)
-                                            <button class="translation-toggle-btn arabic" onclick="toggleTranslation(this, 'arabic')">
-                                                عربي
-                                            </button>
-                                            <div class="translation arabic" style="display: none;">{{ $vocab->arabic_translation }}</div>
-                                        @endif
-                                    </div>
+                                @if($vocab->hebrew_translation)
+                                    <div class="translation hebrew vocab-translation-hidden">{{ $vocab->hebrew_translation }}</div>
+                                @endif
+                                @if($vocab->arabic_translation)
+                                    <div class="translation arabic vocab-translation-hidden">{{ $vocab->arabic_translation }}</div>
                                 @endif
                             </div>
                         </div>
@@ -169,18 +177,16 @@ function playVocabAudio(audioPath) {
     });
 }
 
-// Toggle translation display
-function toggleTranslation(btn, lang) {
-    const translation = btn.nextElementSibling;
-    if (translation && translation.classList.contains('translation') && translation.classList.contains(lang)) {
-        if (translation.style.display === 'none') {
-            translation.style.display = 'block';
-            btn.classList.add('active');
-        } else {
-            translation.style.display = 'none';
-            btn.classList.remove('active');
-        }
-    }
+// Toggle vocabulary language display
+function toggleVocabLanguage(lang) {
+    const btn = document.querySelector(`[data-lang="${lang}"]`);
+    const translations = document.querySelectorAll(`.translation.${lang}`);
+    
+    btn.classList.toggle('active');
+    
+    translations.forEach(translation => {
+        translation.classList.toggle('vocab-translation-hidden');
+    });
 }
 
 // Activity selection function

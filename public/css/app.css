@@ -1965,6 +1965,65 @@ a:focus {
     margin-right: auto;
 }
 
+.vocab-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.vocab-header h3 {
+    color: var(--color-primary);
+    margin: 0;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.vocab-translation-buttons {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.vocab-lang-toggle-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-white);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.vocab-lang-toggle-btn.hebrew,
+.vocab-lang-toggle-btn[data-lang="hebrew"] {
+    color: #1e40af;
+}
+
+.vocab-lang-toggle-btn.arabic,
+.vocab-lang-toggle-btn[data-lang="arabic"] {
+    color: #166534;
+}
+
+.vocab-lang-toggle-btn.active {
+    border-width: 3px;
+    transform: scale(1.05);
+}
+
+.vocab-lang-toggle-btn.active.hebrew,
+.vocab-lang-toggle-btn.active[data-lang="hebrew"] {
+    background-color: #e8f4fd;
+    border-color: #bfdbfe;
+}
+
+.vocab-lang-toggle-btn.active.arabic,
+.vocab-lang-toggle-btn.active[data-lang="arabic"] {
+    background-color: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
 .vocabulary-section h3 {
     color: var(--color-primary);
     margin-bottom: 1rem;
@@ -2003,8 +2062,9 @@ a:focus {
 
 .vocab-content {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 0.5rem;
     margin-top: var(--spacing-sm);
 }
 
@@ -2012,7 +2072,30 @@ a:focus {
     font-weight: 600;
     color: var(--color-primary);
     font-size: 1.1rem;
-    flex: 1;
+}
+
+.translation {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.5rem;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.translation.hebrew {
+    background-color: #e8f4fd;
+    color: #1e40af;
+    border: 2px solid #bfdbfe;
+}
+
+.translation.arabic {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 2px solid #bbf7d0;
+}
+
+.vocab-translation-hidden {
+    display: none;
 }
 
 .vocab-audio-btn {
