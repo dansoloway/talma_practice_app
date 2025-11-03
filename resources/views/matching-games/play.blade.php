@@ -54,7 +54,7 @@
                             <div class="card-word">{{ $card['content'] }}</div>
                             @if($card['audio_path'])
                                 <button class="play-audio-btn" data-audio="{{ $card['audio_path'] }}" title="Play audio">
-                                    🔊
+                                    <i class="fas fa-volume-up"></i>
                                 </button>
                             @endif
                         @endif
@@ -227,24 +227,35 @@
 
 .play-audio-btn {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0.5rem;
+    right: 0.5rem;
     background: var(--color-primary);
     color: white;
     border: none;
-    height: 1.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 0.75rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     z-index: 10;
-    width: 100%;
+}
+
+.play-audio-btn:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.play-audio-btn i {
+    font-size: 1.2rem;
 }
 
 .play-audio-btn:active {
-    background: var(--color-primary-dark);
+    transform: scale(0.95);
 }
 
 .game-completion {
