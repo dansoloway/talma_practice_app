@@ -335,7 +335,13 @@ class MatchingGame {
     
     init() {
         this.cards.forEach(card => {
-            card.addEventListener('click', () => this.flipCard(card));
+            card.addEventListener('click', (e) => {
+                // Don't flip if click was on audio button
+                if (e.target.closest('.play-audio-btn')) {
+                    return;
+                }
+                this.flipCard(card);
+            });
         });
         
         this.startTimer();
@@ -442,7 +448,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Check if click is on button or icon inside button
         const btn = e.target.closest('.play-audio-btn');
         if (btn) {
-            e.stopPropagation(); // Prevent card selection
             const audioPath = btn.dataset.audio;
             if (audioPath) {
                 const audio = new Audio(audioPath);
