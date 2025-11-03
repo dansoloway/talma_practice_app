@@ -9,7 +9,6 @@
         <div class="page-actions">
             <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="btn btn-primary">Add Vocabulary</a>
             <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="btn btn-secondary">Upload CSV</a>
-            <a href="{{ route('admin.lessons.vocabulary.auto-images', $lesson) }}" class="btn btn-success">🔍 Auto-Find Images</a>
             <a href="{{ route('admin.lessons.show', $lesson) }}" class="btn">Back to Lesson</a>
         </div>
     </div>
