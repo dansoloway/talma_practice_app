@@ -6,7 +6,7 @@
 <div class="container">
     <div class="page-header">
         <h1 class="page-title">Create Prompt for {{ $lesson->title }}</h1>
-        <a href="{{ route('admin.lessons.show', $lesson) }}" class="btn">Cancel</a>
+        <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn">Cancel</a>
     </div>
 
     <!-- CSV Import Option -->
@@ -60,7 +60,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Create Prompt</button>
-                <a href="{{ route('admin.lessons.show', $lesson) }}" class="btn">Cancel</a>
+                <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn">Cancel</a>
             </div>
             </form>
         </div>

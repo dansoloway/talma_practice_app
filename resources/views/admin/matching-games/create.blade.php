@@ -7,7 +7,7 @@
     <div class="page-header">
         <h1 class="page-title">Create Matching Game</h1>
         <div class="page-actions">
-            <a href="{{ route('admin.lessons.matching-games.index', $lesson) }}" class="btn">← Back to Matching Games</a>
+            <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn">← Back to Lesson</a>
         </div>
     </div>
 
@@ -86,7 +86,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Matching Game</button>
-            <a href="{{ route('admin.lessons.matching-games.index', $lesson) }}" class="btn">Cancel</a>
+            <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn">Cancel</a>
         </div>
     </form>
 </div>

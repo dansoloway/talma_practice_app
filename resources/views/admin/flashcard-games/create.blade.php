@@ -11,8 +11,8 @@
                     <h1 class="h3 mb-0">Create Flashcard Game</h1>
                     <p class="text-muted mb-0">{{ $lesson->title }}</p>
                 </div>
-                <a href="{{ route('admin.lessons.flashcard-games.index', $lesson) }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Flashcard Games
+                <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Lesson
                 </a>
             </div>
 
@@ -89,7 +89,7 @@
                                 </div>
 
                                 <div class="d-flex justify-content-end">
-                                    <a href="{{ route('admin.lessons.flashcard-games.index', $lesson) }}" 
+                                    <a href="{{ route('admin.lessons.manage', $lesson) }}" 
                                        class="btn btn-secondary me-2">Cancel</a>
                                     <button type="submit" class="btn btn-primary">Create Flashcard Game</button>
                                 </div>
