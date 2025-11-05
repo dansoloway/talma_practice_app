@@ -137,6 +137,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         ->name('lessons.vocabulary.remove-image');
     Route::post('lessons/{lesson}/vocabulary/generate-tts', [AdminVocabularyController::class, 'generateTts'])
         ->name('lessons.vocabulary.generate-tts');
+    Route::get('vocabulary/tts-logs', [AdminVocabularyController::class, 'viewLogs'])
+        ->name('vocabulary.tts-logs');
     
     // Auto-image finder
     Route::get('lessons/{lesson}/vocabulary/auto-images', [App\Http\Controllers\Admin\AutoImageController::class, 'index'])

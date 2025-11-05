@@ -544,4 +544,41 @@ class VocabularyController extends Controller
             optional($lock)->release();
         }
     }
+
+    /**
+     * View TTS generation logs.
+     */
+    public function viewLogs(Request $request)
+    {
+        $lines = (int) $request->input('lines', 100); // Default to last 100 lines
+        $lines = min($lines, 1000); // Cap at 1000 lines
+        
+        $logFile = storage_path('logs/tts_generation.log');
+        $logContent = '';
+        
+        if (file_exists($logFile)) {
+            // Read last N lines from log file
+            $file = new \SplFileObject($logFile, 'r');
+            $file->seek(PHP_INT_MAX);
+            $totalLines = $file->key() + 1;
+            
+            $startLine = max(0, $totalLines - $lines);
+            
+            $logLines = [];
+            $file->seek($startLine);
+            while (!$file->eof()) {
+                $line = $file->current();
+                if ($line !== false) {
+                    $logLines[] = $line;
+                }
+                $file->next();
+            }
+            
+            $logContent = implode('', $logLines);
+        } else {
+            $logContent = 'Log file not found: ' . $logFile;
+        }
+        
+        return view('admin.vocabulary.logs', compact('logContent', 'lines'));
+    }
 }
