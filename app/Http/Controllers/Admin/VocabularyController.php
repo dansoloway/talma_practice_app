@@ -318,9 +318,15 @@ class VocabularyController extends Controller
             if ($response->successful()) {
                 $filename = 'vocabulary_' . time() . '_' . uniqid() . '.mp3';
                 $relativePath = 'vocabulary-audio/' . $filename;
+                $fullPath = storage_path("app/public/{$relativePath}");
                 
-                // Use Storage facade which handles permissions and directory creation better
-                \Storage::disk('public')->put($relativePath, $response->body());
+                // Create directory if needed (same as prompts do)
+                $dir = dirname($fullPath);
+                if (!file_exists($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+                
+                file_put_contents($fullPath, $response->body());
                 
                 // Store path with /storage/ prefix like prompts do for consistency
                 $vocabulary->update(['word_audio_path' => "/storage/{$relativePath}"]);
