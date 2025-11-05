@@ -440,22 +440,31 @@ class VocabularyController extends Controller
                 $vocabulary = $lesson->vocabulary()
                     ->orderBy('id')
                     ->get()
-                    ->first(function($vocab) {
+                    ->first(function($vocab) use ($ttsLogFile) {
                         if (!$vocab->word_audio_path) {
+                            file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: No path, needs generation\n", FILE_APPEND);
                             return true; // No path, needs generation
                         }
                         // Check if file exists in new location
                         $relativePath = str_replace('/storage/', '', ltrim($vocab->word_audio_path, '/'));
                         // If path is in old location (vocabulary-audio/), regenerate it
                         if (strpos($relativePath, 'vocabulary-audio/') === 0) {
+                            file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Old location '{$relativePath}', needs migration\n", FILE_APPEND);
                             return true; // Old location, migrate to new location
                         }
                         // If path is in new location (tts/vocabulary/), check if file exists
-                        // If file exists in new location, skip it (already processed)
                         if (strpos($relativePath, 'tts/vocabulary/') === 0) {
-                            return !\Storage::disk('public')->exists($relativePath); // Only process if file missing
+                            $exists = \Storage::disk('public')->exists($relativePath);
+                            if ($exists) {
+                                file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: File exists in new location '{$relativePath}', SKIPPING\n", FILE_APPEND);
+                                return false; // File exists, skip it
+                            } else {
+                                file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Path in new location but file missing '{$relativePath}', needs generation\n", FILE_APPEND);
+                                return true; // File missing, needs generation
+                            }
                         }
                         // For any other path format, regenerate it
+                        file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Unknown path format '{$relativePath}', regenerating\n", FILE_APPEND);
                         return true;
                     });
             } else {
