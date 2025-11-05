@@ -375,10 +375,23 @@ class VocabularyController extends Controller
                 \Log::info("Successfully saved audio file, bytes written: {$saved}");
                 file_put_contents($ttsLogFile, "[" . now() . "] Successfully saved audio file, bytes written: {$saved}\n", FILE_APPEND);
                 
+                // Verify file was actually written and is readable
+                if (!file_exists($fullPath) || !is_readable($fullPath)) {
+                    $errorMsg = "File was written but is not readable or doesn't exist: {$fullPath}";
+                    \Log::error($errorMsg);
+                    file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
+                    throw new \Exception($errorMsg);
+                }
+                
+                $fileSize = filesize($fullPath);
+                \Log::info("Verified file exists, size: {$fileSize} bytes");
+                file_put_contents($ttsLogFile, "[" . now() . "] Verified file exists, size: {$fileSize} bytes\n", FILE_APPEND);
+                
                 // Store path with /storage/ prefix like prompts do for consistency
+                // Only update database if file was successfully written and verified
                 $vocabulary->update(['word_audio_path' => "/storage/{$relativePath}"]);
                 
-                $successMsg = "Successfully generated audio for: '{$vocabulary->english_word}' (path: /storage/{$relativePath})";
+                $successMsg = "Successfully generated and verified audio for: '{$vocabulary->english_word}' (path: /storage/{$relativePath}, size: {$fileSize} bytes)";
                 \Log::info($successMsg);
                 file_put_contents($ttsLogFile, "[" . now() . "] SUCCESS: {$successMsg}\n", FILE_APPEND);
             } else {
@@ -417,36 +430,53 @@ class VocabularyController extends Controller
             // Always process exactly 1 item to avoid duplicates/repeats
             $forceRecreate = $request->input('force', false);
             
-            // First, try to get items without audio_path or where audio file doesn't exist
-            $vocabulary = $lesson->vocabulary()
-                ->where(function($query) {
-                    $query->whereNull('word_audio_path')
-                          ->orWhere('word_audio_path', '');
-                })
-                ->orderBy('id')
-                ->first();
+            // Get vocabulary items that need audio generation
+            // Priority: 1) No path, 2) Path exists but file missing, 3) Force recreate (all items)
+            $vocabulary = null;
             
-            // If no items without audio, check for items where the file doesn't exist
-            if (!$vocabulary) {
+            if ($forceRecreate) {
+                // Force recreate: process all items, starting with oldest
+                // Check if item already has audio in new location (tts/vocabulary/)
                 $vocabulary = $lesson->vocabulary()
                     ->orderBy('id')
                     ->get()
                     ->first(function($vocab) {
                         if (!$vocab->word_audio_path) {
-                            return true;
+                            return true; // No path, needs generation
                         }
-                        // Check if file exists - handle both old and new path formats
+                        // Check if file exists in new location
                         $relativePath = str_replace('/storage/', '', ltrim($vocab->word_audio_path, '/'));
+                        // If path is in old location (vocabulary-audio/), regenerate it
+                        if (strpos($relativePath, 'vocabulary-audio/') === 0) {
+                            return true; // Old location, migrate to new location
+                        }
+                        // If path is in new location, check if file exists
                         return !\Storage::disk('public')->exists($relativePath);
                     });
-            }
-            
-            // If forcing recreation and all items have valid audio files,
-            // get the first item to regenerate
-            if ($forceRecreate && !$vocabulary) {
-                $vocabulary = $lesson->vocabulary()->orderBy('id')->first();
-                // Don't clear the path - we'll overwrite it with the new path
-                // The old file will remain but won't be referenced
+            } else {
+                // Normal mode: only process items without audio or where file is missing
+                $vocabulary = $lesson->vocabulary()
+                    ->where(function($query) {
+                        $query->whereNull('word_audio_path')
+                              ->orWhere('word_audio_path', '');
+                    })
+                    ->orderBy('id')
+                    ->first();
+                
+                // If no items without path, check for missing files
+                if (!$vocabulary) {
+                    $vocabulary = $lesson->vocabulary()
+                        ->orderBy('id')
+                        ->get()
+                        ->first(function($vocab) {
+                            if (!$vocab->word_audio_path) {
+                                return true;
+                            }
+                            // Check if file exists - handle both old and new path formats
+                            $relativePath = str_replace('/storage/', '', ltrim($vocab->word_audio_path, '/'));
+                            return !\Storage::disk('public')->exists($relativePath);
+                        });
+                }
             }
 
             $processed = 0;
@@ -470,18 +500,38 @@ class VocabularyController extends Controller
                 }
             }
 
-            // Count remaining items (items without audio_path or where file doesn't exist)
-            $totalRemaining = $lesson->vocabulary()
-                ->get()
-                ->filter(function($vocab) {
-                    if (!$vocab->word_audio_path) {
-                        return true; // No path, needs generation
-                    }
-                    // Check if file actually exists
-                    $relativePath = str_replace('/storage/', '', ltrim($vocab->word_audio_path, '/'));
-                    return !\Storage::disk('public')->exists($relativePath);
-                })
-                ->count();
+            // Count remaining items
+            if ($forceRecreate) {
+                // Count items that need regeneration (old location or missing files)
+                $totalRemaining = $lesson->vocabulary()
+                    ->get()
+                    ->filter(function($vocab) {
+                        if (!$vocab->word_audio_path) {
+                            return true; // No path, needs generation
+                        }
+                        $relativePath = str_replace('/storage/', '', ltrim($vocab->word_audio_path, '/'));
+                        // If in old location, needs migration
+                        if (strpos($relativePath, 'vocabulary-audio/') === 0) {
+                            return true;
+                        }
+                        // Check if file exists in new location
+                        return !\Storage::disk('public')->exists($relativePath);
+                    })
+                    ->count();
+            } else {
+                // Count items without audio_path or where file doesn't exist
+                $totalRemaining = $lesson->vocabulary()
+                    ->get()
+                    ->filter(function($vocab) {
+                        if (!$vocab->word_audio_path) {
+                            return true; // No path, needs generation
+                        }
+                        // Check if file actually exists
+                        $relativePath = str_replace('/storage/', '', ltrim($vocab->word_audio_path, '/'));
+                        return !\Storage::disk('public')->exists($relativePath);
+                    })
+                    ->count();
+            }
 
             return response()->json([
                 'success' => true,
