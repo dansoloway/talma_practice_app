@@ -72,9 +72,8 @@
                             <td>
                                 @if($item->word_audio_path)
                                     @php
-                                        // Extract relative path for Storage check (remove /storage/ prefix if present)
-                                        $relativePath = str_replace('/storage/', '', ltrim($item->word_audio_path, '/'));
-                                        $audioExists = \Illuminate\Support\Facades\Storage::disk('public')->exists($relativePath);
+                                        // Use the hasAudioFile method from the model
+                                        $audioExists = $item->hasAudioFile();
                                     @endphp
                                     @if($audioExists)
                                         <span class="status active" title="Audio file exists">

@@ -417,7 +417,7 @@ class VocabularyController extends Controller
             // Always process exactly 1 item to avoid duplicates/repeats
             $forceRecreate = $request->input('force', false);
             
-            // First, try to get items without audio_path
+            // First, try to get items without audio_path or where audio file doesn't exist
             $vocabulary = $lesson->vocabulary()
                 ->where(function($query) {
                     $query->whereNull('word_audio_path')
@@ -426,28 +426,27 @@ class VocabularyController extends Controller
                 ->orderBy('id')
                 ->first();
             
-            // If forcing recreation and all items have audio_path, 
-            // clear the first item's audio_path to start recreation
-            if ($forceRecreate && !$vocabulary) {
-                $vocabulary = $lesson->vocabulary()->orderBy('id')->first();
-                if ($vocabulary && $vocabulary->word_audio_path) {
-                    // Clear audio_path to force regeneration
-                    // Also delete the file if it exists
-                    $audioPath = storage_path('app/public/' . $vocabulary->word_audio_path);
-                    if (file_exists($audioPath)) {
-                        @unlink($audioPath);
-                    }
-                    $vocabulary->update(['word_audio_path' => null]);
-                }
+            // If no items without audio, check for items where the file doesn't exist
+            if (!$vocabulary) {
+                $vocabulary = $lesson->vocabulary()
+                    ->orderBy('id')
+                    ->get()
+                    ->first(function($vocab) {
+                        if (!$vocab->word_audio_path) {
+                            return true;
+                        }
+                        // Check if file exists - handle both old and new path formats
+                        $relativePath = str_replace('/storage/', '', ltrim($vocab->word_audio_path, '/'));
+                        return !\Storage::disk('public')->exists($relativePath);
+                    });
             }
             
-            // If forcing recreation and vocabulary exists, also clear its audio_path
-            if ($forceRecreate && $vocabulary && $vocabulary->word_audio_path) {
-                $audioPath = storage_path('app/public/' . $vocabulary->word_audio_path);
-                if (file_exists($audioPath)) {
-                    @unlink($audioPath);
-                }
-                $vocabulary->update(['word_audio_path' => null]);
+            // If forcing recreation and all items have valid audio files,
+            // get the first item to regenerate
+            if ($forceRecreate && !$vocabulary) {
+                $vocabulary = $lesson->vocabulary()->orderBy('id')->first();
+                // Don't clear the path - we'll overwrite it with the new path
+                // The old file will remain but won't be referenced
             }
 
             $processed = 0;
@@ -471,11 +470,16 @@ class VocabularyController extends Controller
                 }
             }
 
-            // Count remaining items (items without audio_path)
+            // Count remaining items (items without audio_path or where file doesn't exist)
             $totalRemaining = $lesson->vocabulary()
-                ->where(function($query) {
-                    $query->whereNull('word_audio_path')
-                          ->orWhere('word_audio_path', '');
+                ->get()
+                ->filter(function($vocab) {
+                    if (!$vocab->word_audio_path) {
+                        return true; // No path, needs generation
+                    }
+                    // Check if file actually exists
+                    $relativePath = str_replace('/storage/', '', ltrim($vocab->word_audio_path, '/'));
+                    return !\Storage::disk('public')->exists($relativePath);
                 })
                 ->count();
 

@@ -67,7 +67,22 @@ class Vocabulary extends Model
         }
 
         // Otherwise, assume it's a relative path without /storage/ prefix
-        // (for backward compatibility with old paths)
+        // (for backward compatibility with old paths like vocabulary-audio/vocab_10.mp3)
         return asset('storage/' . $this->word_audio_path);
+    }
+
+    /**
+     * Check if the audio file actually exists on disk.
+     */
+    public function hasAudioFile(): bool
+    {
+        if (!$this->word_audio_path) {
+            return false;
+        }
+
+        // Extract relative path for Storage check (remove /storage/ prefix if present)
+        $relativePath = str_replace('/storage/', '', ltrim($this->word_audio_path, '/'));
+        
+        return \Illuminate\Support\Facades\Storage::disk('public')->exists($relativePath);
     }
 }
