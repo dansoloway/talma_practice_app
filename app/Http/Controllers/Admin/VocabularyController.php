@@ -448,10 +448,15 @@ class VocabularyController extends Controller
                             file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: No path, needs generation\n", FILE_APPEND);
                             return true; // No path, needs generation
                         }
-                        // Normalize path: remove /storage/ prefix if present, and leading slash
-                        $relativePath = ltrim($vocab->word_audio_path, '/');
-                        $relativePath = str_replace('/storage/', '', $relativePath);
-                        $relativePath = str_replace('storage/', '', $relativePath); // Handle both /storage/ and storage/
+                        // Normalize path: remove /storage/ or storage/ prefix if present
+                        $originalPath = $vocab->word_audio_path;
+                        $relativePath = $originalPath;
+                        // Remove leading slash if present
+                        $relativePath = ltrim($relativePath, '/');
+                        // Remove storage/ prefix (handles both /storage/ and storage/)
+                        $relativePath = preg_replace('#^storage/#', '', $relativePath);
+                        
+                        file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Original path='{$originalPath}', normalized='{$relativePath}'\n", FILE_APPEND);
                         
                         // If path is in old location (vocabulary-audio/), regenerate it
                         if (strpos($relativePath, 'vocabulary-audio/') === 0) {
@@ -470,7 +475,7 @@ class VocabularyController extends Controller
                             }
                         }
                         // For any other path format, regenerate it
-                        file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Unknown path format '{$relativePath}' (original: '{$vocab->word_audio_path}'), regenerating\n", FILE_APPEND);
+                        file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Unknown path format '{$relativePath}' (original: '{$originalPath}'), regenerating\n", FILE_APPEND);
                         return true;
                     });
             } else {
@@ -526,10 +531,12 @@ class VocabularyController extends Controller
                         if (!$vocab->word_audio_path) {
                             return true; // No path, needs generation
                         }
-                        // Normalize path: remove /storage/ prefix if present, and leading slash
-                        $relativePath = ltrim($vocab->word_audio_path, '/');
-                        $relativePath = str_replace('/storage/', '', $relativePath);
-                        $relativePath = str_replace('storage/', '', $relativePath); // Handle both /storage/ and storage/
+                        // Normalize path: remove /storage/ or storage/ prefix if present
+                        $relativePath = $vocab->word_audio_path;
+                        // Remove leading slash if present
+                        $relativePath = ltrim($relativePath, '/');
+                        // Remove storage/ prefix (handles both /storage/ and storage/)
+                        $relativePath = preg_replace('#^storage/#', '', $relativePath);
                         
                         // If in old location, needs migration
                         if (strpos($relativePath, 'vocabulary-audio/') === 0) {
