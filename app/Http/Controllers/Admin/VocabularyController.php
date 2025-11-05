@@ -450,8 +450,13 @@ class VocabularyController extends Controller
                         if (strpos($relativePath, 'vocabulary-audio/') === 0) {
                             return true; // Old location, migrate to new location
                         }
-                        // If path is in new location, check if file exists
-                        return !\Storage::disk('public')->exists($relativePath);
+                        // If path is in new location (tts/vocabulary/), check if file exists
+                        // If file exists in new location, skip it (already processed)
+                        if (strpos($relativePath, 'tts/vocabulary/') === 0) {
+                            return !\Storage::disk('public')->exists($relativePath); // Only process if file missing
+                        }
+                        // For any other path format, regenerate it
+                        return true;
                     });
             } else {
                 // Normal mode: only process items without audio or where file is missing
@@ -514,8 +519,12 @@ class VocabularyController extends Controller
                         if (strpos($relativePath, 'vocabulary-audio/') === 0) {
                             return true;
                         }
-                        // Check if file exists in new location
-                        return !\Storage::disk('public')->exists($relativePath);
+                        // If in new location (tts/vocabulary/), only count if file doesn't exist
+                        if (strpos($relativePath, 'tts/vocabulary/') === 0) {
+                            return !\Storage::disk('public')->exists($relativePath);
+                        }
+                        // For any other path format, regenerate it
+                        return true;
                     })
                     ->count();
             } else {
