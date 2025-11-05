@@ -72,7 +72,7 @@
                             <td>
                                 @if($item->word_audio_path)
                                     @php
-                                        $audioExists = file_exists(storage_path('app/public/' . $item->word_audio_path));
+                                        $audioExists = \Illuminate\Support\Facades\Storage::disk('public')->exists($item->word_audio_path);
                                     @endphp
                                     @if($audioExists)
                                         <span class="status active" title="Audio file exists">
