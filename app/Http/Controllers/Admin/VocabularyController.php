@@ -320,13 +320,45 @@ class VocabularyController extends Controller
                 $relativePath = 'vocabulary-audio/' . $filename;
                 $fullPath = storage_path("app/public/{$relativePath}");
                 
+                \Log::info("Saving vocabulary audio file to: {$fullPath}");
+                file_put_contents($ttsLogFile, "[" . now() . "] Attempting to save file to: {$fullPath}\n", FILE_APPEND);
+                
                 // Create directory if needed (same as prompts do)
                 $dir = dirname($fullPath);
                 if (!file_exists($dir)) {
-                    mkdir($dir, 0755, true);
+                    \Log::info("Creating directory: {$dir}");
+                    file_put_contents($ttsLogFile, "[" . now() . "] Creating directory: {$dir}\n", FILE_APPEND);
+                    
+                    $mkdirResult = @mkdir($dir, 0755, true);
+                    if (!$mkdirResult) {
+                        $error = error_get_last();
+                        $errorMsg = "Failed to create directory {$dir}: " . ($error['message'] ?? 'Unknown error');
+                        \Log::error($errorMsg);
+                        file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
+                        throw new \Exception($errorMsg);
+                    }
+                    \Log::info("Successfully created directory: {$dir}");
+                    file_put_contents($ttsLogFile, "[" . now() . "] Successfully created directory: {$dir}\n", FILE_APPEND);
+                } else {
+                    \Log::info("Directory already exists: {$dir}");
+                    file_put_contents($ttsLogFile, "[" . now() . "] Directory already exists: {$dir}\n", FILE_APPEND);
                 }
                 
-                file_put_contents($fullPath, $response->body());
+                $audioData = $response->body();
+                \Log::info("Audio data size: " . strlen($audioData) . " bytes");
+                file_put_contents($ttsLogFile, "[" . now() . "] Audio data size: " . strlen($audioData) . " bytes\n", FILE_APPEND);
+                
+                $saved = @file_put_contents($fullPath, $audioData);
+                if ($saved === false) {
+                    $error = error_get_last();
+                    $errorMsg = "Failed to save audio file to {$fullPath}: " . ($error['message'] ?? 'Unknown error');
+                    \Log::error($errorMsg);
+                    file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
+                    throw new \Exception($errorMsg);
+                }
+                
+                \Log::info("Successfully saved audio file, bytes written: {$saved}");
+                file_put_contents($ttsLogFile, "[" . now() . "] Successfully saved audio file, bytes written: {$saved}\n", FILE_APPEND);
                 
                 // Store path with /storage/ prefix like prompts do for consistency
                 $vocabulary->update(['word_audio_path' => "/storage/{$relativePath}"]);
