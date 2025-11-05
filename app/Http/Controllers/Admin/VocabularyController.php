@@ -430,6 +430,9 @@ class VocabularyController extends Controller
             // Always process exactly 1 item to avoid duplicates/repeats
             $forceRecreate = $request->input('force', false);
             
+            // Create dedicated TTS log file (needed for logging in selection logic)
+            $ttsLogFile = storage_path('logs/tts_generation.log');
+            
             // Get vocabulary items that need audio generation
             // Priority: 1) No path, 2) Path exists but file missing, 3) Force recreate (all items)
             $vocabulary = null;
@@ -495,9 +498,6 @@ class VocabularyController extends Controller
 
             $processed = 0;
             $errors = [];
-            
-            // Create dedicated TTS log file
-            $ttsLogFile = storage_path('logs/tts_generation.log');
             
             if ($vocabulary) {
                 file_put_contents($ttsLogFile, "[" . now() . "] Starting single vocabulary TTS for lesson {$lesson->id} | vocab_id={$vocabulary->id} word='{$vocabulary->english_word}'\n", FILE_APPEND);
