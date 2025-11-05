@@ -317,13 +317,21 @@ class VocabularyController extends Controller
 
             if ($response->successful()) {
                 $filename = 'vocabulary_' . time() . '_' . uniqid() . '.mp3';
-                $path = 'vocabulary-audio/' . $filename;
+                $relativePath = 'vocabulary-audio/' . $filename;
+                $fullPath = storage_path("app/public/{$relativePath}");
                 
-                \Storage::disk('public')->put($path, $response->body());
+                // Create directory if needed
+                $dir = dirname($fullPath);
+                if (!file_exists($dir)) {
+                    mkdir($dir, 0755, true);
+                }
                 
-                $vocabulary->update(['word_audio_path' => $path]);
+                file_put_contents($fullPath, $response->body());
                 
-                $successMsg = "Successfully generated audio for: '{$vocabulary->english_word}' (path: {$path})";
+                // Store path with /storage/ prefix like prompts do for consistency
+                $vocabulary->update(['word_audio_path' => "/storage/{$relativePath}"]);
+                
+                $successMsg = "Successfully generated audio for: '{$vocabulary->english_word}' (path: /storage/{$relativePath})";
                 \Log::info($successMsg);
                 file_put_contents($ttsLogFile, "[" . now() . "] SUCCESS: {$successMsg}\n", FILE_APPEND);
             } else {

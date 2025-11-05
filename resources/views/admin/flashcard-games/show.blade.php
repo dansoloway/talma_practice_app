@@ -95,7 +95,7 @@
                                                 <div class="vocab-word">{{ $vocab->english_word }}</div>
                                                 @if($vocab->word_audio_path)
                                                     <button class="btn btn-sm btn-outline-primary" 
-                                                            onclick="playAudio('{{ asset('storage/' . $vocab->word_audio_path) }}')">
+                                                            onclick="playAudio('{{ $vocab->word_audio_url ?? asset('storage/' . $vocab->word_audio_path) }}')">
                                                         <i class="fas fa-volume-up"></i>
                                                     </button>
                                                 @endif

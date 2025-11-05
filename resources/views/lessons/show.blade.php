@@ -58,7 +58,7 @@
                             @endif
                             <div class="vocab-content">
                                 @if($vocab->word_audio_path)
-                                    <button class="vocab-audio-btn" onclick="playVocabAudio('{{ asset('storage/' . $vocab->word_audio_path) }}')" title="Listen to word">
+                                    <button class="vocab-audio-btn" onclick="playVocabAudio('{{ $vocab->word_audio_url }}')" title="Listen to word">
                                         <i class="fas fa-volume-up"></i>
                                     </button>
                                 @endif
