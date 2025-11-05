@@ -317,7 +317,8 @@ class VocabularyController extends Controller
 
             if ($response->successful()) {
                 $filename = 'vocabulary_' . time() . '_' . uniqid() . '.mp3';
-                $relativePath = 'vocabulary-audio/' . $filename;
+                // Use tts/vocabulary/ instead of vocabulary-audio/ to inherit working permissions from tts directory
+                $relativePath = 'tts/vocabulary/' . $filename;
                 $fullPath = storage_path("app/public/{$relativePath}");
                 
                 \Log::info("Saving vocabulary audio file to: {$fullPath}");
@@ -330,18 +331,32 @@ class VocabularyController extends Controller
                     file_put_contents($ttsLogFile, "[" . now() . "] Creating directory: {$dir}\n", FILE_APPEND);
                     
                     $mkdirResult = @mkdir($dir, 0755, true);
-                    if (!$mkdirResult) {
+                    if (!$mkdirResult && !file_exists($dir)) {
+                        // Directory creation failed and still doesn't exist
                         $error = error_get_last();
                         $errorMsg = "Failed to create directory {$dir}: " . ($error['message'] ?? 'Unknown error');
                         \Log::error($errorMsg);
                         file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
                         throw new \Exception($errorMsg);
+                    } elseif (!$mkdirResult && file_exists($dir)) {
+                        // Directory creation "failed" but directory actually exists (race condition or permission issue)
+                        \Log::info("Directory creation returned false but directory exists: {$dir}");
+                        file_put_contents($ttsLogFile, "[" . now() . "] Directory exists despite mkdir failure: {$dir}\n", FILE_APPEND);
+                    } else {
+                        \Log::info("Successfully created directory: {$dir}");
+                        file_put_contents($ttsLogFile, "[" . now() . "] Successfully created directory: {$dir}\n", FILE_APPEND);
                     }
-                    \Log::info("Successfully created directory: {$dir}");
-                    file_put_contents($ttsLogFile, "[" . now() . "] Successfully created directory: {$dir}\n", FILE_APPEND);
                 } else {
                     \Log::info("Directory already exists: {$dir}");
                     file_put_contents($ttsLogFile, "[" . now() . "] Directory already exists: {$dir}\n", FILE_APPEND);
+                }
+                
+                // Check if directory is writable
+                if (!is_writable($dir)) {
+                    $errorMsg = "Directory is not writable: {$dir}";
+                    \Log::error($errorMsg);
+                    file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
+                    throw new \Exception($errorMsg);
                 }
                 
                 $audioData = $response->body();
