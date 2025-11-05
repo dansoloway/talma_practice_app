@@ -142,6 +142,9 @@ class VocabularyController extends Controller
      */
     public function processCsv(Request $request, Lesson $lesson)
     {
+        // Increase execution time for TTS generation
+        set_time_limit(300); // 5 minutes
+        
         $request->validate([
             'csv_file' => 'required|file|mimes:csv,txt|max:2048',
             'import_mode' => 'required|in:add,replace',
@@ -150,6 +153,10 @@ class VocabularyController extends Controller
         $file = $request->file('csv_file');
         $csvData = array_map('str_getcsv', file($file->getRealPath()));
         $importMode = $request->input('import_mode');
+        
+        \Log::info("Starting CSV import for lesson {$lesson->id} in {$importMode} mode");
+        $ttsLogFile = storage_path('logs/tts_generation.log');
+        file_put_contents($ttsLogFile, "[" . now() . "] Starting CSV vocabulary import for lesson {$lesson->id} in {$importMode} mode\n", FILE_APPEND);
         
         // If replace mode, delete existing vocabulary
         if ($importMode === 'replace') {
@@ -188,7 +195,7 @@ class VocabularyController extends Controller
             }
 
             try {
-                Vocabulary::create([
+                $vocabulary = Vocabulary::create([
                     'lesson_id' => $lesson->id,
                     'english_word' => $englishWord,
                     'hebrew_translation' => isset($row[1]) ? trim($row[1]) : null,
@@ -196,10 +203,16 @@ class VocabularyController extends Controller
                     'sort_order' => $imported + 1,
                     'is_active' => true,
                 ]);
+                
+                // Generate TTS audio for the vocabulary word
+                \Log::info("Generating TTS for vocabulary word: {$englishWord} (ID: {$vocabulary->id})");
+                $this->generateVocabularyAudio($vocabulary);
+                
                 $processedWords[] = strtolower($englishWord);
                 $imported++;
             } catch (\Exception $e) {
                 $errors[] = "Row " . ($index + 1) . ": " . $e->getMessage();
+                \Log::error("Failed to create vocabulary from CSV row " . ($index + 1) . ": " . $e->getMessage());
             }
         }
 
@@ -274,9 +287,17 @@ class VocabularyController extends Controller
     {
         $apiKey = config('services.elevenlabs.api_key') ?: env('ELEVENLABS_API_KEY');
         if (!$apiKey) {
-            \Log::warning('ELEVENLABS_API_KEY not found, skipping audio generation for: ' . $vocabulary->english_word);
+            $errorMsg = 'ELEVENLABS_API_KEY not found, skipping audio generation for: ' . $vocabulary->english_word;
+            \Log::warning($errorMsg);
+            // Also log to TTS log file
+            $ttsLogFile = storage_path('logs/tts_generation.log');
+            file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
             return;
         }
+
+        // Create dedicated TTS log file entry
+        $ttsLogFile = storage_path('logs/tts_generation.log');
+        file_put_contents($ttsLogFile, "[" . now() . "] Starting TTS generation for vocabulary word: '{$vocabulary->english_word}' (ID: {$vocabulary->id})\n", FILE_APPEND);
 
         try {
             $voiceId = 'pNInz6obpgDQGcFmaJgB'; // Default voice ID
@@ -285,7 +306,7 @@ class VocabularyController extends Controller
                 'Accept' => 'audio/mpeg',
                 'Content-Type' => 'application/json',
                 'xi-api-key' => $apiKey,
-            ])->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
+            ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
                 'text' => $vocabulary->english_word,
                 'model_id' => 'eleven_monolingual_v1',
                 'voice_settings' => [
@@ -301,10 +322,117 @@ class VocabularyController extends Controller
                 \Storage::disk('public')->put($path, $response->body());
                 
                 $vocabulary->update(['word_audio_path' => $path]);
-                \Log::info('Generated audio for: ' . $vocabulary->english_word);
+                
+                $successMsg = "Successfully generated audio for: '{$vocabulary->english_word}' (path: {$path})";
+                \Log::info($successMsg);
+                file_put_contents($ttsLogFile, "[" . now() . "] SUCCESS: {$successMsg}\n", FILE_APPEND);
+            } else {
+                $errorMsg = "TTS API Error for '{$vocabulary->english_word}': HTTP {$response->status()}";
+                \Log::error($errorMsg);
+                file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
             }
         } catch (\Exception $e) {
-            \Log::error('Failed to generate audio for ' . $vocabulary->english_word . ': ' . $e->getMessage());
+            $errorMsg = "Failed to generate audio for '{$vocabulary->english_word}': " . $e->getMessage();
+            \Log::error($errorMsg);
+            \Log::error("Stack trace: " . $e->getTraceAsString());
+            file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
+            file_put_contents($ttsLogFile, "[" . now() . "] Stack trace: " . $e->getTraceAsString() . "\n", FILE_APPEND);
+        }
+    }
+
+    /**
+     * Generate TTS audio for vocabulary words via AJAX (one at a time).
+     */
+    public function generateTts(Request $request, Lesson $lesson)
+    {
+        // Per-lesson lock to prevent overlapping requests
+        $lock = \Illuminate\Support\Facades\Cache::lock('lesson:' . $lesson->id . ':vocab_tts', 5);
+        if (!$lock->get()) {
+            return response()->json([
+                'success' => true,
+                'processed' => 0,
+                'errors' => [],
+                'remaining' => $lesson->vocabulary()->whereNull('word_audio_path')->count(),
+                'completed' => false,
+                'locked' => true,
+            ]);
+        }
+
+        try {
+            // Always process exactly 1 item to avoid duplicates/repeats
+            $forceRecreate = $request->input('force', false);
+            
+            // First, try to get items without audio_path
+            $vocabulary = $lesson->vocabulary()
+                ->where(function($query) {
+                    $query->whereNull('word_audio_path')
+                          ->orWhere('word_audio_path', '');
+                })
+                ->orderBy('id')
+                ->first();
+            
+            // If forcing recreation and all items have audio_path, 
+            // clear the first item's audio_path to start recreation
+            if ($forceRecreate && !$vocabulary) {
+                $vocabulary = $lesson->vocabulary()->orderBy('id')->first();
+                if ($vocabulary && $vocabulary->word_audio_path) {
+                    // Clear audio_path to force regeneration
+                    // Also delete the file if it exists
+                    $audioPath = storage_path('app/public/' . $vocabulary->word_audio_path);
+                    if (file_exists($audioPath)) {
+                        @unlink($audioPath);
+                    }
+                    $vocabulary->update(['word_audio_path' => null]);
+                }
+            }
+            
+            // If forcing recreation and vocabulary exists, also clear its audio_path
+            if ($forceRecreate && $vocabulary && $vocabulary->word_audio_path) {
+                $audioPath = storage_path('app/public/' . $vocabulary->word_audio_path);
+                if (file_exists($audioPath)) {
+                    @unlink($audioPath);
+                }
+                $vocabulary->update(['word_audio_path' => null]);
+            }
+
+            $processed = 0;
+            $errors = [];
+            
+            // Create dedicated TTS log file
+            $ttsLogFile = storage_path('logs/tts_generation.log');
+            
+            if ($vocabulary) {
+                file_put_contents($ttsLogFile, "[" . now() . "] Starting single vocabulary TTS for lesson {$lesson->id} | vocab_id={$vocabulary->id} word='{$vocabulary->english_word}'\n", FILE_APPEND);
+                try {
+                    $this->generateVocabularyAudio($vocabulary);
+                    $processed = 1;
+                    \Log::info("Successfully generated word TTS for '{$vocabulary->english_word}' (Vocabulary ID: {$vocabulary->id})");
+                } catch (\Exception $e) {
+                    $errorMsg = "Failed to generate TTS for '{$vocabulary->english_word}': " . $e->getMessage();
+                    \Log::error($errorMsg);
+                    \Log::error("Stack trace: " . $e->getTraceAsString());
+                    file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
+                    $errors[] = $errorMsg;
+                }
+            }
+
+            // Count remaining items (items without audio_path)
+            $totalRemaining = $lesson->vocabulary()
+                ->where(function($query) {
+                    $query->whereNull('word_audio_path')
+                          ->orWhere('word_audio_path', '');
+                })
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'processed' => $processed,
+                'errors' => $errors,
+                'remaining' => max(0, $totalRemaining),
+                'completed' => $totalRemaining <= 0
+            ]);
+        } finally {
+            optional($lock)->release();
         }
     }
 }

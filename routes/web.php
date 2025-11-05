@@ -135,6 +135,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         ->name('lessons.vocabulary.update-image');
     Route::put('lessons/{lesson}/vocabulary/{vocabulary}/remove-image', [AdminVocabularyController::class, 'removeImage'])
         ->name('lessons.vocabulary.remove-image');
+    Route::post('lessons/{lesson}/vocabulary/generate-tts', [AdminVocabularyController::class, 'generateTts'])
+        ->name('lessons.vocabulary.generate-tts');
     
     // Auto-image finder
     Route::get('lessons/{lesson}/vocabulary/auto-images', [App\Http\Controllers\Admin\AutoImageController::class, 'index'])
