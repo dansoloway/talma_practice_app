@@ -80,8 +80,9 @@ class Vocabulary extends Model
             return false;
         }
 
-        // Extract relative path for Storage check (remove /storage/ prefix if present)
-        $relativePath = str_replace('/storage/', '', ltrim($this->word_audio_path, '/'));
+        // Extract relative path for Storage check (remove /storage or storage prefix if present)
+        $normalizedPath = ltrim($this->word_audio_path, '/');
+        $relativePath = preg_replace('#^storage/#', '', $normalizedPath);
         
         return \Illuminate\Support\Facades\Storage::disk('public')->exists($relativePath);
     }
