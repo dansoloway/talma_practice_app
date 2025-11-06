@@ -76,8 +76,11 @@ class GenerateVocabularyAudio extends Command
             'text' => $text,
             'model_id' => 'eleven_monolingual_v1',
             'voice_settings' => [
-                'stability' => 0.5,
-                'similarity_boost' => 0.5
+                'stability' => 0.65,
+                'similarity_boost' => 0.6,
+                'style' => 0.2,
+                'speed' => 0.85,
+                'use_speaker_boost' => false,
             ]
         ]);
 
