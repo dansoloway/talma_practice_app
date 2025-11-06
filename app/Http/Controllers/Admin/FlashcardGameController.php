@@ -188,14 +188,23 @@ class FlashcardGameController extends Controller
 
     private function generateGameData(FlashcardGame $flashcardGame, $vocabulary, $mode = 'image')
     {
-        $gameTypes = $flashcardGame->game_types;
-        $cardsPerGame = $flashcardGame->cards_per_game;
+        $availableModes = $this->getAvailableModes($vocabulary);
+        $gameTypes = $this->determineAvailableGameTypes($vocabulary);
+        if (empty($gameTypes)) {
+            $gameTypes = array_keys(FlashcardGame::getGameTypes());
+        }
+        $cardsPerGame = max(1, (int) $flashcardGame->cards_per_game);
         
         // Filter vocabulary based on what's available for the selected mode
         $availableVocab = $this->filterVocabularyForMode($vocabulary, $mode);
         
         // Select random vocabulary items
         $selectedVocab = $availableVocab->shuffle()->take($cardsPerGame);
+        if ($selectedVocab->isEmpty()) {
+            $selectedVocab = $availableVocab;
+        }
+
+        $cardsPerGame = max(1, $selectedVocab->count());
         
         $cards = [];
         
@@ -205,8 +214,8 @@ class FlashcardGameController extends Controller
                 'english_word' => $vocab->english_word,
                 'hebrew_translation' => $vocab->hebrew_translation,
                 'arabic_translation' => $vocab->arabic_translation,
-                'image_path' => $vocab->image_path ? asset('storage/' . $vocab->image_path) : null,
-                'audio_path' => $vocab->word_audio_path ? asset('storage/' . $vocab->word_audio_path) : null,
+                'image_path' => $this->buildPublicAssetUrl($vocab->image_path),
+                'audio_path' => $this->buildPublicAssetUrl($vocab->word_audio_path),
             ];
         }
 
@@ -215,7 +224,7 @@ class FlashcardGameController extends Controller
             'game_types' => $gameTypes,
             'cards_per_game' => $cardsPerGame,
             'mode' => $mode,
-            'available_modes' => $this->getAvailableModes($vocabulary),
+            'available_modes' => $availableModes,
         ];
     }
 
@@ -255,5 +264,37 @@ class FlashcardGameController extends Controller
         }
         
         return $modes;
+    }
+
+    private function determineAvailableGameTypes($vocabulary): array
+    {
+        $types = [];
+
+        if ($vocabulary->whereNotNull('image_path')->count() > 0) {
+            $types[] = 'image_to_word';
+        }
+
+        if ($vocabulary->whereNotNull('image_path')->whereNotNull('word_audio_path')->count() > 0) {
+            $types[] = 'image_to_audio';
+            $types[] = 'audio_to_image';
+        }
+
+        if ($vocabulary->whereNotNull('word_audio_path')->count() > 0) {
+            $types[] = 'audio_to_word';
+        }
+
+        return array_values(array_unique($types));
+    }
+
+    private function buildPublicAssetUrl(?string $path): ?string
+    {
+        if (!$path) {
+            return null;
+        }
+
+        $normalized = ltrim($path, '/');
+        $normalized = preg_replace('#^storage/#', '', $normalized);
+
+        return asset('storage/' . $normalized);
     }
 }

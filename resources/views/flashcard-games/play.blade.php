@@ -103,7 +103,17 @@
         <div class="game-complete hidden" id="game-complete">
             <div class="completion-content">
                 <h2>🎉 Game Complete!</h2>
-                <p>Great job practicing your vocabulary!</p>
+                <p id="completion-message">Great job practicing your vocabulary!</p>
+                <div class="completion-stats">
+                    <div class="stat">
+                        <span class="stat-value" id="completion-score">0 / 0</span>
+                        <span class="stat-label">Correct</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="completion-accuracy">0%</span>
+                        <span class="stat-label">Accuracy</span>
+                    </div>
+                </div>
                 <div class="completion-actions">
                     <button id="play-again-btn" class="btn btn-primary">Play Again</button>
                     <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-secondary">Back to Lesson</a>
@@ -124,6 +134,8 @@ let currentGameType = null;
 let currentCardIndex = 0;
 let currentMode = '{{ $mode }}';
 let gameCards = [];
+let correctAnswers = 0;
+let userAnswers = [];
 
 // DOM elements
 const gameSelection = document.getElementById('game-selection');
@@ -136,6 +148,9 @@ const totalCardsSpan = document.getElementById('total-cards');
 const nextBtn = document.getElementById('next-btn');
 const restartBtn = document.getElementById('restart-btn');
 const playAgainBtn = document.getElementById('play-again-btn');
+const completionMessage = document.getElementById('completion-message');
+const completionScore = document.getElementById('completion-score');
+const completionAccuracy = document.getElementById('completion-accuracy');
 
 // Mode change functionality
 function changeMode(mode) {
@@ -485,6 +500,11 @@ function checkAnswer(selectedOption) {
         selectedOption.classList.add('incorrect');
         showFeedback('incorrect');
     }
+
+    userAnswers.push({
+        cardId: gameCards[currentCardIndex]?.id,
+        correct: isCorrect
+    });
     
     // Show next button
     nextBtn.classList.remove('hidden');
@@ -507,13 +527,26 @@ function nextCard() {
 }
 
 function endGame() {
-    // Update stats
-    correctCountSpan.textContent = correctAnswers;
-    totalCountSpan.textContent = gameCards.length;
+    const total = gameCards.length;
+    const accuracy = total > 0 ? Math.round((correctAnswers / total) * 100) : 0;
+
+    completionScore.textContent = `${correctAnswers} / ${total}`;
+    completionAccuracy.textContent = `${accuracy}%`;
+
+    if (accuracy === 100) {
+        completionMessage.textContent = 'Perfect! You nailed every card.';
+    } else if (accuracy >= 80) {
+        completionMessage.textContent = 'Great work! A little more practice will make it perfect.';
+    } else if (accuracy >= 50) {
+        completionMessage.textContent = 'Nice effort! Keep practicing to master these words.';
+    } else {
+        completionMessage.textContent = 'Good start! Replay the game to boost your score.';
+    }
     
     // Show completion screen
     gameScreen.classList.add('hidden');
     gameComplete.classList.remove('hidden');
+    gameComplete.classList.add('celebrate');
 }
 
 function restartGame() {
@@ -521,6 +554,7 @@ function restartGame() {
     gameSelection.classList.remove('hidden');
     gameScreen.classList.add('hidden');
     gameComplete.classList.add('hidden');
+    gameComplete.classList.remove('celebrate');
 }
 
 function updateProgress() {
@@ -938,6 +972,14 @@ function playAudio(audioPath) {
     padding: 3rem;
 }
 
+.game-complete.celebrate h2 {
+    animation: bounce 1s ease-in-out 2;
+}
+
+.game-complete.celebrate .completion-stats {
+    animation: fadeInUp 0.6s ease;
+}
+
 .completion-stats {
     display: flex;
     justify-content: center;
@@ -972,6 +1014,22 @@ function playAudio(audioPath) {
     0% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.02); opacity: 0.9; }
     100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 </style>
 @endpush
