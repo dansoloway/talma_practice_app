@@ -44,18 +44,18 @@ class ImportPracticePalLessons extends Command
         }
 
         // Check if CSV files exist
-        $sessionsFile = base_path('we speak vocab - sessions.csv');
-        $vocabFile = base_path('we speak vocab - vocab.csv');
+        $sessionsFile = base_path('data/we speak vocab - sessions.csv');
+        $vocabFile = base_path('data/we speak vocab - vocab.csv');
 
         if (!file_exists($sessionsFile)) {
             $this->error('❌ Sessions CSV file not found: ' . $sessionsFile);
-            $this->info('Please make sure "we speak vocab - sessions.csv" is in the project root.');
+            $this->info('Please make sure "we speak vocab - sessions.csv" is in the data/ directory.');
             return 1;
         }
 
         if (!file_exists($vocabFile)) {
             $this->error('❌ Vocabulary CSV file not found: ' . $vocabFile);
-            $this->info('Please make sure "we speak vocab - vocab.csv" is in the project root.');
+            $this->info('Please make sure "we speak vocab - vocab.csv" is in the data/ directory.');
             return 1;
         }
 

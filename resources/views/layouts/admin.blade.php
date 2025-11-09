@@ -22,7 +22,10 @@
     <header class="admin-header">
         <nav class="nav">
             <div class="nav-brand">
-                <a href="{{ route('admin.dashboard') }}">TALMA Practice Pal Admin</a>
+                <a href="{{ route('admin.dashboard') }}" class="nav-logo-link" aria-label="TALMA Practice Pal admin home">
+                    <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="nav-logo">
+                    <span class="nav-logo-text">Admin</span>
+                </a>
             </div>
             <div class="nav-links">
                 <a href="{{ route('admin.dashboard') }}">Dashboard</a>

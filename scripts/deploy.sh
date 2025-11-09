@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # TALMA Practice Pal Production Deployment Script
-# Usage: ./deploy.sh
+# Usage: ./scripts/deploy.sh
 
 echo "🚀 TALMA Practice Pal Production Deployment"
 echo "================================"
@@ -13,9 +13,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Get current directory
-CURRENT_DIR=$(pwd)
-APP_DIR=$(dirname "$CURRENT_DIR")
+# Resolve directories relative to this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR=$(dirname "$SCRIPT_DIR")
 GIT_DIR="$APP_DIR/git_repo"
 PUBLIC_DIR="$APP_DIR/public_html"
 
@@ -101,8 +101,16 @@ fi
 # Step 7: Check for CSV files and offer import
 echo ""
 echo -e "${BLUE}📊 Checking for lesson import files...${NC}"
+DATA_DIR="$PUBLIC_DIR/data"
+SESSIONS_CSV="$DATA_DIR/we speak vocab - sessions.csv"
+VOCAB_CSV="$DATA_DIR/we speak vocab - vocab.csv"
 
-if [ -f "we speak vocab - sessions.csv" ] && [ -f "we speak vocab - vocab.csv" ]; then
+if [ ! -d "$DATA_DIR" ]; then
+    mkdir -p "$DATA_DIR"
+    echo "  Created data directory at: $DATA_DIR"
+fi
+
+if [ -f "$SESSIONS_CSV" ] && [ -f "$VOCAB_CSV" ]; then
     echo -e "${GREEN}✅ Found CSV files for lesson import${NC}"
     echo ""
     echo -e "${YELLOW}Do you want to import lessons from CSV? (y/n)${NC}"
@@ -117,8 +125,10 @@ if [ -f "we speak vocab - sessions.csv" ] && [ -f "we speak vocab - vocab.csv" ]
     fi
 else
     echo -e "${YELLOW}⚠️  CSV files not found${NC}"
-    echo "  Upload 'we speak vocab - sessions.csv' and 'we speak vocab - vocab.csv'"
-    echo "  to run lesson import"
+    echo "  Upload the lesson CSVs to: $DATA_DIR/"
+    echo "    - we speak vocab - sessions.csv"
+    echo "    - we speak vocab - vocab.csv"
+    echo "  Then run: php artisan talma:import-lessons"
 fi
 
 # Step 8: Set proper permissions

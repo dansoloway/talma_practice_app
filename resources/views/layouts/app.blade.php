@@ -22,7 +22,9 @@
     <header class="header">
         <nav class="nav">
             <div class="nav-brand">
-                <a href="{{ route('lessons.index') }}">TALMA Practice Pal</a>
+                <a href="{{ route('lessons.index') }}" class="nav-logo-link" aria-label="TALMA Practice Pal home">
+                    <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="nav-logo">
+                </a>
             </div>
             <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>

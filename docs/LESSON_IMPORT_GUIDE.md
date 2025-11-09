@@ -4,7 +4,7 @@
 Import lessons and vocabulary from CSV files into the TALMA Practice Pal database.
 
 ## 📁 **Required Files**
-Place these CSV files in the project root:
+Place these CSV files in the `data/` directory:
 - `we speak vocab - sessions.csv` - Lesson information
 - `we speak vocab - vocab.csv` - Vocabulary words
 
@@ -41,9 +41,9 @@ php artisan talma:import-lessons --force
 
 ### **Production Deployment:**
 ```bash
-# 1. Upload CSV files to server root
-scp "we speak vocab - sessions.csv" server:/path/to/talma-practice-pal/
-scp "we speak vocab - vocab.csv" server:/path/to/talma-practice-pal/
+# 1. Upload CSV files to the data directory
+scp "we speak vocab - sessions.csv" server:/path/to/talma-practice-pal/data/
+scp "we speak vocab - vocab.csv" server:/path/to/talma-practice-pal/data/
 
 # 2. SSH into production server
 ssh server
@@ -95,8 +95,8 @@ php artisan talma:import-lessons
 🚀 TALMA Practice Pal Lesson Import Tool
 ================================
 📁 Found CSV files:
-  ✓ /path/to/we speak vocab - sessions.csv
-  ✓ /path/to/we speak vocab - vocab.csv
+  ✓ /path/to/talma-practice-pal/data/we speak vocab - sessions.csv
+  ✓ /path/to/talma-practice-pal/data/we speak vocab - vocab.csv
 
 Creating TALMA Practice Pal lessons and vocabulary...
 Creating lesson: Making a Volcano
@@ -115,9 +115,9 @@ Creating lesson: The Scientific Method
 
 ### **CSV File Not Found:**
 ```
-❌ Sessions CSV file not found: /path/to/we speak vocab - sessions.csv
+❌ Sessions CSV file not found: /path/to/talma-practice-pal/data/we speak vocab - sessions.csv
 ```
-**Solution:** Make sure CSV files are in the project root directory.
+**Solution:** Make sure CSV files are in the `data/` directory.
 
 ### **Database Connection Error:**
 **Solution:** Check database credentials in `.env` file.

@@ -75,11 +75,31 @@ Complete file listing for the Laravel sentence speaking application.
 - `app/Console/Commands/BuildTtsAssets.php` - Generate TTS asset records
 - `app/Console/Commands/VerifyTtsAssets.php` - Verify audio files exist
 
-## Configuration
+## Configuration & Docs
 
 - `.env.example` - Environment template with privacy/recording settings
-- `README.md` - Full documentation
-- `SETUP.md` - Quick start guide
+- `README.md` - Project overview
+- `docs/SETUP.md` - Quick start guide
+- `docs/DEPLOYMENT.md` - Production deployment checklist
+- `docs/LESSON_IMPORT_GUIDE.md` - CSV import workflow
+- `docs/CREATE_SESSION_WORKFLOW.md` - Session planning guide
+- `docs/PROJECT_STRUCTURE.md` - This document
+- `docs/whattobuild.md` - Product brief
+
+## Utilities & Scripts
+
+- `scripts/deploy.sh` - Production deployment automation
+- `scripts/reset-lessons.sh` - Re-import lessons from CSV
+- `scripts/fix-production-database.sh` - Migration helper for production DB
+- `scripts/check-storage-permissions.sh` - Storage permission audit
+- `scripts/fix-vocabulary-audio-permissions.sh` - Audio permission fix
+- `scripts/generate_audio.php` - Example audio generation helper
+
+## Data
+
+- `data/we speak vocab - sessions.csv` - Lesson metadata
+- `data/we speak vocab - vocab.csv` - Vocabulary list
+- Additional CSVs used during development/testing
 
 ## Key Features Implemented
 
@@ -124,5 +144,5 @@ Complete file listing for the Laravel sentence speaking application.
 5. Add option images to `public/images/`
 6. Start serving!
 
-See `SETUP.md` for step-by-step instructions.
+See `docs/SETUP.md` for step-by-step instructions.
 

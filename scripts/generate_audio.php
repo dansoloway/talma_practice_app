@@ -1,18 +1,15 @@
 <?php
 
-require __DIR__.'/vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
-$app = require_once __DIR__.'/bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-
-use App\Models\PromptOptionAsset;
-use Illuminate\Support\Facades\Http;
+$app = require_once __DIR__.'/../bootstrap/app.php';
+$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 // Get your API key from https://elevenlabs.io/app/settings/api-keys
 $apiKey = env('ELEVENLABS_API_KEY') ?: readline('Enter your ElevenLabs API key: ');
 $voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice (or use your own)
 
-$assets = PromptOptionAsset::whereNull('duration_ms')->get();
+$assets = \App\Models\PromptOptionAsset::whereNull('duration_ms')->get();
 $wordOptions = \App\Models\Option::whereNull('word_audio_path')->get();
 $prompts = \App\Models\Prompt::whereNull('prompt_audio_path')->get();
 
@@ -25,7 +22,7 @@ foreach ($assets as $asset) {
     
     try {
         // Call ElevenLabs API
-        $response = Http::withHeaders([
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
             'xi-api-key' => $apiKey,
             'Content-Type' => 'application/json',
         ])->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
@@ -75,7 +72,7 @@ foreach ($prompts as $prompt) {
     
     try {
         // Call ElevenLabs API
-        $response = Http::withHeaders([
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
             'xi-api-key' => $apiKey,
             'Content-Type' => 'application/json',
         ])->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
@@ -126,7 +123,7 @@ foreach ($wordOptions as $option) {
     
     try {
         // Call ElevenLabs API for word
-        $response = Http::withHeaders([
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
             'xi-api-key' => $apiKey,
             'Content-Type' => 'application/json',
         ])->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [

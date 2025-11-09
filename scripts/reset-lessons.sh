@@ -3,6 +3,9 @@
 # TALMA Practice Pal Production Reset Script
 # This script deletes all lessons and vocabulary, then re-imports from CSV files
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR" || exit 1
+
 echo "🚀 TALMA Practice Pal Production Reset Script"
 echo "=================================="
 echo ""
@@ -15,21 +18,25 @@ if [ ! -f "artisan" ]; then
 fi
 
 # Check if CSV files exist
-if [ ! -f "we speak vocab - sessions.csv" ]; then
-    echo "❌ Error: Sessions CSV file not found: we speak vocab - sessions.csv"
-    echo "   Please make sure the CSV files are in the project root"
+DATA_DIR="data"
+SESSIONS_CSV="$DATA_DIR/we speak vocab - sessions.csv"
+VOCAB_CSV="$DATA_DIR/we speak vocab - vocab.csv"
+
+if [ ! -f "$SESSIONS_CSV" ]; then
+    echo "❌ Error: Sessions CSV file not found: $SESSIONS_CSV"
+    echo "   Please make sure the CSV files are in the $DATA_DIR/ directory"
     exit 1
 fi
 
-if [ ! -f "we speak vocab - vocab.csv" ]; then
-    echo "❌ Error: Vocabulary CSV file not found: we speak vocab - vocab.csv"
-    echo "   Please make sure the CSV files are in the project root"
+if [ ! -f "$VOCAB_CSV" ]; then
+    echo "❌ Error: Vocabulary CSV file not found: $VOCAB_CSV"
+    echo "   Please make sure the CSV files are in the $DATA_DIR/ directory"
     exit 1
 fi
 
 echo "📁 Found CSV files:"
-echo "  ✓ we speak vocab - sessions.csv"
-echo "  ✓ we speak vocab - vocab.csv"
+echo "  ✓ $SESSIONS_CSV"
+echo "  ✓ $VOCAB_CSV"
 echo ""
 
 # Confirm before proceeding

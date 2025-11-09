@@ -17,14 +17,14 @@ class PracticePalLessonsSeeder extends Seeder
         $this->command->info('Creating TALMA Practice Pal lessons and vocabulary...');
 
         // Read sessions CSV
-        $sessionsFile = base_path('we speak vocab - sessions.csv');
+        $sessionsFile = base_path('data/we speak vocab - sessions.csv');
         if (!file_exists($sessionsFile)) {
             $this->command->error('Sessions CSV file not found: ' . $sessionsFile);
             return;
         }
 
         // Read vocabulary CSV
-        $vocabFile = base_path('we speak vocab - vocab.csv');
+        $vocabFile = base_path('data/we speak vocab - vocab.csv');
         if (!file_exists($vocabFile)) {
             $this->command->error('Vocabulary CSV file not found: ' . $vocabFile);
             return;

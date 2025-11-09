@@ -3,6 +3,9 @@
 # TALMA Practice Pal Production Database Fix Script
 # This script runs the migration to add translation columns, then resets lessons
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR" || exit 1
+
 echo "🔧 TALMA Practice Pal Production Database Fix"
 echo "=================================="
 echo ""
@@ -52,4 +55,4 @@ echo 'Arabic column exists: ' . (\$hasArabic ? 'Yes' : 'No') . PHP_EOL;
 
 echo ""
 echo "🎉 Database fix completed!"
-echo "   You can now run ./reset-lessons.sh to import the lessons with translations."
+echo "   You can now run ./scripts/reset-lessons.sh to import the lessons with translations."

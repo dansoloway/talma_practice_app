@@ -1,5 +1,7 @@
 # TALMA Practice Pal - Production Deployment Guide
 
+> Use `./scripts/deploy.sh` for the automated workflow described below.
+
 ## 🚀 Pre-Deployment Checklist
 
 ### 1. Environment Configuration

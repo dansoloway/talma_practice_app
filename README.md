@@ -11,6 +11,13 @@ A Laravel + MySQL application for practicing sentence construction through inter
 - ✅ Mobile-friendly design
 - ✅ Progress tracking
 
+## Documentation
+
+- `docs/SETUP.md` — quick start checklist
+- `docs/DEPLOYMENT.md` — production rollout guide
+- `docs/LESSON_IMPORT_GUIDE.md` — CSV import workflow
+- `docs/CREATE_SESSION_WORKFLOW.md` — lesson planning flow
+
 ## Requirements
 
 - PHP 8.1+
@@ -133,7 +140,7 @@ You have several options:
 Create a script to batch-generate audio:
 
 ```php
-// scripts/generate-tts.php
+// scripts/generate_audio.php (example)
 $assets = PromptOptionAsset::whereNull('duration_ms')->get();
 
 foreach ($assets as $asset) {
@@ -252,6 +259,9 @@ talma-practice-pal/
 │   ├── lessons/                    # Public views
 │   └── admin/                      # Admin views
 ├── routes/web.php                  # Application routes
+├── docs/                           # In-depth project documentation
+├── scripts/                        # Deployment and maintenance scripts
+├── data/                           # CSV imports and supporting datasets
 └── storage/app/public/
     └── tts/                        # Pre-generated audio files
 ```
