@@ -24,7 +24,7 @@
     <form action="{{ route('admin.lessons.matching-games.store', $lesson) }}" method="POST">
         @csrf
         
-        <input type="hidden" name="title" value="{{ $lesson->session_title ?: 'Vocabulary Matching Game' }}">
+        <input type="hidden" name="title" value="{{ old('title', trim($lesson->title . ' Matching Game ' . ($lesson->matchingGames()->count() + 1))) }}">
 
         <div class="form-group">
             <label for="grid_size">Grid Size</label>

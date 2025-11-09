@@ -29,7 +29,7 @@ class MatchingGameController extends Controller
     {
         $validated = $request->validate([
             'part_id' => 'nullable|exists:parts,id',
-            'title' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
             'vocabulary_ids' => 'required|array|min:2',
             'vocabulary_ids.*' => 'exists:vocabulary,id',
             'grid_size' => 'required|integer|min:4|max:8',
@@ -49,6 +49,8 @@ class MatchingGameController extends Controller
 
         $validated['lesson_id'] = $lesson->id;
         $validated['vocabulary_ids'] = array_slice($validated['vocabulary_ids'], 0, $requiredPairs);
+        $validated['title'] = $validated['title'] ?: $this->generateDefaultTitle($lesson);
+        $validated['is_active'] = $request->boolean('is_active', true);
         
         // Note: Parts are no longer used, activities belong directly to lessons
 
@@ -96,6 +98,9 @@ class MatchingGameController extends Controller
         }
 
         $validated['vocabulary_ids'] = array_slice($validated['vocabulary_ids'], 0, $requiredPairs);
+
+        $validated['title'] = $validated['title'] ?? $matchingGame->title;
+        $validated['is_active'] = $request->boolean('is_active', $matchingGame->is_active);
 
         $matchingGame->update($validated);
 
@@ -256,5 +261,10 @@ class MatchingGameController extends Controller
         }
         
         return $modes;
+    }
+    private function generateDefaultTitle(Lesson $lesson): string
+    {
+        $count = $lesson->matchingGames()->count() + 1;
+        return trim(sprintf('%s Matching Game %d', $lesson->title, $count));
     }
 }

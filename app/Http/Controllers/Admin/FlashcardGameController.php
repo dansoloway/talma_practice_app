@@ -36,13 +36,14 @@ class FlashcardGameController extends Controller
     public function store(Request $request, Lesson $lesson)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
             'vocabulary_ids' => 'required|array|min:1',
             'vocabulary_ids.*' => 'exists:vocabulary,id',
             'cards_per_game' => 'integer|min:1|max:50',
         ]);
 
         $validated['lesson_id'] = $lesson->id;
+        $validated['title'] = $validated['title'] ?: $this->generateDefaultTitle($lesson);
         
         // Determine game types based on selected vocabulary assets
         $selectedIds = $validated['vocabulary_ids'] ?? [];
@@ -76,7 +77,7 @@ class FlashcardGameController extends Controller
         }
         
         // Default to active
-        $validated['is_active'] = $request->input('is_active', '1') == '1';
+        $validated['is_active'] = $request->boolean('is_active', true);
 
         $flashcardGame = FlashcardGame::create($validated);
 
@@ -296,5 +297,11 @@ class FlashcardGameController extends Controller
         $normalized = preg_replace('#^storage/#', '', $normalized);
 
         return asset('storage/' . $normalized);
+    }
+
+    private function generateDefaultTitle(Lesson $lesson): string
+    {
+        $count = $lesson->flashcardGames()->count() + 1;
+        return trim(sprintf('%s Flashcards %d', $lesson->title, $count));
     }
 }
