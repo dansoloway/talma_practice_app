@@ -11,7 +11,14 @@ class GenerateVocabularyTts extends Command
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'wespeak:generate-vocab-tts {--lesson= : Generate TTS for specific lesson ID} {--force : Regenerate even if audio already exists}';
+    protected $signature = 'talma:generate-vocab-tts {--lesson= : Generate TTS for specific lesson ID} {--force : Regenerate even if audio already exists}';
+
+    /**
+     * The list of command aliases.
+     *
+     * @var array<int, string>
+     */
+    protected $aliases = ['wespeak:generate-vocab-tts'];
 
     /**
      * The console command description.
@@ -23,7 +30,7 @@ class GenerateVocabularyTts extends Command
      */
     public function handle(): int
     {
-        $this->info('🎵 WeSpeak Vocabulary TTS Generator');
+        $this->info('🎵 TALMA Practice Pal Vocabulary TTS Generator');
         $this->info('===================================');
 
         // Get vocabulary words

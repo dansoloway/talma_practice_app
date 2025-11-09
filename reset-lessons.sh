@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# WeSpeak Production Reset Script
+# TALMA Practice Pal Production Reset Script
 # This script deletes all lessons and vocabulary, then re-imports from CSV files
 
-echo "🚀 WeSpeak Production Reset Script"
+echo "🚀 TALMA Practice Pal Production Reset Script"
 echo "=================================="
 echo ""
 
@@ -73,7 +73,7 @@ echo ""
 echo "📥 Importing lessons and vocabulary from CSV files..."
 
 # Run the import command
-php artisan wespeak:import-lessons
+php artisan talma:import-lessons
 
 if [ $? -ne 0 ]; then
     echo "❌ Error: Failed to import lessons"

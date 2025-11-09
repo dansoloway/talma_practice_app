@@ -1,7 +1,7 @@
 # Create a New Session/Lesson - Complete Workflow
 
 ## Overview
-This guide explains the step-by-step process for creating a new lesson/session in WeSpeak with vocabulary, images, prompts, and games.
+This guide explains the step-by-step process for creating a new lesson/session in TALMA Practice Pal with vocabulary, images, prompts, and games.
 
 ---
 

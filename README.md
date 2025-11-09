@@ -1,4 +1,4 @@
-# WeSpeak - Sentence Speaking Practice App
+# TALMA Practice Pal - Sentence Speaking Practice App
 
 A Laravel + MySQL application for practicing sentence construction through interactive prompts with pre-generated audio.
 
@@ -24,8 +24,8 @@ A Laravel + MySQL application for practicing sentence construction through inter
 
 ```bash
 # If using git
-git clone <repository-url> wespeak
-cd wespeak
+git clone <repository-url> talma-practice-pal
+cd talma-practice-pal
 
 # Or just copy the files into your project directory
 ```
@@ -228,7 +228,7 @@ RECORDING_DISK=local  # or 's3'
 ## File Structure
 
 ```
-wespeak/
+talma-practice-pal/
 ├── app/
 │   ├── Console/Commands/
 │   │   ├── BuildTtsAssets.php      # Generate TTS asset records

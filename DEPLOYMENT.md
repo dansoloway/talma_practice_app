@@ -1,4 +1,4 @@
-# WeSpeak - Production Deployment Guide
+# TALMA Practice Pal - Production Deployment Guide
 
 ## 🚀 Pre-Deployment Checklist
 
@@ -6,7 +6,7 @@
 Create a production `.env` file with these changes:
 
 ```env
-APP_NAME="WeSpeak"
+APP_NAME="TALMA Practice Pal"
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://your-domain.com

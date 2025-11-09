@@ -3,26 +3,33 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Database\Seeders\WeSpeak_LessonsSeeder;
+use Database\Seeders\PracticePalLessonsSeeder;
 
-class ImportWeSpeak_Lessons extends Command
+class ImportPracticePalLessons extends Command
 {
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'wespeak:import-lessons {--force : Force import even if lessons already exist}';
+    protected $signature = 'talma:import-lessons {--force : Force import even if lessons already exist}';
+
+    /**
+     * The list of command aliases.
+     *
+     * @var array<int, string>
+     */
+    protected $aliases = ['wespeak:import-lessons'];
 
     /**
      * The console command description.
      */
-    protected $description = 'Import WeSpeak lessons and vocabulary from CSV files';
+    protected $description = 'Import TALMA Practice Pal lessons and vocabulary from CSV files';
 
     /**
      * Execute the console command.
      */
     public function handle(): int
     {
-        $this->info('🚀 WeSpeak Lesson Import Tool');
+        $this->info('🚀 TALMA Practice Pal Lesson Import Tool');
         $this->info('================================');
 
         // Check if lessons already exist
@@ -59,7 +66,7 @@ class ImportWeSpeak_Lessons extends Command
 
         // Run the seeder
         try {
-            $seeder = new WeSpeak_LessonsSeeder();
+            $seeder = new PracticePalLessonsSeeder();
             $seeder->setCommand($this);
             $seeder->run();
 

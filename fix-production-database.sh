@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# WeSpeak Production Database Fix Script
+# TALMA Practice Pal Production Database Fix Script
 # This script runs the migration to add translation columns, then resets lessons
 
-echo "🔧 WeSpeak Production Database Fix"
+echo "🔧 TALMA Practice Pal Production Database Fix"
 echo "=================================="
 echo ""
 

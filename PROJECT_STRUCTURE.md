@@ -1,4 +1,4 @@
-# WeSpeak Project Structure
+# TALMA Practice Pal Project Structure
 
 Complete file listing for the Laravel sentence speaking application.
 

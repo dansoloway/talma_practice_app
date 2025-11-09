@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admin') - WeSpeak</title>
+    <title>@yield('title', 'Admin') - TALMA Practice Pal</title>
     
     <!-- Favicons -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
@@ -22,7 +22,7 @@
     <header class="admin-header">
         <nav class="nav">
             <div class="nav-brand">
-                <a href="{{ route('admin.dashboard') }}">WeSpeak Admin</a>
+                <a href="{{ route('admin.dashboard') }}">TALMA Practice Pal Admin</a>
             </div>
             <div class="nav-links">
                 <a href="{{ route('admin.dashboard') }}">Dashboard</a>

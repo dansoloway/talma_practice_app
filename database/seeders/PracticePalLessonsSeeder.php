@@ -7,14 +7,14 @@ use App\Models\Lesson;
 use App\Models\Vocabulary;
 use Illuminate\Support\Str;
 
-class WeSpeak_LessonsSeeder extends Seeder
+class PracticePalLessonsSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $this->command->info('Creating WeSpeak lessons and vocabulary...');
+        $this->command->info('Creating TALMA Practice Pal lessons and vocabulary...');
 
         // Read sessions CSV
         $sessionsFile = base_path('we speak vocab - sessions.csv');
@@ -110,7 +110,7 @@ class WeSpeak_LessonsSeeder extends Seeder
             $this->command->info("  ✓ Created lesson: {$lesson->title} (ID: {$lesson->id})");
         }
 
-        $this->command->info('✅ WeSpeak lessons and vocabulary created successfully!');
+        $this->command->info('✅ TALMA Practice Pal lessons and vocabulary created successfully!');
     }
 
     /**

@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'WeSpeak - Choose Your Grade')
+@section('title', 'TALMA Practice Pal - Choose Your Grade')
 
 @section('content')
 <div class="container">
     <div class="student-homepage">
         <div class="welcome-section">
-            <h1 class="welcome-title">Welcome to WeSpeak!</h1>
+            <h1 class="welcome-title">Welcome to TALMA Practice Pal!</h1>
             <p class="welcome-subtitle">Practice English with fun activities</p>
         </div>
 

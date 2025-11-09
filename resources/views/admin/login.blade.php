@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Admin Login - WeSpeak')
+@section('title', 'Admin Login - TALMA Practice Pal')
 
 @section('content')
 <div class="container">

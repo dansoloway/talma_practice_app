@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# WeSpeak Production Deployment Script
+# TALMA Practice Pal Production Deployment Script
 # Usage: ./deploy.sh
 
-echo "🚀 WeSpeak Production Deployment"
+echo "🚀 TALMA Practice Pal Production Deployment"
 echo "================================"
 
 # Colors for output
@@ -52,7 +52,7 @@ echo ""
 echo -e "${BLUE}📋 Checking if files need to be copied...${NC}"
 
 # Check if Cloudways auto-deployment is working
-if [ -f "$PUBLIC_DIR/app/Console/Commands/ImportWeSpeak_Lessons.php" ]; then
+if [ -f "$PUBLIC_DIR/app/Console/Commands/ImportPracticePalLessons.php" ]; then
     echo -e "${GREEN}✅ Files already deployed by Cloudways${NC}"
 else
     echo -e "${YELLOW}⚠️  Copying files manually...${NC}"
@@ -108,11 +108,11 @@ if [ -f "we speak vocab - sessions.csv" ] && [ -f "we speak vocab - vocab.csv" ]
     read -r response
     if [[ "$response" =~ ^[Yy]$ ]]; then
         echo -e "${BLUE}📚 Importing lessons...${NC}"
-        php artisan wespeak:import-lessons --force
+        php artisan talma:import-lessons --force
         echo -e "${GREEN}✅ Lesson import complete${NC}"
     else
         echo -e "${BLUE}ℹ️  Skipping lesson import${NC}"
-        echo "  To import later, run: php artisan wespeak:import-lessons"
+        echo "  To import later, run: php artisan talma:import-lessons"
     fi
 else
     echo -e "${YELLOW}⚠️  CSV files not found${NC}"
@@ -154,8 +154,8 @@ echo "  2. Test admin panel: https://wespeak.talma.digital/admin"
 echo "  3. Check lesson import results if you ran it"
 echo ""
 echo -e "${BLUE}📚 Useful Commands:${NC}"
-echo "  • Import lessons: php artisan wespeak:import-lessons"
+echo "  • Import lessons: php artisan talma:import-lessons"
 echo "  • Check logs: tail -f storage/logs/laravel.log"
 echo "  • Clear cache: php artisan config:clear"
 echo ""
-echo -e "${GREEN}✨ WeSpeak is ready!${NC}"
+echo -e "${GREEN}✨ TALMA Practice Pal is ready!${NC}"

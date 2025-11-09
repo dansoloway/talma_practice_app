@@ -1,7 +1,7 @@
-# WeSpeak Lesson Import Guide
+# TALMA Practice Pal Lesson Import Guide
 
 ## 🎯 **Purpose**
-Import lessons and vocabulary from CSV files into the WeSpeak database.
+Import lessons and vocabulary from CSV files into the TALMA Practice Pal database.
 
 ## 📁 **Required Files**
 Place these CSV files in the project root:
@@ -33,26 +33,26 @@ session_id,word
 ### **Local Testing:**
 ```bash
 # Test import (will ask for confirmation if lessons exist)
-php artisan wespeak:import-lessons
+php artisan talma:import-lessons
 
 # Force import (skip confirmation)
-php artisan wespeak:import-lessons --force
+php artisan talma:import-lessons --force
 ```
 
 ### **Production Deployment:**
 ```bash
 # 1. Upload CSV files to server root
-scp "we speak vocab - sessions.csv" server:/path/to/wespeak/
-scp "we speak vocab - vocab.csv" server:/path/to/wespeak/
+scp "we speak vocab - sessions.csv" server:/path/to/talma-practice-pal/
+scp "we speak vocab - vocab.csv" server:/path/to/talma-practice-pal/
 
 # 2. SSH into production server
 ssh server
 
 # 3. Navigate to project
-cd /path/to/wespeak/
+cd /path/to/talma-practice-pal/
 
 # 4. Run import
-php artisan wespeak:import-lessons
+php artisan talma:import-lessons
 ```
 
 ## ✅ **What Gets Created**
@@ -92,13 +92,13 @@ php artisan wespeak:import-lessons
 
 ## 📊 **Example Output**
 ```
-🚀 WeSpeak Lesson Import Tool
+🚀 TALMA Practice Pal Lesson Import Tool
 ================================
 📁 Found CSV files:
   ✓ /path/to/we speak vocab - sessions.csv
   ✓ /path/to/we speak vocab - vocab.csv
 
-Creating WeSpeak lessons and vocabulary...
+Creating TALMA Practice Pal lessons and vocabulary...
 Creating lesson: Making a Volcano
   ⚠️  Lesson already exists: Making a Volcano (ID: 8)
 Creating lesson: The Scientific Method
