@@ -31,20 +31,21 @@ if [ ! -d "$GIT_DIR" ]; then
     exit 1
 fi
 
-# Step 1: Pull latest changes from git
-echo -e "${BLUE}📥 Pulling latest changes from Git...${NC}"
-cd "$GIT_DIR"
-
-# Check git status
-echo -e "${YELLOW}Current git status:${NC}"
-git status --short
-
-# Pull changes
-if git pull origin main; then
-    echo -e "${GREEN}✅ Git pull successful${NC}"
+# Step 1: (Optional) Pull latest changes from git
+echo -e "${BLUE}📥 Git updates${NC}"
+if [ "${SKIP_GIT_PULL:-1}" -eq 1 ]; then
+    echo -e "${YELLOW}Skipping git pull (set SKIP_GIT_PULL=0 to enable)${NC}"
+    echo "  Make sure the repository at $GIT_DIR is already up to date."
 else
-    echo -e "${RED}❌ Git pull failed${NC}"
-    exit 1
+    cd "$GIT_DIR"
+    echo -e "${YELLOW}Current git status:${NC}"
+    git status --short
+    if git pull origin main; then
+        echo -e "${GREEN}✅ Git pull successful${NC}"
+    else
+        echo -e "${RED}❌ Git pull failed${NC}"
+        exit 1
+    fi
 fi
 
 # Step 2: Copy files to public_html (if needed)
