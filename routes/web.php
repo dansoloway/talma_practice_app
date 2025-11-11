@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityEventController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\PromptController;
 use App\Http\Controllers\PromptModelController;
@@ -45,6 +46,7 @@ Route::get('/prompts/{promptId}/options/{optionId}/model', [PromptModelControlle
 
 // Responses
 Route::post('/responses', [ResponseController::class, 'store'])->name('responses.store');
+Route::post('/activity-events', [ActivityEventController::class, 'store'])->name('activity-events.store');
 
 /*
 |--------------------------------------------------------------------------

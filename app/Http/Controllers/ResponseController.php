@@ -54,6 +54,7 @@ class ResponseController extends Controller
 
         $response = Response::create([
             'user_id' => auth()->id(),
+            'session_id' => $request->attributes->get('practice_session_id'),
             'lesson_id' => $request->lesson_id,
             'prompt_id' => $request->prompt_id,
             'option_id' => $request->option_id,

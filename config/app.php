@@ -19,6 +19,7 @@ return [
     
     'allow_recording_upload' => env('PRIVACY_ALLOW_UPLOAD', false),
     'recording_max_seconds' => env('RECORDING_MAX_SECONDS', 20),
+    'practice_session_cookie' => env('PRACTICE_SESSION_COOKIE', 'talma_session_id'),
 
     'maintenance' => [
         'driver' => 'file',

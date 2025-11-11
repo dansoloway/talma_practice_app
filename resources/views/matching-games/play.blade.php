@@ -343,15 +343,45 @@
 </style>
 
 <script>
+const activityEventEndpoint = '{{ route('activity-events.store') }}';
+const activityEventPayload = {
+    lesson_id: {{ $lesson->id }},
+    activity_type: 'matching',
+    activity_id: {{ $matching_game->id }},
+};
+
+function logActivityEvent(status, meta = {}) {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    fetch(activityEventEndpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+        },
+        body: JSON.stringify({
+            ...activityEventPayload,
+            status,
+            meta,
+        }),
+    }).catch(() => {});
+}
+
 class MatchingGame {
-    constructor() {
+    constructor(config) {
         this.cards = document.querySelectorAll('.game-card');
         this.flippedCards = [];
         this.matches = 0;
         this.startTime = Date.now();
         this.gameInterval = null;
+        this.mode = config.mode;
+        this.gridSize = config.gridSize;
         
         this.init();
+
+        logActivityEvent('started', {
+            mode: this.mode,
+            grid_size: this.gridSize,
+        });
     }
     
     init() {
@@ -452,17 +482,29 @@ class MatchingGame {
     completeGame() {
         clearInterval(this.gameInterval);
         
+        const durationSeconds = Math.floor((Date.now() - this.startTime) / 1000);
+
         // Show completion screen
         const finalTime = document.getElementById('game-time').textContent;
         document.getElementById('final-time').textContent = finalTime;
         document.getElementById('final-matches').textContent = this.matches;
         document.getElementById('game-completion').style.display = 'flex';
+
+        logActivityEvent('completed', {
+            mode: this.mode,
+            grid_size: this.gridSize,
+            matches: this.matches,
+            duration_seconds: durationSeconds,
+        });
     }
 }
 
 // Start the game when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    new MatchingGame();
+    new MatchingGame({
+        mode: '{{ $mode }}',
+        gridSize: {{ $gameData['grid_size'] }},
+    });
     
     // Handle audio playback
     document.addEventListener('click', function(e) {

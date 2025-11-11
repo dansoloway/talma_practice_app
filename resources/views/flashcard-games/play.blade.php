@@ -126,6 +126,29 @@
 <audio id="game-audio" preload="auto"></audio>
 
 <script>
+const flashcardActivityEndpoint = '{{ route('activity-events.store') }}';
+const flashcardActivityPayload = {
+    lesson_id: {{ $lesson->id }},
+    activity_type: 'flashcard',
+    activity_id: {{ $flashcardGame->id }},
+};
+
+function logFlashcardEvent(status, meta = {}) {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    fetch(flashcardActivityEndpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+        },
+        body: JSON.stringify({
+            ...flashcardActivityPayload,
+            status,
+            meta,
+        }),
+    }).catch(() => {});
+}
+
 const gameData = @json($gameData);
 const lessonSlug = '{{ $lesson->slug }}';
 
@@ -136,6 +159,7 @@ let currentMode = '{{ $mode }}';
 let gameCards = [];
 let correctAnswers = 0;
 let userAnswers = [];
+let gameStartTime = null;
 
 // DOM elements
 const gameSelection = document.getElementById('game-selection');
@@ -220,6 +244,12 @@ function startGame() {
     currentCardIndex = 0;
     correctAnswers = 0;
     userAnswers = [];
+    gameStartTime = Date.now();
+    logFlashcardEvent('started', {
+        mode: currentMode,
+        game_type: currentGameType,
+        cards_planned: gameCards.length,
+    });
 
     // Show game screen
     gameSelection.classList.add('hidden');
@@ -529,6 +559,7 @@ function nextCard() {
 function endGame() {
     const total = gameCards.length;
     const accuracy = total > 0 ? Math.round((correctAnswers / total) * 100) : 0;
+    const durationSeconds = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 1000) : null;
 
     completionScore.textContent = `${correctAnswers} / ${total}`;
     completionAccuracy.textContent = `${accuracy}%`;
@@ -547,6 +578,15 @@ function endGame() {
     gameScreen.classList.add('hidden');
     gameComplete.classList.remove('hidden');
     gameComplete.classList.add('celebrate');
+
+    logFlashcardEvent('completed', {
+        mode: currentMode,
+        game_type: currentGameType,
+        cards_played: total,
+        correct_answers: correctAnswers,
+        accuracy,
+        duration_seconds: durationSeconds,
+    });
 }
 
 function restartGame() {
@@ -555,6 +595,7 @@ function restartGame() {
     gameScreen.classList.add('hidden');
     gameComplete.classList.add('hidden');
     gameComplete.classList.remove('celebrate');
+    gameStartTime = null;
 }
 
 function updateProgress() {
