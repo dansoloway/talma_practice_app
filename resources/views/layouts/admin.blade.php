@@ -22,13 +22,13 @@
     <header class="admin-header">
         <nav class="nav">
             <div class="nav-brand">
-                <a href="{{ route('admin.dashboard') }}" class="nav-logo-link" aria-label="TALMA Practice Pal admin home">
+                <a href="{{ route('admin.analytics') }}" class="nav-logo-link" aria-label="TALMA Practice Pal admin home">
                     <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="nav-logo">
                     <span class="nav-logo-text">Admin</span>
                 </a>
             </div>
             <div class="nav-links">
-                <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+                <a href="{{ route('admin.analytics') }}">Analytics</a>
                 <a href="{{ route('admin.lessons.index') }}">Lessons</a>
                 <a href="{{ route('admin.lessons.archived') }}">Archived</a>
                 <a href="{{ route('lessons.index') }}">Student View</a>

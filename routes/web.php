@@ -55,9 +55,9 @@ Route::post('/activity-events', [ActivityEventController::class, 'store'])->name
 */
 
 // Admin login route (redirects to lessons management)
-Route::get('/admin', [DashboardController::class, 'index'])
-    ->name('admin.dashboard')
-    ->middleware('admin.auth');
+Route::get('/admin', function () {
+    return redirect()->route('admin.lessons.index');
+})->name('admin.dashboard')->middleware('admin.auth');
 
 Route::post('/admin/login', function (Request $request) {
     $password = $request->input('admin_password');
@@ -65,13 +65,14 @@ Route::post('/admin/login', function (Request $request) {
     
     if ($password === $correctPassword) {
         session(['admin_authenticated' => true]);
-        return redirect()->route('admin.dashboard');
+        return redirect()->route('admin.analytics');
     } else {
         return redirect()->route('admin.dashboard')->with('error', 'Incorrect password. Please try again.');
     }
 })->name('admin.login');
 
 Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
+    Route::get('analytics', [DashboardController::class, 'index'])->name('analytics');
     
     // Logout
     Route::post('/logout', function () {
