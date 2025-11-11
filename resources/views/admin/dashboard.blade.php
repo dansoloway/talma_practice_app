@@ -3,29 +3,193 @@
 @section('title', 'Dashboard')
 
 @section('content')
+@php
+    use Illuminate\Support\Str;
+
+    $formatDuration = function (?int $seconds): string {
+        if (!$seconds || $seconds <= 0) {
+            return '—';
+        }
+        $minutes = intdiv($seconds, 60);
+        $remaining = $seconds % 60;
+        if ($minutes === 0) {
+            return "{$remaining}s";
+        }
+        $hours = intdiv($minutes, 60);
+        $minutes = $minutes % 60;
+        $parts = [];
+        if ($hours > 0) {
+            $parts[] = "{$hours}h";
+        }
+        if ($minutes > 0) {
+            $parts[] = "{$minutes}m";
+        }
+        if ($remaining > 0 && $hours === 0) {
+            $parts[] = "{$remaining}s";
+        }
+        return implode(' ', $parts);
+    };
+@endphp
+
 <div class="container">
-    <h1 class="page-title">Admin Dashboard</h1>
+    <h1 class="page-title">Practice Analytics</h1>
 
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-number">{{ $stats['lessons_count'] }}</div>
-            <div class="stat-label">Lessons</div>
+            <div class="stat-number">{{ number_format($stats['total_responses']) }}</div>
+            <div class="stat-label">Total Responses</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ $stats['prompts_count'] }}</div>
-            <div class="stat-label">Prompts</div>
+            <div class="stat-number">{{ number_format($stats['unique_sessions']) }}</div>
+            <div class="stat-label">Unique Students</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ $stats['options_count'] }}</div>
-            <div class="stat-label">Options</div>
+            <div class="stat-number">{{ number_format($stats['responses_last_7_days']) }}</div>
+            <div class="stat-label">Responses · Last 7 Days</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">{{ $stats['responses_count'] }}</div>
-            <div class="stat-label">Responses</div>
+            <div class="stat-number">{{ number_format($stats['active_sessions_today']) }}</div>
+            <div class="stat-label">Students Active Today</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ $formatDuration($stats['average_session_duration']) }}</div>
+            <div class="stat-label">Avg Session Length</div>
+            <div class="stat-subtle">Median {{ $formatDuration($stats['median_session_duration']) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ number_format($stats['total_activity_completions']) }}</div>
+            <div class="stat-label">Activities Completed</div>
+            <div class="stat-subtle">{{ $stats['average_responses_per_session'] }} responses / session</div>
         </div>
     </div>
 
     <div class="dashboard-sections">
+        <div class="dashboard-section wide">
+            <h2>Daily Practice (last 14 days)</h2>
+            @if(empty($dailyPractice))
+                <p class="empty-text">No student activity recorded yet.</p>
+            @else
+                <table class="table compact">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th class="text-right">Responses</th>
+                            <th class="text-right">Unique Students</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($dailyPractice as $day)
+                            <tr>
+                                <td>{{ $day['date'] }}</td>
+                                <td class="text-right">{{ $day['responses'] }}</td>
+                                <td class="text-right">{{ $day['unique_sessions'] }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Most Practiced Lessons</h2>
+            @if($lessonStats['top_lessons']->isEmpty())
+                <p class="empty-text">No lessons have student responses yet.</p>
+            @else
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Lesson</th>
+                            <th class="text-right">Responses</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($lessonStats['top_lessons'] as $lessonStat)
+                            <tr>
+                                <td>
+                                    <strong>{{ $lessonStat['lesson']->title }}</strong>
+                                    <div class="muted-text">{{ $lessonStat['lesson']->slug }}</div>
+                                </td>
+                                <td class="text-right">{{ number_format($lessonStat['responses']) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+            @if($lessonStats['lessons_without_responses'] > 0)
+                <p class="muted-text">{{ $lessonStats['lessons_without_responses'] }} lessons have no student responses yet.</p>
+            @endif
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Activity Conversion · Matching Games</h2>
+            @if($activityStats['matching']->isEmpty())
+                <p class="empty-text">No matching games have been played yet.</p>
+            @else
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Game</th>
+                            <th class="text-right">Started</th>
+                            <th class="text-right">Completed</th>
+                            <th class="text-right">Conversion</th>
+                            <th class="text-right">Avg Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($activityStats['matching'] as $stat)
+                            <tr>
+                                <td>
+                                    <strong>{{ $stat['activity']->title }}</strong>
+                                    @if($stat['lesson'])
+                                        <div class="muted-text">{{ $stat['lesson']->title }}</div>
+                                    @endif
+                                </td>
+                                <td class="text-right">{{ number_format($stat['started']) }}</td>
+                                <td class="text-right">{{ number_format($stat['completed']) }}</td>
+                                <td class="text-right">{{ $stat['conversion_rate'] !== null ? $stat['conversion_rate'] . '%' : '—' }}</td>
+                                <td class="text-right">{{ $formatDuration($stat['average_duration']) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Activity Conversion · Flashcard Games</h2>
+            @if($activityStats['flashcard']->isEmpty())
+                <p class="empty-text">No flashcard games have been played yet.</p>
+            @else
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Game</th>
+                            <th class="text-right">Started</th>
+                            <th class="text-right">Completed</th>
+                            <th class="text-right">Conversion</th>
+                            <th class="text-right">Avg Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($activityStats['flashcard'] as $stat)
+                            <tr>
+                                <td>
+                                    <strong>{{ $stat['activity']->title }}</strong>
+                                    @if($stat['lesson'])
+                                        <div class="muted-text">{{ $stat['lesson']->title }}</div>
+                                    @endif
+                                </td>
+                                <td class="text-right">{{ number_format($stat['started']) }}</td>
+                                <td class="text-right">{{ number_format($stat['completed']) }}</td>
+                                <td class="text-right">{{ $stat['conversion_rate'] !== null ? $stat['conversion_rate'] . '%' : '—' }}</td>
+                                <td class="text-right">{{ $formatDuration($stat['average_duration']) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+
         <div class="dashboard-section">
             <h2>Recent Lessons</h2>
             @if($recentLessons->isEmpty())
@@ -76,7 +240,7 @@
                         @foreach($recentResponses as $response)
                             <tr>
                                 <td>{{ $response->lesson->title }}</td>
-                                <td>{{ Str::limit($response->prompt->prompt_text, 40) }}</td>
+                                <td>{{ Str::limit($response->prompt->prompt_text, 60) }}</td>
                                 <td>{{ $response->option->label }}</td>
                                 <td>{{ $response->created_at->diffForHumans() }}</td>
                             </tr>
@@ -87,5 +251,66 @@
         </div>
     </div>
 </div>
+
+@push('styles')
+<style>
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+.stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+.stat-label {
+    font-size: 0.95rem;
+    color: var(--color-text-light);
+    margin-top: 0.25rem;
+}
+.stat-subtle {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-top: 0.35rem;
+}
+.dashboard-sections {
+    display: grid;
+    gap: 2rem;
+}
+.dashboard-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+.dashboard-section.wide {
+    grid-column: span 2;
+}
+.table.compact td,
+.table.compact th {
+    padding: 0.5rem 0.75rem;
+}
+.text-right {
+    text-align: right;
+}
+.muted-text {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+@media (max-width: 1024px) {
+    .dashboard-section.wide {
+        grid-column: span 1;
+    }
+}
+</style>
+@endpush
 @endsection
 
