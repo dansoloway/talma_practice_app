@@ -27,7 +27,7 @@
                     <h3>{{ $item->english_word }}</h3>
                     @if($item->image_path)
                         <div class="current-image">
-                            <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->english_word }}" class="vocab-image">
+                            <img src="{{ $item->image_url }}" alt="{{ $item->english_word }}" class="vocab-image">
                             <span class="image-status">✓ Has Image</span>
                         </div>
                     @else

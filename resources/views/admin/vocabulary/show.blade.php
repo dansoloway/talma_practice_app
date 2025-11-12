@@ -35,7 +35,7 @@
         @if($vocabulary->image_path)
             <div class="detail-group">
                 <h3>Image</h3>
-                <img src="{{ asset('storage/' . $vocabulary->image_path) }}" alt="{{ $vocabulary->english_word }}" style="max-width: 300px; height: auto; border-radius: 8px;">
+                <img src="{{ $vocabulary->image_url }}" alt="{{ $vocabulary->english_word }}" style="max-width: 300px; height: auto; border-radius: 8px;">
             </div>
         @endif
 

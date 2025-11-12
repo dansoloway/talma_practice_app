@@ -72,6 +72,25 @@ class Vocabulary extends Model
     }
 
     /**
+     * Get the full URL for the vocabulary image.
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image_path) {
+            return null;
+        }
+
+        // If path already starts with /storage/, use it directly
+        if (strpos($this->image_path, '/storage/') === 0) {
+            return asset($this->image_path);
+        }
+
+        // Otherwise, prepend storage/ to the relative path
+        // Paths are stored as: images/vocabulary/filename.png
+        return asset('storage/' . $this->image_path);
+    }
+
+    /**
      * Check if the audio file actually exists on disk.
      */
     public function hasAudioFile(): bool

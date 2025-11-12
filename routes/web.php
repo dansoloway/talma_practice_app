@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [StudentController::class, 'index'])->name('student.index');
 Route::get('/lessons', [StudentController::class, 'index'])->name('lessons.index');
 Route::get('/grade/{gradeLevel}', [StudentController::class, 'grade'])->name('student.grade');
+Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'updateLessonOrder'])->name('student.grade.update-order');
 
 // Individual Lessons
 Route::get('/lessons/{slug}', [LessonController::class, 'show'])->name('lessons.show');
@@ -138,6 +139,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         ->name('lessons.vocabulary.update-image');
     Route::put('lessons/{lesson}/vocabulary/{vocabulary}/remove-image', [AdminVocabularyController::class, 'removeImage'])
         ->name('lessons.vocabulary.remove-image');
+    Route::post('lessons/{lesson}/vocabulary/{vocabulary}/generate-image', [AdminVocabularyController::class, 'generateImage'])
+        ->name('lessons.vocabulary.generate-image');
     Route::post('lessons/{lesson}/vocabulary/generate-tts', [AdminVocabularyController::class, 'generateTts'])
         ->name('lessons.vocabulary.generate-tts');
     Route::get('vocabulary/tts-logs', [AdminVocabularyController::class, 'viewLogs'])

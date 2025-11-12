@@ -34,7 +34,7 @@
             <div class="form-group">
                 <label>Current Image</label>
                 <div>
-                    <img src="{{ asset('storage/' . $vocabulary->image_path) }}" alt="{{ $vocabulary->english_word }}" style="max-width: 200px; height: auto; border-radius: 4px;">
+                    <img src="{{ $vocabulary->image_url }}" alt="{{ $vocabulary->english_word }}" style="max-width: 200px; height: auto; border-radius: 4px;">
                 </div>
             </div>
         @endif

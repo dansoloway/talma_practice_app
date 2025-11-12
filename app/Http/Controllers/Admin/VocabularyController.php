@@ -5,14 +5,34 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\Vocabulary;
+use App\Services\ImageGeneration\FlaticonImageGenerator;
+use App\Services\ImageGeneration\LeonardoImageGenerator;
+use App\Services\ImageGeneration\OpenAiImageGenerator;
+use App\Services\ImageGeneration\StockImageGenerator;
 use App\Services\Translation\OpenAiTranslator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class VocabularyController extends Controller
 {
-    public function __construct(protected OpenAiTranslator $translator)
-    {
+    protected $imageGenerator;
+
+    public function __construct(
+        protected OpenAiTranslator $translator
+    ) {
+        // Priority: Flaticon > Stock images (Unsplash/Pixabay) > Leonardo.ai > OpenAI
+        $flaticonGenerator = app(FlaticonImageGenerator::class);
+        $stockGenerator = app(StockImageGenerator::class);
+        $leonardoGenerator = app(LeonardoImageGenerator::class);
+        $openAiGenerator = app(OpenAiImageGenerator::class);
+        
+        $this->imageGenerator = $flaticonGenerator->enabled() 
+            ? $flaticonGenerator 
+            : ($stockGenerator->enabled() 
+                ? $stockGenerator 
+                : ($leonardoGenerator->enabled() 
+                    ? $leonardoGenerator 
+                    : $openAiGenerator));
     }
 
     /**
@@ -71,6 +91,16 @@ class VocabularyController extends Controller
         }
 
         $vocabulary = Vocabulary::create($validated);
+        
+        // Automatic image generation is currently disabled
+        // Users can upload images manually or use the "Generate Image" button
+        // if (empty($validated['image_path']) && $this->imageGenerator->enabled()) {
+        //     \Log::info("Generating image for vocabulary word: {$vocabulary->english_word} (ID: {$vocabulary->id})");
+        //     $imagePath = $this->imageGenerator->generateVocabularyImage($vocabulary->english_word);
+        //     if ($imagePath) {
+        //         $vocabulary->update(['image_path' => $imagePath]);
+        //     }
+        // }
         
         // Generate audio for the new vocabulary word
         $this->generateVocabularyAudio($vocabulary);
@@ -163,10 +193,31 @@ class VocabularyController extends Controller
         // Increase execution time for TTS generation
         set_time_limit(300); // 5 minutes
         
-        $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
-            'import_mode' => 'required|in:add,replace',
-        ]);
+        try {
+            $request->validate([
+                'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+                'import_mode' => 'required|in:add,replace',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('CSV upload validation failed', [
+                'errors' => $e->errors(),
+                'request' => $request->all(),
+            ]);
+            
+            // Return JSON for AJAX requests
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+            
+            return redirect()
+                ->route('admin.lessons.vocabulary.csv.upload', $lesson)
+                ->withErrors($e->errors())
+                ->withInput();
+        }
 
         $file = $request->file('csv_file');
         $csvData = array_map('str_getcsv', file($file->getRealPath()));
@@ -184,6 +235,7 @@ class VocabularyController extends Controller
         $imported = 0;
         $errors = [];
         $processedWords = []; // Track words to prevent duplicates within CSV
+        $totalRows = count($csvData);
 
         foreach ($csvData as $index => $row) {
             // Skip header row if it exists
@@ -222,9 +274,13 @@ class VocabularyController extends Controller
                 $translations = $this->translator->translate($englishWord, $needsHebrew, $needsArabic);
                 if ($needsHebrew && !empty($translations['hebrew'])) {
                     $hebrew = $translations['hebrew'];
+                } elseif ($needsHebrew) {
+                    $errors[] = "Row " . ($index + 1) . ": Failed to translate '{$englishWord}' to Hebrew (may have hit rate limit).";
                 }
                 if ($needsArabic && !empty($translations['arabic'])) {
                     $arabic = $translations['arabic'];
+                } elseif ($needsArabic) {
+                    $errors[] = "Row " . ($index + 1) . ": Failed to translate '{$englishWord}' to Arabic (may have hit rate limit).";
                 }
             } elseif (($needsHebrew || $needsArabic) && !$this->translator->enabled()) {
                 $errors[] = "Row " . ($index + 1) . ": Missing translations for '{$englishWord}' and OpenAI key is not configured.";
@@ -239,6 +295,16 @@ class VocabularyController extends Controller
                     'sort_order' => $imported + 1,
                     'is_active' => true,
                 ]);
+                
+                // Automatic image generation is currently disabled
+                // Users can upload images manually or use the "Generate Image" button
+                // if ($this->imageGenerator->enabled()) {
+                //     \Log::info("Generating image for vocabulary word: {$englishWord} (ID: {$vocabulary->id})");
+                //     $imagePath = $this->imageGenerator->generateVocabularyImage($englishWord);
+                //     if ($imagePath) {
+                //         $vocabulary->update(['image_path' => $imagePath]);
+                //     }
+                // }
                 
                 // Generate TTS audio for the vocabulary word
                 \Log::info("Generating TTS for vocabulary word: {$englishWord} (ID: {$vocabulary->id})");
@@ -256,6 +322,17 @@ class VocabularyController extends Controller
         $message = "Successfully {$action} {$imported} vocabulary items.";
         if (!empty($errors)) {
             $message .= " Errors: " . implode(', ', $errors);
+        }
+
+        // Return JSON for AJAX requests
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'imported' => $imported,
+                'errors' => $errors,
+                'redirect_url' => route('admin.lessons.vocabulary.index', $lesson),
+            ]);
         }
 
         return redirect()
@@ -314,6 +391,77 @@ class VocabularyController extends Controller
         return redirect()
             ->route('admin.lessons.vocabulary.index', $lesson)
             ->with('success', 'Image removed successfully!');
+    }
+
+    /**
+     * Generate or regenerate image for a vocabulary word.
+     */
+    public function generateImage(Request $request, Lesson $lesson, Vocabulary $vocabulary)
+    {
+        // Increase execution time for image generation (can take up to 5 minutes for Leonardo.ai polling)
+        set_time_limit(300); // 5 minutes
+        
+        // Refresh image generator in case config changed
+        $flaticonGenerator = app(FlaticonImageGenerator::class);
+        $stockGenerator = app(StockImageGenerator::class);
+        $leonardoGenerator = app(LeonardoImageGenerator::class);
+        $openAiGenerator = app(OpenAiImageGenerator::class);
+        
+        $imageGenerator = $flaticonGenerator->enabled() 
+            ? $flaticonGenerator 
+            : ($stockGenerator->enabled() 
+                ? $stockGenerator 
+                : ($leonardoGenerator->enabled() 
+                    ? $leonardoGenerator 
+                    : $openAiGenerator));
+        
+        if (!$imageGenerator->enabled()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No image service configured. Please set FLATICON_API_KEY, UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, LEONARDO_API_KEY, or OPENAI_API_KEY in your .env file.',
+                ], 400);
+            }
+            
+            return redirect()
+                ->route('admin.lessons.vocabulary.index', $lesson)
+                ->with('error', 'No image service configured.');
+        }
+
+        // Delete old image if exists
+        if ($vocabulary->image_path && Storage::disk('public')->exists($vocabulary->image_path)) {
+            Storage::disk('public')->delete($vocabulary->image_path);
+        }
+
+        \Log::info("Generating image for vocabulary word: {$vocabulary->english_word} (ID: {$vocabulary->id})");
+        $imagePath = $imageGenerator->generateVocabularyImage($vocabulary->english_word);
+
+        if ($imagePath) {
+            $vocabulary->update(['image_path' => $imagePath]);
+            
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Image generated successfully!',
+                    'image_url' => $vocabulary->image_url,
+                ]);
+            }
+            
+            return redirect()
+                ->route('admin.lessons.vocabulary.index', $lesson)
+                ->with('success', 'Image generated successfully!');
+        } else {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to generate image. Please check logs for details.',
+                ], 500);
+            }
+            
+            return redirect()
+                ->route('admin.lessons.vocabulary.index', $lesson)
+                ->with('error', 'Failed to generate image. Please check logs for details.');
+        }
     }
 
     /**

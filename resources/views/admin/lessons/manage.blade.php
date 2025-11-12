@@ -160,7 +160,7 @@
                 @foreach($lesson->vocabulary as $vocab)
                     <div class="vocabulary-card">
                         @if($vocab->image_path)
-                            <img src="{{ asset('storage/' . $vocab->image_path) }}" alt="{{ $vocab->english_word }}" class="vocab-image">
+                            <img src="{{ $vocab->image_url }}" alt="{{ $vocab->english_word }}" class="vocab-image">
                         @endif
                         <div class="vocab-content">
                             <h4>{{ $vocab->english_word }}</h4>

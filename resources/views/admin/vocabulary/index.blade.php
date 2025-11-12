@@ -64,7 +64,8 @@
                             </td>
                             <td>
                                 @if($item->image_path)
-                                    <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->english_word }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                    <img src="{{ $item->image_url }}" alt="{{ $item->english_word }}" class="vocab-thumbnail" data-image-url="{{ $item->image_url }}" data-word="{{ $item->english_word }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; cursor: pointer;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                                    <span class="text-muted" style="display: none;">Image not found</span>
                                 @else
                                     <span class="text-muted">No image</span>
                                 @endif
@@ -97,6 +98,9 @@
                                 </span>
                             </td>
                             <td class="actions">
+                                <button type="button" class="btn btn-sm btn-primary generate-image-btn" data-vocab-id="{{ $item->id }}" data-word="{{ $item->english_word }}" data-has-image="{{ $item->image_path ? '1' : '0' }}">
+                                    {{ $item->image_path ? '🔄 Re-generate' : '🎨 Generate' }} Image
+                                </button>
                                 <form action="{{ route('admin.lessons.vocabulary.update-image', [$lesson, $item]) }}" method="POST" enctype="multipart/form-data" class="inline-form">
                                     @csrf
                                     @method('PUT')
@@ -129,6 +133,28 @@
         </div>
     @endif
 </div>
+
+<!-- Image Modal -->
+<div id="image-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 10000; align-items: center; justify-content: center; cursor: pointer;">
+    <div style="position: relative; max-width: 90%; max-height: 90%; text-align: center;">
+        <button id="close-modal" style="position: absolute; top: -40px; right: 0; background: white; border: none; color: #333; font-size: 2rem; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; line-height: 1;">×</button>
+        <img id="modal-image" src="" alt="" style="max-width: 100%; max-height: 90vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);">
+        <p id="modal-word" style="color: white; margin-top: 1rem; font-size: 1.2rem; font-weight: 600;"></p>
+    </div>
+</div>
+
+<!-- Image Generation Modal -->
+<div id="generate-image-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🎨</div>
+        <h2 style="margin-bottom: 1rem; color: #0024a7;">Generating Image</h2>
+        <p id="generate-status" style="margin-bottom: 1rem; color: #666;">Starting image generation...</p>
+        <div style="width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
+            <div id="generate-progress" style="height: 100%; background: #0024a7; width: 0%; transition: width 0.3s;"></div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('styles')
@@ -160,6 +186,20 @@
 .status-icon {
     margin-right: 0.25rem;
     font-weight: bold;
+}
+
+#image-modal {
+    display: flex;
+}
+
+.vocab-thumbnail:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+    transition: all 0.2s;
+}
+
+#generate-image-modal {
+    display: flex;
 }
 </style>
 @endpush
@@ -263,5 +303,103 @@ function generateAllTts() {
 
     processNext();
 }
+
+// Image modal functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const imageModal = document.getElementById('image-modal');
+    const modalImage = document.getElementById('modal-image');
+    const modalWord = document.getElementById('modal-word');
+    const closeModal = document.getElementById('close-modal');
+    const thumbnails = document.querySelectorAll('.vocab-thumbnail');
+    
+    // Open modal on thumbnail click
+    thumbnails.forEach(function(thumbnail) {
+        thumbnail.addEventListener('click', function() {
+            modalImage.src = this.dataset.imageUrl;
+            modalWord.textContent = this.dataset.word;
+            imageModal.style.display = 'flex';
+        });
+    });
+    
+    // Close modal
+    function closeImageModal() {
+        imageModal.style.display = 'none';
+    }
+    
+    closeModal.addEventListener('click', closeImageModal);
+    imageModal.addEventListener('click', function(e) {
+        if (e.target === imageModal) {
+            closeImageModal();
+        }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && imageModal.style.display === 'flex') {
+            closeImageModal();
+        }
+    });
+    
+    // Image generation functionality
+    const generateButtons = document.querySelectorAll('.generate-image-btn');
+    const generateModal = document.getElementById('generate-image-modal');
+    const generateStatus = document.getElementById('generate-status');
+    const generateProgress = document.getElementById('generate-progress');
+    
+    generateButtons.forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+            const vocabId = this.dataset.vocabId;
+            const word = this.dataset.word;
+            const hasImage = this.dataset.hasImage === '1';
+            
+            if (hasImage && !confirm(`Regenerate image for "${word}"? This will replace the current image.`)) {
+                return;
+            }
+            
+            // Show modal
+            generateModal.style.display = 'flex';
+            generateStatus.textContent = `Generating image for "${word}"...`;
+            generateProgress.style.width = '20%';
+            
+            try {
+                const response = await fetch(`/admin/lessons/{{ $lesson->id }}/vocabulary/${vocabId}/generate-image`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                
+                generateProgress.style.width = '80%';
+                generateStatus.textContent = 'Processing...';
+                
+                if (!response.ok) {
+                    throw new Error('Server returned an error: ' + response.status);
+                }
+                
+                const data = await response.json();
+                
+                generateProgress.style.width = '100%';
+                generateStatus.textContent = 'Complete!';
+                
+                setTimeout(function() {
+                    generateModal.style.display = 'none';
+                    if (data.success) {
+                        // Reload page to show new image
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to generate image'));
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                generateModal.style.display = 'none';
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+            }
+        });
+    });
+});
 </script>
 @endpush
