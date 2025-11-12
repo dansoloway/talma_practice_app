@@ -457,6 +457,8 @@ function generateOptions(correctCard) {
                     selectOption(this);
                 });
                 optionsContainer.appendChild(optionBtn);
+                // Auto-resize text if needed
+                autoResizeText(optionBtn);
             });
             break;
             
@@ -494,6 +496,8 @@ function generateOptions(correctCard) {
                     selectOption(this);
                 });
                 optionsContainer.appendChild(optionBtn);
+                // Auto-resize text if needed
+                autoResizeText(optionBtn);
             });
             break;
     }
@@ -608,6 +612,38 @@ function playAudio(audioPath) {
     const audio = document.getElementById('game-audio');
     audio.src = audioPath;
     audio.play();
+}
+
+function autoResizeText(element) {
+    // Wait for element to be rendered
+    requestAnimationFrame(() => {
+        // Reset to original size
+        element.style.fontSize = '';
+        element.style.whiteSpace = 'nowrap';
+        element.style.wordBreak = '';
+        element.style.lineHeight = '';
+        
+        // Check if text overflows
+        if (element.scrollWidth > element.clientWidth) {
+            // Calculate the scale factor needed
+            const scale = element.clientWidth / element.scrollWidth;
+            const currentFontSize = parseFloat(window.getComputedStyle(element).fontSize);
+            const newFontSize = Math.max(currentFontSize * scale * 0.95, 0.6); // Minimum 0.6rem
+            
+            // Apply the new font size
+            element.style.fontSize = newFontSize + 'rem';
+            
+            // Check again after font size change
+            requestAnimationFrame(() => {
+                // If still overflowing, allow wrapping for very long text
+                if (element.scrollWidth > element.clientWidth) {
+                    element.style.whiteSpace = 'normal';
+                    element.style.wordBreak = 'break-word';
+                    element.style.lineHeight = '1.2';
+                }
+            });
+        }
+    });
 }
 </script>
 @endsection
@@ -784,6 +820,13 @@ function playAudio(audioPath) {
     cursor: pointer;
     transition: all 0.2s ease;
     min-width: 120px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1rem;
+    line-height: 1.4;
+    text-align: center;
 }
 
 .audio-option:hover, .image-option:hover, .word-option:hover {
