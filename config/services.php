@@ -43,4 +43,10 @@ return [
         'api_key' => env('ELEVENLABS_API_KEY'),
     ],
 
+'openai' => [
+    'key' => env('OPENAI_API_KEY'),
+    'translation_model' => env('OPENAI_TRANSLATION_MODEL', 'gpt-4o-mini'),
+    'endpoint' => env('OPENAI_ENDPOINT', 'https://api.openai.com/v1/chat/completions'),
+],
+
 ];

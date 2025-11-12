@@ -5,11 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\Vocabulary;
+use App\Services\Translation\OpenAiTranslator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class VocabularyController extends Controller
 {
+    public function __construct(protected OpenAiTranslator $translator)
+    {
+    }
+
     /**
      * Display a listing of vocabulary for a lesson.
      */
@@ -43,6 +48,19 @@ class VocabularyController extends Controller
         ]);
 
         $validated['lesson_id'] = $lesson->id;
+
+        $needsHebrew = empty($validated['hebrew_translation']);
+        $needsArabic = empty($validated['arabic_translation']);
+
+        if (($needsHebrew || $needsArabic) && $this->translator->enabled()) {
+            $translations = $this->translator->translate($validated['english_word'], $needsHebrew, $needsArabic);
+            if ($needsHebrew && !empty($translations['hebrew'])) {
+                $validated['hebrew_translation'] = $translations['hebrew'];
+            }
+            if ($needsArabic && !empty($translations['arabic'])) {
+                $validated['arabic_translation'] = $translations['arabic'];
+            }
+        }
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -194,12 +212,30 @@ class VocabularyController extends Controller
                 }
             }
 
+            $hebrew = isset($row[1]) ? trim($row[1]) : null;
+            $arabic = isset($row[2]) ? trim($row[2]) : null;
+
+            $needsHebrew = blank($hebrew);
+            $needsArabic = blank($arabic);
+
+            if (($needsHebrew || $needsArabic) && $this->translator->enabled()) {
+                $translations = $this->translator->translate($englishWord, $needsHebrew, $needsArabic);
+                if ($needsHebrew && !empty($translations['hebrew'])) {
+                    $hebrew = $translations['hebrew'];
+                }
+                if ($needsArabic && !empty($translations['arabic'])) {
+                    $arabic = $translations['arabic'];
+                }
+            } elseif (($needsHebrew || $needsArabic) && !$this->translator->enabled()) {
+                $errors[] = "Row " . ($index + 1) . ": Missing translations for '{$englishWord}' and OpenAI key is not configured.";
+            }
+
             try {
                 $vocabulary = Vocabulary::create([
                     'lesson_id' => $lesson->id,
                     'english_word' => $englishWord,
-                    'hebrew_translation' => isset($row[1]) ? trim($row[1]) : null,
-                    'arabic_translation' => isset($row[2]) ? trim($row[2]) : null,
+                    'hebrew_translation' => $hebrew ?: null,
+                    'arabic_translation' => $arabic ?: null,
                     'sort_order' => $imported + 1,
                     'is_active' => true,
                 ]);

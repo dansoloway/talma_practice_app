@@ -6,7 +6,7 @@ Import lessons and vocabulary from CSV files into the TALMA Practice Pal databas
 ## 📁 **Required Files**
 Place these CSV files in the `data/` directory:
 - `we speak vocab - sessions.csv` - Lesson information
-- `we speak vocab - vocab.csv` - Vocabulary words
+- `we speak vocab - vocab.csv` - Vocabulary words (English required, Hebrew/Arabic optional)
 
 ## 📊 **CSV Format**
 
@@ -20,13 +20,14 @@ id,grade_level,session_title,title
 
 ### **Vocabulary CSV Format:**
 ```csv
-session_id,word
-1,science
-1,experiment
-1,volcano
-2,ice
-2,melts
+session_id,word,hebrew,arabic
+1,science,,
+1,experiment,,
+1,volcano,,
+2,ice,,
+2,melts,,
 ```
+> Leave the translation columns blank to let the system auto-translate using OpenAI (requires `OPENAI_API_KEY` in `.env`). Supply your own translations to override the automatic values.
 
 ## 🚀 **Usage**
 
@@ -84,6 +85,7 @@ php artisan talma:import-lessons
 - Validates CSV files exist
 - Shows clear error messages
 - Provides import summary
+- Automatically fills missing Hebrew / Arabic translations when OpenAI is configured
 
 ### **Smart Parsing:**
 - Extracts grade numbers from "7th Grade", "8th Grade"
