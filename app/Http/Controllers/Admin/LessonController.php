@@ -83,6 +83,19 @@ class LessonController extends Controller
             $counter++;
         }
 
+        // If sort_order not provided, is null, empty, or is 0, set it to be last (highest + 1) for the same grade level
+        if (!isset($validated['sort_order']) || $validated['sort_order'] === null || $validated['sort_order'] === '' || $validated['sort_order'] == 0) {
+            $query = Lesson::query();
+            
+            // If grade_level is set, find max sort_order for that grade level
+            if (!empty($validated['grade_level'])) {
+                $query->where('grade_level', $validated['grade_level']);
+            }
+            
+            $maxSortOrder = $query->max('sort_order') ?? 0;
+            $validated['sort_order'] = $maxSortOrder + 1;
+        }
+
         $lesson = Lesson::create($validated);
 
         return redirect()

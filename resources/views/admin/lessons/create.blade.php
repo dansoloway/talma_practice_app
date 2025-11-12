@@ -63,7 +63,8 @@
 
         <div class="form-group">
             <label for="sort_order">Sort Order</label>
-            <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', 0) }}" class="form-control">
+            <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order') }}" class="form-control" placeholder="Leave blank to add at end">
+            <small>Leave blank to automatically add this lesson at the end of its grade level</small>
         </div>
 
         <div class="form-group">
