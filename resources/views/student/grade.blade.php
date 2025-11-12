@@ -2,6 +2,10 @@
 
 @section('title', 'Grade ' . $gradeLevel . ' Lessons')
 
+@php
+    $isAdmin = session('admin_authenticated', false) === true;
+@endphp
+
 @section('content')
 <div class="container">
     <div class="student-grade-page">
@@ -12,7 +16,7 @@
                     <h1 class="grade-title">Grade {{ $gradeLevel }} Lessons</h1>
                     <p class="grade-subtitle">Choose a lesson to start practicing</p>
                 </div>
-                @if(session('admin_authenticated'))
+                @if($isAdmin)
                     <button id="toggle-sort-mode" class="btn btn-secondary btn-sm">
                         <i class="fas fa-grip-vertical"></i> Sort Lessons
                     </button>
@@ -23,8 +27,8 @@
         <div class="lessons-list" id="lessons-list">
             @forelse($lessons as $lesson)
                 <div class="lesson-card-wrapper" data-lesson-id="{{ $lesson->id }}">
-                    <div class="lesson-card {{ session('admin_authenticated') ? 'sortable' : '' }}">
-                        @if(session('admin_authenticated'))
+                    <div class="lesson-card {{ $isAdmin ? 'sortable' : '' }}">
+                        @if($isAdmin)
                             <div class="drag-handle">
                                 <i class="fas fa-grip-vertical"></i>
                             </div>
@@ -83,7 +87,7 @@
     </div>
 </div>
 
-@if(session('admin_authenticated'))
+@if($isAdmin)
     @push('styles')
     <style>
         .header-content {
@@ -98,30 +102,42 @@
             margin-bottom: 1rem;
         }
 
-        .lesson-card {
+        /* Override the base .lesson-card styles since we changed the structure */
+        .lessons-list .lesson-card {
+            display: block;
+            padding: 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
             position: relative;
+        }
+
+        .lessons-list .lesson-card:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: transparent;
+        }
+
+        .lesson-card-link {
             display: flex;
             align-items: center;
             padding: 1.5rem;
             background: var(--color-white);
             border: 2px solid var(--color-border);
             border-radius: var(--radius-lg);
+            text-decoration: none;
+            color: inherit;
             transition: var(--transition-fast);
             box-shadow: var(--shadow-sm);
+            width: 100%;
         }
 
-        .lesson-card:hover {
+        .lesson-card-link:hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
             border-color: var(--color-primary-light);
-        }
-
-        .lesson-card-link {
-            display: flex;
-            align-items: center;
-            width: 100%;
             text-decoration: none;
-            color: inherit;
         }
 
         .lesson-card.sort-mode {

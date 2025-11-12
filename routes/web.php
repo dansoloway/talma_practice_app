@@ -26,7 +26,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [StudentController::class, 'index'])->name('student.index');
 Route::get('/lessons', [StudentController::class, 'index'])->name('lessons.index');
 Route::get('/grade/{gradeLevel}', [StudentController::class, 'grade'])->name('student.grade');
-Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'updateLessonOrder'])->name('student.grade.update-order');
+Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'updateLessonOrder'])
+    ->middleware('admin.auth')
+    ->name('student.grade.update-order');
 
 // Individual Lessons
 Route::get('/lessons/{slug}', [LessonController::class, 'show'])->name('lessons.show');
