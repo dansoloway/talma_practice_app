@@ -87,163 +87,164 @@
     </div>
 </div>
 
+@push('styles')
+<style>
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .lesson-card-wrapper {
+        margin-bottom: 1rem;
+    }
+
+    /* Override the base .lesson-card styles since we changed the structure */
+    .lessons-list .lesson-card {
+        display: block;
+        padding: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        position: relative;
+    }
+
+    .lessons-list .lesson-card:hover {
+        transform: none;
+        box-shadow: none;
+        border-color: transparent;
+    }
+
+    .lesson-card-link {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem;
+        background: var(--color-white);
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        color: inherit;
+        transition: var(--transition-fast);
+        box-shadow: var(--shadow-sm);
+        width: 100%;
+    }
+
+    .lesson-card-link:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--color-primary-light);
+        text-decoration: none;
+    }
+
+    /* Reduce spacing between cards in sort mode */
+    #lessons-list.sort-mode .lesson-card-wrapper {
+        margin-bottom: 0.5rem;
+    }
+
+    /* Sort mode styles - only visible when admin enables sort mode */
+    .lesson-card.sort-mode {
+        cursor: move;
+    }
+
+    .lesson-card.sort-mode .lesson-card-link {
+        pointer-events: none;
+        padding: 0.75rem 1rem;
+        padding-left: 3rem;
+    }
+
+    /* Compact styling for sort mode */
+    .lesson-card.sort-mode .lesson-session {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        margin-right: 1rem;
+    }
+
+    .lesson-card.sort-mode .lesson-title {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .lesson-card.sort-mode .lesson-session-title {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .lesson-card.sort-mode .lesson-description {
+        font-size: 0.8rem;
+        display: none; /* Hide description in sort mode */
+    }
+
+    .lesson-card.sort-mode .lesson-stats {
+        display: none; /* Hide stats in sort mode */
+    }
+
+    .lesson-card.sort-mode .lesson-arrow {
+        font-size: 0.9rem;
+        margin-left: 0.5rem;
+    }
+
+    .drag-handle {
+        position: absolute;
+        left: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--color-text-muted);
+        font-size: 1rem;
+        padding: 0.25rem;
+        cursor: grab;
+        z-index: 10;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: var(--radius-sm);
+        transition: all 0.2s ease;
+    }
+
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+
+    .lesson-card.sort-mode .drag-handle {
+        display: flex;
+    }
+
+    .lesson-card.sort-mode .drag-handle:hover {
+        background-color: var(--color-gray-100);
+        color: var(--color-primary);
+    }
+
+    .sortable-ghost {
+        opacity: 0.4;
+        background-color: var(--color-primary-bg);
+    }
+
+    .sortable-drag {
+        opacity: 0.8;
+        transform: rotate(2deg);
+    }
+
+    #toggle-sort-mode.active {
+        background-color: var(--color-primary);
+        color: white;
+    }
+
+    .save-order-btn {
+        margin-top: 1rem;
+        display: none;
+    }
+
+    .save-order-btn.visible {
+        display: inline-block;
+    }
+</style>
+@endpush
+
 @if($isAdmin)
-    @push('styles')
-    <style>
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .lesson-card-wrapper {
-            margin-bottom: 1rem;
-        }
-
-        /* Reduce spacing between cards in sort mode */
-        #lessons-list.sort-mode .lesson-card-wrapper {
-            margin-bottom: 0.5rem;
-        }
-
-        /* Override the base .lesson-card styles since we changed the structure */
-        .lessons-list .lesson-card {
-            display: block;
-            padding: 0;
-            background: transparent;
-            border: none;
-            border-radius: 0;
-            box-shadow: none;
-            position: relative;
-        }
-
-        .lessons-list .lesson-card:hover {
-            transform: none;
-            box-shadow: none;
-            border-color: transparent;
-        }
-
-        .lesson-card-link {
-            display: flex;
-            align-items: center;
-            padding: 1.5rem;
-            background: var(--color-white);
-            border: 2px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            text-decoration: none;
-            color: inherit;
-            transition: var(--transition-fast);
-            box-shadow: var(--shadow-sm);
-            width: 100%;
-        }
-
-        .lesson-card-link:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--color-primary-light);
-            text-decoration: none;
-        }
-
-        .lesson-card.sort-mode {
-            cursor: move;
-        }
-
-        .lesson-card.sort-mode .lesson-card-link {
-            pointer-events: none;
-            padding: 0.75rem 1rem;
-            padding-left: 3rem;
-        }
-
-        /* Compact styling for sort mode */
-        .lesson-card.sort-mode .lesson-session {
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-            margin-right: 1rem;
-        }
-
-        .lesson-card.sort-mode .lesson-title {
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .lesson-card.sort-mode .lesson-session-title {
-            font-size: 0.85rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .lesson-card.sort-mode .lesson-description {
-            font-size: 0.8rem;
-            display: none; /* Hide description in sort mode */
-        }
-
-        .lesson-card.sort-mode .lesson-stats {
-            display: none; /* Hide stats in sort mode */
-        }
-
-        .lesson-card.sort-mode .lesson-arrow {
-            font-size: 0.9rem;
-            margin-left: 0.5rem;
-        }
-
-        .drag-handle {
-            position: absolute;
-            left: 0.5rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--color-text-muted);
-            font-size: 1rem;
-            padding: 0.25rem;
-            cursor: grab;
-            z-index: 10;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: var(--radius-sm);
-            transition: all 0.2s ease;
-        }
-
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-
-        .lesson-card.sort-mode .drag-handle {
-            display: flex;
-        }
-
-        .lesson-card.sort-mode .drag-handle:hover {
-            background-color: var(--color-gray-100);
-            color: var(--color-primary);
-        }
-
-        .sortable-ghost {
-            opacity: 0.4;
-            background-color: var(--color-primary-bg);
-        }
-
-        .sortable-drag {
-            opacity: 0.8;
-            transform: rotate(2deg);
-        }
-
-        #toggle-sort-mode.active {
-            background-color: var(--color-primary);
-            color: white;
-        }
-
-        .save-order-btn {
-            margin-top: 1rem;
-            display: none;
-        }
-
-        .save-order-btn.visible {
-            display: inline-block;
-        }
-    </style>
-    @endpush
-
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
