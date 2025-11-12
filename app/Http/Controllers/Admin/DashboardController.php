@@ -240,7 +240,9 @@ class DashboardController extends Controller
             }
             
             // Add time for single-response sessions (estimate 30 seconds per response)
-            $singleResponseSessions = Response::whereDate('created_at', $key)
+            $singleResponseSessions = DB::table('responses')
+                ->select('session_id')
+                ->whereDate('created_at', $key)
                 ->whereNotNull('session_id')
                 ->groupBy('session_id')
                 ->havingRaw('COUNT(*) = 1')
