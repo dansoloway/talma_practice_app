@@ -64,7 +64,7 @@ class LessonController extends Controller
             'session_number' => 'nullable|integer|min:1',
             'session_title' => 'nullable|string|max:255',
             'is_active' => 'boolean',
-            'sort_order' => 'integer',
+            'sort_order' => 'nullable|integer',
         ]);
 
         // Auto-generate slug if not provided
@@ -84,7 +84,7 @@ class LessonController extends Controller
         }
 
         // If sort_order not provided, is null, empty, or is 0, set it to be last (highest + 1) for the same grade level
-        if (!isset($validated['sort_order']) || $validated['sort_order'] === null || $validated['sort_order'] === '' || $validated['sort_order'] == 0) {
+        if (empty($validated['sort_order']) || $validated['sort_order'] == 0) {
             $query = Lesson::query();
             
             // If grade_level is set, find max sort_order for that grade level
