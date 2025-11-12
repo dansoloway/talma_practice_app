@@ -178,13 +178,7 @@
         }
 
         .lesson-card.sort-mode .lesson-stats {
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-        }
-
-        .lesson-card.sort-mode .lesson-stats .stat {
-            font-size: 0.75rem;
-            padding: 0.125rem 0.5rem;
+            display: none; /* Hide stats in sort mode */
         }
 
         .lesson-card.sort-mode .lesson-arrow {
