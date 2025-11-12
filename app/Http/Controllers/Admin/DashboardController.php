@@ -103,25 +103,66 @@ class DashboardController extends Controller
 
     protected function buildLessonStats(): array
     {
-        $topLessons = Response::select('lesson_id', DB::raw('COUNT(*) as total'))
-            ->with('lesson:id,title,slug')
-            ->groupBy('lesson_id')
-            ->orderByDesc('total')
-            ->take(5)
-            ->get()
-            ->map(function ($row) {
-                return [
-                    'lesson' => $row->lesson,
-                    'responses' => $row->total,
-                ];
-            })
-            ->filter(fn ($item) => $item['lesson']);
+        // Get all lessons with their time spent
+        $lessons = Lesson::all();
+        
+        $lessonTimeStats = $lessons->map(function ($lesson) {
+            $totalTimeSeconds = 0;
+            
+            // Time from completed activities (games) for this lesson
+            $completedActivities = ActivityEvent::where('lesson_id', $lesson->id)
+                ->where('status', 'completed')
+                ->whereNotNull('meta')
+                ->get();
+            
+            foreach ($completedActivities as $activity) {
+                $duration = data_get($activity->meta, 'duration_seconds', 0);
+                if ($duration && is_numeric($duration)) {
+                    $totalTimeSeconds += (int) $duration;
+                }
+            }
+            
+            // Time from Response sessions for this lesson - calculate session duration from first to last response
+            $sessionDurations = Response::select('session_id')
+                ->selectRaw('TIMESTAMPDIFF(SECOND, MIN(created_at), MAX(created_at)) as duration')
+                ->where('lesson_id', $lesson->id)
+                ->whereNotNull('session_id')
+                ->groupBy('session_id')
+                ->havingRaw('COUNT(*) > 1') // Only sessions with multiple responses
+                ->get();
+            
+            foreach ($sessionDurations as $session) {
+                if ($session->duration && $session->duration > 0) {
+                    $totalTimeSeconds += (int) $session->duration;
+                }
+            }
+            
+            // Add time for single-response sessions (estimate 30 seconds per response)
+            $singleResponseSessions = DB::table('responses')
+                ->select('session_id')
+                ->where('lesson_id', $lesson->id)
+                ->whereNotNull('session_id')
+                ->groupBy('session_id')
+                ->havingRaw('COUNT(*) = 1')
+                ->count();
+            $totalTimeSeconds += $singleResponseSessions * 30; // Estimate 30 seconds per single response
+            
+            return [
+                'lesson' => $lesson,
+                'time_seconds' => $totalTimeSeconds,
+            ];
+        })->filter(fn ($item) => $item['time_seconds'] > 0)
+          ->sortByDesc('time_seconds')
+          ->take(5)
+          ->values();
 
-        $lessonsWithNoResponses = Lesson::doesntHave('responses')->count();
+        $lessonsWithNoActivity = Lesson::doesntHave('responses')
+            ->whereNotIn('id', ActivityEvent::distinct()->pluck('lesson_id')->filter())
+            ->count();
 
         return [
-            'top_lessons' => $topLessons,
-            'lessons_without_responses' => $lessonsWithNoResponses,
+            'top_lessons' => $lessonTimeStats,
+            'lessons_without_responses' => $lessonsWithNoActivity,
         ];
     }
 

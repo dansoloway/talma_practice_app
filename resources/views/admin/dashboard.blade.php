@@ -93,13 +93,13 @@
         <div class="dashboard-section">
             <h2>Most Practiced Lessons</h2>
             @if($lessonStats['top_lessons']->isEmpty())
-                <p class="empty-text">No lessons have prompt responses yet.</p>
+                <p class="empty-text">No lessons have activity recorded yet.</p>
             @else
                 <table class="table">
                     <thead>
                         <tr>
                             <th>Lesson</th>
-                            <th class="text-right">Prompt Responses</th>
+                            <th class="text-right">Time Spent</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -109,14 +109,14 @@
                                     <strong>{{ $lessonStat['lesson']->title }}</strong>
                                     <div class="muted-text">{{ $lessonStat['lesson']->slug }}</div>
                                 </td>
-                                <td class="text-right">{{ number_format($lessonStat['responses']) }}</td>
+                                <td class="text-right">{{ $formatDuration($lessonStat['time_seconds']) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             @endif
             @if($lessonStats['lessons_without_responses'] > 0)
-                <p class="muted-text">{{ $lessonStats['lessons_without_responses'] }} lessons have no prompt responses yet.</p>
+                <p class="muted-text">{{ $lessonStats['lessons_without_responses'] }} lessons have no activity recorded yet.</p>
             @endif
         </div>
 
