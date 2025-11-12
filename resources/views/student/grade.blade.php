@@ -102,6 +102,11 @@
             margin-bottom: 1rem;
         }
 
+        /* Reduce spacing between cards in sort mode */
+        #lessons-list.sort-mode .lesson-card-wrapper {
+            margin-bottom: 0.5rem;
+        }
+
         /* Override the base .lesson-card styles since we changed the structure */
         .lessons-list .lesson-card {
             display: block;
@@ -146,6 +151,45 @@
 
         .lesson-card.sort-mode .lesson-card-link {
             pointer-events: none;
+            padding: 0.75rem 1rem;
+            padding-left: 3rem;
+        }
+
+        /* Compact styling for sort mode */
+        .lesson-card.sort-mode .lesson-session {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            margin-right: 1rem;
+        }
+
+        .lesson-card.sort-mode .lesson-title {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .lesson-card.sort-mode .lesson-session-title {
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .lesson-card.sort-mode .lesson-description {
+            font-size: 0.8rem;
+            display: none; /* Hide description in sort mode */
+        }
+
+        .lesson-card.sort-mode .lesson-stats {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .lesson-card.sort-mode .lesson-stats .stat {
+            font-size: 0.75rem;
+            padding: 0.125rem 0.5rem;
+        }
+
+        .lesson-card.sort-mode .lesson-arrow {
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
         }
 
         .drag-handle {
@@ -154,15 +198,15 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--color-text-muted);
-            font-size: 1.2rem;
-            padding: 0.5rem;
+            font-size: 1rem;
+            padding: 0.25rem;
             cursor: grab;
             z-index: 10;
             display: none;
             align-items: center;
             justify-content: center;
-            width: 2rem;
-            height: 2rem;
+            width: 1.5rem;
+            height: 1.5rem;
             border-radius: var(--radius-sm);
             transition: all 0.2s ease;
         }
@@ -178,10 +222,6 @@
         .lesson-card.sort-mode .drag-handle:hover {
             background-color: var(--color-gray-100);
             color: var(--color-primary);
-        }
-
-        .sort-mode .lesson-card-link {
-            padding-left: 3rem;
         }
 
         .sortable-ghost {
@@ -230,6 +270,9 @@
                     toggleSortBtn.classList.add('active');
                     toggleSortBtn.innerHTML = '<i class="fas fa-check"></i> Done Sorting';
                     
+                    // Add sort-mode class to lessons list container
+                    lessonsList.classList.add('sort-mode');
+                    
                     // Add sort-mode class to all cards
                     document.querySelectorAll('.lesson-card').forEach(card => {
                         card.classList.add('sort-mode');
@@ -252,7 +295,10 @@
                     toggleSortBtn.classList.remove('active');
                     toggleSortBtn.innerHTML = '<i class="fas fa-grip-vertical"></i> Sort Lessons';
                     
-                    // Remove sort-mode class
+                    // Remove sort-mode class from lessons list container
+                    lessonsList.classList.remove('sort-mode');
+                    
+                    // Remove sort-mode class from all cards
                     document.querySelectorAll('.lesson-card').forEach(card => {
                         card.classList.remove('sort-mode');
                     });
