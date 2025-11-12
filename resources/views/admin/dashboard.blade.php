@@ -37,7 +37,7 @@
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-number">{{ number_format($stats['total_responses']) }}</div>
-            <div class="stat-label">Total Responses</div>
+            <div class="stat-label">Total Prompt Responses</div>
         </div>
         <div class="stat-card">
             <div class="stat-number">{{ number_format($stats['unique_sessions']) }}</div>
@@ -45,7 +45,7 @@
         </div>
         <div class="stat-card">
             <div class="stat-number">{{ number_format($stats['responses_last_7_days']) }}</div>
-            <div class="stat-label">Responses · Last 7 Days</div>
+            <div class="stat-label">Prompt Responses · Last 7 Days</div>
         </div>
         <div class="stat-card">
             <div class="stat-number">{{ number_format($stats['active_sessions_today']) }}</div>
@@ -59,7 +59,7 @@
         <div class="stat-card">
             <div class="stat-number">{{ number_format($stats['total_activity_completions']) }}</div>
             <div class="stat-label">Activities Completed</div>
-            <div class="stat-subtle">{{ $stats['average_responses_per_session'] }} responses / session</div>
+            <div class="stat-subtle">{{ $stats['average_responses_per_session'] }} prompt responses / session</div>
         </div>
     </div>
 
@@ -73,7 +73,7 @@
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th class="text-right">Responses</th>
+                            <th class="text-right">Prompt Responses</th>
                             <th class="text-right">Unique Students</th>
                         </tr>
                     </thead>
@@ -93,13 +93,13 @@
         <div class="dashboard-section">
             <h2>Most Practiced Lessons</h2>
             @if($lessonStats['top_lessons']->isEmpty())
-                <p class="empty-text">No lessons have student responses yet.</p>
+                <p class="empty-text">No lessons have prompt responses yet.</p>
             @else
                 <table class="table">
                     <thead>
                         <tr>
                             <th>Lesson</th>
-                            <th class="text-right">Responses</th>
+                            <th class="text-right">Prompt Responses</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -116,7 +116,7 @@
                 </table>
             @endif
             @if($lessonStats['lessons_without_responses'] > 0)
-                <p class="muted-text">{{ $lessonStats['lessons_without_responses'] }} lessons have no student responses yet.</p>
+                <p class="muted-text">{{ $lessonStats['lessons_without_responses'] }} lessons have no prompt responses yet.</p>
             @endif
         </div>
 
@@ -223,9 +223,9 @@
         </div>
 
         <div class="dashboard-section">
-            <h2>Recent Responses</h2>
+            <h2>Recent Prompt Responses</h2>
             @if($recentResponses->isEmpty())
-                <p class="empty-text">No responses yet.</p>
+                <p class="empty-text">No prompt responses yet.</p>
             @else
                 <table class="table">
                     <thead>

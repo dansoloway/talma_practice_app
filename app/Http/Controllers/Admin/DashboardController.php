@@ -21,13 +21,28 @@ class DashboardController extends Controller
     public function index()
     {
         $totalResponses = Response::count();
-        $uniqueSessions = Response::whereNotNull('session_id')
+        
+        // Count unique sessions from both Response and ActivityEvent tables
+        $uniqueSessionsFromResponses = Response::whereNotNull('session_id')
             ->distinct('session_id')
-            ->count('session_id');
+            ->pluck('session_id');
+        $uniqueSessionsFromActivities = ActivityEvent::whereNotNull('session_id')
+            ->distinct('session_id')
+            ->pluck('session_id');
+        $uniqueSessions = $uniqueSessionsFromResponses->merge($uniqueSessionsFromActivities)->unique()->count();
+        
         $responsesLast7Days = Response::where('created_at', '>=', now()->subDays(7))->count();
-        $activeSessionsToday = Response::whereDate('created_at', Carbon::today())
+        
+        // Count active sessions today from both tables
+        $activeSessionsTodayFromResponses = Response::whereDate('created_at', Carbon::today())
+            ->whereNotNull('session_id')
             ->distinct('session_id')
-            ->count('session_id');
+            ->pluck('session_id');
+        $activeSessionsTodayFromActivities = ActivityEvent::whereDate('created_at', Carbon::today())
+            ->whereNotNull('session_id')
+            ->distinct('session_id')
+            ->pluck('session_id');
+        $activeSessionsToday = $activeSessionsTodayFromResponses->merge($activeSessionsTodayFromActivities)->unique()->count();
 
         $sessionStats = $this->buildSessionStats();
         $lessonStats = $this->buildLessonStats();
@@ -41,14 +56,14 @@ class DashboardController extends Controller
             ->get();
 
         $stats = [
-            'total_responses' => $totalResponses,
+            'total_responses' => $totalResponses, // Prompt responses
             'unique_sessions' => $uniqueSessions,
-            'responses_last_7_days' => $responsesLast7Days,
+            'responses_last_7_days' => $responsesLast7Days, // Prompt responses last 7 days
             'active_sessions_today' => $activeSessionsToday,
             'average_session_duration' => $sessionStats['average_duration'],
             'median_session_duration' => $sessionStats['median_duration'],
-            'average_responses_per_session' => $sessionStats['average_responses'],
-            'total_activity_completions' => $activityStats['totals']['completed'],
+            'average_responses_per_session' => $sessionStats['average_responses'], // Average prompt responses per session
+            'total_activity_completions' => $activityStats['totals']['completed'], // Game completions
         ];
 
         return view('admin.dashboard', compact(
@@ -173,10 +188,10 @@ class DashboardController extends Controller
         $daysBack = 13;
         $startDate = Carbon::today()->subDays($daysBack);
 
-        $raw = Response::select(
+        // Get responses per day
+        $rawResponses = Response::select(
             DB::raw('DATE(created_at) as date'),
-            DB::raw('COUNT(*) as total'),
-            DB::raw('COUNT(DISTINCT session_id) as unique_sessions')
+            DB::raw('COUNT(*) as total')
         )
             ->where('created_at', '>=', $startDate)
             ->groupBy(DB::raw('DATE(created_at)'))
@@ -184,23 +199,30 @@ class DashboardController extends Controller
             ->pluck('total', 'date')
             ->toArray();
 
-        $rawSessions = Response::select(
-            DB::raw('DATE(created_at) as date'),
-            DB::raw('COUNT(DISTINCT session_id) as unique_sessions')
-        )
-            ->where('created_at', '>=', $startDate)
-            ->groupBy(DB::raw('DATE(created_at)'))
-            ->orderBy('date')
-            ->pluck('unique_sessions', 'date')
-            ->toArray();
-
+        // Get unique sessions per day from both tables
         $series = [];
         for ($date = $startDate->copy(); $date <= Carbon::today(); $date->addDay()) {
             $key = $date->toDateString();
+            
+            // Get unique sessions from Response table for this day
+            $sessionsFromResponses = Response::whereDate('created_at', $key)
+                ->whereNotNull('session_id')
+                ->distinct('session_id')
+                ->pluck('session_id');
+            
+            // Get unique sessions from ActivityEvent table for this day
+            $sessionsFromActivities = ActivityEvent::whereDate('created_at', $key)
+                ->whereNotNull('session_id')
+                ->distinct('session_id')
+                ->pluck('session_id');
+            
+            // Merge and count unique sessions (removing duplicates)
+            $uniqueSessions = $sessionsFromResponses->merge($sessionsFromActivities)->unique()->count();
+            
             $series[] = [
                 'date' => $date->format('M j'),
-                'responses' => $raw[$key] ?? 0,
-                'unique_sessions' => $rawSessions[$key] ?? 0,
+                'responses' => $rawResponses[$key] ?? 0,
+                'unique_sessions' => $uniqueSessions,
             ];
         }
 
