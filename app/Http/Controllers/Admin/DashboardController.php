@@ -188,20 +188,9 @@ class DashboardController extends Controller
         $daysBack = 13;
         $startDate = Carbon::today()->subDays($daysBack);
 
-        // Get responses per day
-        $rawResponses = Response::select(
-            DB::raw('DATE(created_at) as date'),
-            DB::raw('COUNT(*) as total')
-        )
-            ->where('created_at', '>=', $startDate)
-            ->groupBy(DB::raw('DATE(created_at)'))
-            ->orderBy('date')
-            ->pluck('total', 'date')
-            ->toArray();
-
-        // Get unique sessions per day from both tables
+        // Get unique sessions per day from both tables and calculate time spent
         $series = [];
-        for ($date = $startDate->copy(); $date <= Carbon::today(); $date->addDay()) {
+        for ($date = Carbon::today(); $date >= $startDate; $date->subDay()) {
             $key = $date->toDateString();
             
             // Get unique sessions from Response table for this day
@@ -219,9 +208,48 @@ class DashboardController extends Controller
             // Merge and count unique sessions (removing duplicates)
             $uniqueSessions = $sessionsFromResponses->merge($sessionsFromActivities)->unique()->count();
             
+            // Calculate total time spent (in seconds)
+            $totalTimeSeconds = 0;
+            
+            // Time from completed activities (games) - sum duration_seconds from meta
+            $completedActivities = ActivityEvent::whereDate('created_at', $key)
+                ->where('status', 'completed')
+                ->whereNotNull('meta')
+                ->get();
+            
+            foreach ($completedActivities as $activity) {
+                $duration = data_get($activity->meta, 'duration_seconds', 0);
+                if ($duration && is_numeric($duration)) {
+                    $totalTimeSeconds += (int) $duration;
+                }
+            }
+            
+            // Time from Response sessions - calculate session duration from first to last response
+            $sessionDurations = Response::select('session_id')
+                ->selectRaw('TIMESTAMPDIFF(SECOND, MIN(created_at), MAX(created_at)) as duration')
+                ->whereDate('created_at', $key)
+                ->whereNotNull('session_id')
+                ->groupBy('session_id')
+                ->havingRaw('COUNT(*) > 1') // Only sessions with multiple responses
+                ->get();
+            
+            foreach ($sessionDurations as $session) {
+                if ($session->duration && $session->duration > 0) {
+                    $totalTimeSeconds += (int) $session->duration;
+                }
+            }
+            
+            // Add time for single-response sessions (estimate 30 seconds per response)
+            $singleResponseSessions = Response::whereDate('created_at', $key)
+                ->whereNotNull('session_id')
+                ->groupBy('session_id')
+                ->havingRaw('COUNT(*) = 1')
+                ->count();
+            $totalTimeSeconds += $singleResponseSessions * 30; // Estimate 30 seconds per single response
+            
             $series[] = [
                 'date' => $date->format('M j'),
-                'responses' => $rawResponses[$key] ?? 0,
+                'total_time_seconds' => $totalTimeSeconds,
                 'unique_sessions' => $uniqueSessions,
             ];
         }

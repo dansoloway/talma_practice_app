@@ -73,7 +73,7 @@
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th class="text-right">Prompt Responses</th>
+                            <th class="text-right">Total Time</th>
                             <th class="text-right">Unique Students</th>
                         </tr>
                     </thead>
@@ -81,7 +81,7 @@
                         @foreach($dailyPractice as $day)
                             <tr>
                                 <td>{{ $day['date'] }}</td>
-                                <td class="text-right">{{ $day['responses'] }}</td>
+                                <td class="text-right">{{ $formatDuration($day['total_time_seconds']) }}</td>
                                 <td class="text-right">{{ $day['unique_sessions'] }}</td>
                             </tr>
                         @endforeach
