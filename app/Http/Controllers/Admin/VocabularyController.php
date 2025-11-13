@@ -494,6 +494,9 @@ class VocabularyController extends Controller
             // Always process exactly 1 item to avoid duplicates/repeats
             $forceRecreate = $request->input('force', false);
             
+            // Create dedicated image generation log file
+            $imageLogFile = storage_path('logs/image_generation.log');
+            
             // Get image generator
             $freepikGenerator = app(FreepikImageGenerator::class);
             $flaticonGenerator = app(FlaticonImageGenerator::class);
@@ -522,15 +525,54 @@ class VocabularyController extends Controller
             }
             
             // Get vocabulary items that need image generation
+            // Priority: 1) No path, 2) Path exists but file missing, 3) Force recreate (all items)
             $vocabulary = null;
             
             if ($forceRecreate) {
                 // Force recreate: process all items, starting with oldest
+                // Process items that don't have valid files first, then regenerate existing ones
                 $vocabulary = $lesson->vocabulary()
                     ->orderBy('id')
-                    ->first();
+                    ->get()
+                    ->first(function($vocab) use ($imageLogFile) {
+                        if (!$vocab->image_path) {
+                            file_put_contents($imageLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: No path, needs generation\n", FILE_APPEND);
+                            return true; // No path, needs generation
+                        }
+                        
+                        // Normalize path: remove /storage/ or storage/ prefix if present
+                        $originalPath = $vocab->image_path;
+                        $relativePath = $originalPath;
+                        // Remove leading slash if present
+                        $relativePath = ltrim($relativePath, '/');
+                        // Remove storage/ prefix (handles both /storage/ and storage/)
+                        $relativePath = preg_replace('#^storage/#', '', $relativePath);
+                        
+                        file_put_contents($imageLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Original path='{$originalPath}', normalized='{$relativePath}'\n", FILE_APPEND);
+                        
+                        // Check if file actually exists
+                        $exists = Storage::disk('public')->exists($relativePath);
+                        if (!$exists) {
+                            file_put_contents($imageLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Path set but file missing '{$relativePath}', needs generation\n", FILE_APPEND);
+                            return true; // File missing, needs generation
+                        } else {
+                            // File exists - in force recreate mode, we'll regenerate it, but prioritize items without files first
+                            file_put_contents($imageLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: File exists '{$relativePath}', will regenerate later\n", FILE_APPEND);
+                            return false; // Skip for now, process items without files first
+                        }
+                    });
+                
+                // If all items have files, start regenerating from the beginning
+                if (!$vocabulary) {
+                    $vocabulary = $lesson->vocabulary()
+                        ->orderBy('id')
+                        ->first();
+                    if ($vocabulary) {
+                        file_put_contents($imageLogFile, "[" . now() . "] All items have files, starting regeneration from vocab_id={$vocabulary->id}\n", FILE_APPEND);
+                    }
+                }
             } else {
-                // Normal mode: only process items without images
+                // Normal mode: only process items without images or where file is missing
                 $vocabulary = $lesson->vocabulary()
                     ->where(function($query) {
                         $query->whereNull('image_path')
@@ -538,46 +580,121 @@ class VocabularyController extends Controller
                     })
                     ->orderBy('id')
                     ->first();
+                
+                // If no items without path, check for missing files
+                if (!$vocabulary) {
+                    $vocabulary = $lesson->vocabulary()
+                        ->orderBy('id')
+                        ->get()
+                        ->first(function($vocab) use ($imageLogFile) {
+                            if (!$vocab->image_path) {
+                                return true;
+                            }
+                            // Check if file exists - handle path normalization
+                            $relativePath = $vocab->image_path;
+                            $relativePath = ltrim($relativePath, '/');
+                            $relativePath = preg_replace('#^storage/#', '', $relativePath);
+                            
+                            $exists = Storage::disk('public')->exists($relativePath);
+                            if (!$exists) {
+                                file_put_contents($imageLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Path set but file missing '{$relativePath}', needs generation\n", FILE_APPEND);
+                            }
+                            return !$exists;
+                        });
+                }
             }
 
             $processed = 0;
             $errors = [];
             
             if ($vocabulary) {
+                file_put_contents($imageLogFile, "[" . now() . "] Starting single vocabulary image generation for lesson {$lesson->id} | vocab_id={$vocabulary->id} word='{$vocabulary->english_word}'\n", FILE_APPEND);
                 try {
-                    // Delete old image if exists (for force recreate)
-                    if ($forceRecreate && $vocabulary->image_path && Storage::disk('public')->exists($vocabulary->image_path)) {
-                        Storage::disk('public')->delete($vocabulary->image_path);
+                    // Delete old image if exists (for force recreate or if file is missing)
+                    if ($vocabulary->image_path) {
+                        $relativePath = $vocabulary->image_path;
+                        $relativePath = ltrim($relativePath, '/');
+                        $relativePath = preg_replace('#^storage/#', '', $relativePath);
+                        
+                        if (Storage::disk('public')->exists($relativePath)) {
+                            Storage::disk('public')->delete($relativePath);
+                            file_put_contents($imageLogFile, "[" . now() . "] Deleted old image file: {$relativePath}\n", FILE_APPEND);
+                        }
                     }
                     
                     \Log::info("Bulk generating image for vocabulary word: {$vocabulary->english_word} (ID: {$vocabulary->id})");
+                    file_put_contents($imageLogFile, "[" . now() . "] Calling image generator for '{$vocabulary->english_word}'\n", FILE_APPEND);
+                    
                     $imagePath = $imageGenerator->generateVocabularyImage($vocabulary->english_word);
                     
                     if ($imagePath) {
-                        $vocabulary->update(['image_path' => $imagePath]);
-                        $processed = 1;
+                        // Verify the file was actually created
+                        $relativePath = ltrim($imagePath, '/');
+                        $relativePath = preg_replace('#^storage/#', '', $relativePath);
+                        
+                        if (Storage::disk('public')->exists($relativePath)) {
+                            $vocabulary->update(['image_path' => $imagePath]);
+                            $processed = 1;
+                            $fileSize = Storage::disk('public')->size($relativePath);
+                            $successMsg = "Successfully generated image for '{$vocabulary->english_word}' (path: {$imagePath}, size: {$fileSize} bytes)";
+                            \Log::info($successMsg);
+                            file_put_contents($imageLogFile, "[" . now() . "] SUCCESS: {$successMsg}\n", FILE_APPEND);
+                        } else {
+                            $errorMsg = "Image generator returned path but file doesn't exist: {$imagePath}";
+                            \Log::error($errorMsg);
+                            file_put_contents($imageLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
+                            $errors[] = "Failed to generate image for '{$vocabulary->english_word}': File not found";
+                        }
                     } else {
+                        $errorMsg = "Image generator returned null for '{$vocabulary->english_word}'";
+                        \Log::warning($errorMsg);
+                        file_put_contents($imageLogFile, "[" . now() . "] WARNING: {$errorMsg}\n", FILE_APPEND);
                         $errors[] = "Failed to generate image for '{$vocabulary->english_word}'";
                     }
                 } catch (\Exception $e) {
-                    \Log::error("Error generating image for vocabulary {$vocabulary->id}: " . $e->getMessage());
-                    $errors[] = "Error for '{$vocabulary->english_word}': " . $e->getMessage();
+                    $errorMsg = "Failed to generate image for '{$vocabulary->english_word}': " . $e->getMessage();
+                    \Log::error($errorMsg);
+                    \Log::error("Stack trace: " . $e->getTraceAsString());
+                    file_put_contents($imageLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
+                    file_put_contents($imageLogFile, "[" . now() . "] Stack trace: " . $e->getTraceAsString() . "\n", FILE_APPEND);
+                    $errors[] = $errorMsg;
                 }
-            }
-            
-            // Calculate remaining items
-            if ($forceRecreate) {
-                // For force recreate: count items that don't have images yet
-                // After processing, items will have images, so remaining = total - items_with_images
-                $total = $lesson->vocabulary()->count();
-                $withImages = $lesson->vocabulary()->whereNotNull('image_path')->where('image_path', '!=', '')->count();
-                $remaining = max(0, $total - $withImages);
             } else {
-                // Count items without images
+                file_put_contents($imageLogFile, "[" . now() . "] No vocabulary items found that need image generation\n", FILE_APPEND);
+            }
+
+            // Count remaining items
+            if ($forceRecreate) {
+                // For force recreate: count all items that still need processing
+                // After processing one, remaining = total - 1 (since we process sequentially)
+                $total = $lesson->vocabulary()->count();
+                // Count items that have been successfully processed (have valid files)
+                $processedCount = $lesson->vocabulary()
+                    ->get()
+                    ->filter(function($vocab) {
+                        if (!$vocab->image_path) {
+                            return false; // No path, not processed yet
+                        }
+                        $relativePath = $vocab->image_path;
+                        $relativePath = ltrim($relativePath, '/');
+                        $relativePath = preg_replace('#^storage/#', '', $relativePath);
+                        return Storage::disk('public')->exists($relativePath);
+                    })
+                    ->count();
+                // Remaining = total - processed (but we just processed one, so subtract that)
+                $remaining = max(0, $total - $processedCount);
+            } else {
+                // Count items without images or where file is missing
                 $remaining = $lesson->vocabulary()
-                    ->where(function($query) {
-                        $query->whereNull('image_path')
-                              ->orWhere('image_path', '');
+                    ->get()
+                    ->filter(function($vocab) {
+                        if (!$vocab->image_path) {
+                            return true;
+                        }
+                        $relativePath = $vocab->image_path;
+                        $relativePath = ltrim($relativePath, '/');
+                        $relativePath = preg_replace('#^storage/#', '', $relativePath);
+                        return !Storage::disk('public')->exists($relativePath);
                     })
                     ->count();
             }
