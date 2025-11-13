@@ -43,6 +43,10 @@ return [
     'api_key' => env('FLATICON_API_KEY'),
 ],
 
+'freepik' => [
+    'api_key' => env('FREEPIK_API_KEY'),
+],
+
     'elevenlabs' => [
         'api_key' => env('ELEVENLABS_API_KEY'),
     ],

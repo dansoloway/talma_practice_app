@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\Vocabulary;
 use App\Services\ImageGeneration\FlaticonImageGenerator;
+use App\Services\ImageGeneration\FreepikImageGenerator;
 use App\Services\ImageGeneration\LeonardoImageGenerator;
 use App\Services\ImageGeneration\OpenAiImageGenerator;
 use App\Services\ImageGeneration\StockImageGenerator;
@@ -20,19 +21,22 @@ class VocabularyController extends Controller
     public function __construct(
         protected OpenAiTranslator $translator
     ) {
-        // Priority: Flaticon > Stock images (Unsplash/Pixabay) > Leonardo.ai > OpenAI
+        // Priority: Freepik > Flaticon > Stock images (Unsplash/Pixabay) > Leonardo.ai > OpenAI
+        $freepikGenerator = app(FreepikImageGenerator::class);
         $flaticonGenerator = app(FlaticonImageGenerator::class);
         $stockGenerator = app(StockImageGenerator::class);
         $leonardoGenerator = app(LeonardoImageGenerator::class);
         $openAiGenerator = app(OpenAiImageGenerator::class);
         
-        $this->imageGenerator = $flaticonGenerator->enabled() 
-            ? $flaticonGenerator 
-            : ($stockGenerator->enabled() 
-                ? $stockGenerator 
-                : ($leonardoGenerator->enabled() 
-                    ? $leonardoGenerator 
-                    : $openAiGenerator));
+        $this->imageGenerator = $freepikGenerator->enabled() 
+            ? $freepikGenerator 
+            : ($flaticonGenerator->enabled() 
+                ? $flaticonGenerator 
+                : ($stockGenerator->enabled() 
+                    ? $stockGenerator 
+                    : ($leonardoGenerator->enabled() 
+                        ? $leonardoGenerator 
+                        : $openAiGenerator)));
     }
 
     /**
@@ -402,24 +406,28 @@ class VocabularyController extends Controller
         set_time_limit(300); // 5 minutes
         
         // Refresh image generator in case config changed
+        // Priority: Freepik > Flaticon > Stock images (Unsplash/Pixabay) > Leonardo.ai > OpenAI
+        $freepikGenerator = app(FreepikImageGenerator::class);
         $flaticonGenerator = app(FlaticonImageGenerator::class);
         $stockGenerator = app(StockImageGenerator::class);
         $leonardoGenerator = app(LeonardoImageGenerator::class);
         $openAiGenerator = app(OpenAiImageGenerator::class);
         
-        $imageGenerator = $flaticonGenerator->enabled() 
-            ? $flaticonGenerator 
-            : ($stockGenerator->enabled() 
-                ? $stockGenerator 
-                : ($leonardoGenerator->enabled() 
-                    ? $leonardoGenerator 
-                    : $openAiGenerator));
+        $imageGenerator = $freepikGenerator->enabled() 
+            ? $freepikGenerator 
+            : ($flaticonGenerator->enabled() 
+                ? $flaticonGenerator 
+                : ($stockGenerator->enabled() 
+                    ? $stockGenerator 
+                    : ($leonardoGenerator->enabled() 
+                        ? $leonardoGenerator 
+                        : $openAiGenerator)));
         
         if (!$imageGenerator->enabled()) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No image service configured. Please set FLATICON_API_KEY, UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, LEONARDO_API_KEY, or OPENAI_API_KEY in your .env file.',
+                    'message' => 'No image service configured. Please set FREEPIK_API_KEY, FLATICON_API_KEY, UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, LEONARDO_API_KEY, or OPENAI_API_KEY in your .env file.',
                 ], 400);
             }
             
