@@ -473,6 +473,128 @@ class VocabularyController extends Controller
     }
 
     /**
+     * Generate images for all vocabulary items (bulk operation)
+     */
+    public function generateImages(Request $request, Lesson $lesson)
+    {
+        // Per-lesson lock to prevent overlapping requests
+        $lock = \Illuminate\Support\Facades\Cache::lock('lesson:' . $lesson->id . ':vocab_images', 5);
+        if (!$lock->get()) {
+            return response()->json([
+                'success' => true,
+                'processed' => 0,
+                'errors' => [],
+                'remaining' => $lesson->vocabulary()->whereNull('image_path')->count(),
+                'completed' => false,
+                'locked' => true,
+            ]);
+        }
+
+        try {
+            // Always process exactly 1 item to avoid duplicates/repeats
+            $forceRecreate = $request->input('force', false);
+            
+            // Get image generator
+            $freepikGenerator = app(FreepikImageGenerator::class);
+            $flaticonGenerator = app(FlaticonImageGenerator::class);
+            $stockGenerator = app(StockImageGenerator::class);
+            $leonardoGenerator = app(LeonardoImageGenerator::class);
+            $openAiGenerator = app(OpenAiImageGenerator::class);
+            
+            $imageGenerator = $freepikGenerator->enabled() 
+                ? $freepikGenerator 
+                : ($flaticonGenerator->enabled() 
+                    ? $flaticonGenerator 
+                    : ($stockGenerator->enabled() 
+                        ? $stockGenerator 
+                        : ($leonardoGenerator->enabled() 
+                            ? $leonardoGenerator 
+                            : $openAiGenerator)));
+            
+            if (!$imageGenerator->enabled()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No image service configured.',
+                    'processed' => 0,
+                    'remaining' => 0,
+                    'completed' => true,
+                ], 400);
+            }
+            
+            // Get vocabulary items that need image generation
+            $vocabulary = null;
+            
+            if ($forceRecreate) {
+                // Force recreate: process all items, starting with oldest
+                $vocabulary = $lesson->vocabulary()
+                    ->orderBy('id')
+                    ->first();
+            } else {
+                // Normal mode: only process items without images
+                $vocabulary = $lesson->vocabulary()
+                    ->where(function($query) {
+                        $query->whereNull('image_path')
+                              ->orWhere('image_path', '');
+                    })
+                    ->orderBy('id')
+                    ->first();
+            }
+
+            $processed = 0;
+            $errors = [];
+            
+            if ($vocabulary) {
+                try {
+                    // Delete old image if exists (for force recreate)
+                    if ($forceRecreate && $vocabulary->image_path && Storage::disk('public')->exists($vocabulary->image_path)) {
+                        Storage::disk('public')->delete($vocabulary->image_path);
+                    }
+                    
+                    \Log::info("Bulk generating image for vocabulary word: {$vocabulary->english_word} (ID: {$vocabulary->id})");
+                    $imagePath = $imageGenerator->generateVocabularyImage($vocabulary->english_word);
+                    
+                    if ($imagePath) {
+                        $vocabulary->update(['image_path' => $imagePath]);
+                        $processed = 1;
+                    } else {
+                        $errors[] = "Failed to generate image for '{$vocabulary->english_word}'";
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Error generating image for vocabulary {$vocabulary->id}: " . $e->getMessage());
+                    $errors[] = "Error for '{$vocabulary->english_word}': " . $e->getMessage();
+                }
+            }
+            
+            // Calculate remaining items
+            if ($forceRecreate) {
+                // For force recreate: count items that don't have images yet
+                // After processing, items will have images, so remaining = total - items_with_images
+                $total = $lesson->vocabulary()->count();
+                $withImages = $lesson->vocabulary()->whereNotNull('image_path')->where('image_path', '!=', '')->count();
+                $remaining = max(0, $total - $withImages);
+            } else {
+                // Count items without images
+                $remaining = $lesson->vocabulary()
+                    ->where(function($query) {
+                        $query->whereNull('image_path')
+                              ->orWhere('image_path', '');
+                    })
+                    ->count();
+            }
+            
+            return response()->json([
+                'success' => true,
+                'processed' => $processed,
+                'errors' => $errors,
+                'remaining' => $remaining,
+                'completed' => $remaining <= 0,
+            ]);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
      * Generate TTS audio for a vocabulary word
      */
     private function generateVocabularyAudio(Vocabulary $vocabulary)

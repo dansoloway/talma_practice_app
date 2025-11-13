@@ -7,6 +7,10 @@
     <div class="page-header">
         <h1 class="page-title">Vocabulary for: {{ $lesson->title }}</h1>
         <div class="page-actions">
+            <button id="generate-images-btn" class="btn btn-primary" onclick="generateAllImages()">
+                <span id="images-btn-text">🎨 Generate Images</span>
+                <span id="images-btn-spinner" style="display: none;">⏳ Processing...</span>
+            </button>
             <button id="generate-tts-btn" class="btn btn-primary" onclick="generateAllTts()">
                 <span id="tts-btn-text">Generate/Recreate TTS</span>
                 <span id="tts-btn-spinner" style="display: none;">⏳ Processing...</span>
@@ -18,6 +22,15 @@
     </div>
 
     @if($vocabulary->count() > 0)
+        <div id="images-status" style="display: none; margin-bottom: 1rem; padding: 1rem; background: #fef3c7; border-radius: 4px; border-left: 4px solid #f59e0b;">
+            <div id="images-progress-text">Initializing image generation...</div>
+            <div id="images-progress-bar" style="margin-top: 0.5rem; width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                <div id="images-progress-fill" style="height: 100%; background: #f59e0b; width: 0%; transition: width 0.3s;"></div>
+            </div>
+            <div id="images-stats" style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;">
+                <span id="images-processed">0</span> processed, <span id="images-remaining">0</span> remaining
+            </div>
+        </div>
         <div id="tts-status" style="display: none; margin-bottom: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 4px; border-left: 4px solid #3b82f6;">
             <div id="tts-progress-text">Initializing TTS generation...</div>
             <div id="tts-progress-bar" style="margin-top: 0.5rem; width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
@@ -206,9 +219,107 @@
 
 @push('scripts')
 <script>
+let imagesGenerationInProgress = false;
+let imagesTotalItems = {{ $vocabulary->count() }};
+let imagesProcessedItems = 0;
+
 let ttsGenerationInProgress = false;
 let ttsTotalItems = {{ $vocabulary->count() }};
 let ttsProcessedItems = 0;
+
+function generateAllImages() {
+    if (imagesGenerationInProgress) {
+        return;
+    }
+
+    if (!confirm('This will generate/recreate images for all {{ $vocabulary->count() }} vocabulary words. This may take several minutes. Continue?')) {
+        return;
+    }
+
+    imagesGenerationInProgress = true;
+    imagesProcessedItems = 0;
+    
+    const btn = document.getElementById('generate-images-btn');
+    const btnText = document.getElementById('images-btn-text');
+    const btnSpinner = document.getElementById('images-btn-spinner');
+    const statusDiv = document.getElementById('images-status');
+    const progressText = document.getElementById('images-progress-text');
+    const progressFill = document.getElementById('images-progress-fill');
+    const processedSpan = document.getElementById('images-processed');
+    const remainingSpan = document.getElementById('images-remaining');
+
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    btnSpinner.style.display = 'inline';
+    statusDiv.style.display = 'block';
+    progressText.textContent = 'Starting image generation...';
+    progressFill.style.width = '0%';
+
+    function processNext() {
+        fetch('{{ route("admin.lessons.vocabulary.generate-images", $lesson) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                force: true  // Always recreate to regenerate existing images
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                imagesProcessedItems += data.processed || 0;
+                const remaining = data.remaining || 0;
+                const total = imagesTotalItems;
+                const percent = Math.round((imagesProcessedItems / total) * 100);
+
+                progressFill.style.width = percent + '%';
+                processedSpan.textContent = imagesProcessedItems;
+                remainingSpan.textContent = remaining;
+                
+                if (data.errors && data.errors.length > 0) {
+                    progressText.textContent = `Processing... (Errors: ${data.errors.length})`;
+                    console.error('Image Errors:', data.errors);
+                } else {
+                    progressText.textContent = `Processing... ${imagesProcessedItems} of ${total} completed`;
+                }
+
+                if (data.completed || remaining <= 0) {
+                    // Finished
+                    btn.disabled = false;
+                    btnText.style.display = 'inline';
+                    btnSpinner.style.display = 'none';
+                    progressText.textContent = `✅ Completed! Generated images for ${imagesProcessedItems} vocabulary words.`;
+                    progressFill.style.width = '100%';
+                    progressFill.style.background = '#10b981';
+                    imagesGenerationInProgress = false;
+                    
+                    // Reload page after 2 seconds to show updated images
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    // Continue processing
+                    setTimeout(processNext, 1000); // 1 second delay for image generation
+                }
+            } else {
+                throw new Error(data.message || 'Image generation failed');
+            }
+        })
+        .catch(error => {
+            console.error('Image Generation Error:', error);
+            progressText.textContent = '❌ Error: ' + error.message;
+            progressFill.style.background = '#ef4444';
+            btn.disabled = false;
+            btnText.style.display = 'inline';
+            btnSpinner.style.display = 'none';
+            imagesGenerationInProgress = false;
+        });
+    }
+
+    processNext();
+}
 
 function generateAllTts() {
     if (ttsGenerationInProgress) {
