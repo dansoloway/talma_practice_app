@@ -67,8 +67,11 @@
                     <div class="card-content">
                         @if($card['type'] === 'audio')
                             @if(!empty($card['audio_path']))
-                                <button class="play-audio-strip" data-audio="{{ $card['audio_path'] }}" title="Play audio">
+                                <div class="audio-card-top">
                                     Choose
+                                </div>
+                                <button class="play-audio-strip" data-audio="{{ $card['audio_path'] }}" title="Play audio">
+                                    <i class="fas fa-play"></i>
                                 </button>
                             @else
                                 <div class="card-word" style="color: red;">No audio</div>
@@ -620,9 +623,22 @@ function changeMode(mode) {
     color: #374151;
 }
 
-/* Audio card styles - button on bottom half */
+/* Audio card styles - text on top half, button on bottom half */
 .game-card[data-type="audio"] .card-content {
-    justify-content: flex-end;
+    justify-content: space-between;
+    padding: 0;
+}
+
+.audio-card-top {
+    width: 100%;
+    height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-text);
+    padding: 1rem;
 }
 
 .game-card[data-type="audio"] .play-audio-strip {
@@ -635,12 +651,12 @@ function changeMode(mode) {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 1rem;
+    font-size: 1.5rem;
     font-weight: 600;
     z-index: 10;
+    border-top: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .play-audio-strip {
