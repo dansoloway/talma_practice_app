@@ -195,15 +195,10 @@
 }
 
 .game-card.selected {
-    border: 4px solid var(--color-primary);
-    background: var(--color-primary-light, #e3f2fd);
-    transform: scale(1.05);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-}
-
-.game-card[data-type="audio"].selected {
-    border-color: var(--color-success);
+    border: 5px solid var(--color-success, #28a745);
     background: var(--color-success-light, #d4edda);
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
 }
 
 .game-card.correct {
