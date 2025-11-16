@@ -201,6 +201,11 @@
     box-shadow: 0 8px 16px rgba(0,0,0,0.2);
 }
 
+.game-card[data-type="audio"].selected {
+    border-color: var(--color-success);
+    background: var(--color-success-light, #d4edda);
+}
+
 .game-card.correct {
     border-color: var(--color-success);
     background: var(--color-success-light, #d4edda);
