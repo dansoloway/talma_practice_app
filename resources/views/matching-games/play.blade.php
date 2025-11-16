@@ -654,9 +654,13 @@ function changeMode(mode) {
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 2.5rem;
+    font-size: 3.5rem;
     font-weight: 600;
     z-index: 10;
+}
+
+.game-card[data-type="audio"] .play-audio-strip i {
+    font-size: 3.5rem;
 }
 
 .play-audio-strip {
