@@ -67,9 +67,6 @@
                     <div class="card-content">
                         @if($card['type'] === 'audio')
                             @if(!empty($card['audio_path']))
-                                <div class="audio-card-top">
-                                    Choose
-                                </div>
                                 <button class="play-audio-strip" data-audio="{{ $card['audio_path'] }}" title="Play audio">
                                     <i class="fas fa-play"></i>
                                 </button>
@@ -405,10 +402,11 @@ class MatchingGame {
     init() {
         this.cards.forEach(card => {
             card.addEventListener('click', (e) => {
-                // Don't flip if click was on audio button or audio strip
-                if (e.target.closest('.play-audio-btn') || e.target.closest('.play-audio-strip')) {
+                // Don't flip if click was on regular audio button (for word cards in other modes)
+                if (e.target.closest('.play-audio-btn')) {
                     return;
                 }
+                // For audio strip buttons, allow the click to proceed (will play audio and select card)
                 this.flipCard(card);
             });
         });
@@ -526,15 +524,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle audio playback
     document.addEventListener('click', function(e) {
-        // Check if click is on button or icon inside button
-        const btn = e.target.closest('.play-audio-btn, .play-audio-strip');
+        // Check if click is on regular audio button (for word cards in other modes)
+        const btn = e.target.closest('.play-audio-btn');
         if (btn) {
-            e.stopPropagation(); // Prevent card selection
+            e.stopPropagation(); // Prevent card selection for regular audio buttons
             const audioPath = btn.dataset.audio;
             if (audioPath) {
                 const audio = new Audio(audioPath);
                 audio.play().catch(err => console.log('Audio play failed:', err));
             }
+        }
+        // For audio strip buttons, play audio but allow card selection to proceed
+        const audioStrip = e.target.closest('.play-audio-strip');
+        if (audioStrip) {
+            const audioPath = audioStrip.dataset.audio;
+            if (audioPath) {
+                const audio = new Audio(audioPath);
+                audio.play().catch(err => console.log('Audio play failed:', err));
+            }
+            // Don't stop propagation - let the card selection happen
         }
     });
 });
@@ -623,27 +631,15 @@ function changeMode(mode) {
     color: #374151;
 }
 
-/* Audio card styles - text on top half, button on bottom half */
+/* Audio card styles - button fills entire card */
 .game-card[data-type="audio"] .card-content {
-    justify-content: space-between;
-    padding: 0;
-}
-
-.audio-card-top {
-    width: 100%;
-    height: 50%;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--color-text);
-    padding: 1rem;
+    padding: 0;
 }
 
 .game-card[data-type="audio"] .play-audio-strip {
     width: 100%;
-    height: 50%;
+    height: 100%;
     background: var(--color-primary);
     color: white;
     border: none;
@@ -653,10 +649,9 @@ function changeMode(mode) {
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 1.5rem;
+    font-size: 2.5rem;
     font-weight: 600;
     z-index: 10;
-    border-top: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .play-audio-strip {
