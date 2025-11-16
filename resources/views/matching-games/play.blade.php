@@ -66,10 +66,12 @@
                 <div class="game-card" data-card-id="{{ $card['id'] }}" data-vocab-id="{{ $card['vocab_id'] }}" data-type="{{ $card['type'] }}">
                     <div class="card-content">
                         @if($card['type'] === 'audio')
-                            @if($card['audio_path'])
+                            @if(!empty($card['audio_path']))
                                 <button class="play-audio-strip" data-audio="{{ $card['audio_path'] }}" title="Play audio">
                                     Choose
                                 </button>
+                            @else
+                                <div class="card-word" style="color: red;">No audio</div>
                             @endif
                         @elseif($card['type'] === 'image' && $card['content'])
                             <img src="{{ $card['content'] }}" alt="{{ $card['word'] }}" class="card-image">

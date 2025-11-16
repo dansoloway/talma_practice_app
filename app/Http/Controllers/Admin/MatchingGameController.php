@@ -166,7 +166,7 @@ class MatchingGameController extends Controller
                 'content' => $vocab->english_word,
                 'word' => $vocab->english_word,
                 'vocab_id' => $vocab->id,
-                'audio_path' => $vocab->word_audio_path ? asset('storage/' . $vocab->word_audio_path) : null,
+                'audio_path' => $vocab->word_audio_url,
             ];
             
             // Matching card based on mode
@@ -222,7 +222,7 @@ class MatchingGameController extends Controller
                     'content' => null, // No visual content for audio cards
                     'word' => $vocab->english_word,
                     'vocab_id' => $vocab->id,
-                    'audio_path' => $vocab->word_audio_path ? asset('storage/' . $vocab->word_audio_path) : null,
+                    'audio_path' => $vocab->word_audio_url,
                 ];
             case 'hebrew':
                 return [
