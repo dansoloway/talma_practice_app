@@ -65,7 +65,14 @@
             @foreach($gameData['cards'] as $index => $card)
                 <div class="game-card" data-card-id="{{ $card['id'] }}" data-vocab-id="{{ $card['vocab_id'] }}" data-type="{{ $card['type'] }}">
                     <div class="card-content">
-                        @if($card['type'] === 'image' && $card['content'])
+                        @if($card['type'] === 'audio')
+                            @if($card['audio_path'])
+                                <button class="play-audio-strip" data-audio="{{ $card['audio_path'] }}" title="Play audio">
+                                    <i class="fas fa-play"></i>
+                                    <span>Choose</span>
+                                </button>
+                            @endif
+                        @elseif($card['type'] === 'image' && $card['content'])
                             <img src="{{ $card['content'] }}" alt="{{ $card['word'] }}" class="card-image">
                         @elseif($card['type'] === 'hebrew')
                             <div class="card-translation hebrew">{{ $card['content'] }}</div>
@@ -225,6 +232,13 @@
     align-items: center;
     justify-content: center;
     padding: 0.5rem;
+    overflow: hidden;
+}
+
+/* For audio cards, use column layout with no padding */
+.game-card[data-type="audio"] .card-content {
+    flex-direction: column;
+    padding: 0;
 }
 
 .card-image {
@@ -387,8 +401,8 @@ class MatchingGame {
     init() {
         this.cards.forEach(card => {
             card.addEventListener('click', (e) => {
-                // Don't flip if click was on audio button
-                if (e.target.closest('.play-audio-btn')) {
+                // Don't flip if click was on audio button or audio strip
+                if (e.target.closest('.play-audio-btn') || e.target.closest('.play-audio-strip')) {
                     return;
                 }
                 this.flipCard(card);
@@ -509,8 +523,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle audio playback
     document.addEventListener('click', function(e) {
         // Check if click is on button or icon inside button
-        const btn = e.target.closest('.play-audio-btn');
+        const btn = e.target.closest('.play-audio-btn, .play-audio-strip');
         if (btn) {
+            e.stopPropagation(); // Prevent card selection
             const audioPath = btn.dataset.audio;
             if (audioPath) {
                 const audio = new Audio(audioPath);
@@ -602,6 +617,75 @@ function changeMode(mode) {
     background: white;
     border: 2px solid #e5e7eb;
     color: #374151;
+}
+
+/* Audio card styles - button on bottom half */
+.game-card[data-type="audio"] .card-content {
+    justify-content: flex-end;
+}
+
+.game-card[data-type="audio"] .play-audio-strip {
+    width: 100%;
+    height: 50%;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    font-weight: 600;
+    z-index: 10;
+}
+
+.play-audio-strip {
+    width: 100%;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    font-weight: 600;
+    z-index: 10;
+    border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.play-audio-strip:hover {
+    background: var(--color-primary-dark, #2563eb);
+    transform: none;
+}
+
+.play-audio-strip:active {
+    background: var(--color-primary-dark, #1e40af);
+    transform: scale(0.98);
+}
+
+.play-audio-strip i {
+    font-size: 1rem;
+}
+
+/* Ensure other card types still work with flex column */
+.game-card[data-type="image"] .card-content,
+.game-card[data-type="hebrew"] .card-content,
+.game-card[data-type="arabic"] .card-content,
+.game-card[data-type="word"] .card-content {
+    flex-direction: row;
+    padding: 0.5rem;
+}
+
+.game-card[data-type="image"] .card-image {
+    width: 80%;
+    height: 80%;
 }
 </style>
 @endsection

@@ -195,6 +195,8 @@ class MatchingGameController extends Controller
     {
         return $vocabulary->filter(function ($vocab) use ($mode) {
             switch ($mode) {
+                case 'audio':
+                    return !empty($vocab->word_audio_path);
                 case 'hebrew':
                     return !empty($vocab->hebrew_translation);
                 case 'arabic':
@@ -212,6 +214,16 @@ class MatchingGameController extends Controller
     private function createMatchingCard($vocab, $mode)
     {
         switch ($mode) {
+            case 'audio':
+                // In audio mode, create an audio card (to match with word card)
+                return [
+                    'id' => 'audio_' . $vocab->id,
+                    'type' => 'audio',
+                    'content' => null, // No visual content for audio cards
+                    'word' => $vocab->english_word,
+                    'vocab_id' => $vocab->id,
+                    'audio_path' => $vocab->word_audio_path ? asset('storage/' . $vocab->word_audio_path) : null,
+                ];
             case 'hebrew':
                 return [
                     'id' => 'hebrew_' . $vocab->id,
@@ -250,6 +262,9 @@ class MatchingGameController extends Controller
     {
         $modes = [];
         
+        if ($vocabulary->whereNotNull('word_audio_path')->count() > 0) {
+            $modes['audio'] = 'Audio';
+        }
         if ($vocabulary->whereNotNull('image_path')->count() > 0) {
             $modes['image'] = 'Images';
         }
