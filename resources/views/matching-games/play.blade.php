@@ -68,8 +68,7 @@
                         @if($card['type'] === 'audio')
                             @if($card['audio_path'])
                                 <button class="play-audio-strip" data-audio="{{ $card['audio_path'] }}" title="Play audio">
-                                    <i class="fas fa-play"></i>
-                                    <span>Choose</span>
+                                    Choose
                                 </button>
                             @endif
                         @elseif($card['type'] === 'image' && $card['content'])
