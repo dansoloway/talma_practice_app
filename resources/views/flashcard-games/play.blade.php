@@ -384,16 +384,6 @@ function setupCardEvents(card) {
         });
     });
 
-    // Answer audio playback (for image_to_word mode)
-    document.querySelectorAll('.play-answer-audio-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const audioPath = this.dataset.audio;
-            if (audioPath) {
-                playAudio(audioPath);
-            }
-        });
-    });
-
     // Generate options based on game type
     generateOptions(card);
 }
