@@ -73,7 +73,7 @@
                             <div class="card-translation arabic">{{ $card['content'] }}</div>
                         @else
                             <div class="card-word">{{ $card['content'] }}</div>
-                            @if($card['audio_path'])
+                            @if($card['audio_path'] && $mode !== 'image')
                                 <button class="play-audio-btn" data-audio="{{ $card['audio_path'] }}" title="Play audio">
                                     <i class="fas fa-volume-up"></i>
                                 </button>
