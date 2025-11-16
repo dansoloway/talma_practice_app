@@ -45,10 +45,11 @@ class FlashcardGame extends Model
     public static function getGameTypes(): array
     {
         return [
-            'image_to_word' => 'Image → Word',
+            'image_to_word' => 'Images',
+            'audio_to_word' => 'Audio',
+            // Deprecated mixed modes - kept for backward compatibility but not enabled by default
             'image_to_audio' => 'Image → Audio',
             'audio_to_image' => 'Audio → Image',
-            'audio_to_word' => 'Audio → Word',
         ];
     }
 }

@@ -45,13 +45,13 @@
                     <button class="game-type-btn" data-type="{{ $type }}">
                         <div class="game-type-icon">
                             @if($type === 'image_to_word')
-                                🖼️ → 📝
+                                🖼️
+                            @elseif($type === 'audio_to_word')
+                                🔊
                             @elseif($type === 'image_to_audio')
                                 🖼️ → 🔊
                             @elseif($type === 'audio_to_image')
                                 🔊 → 🖼️
-                            @elseif($type === 'audio_to_word')
-                                🔊 → 📝
                             @endif
                         </div>
                         <div class="game-type-label">

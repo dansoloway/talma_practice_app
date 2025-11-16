@@ -67,8 +67,8 @@ class FlashcardGameController extends Controller
             $validated['game_types'] = ['image_to_word'];
             session()->flash('warning', "Some selected vocabulary items are missing audio ({$missingAudio}). Audio-based game types were disabled.");
         } else {
-            // All assets available, enable all game types
-            $validated['game_types'] = ['image_to_word', 'image_to_audio', 'audio_to_image', 'audio_to_word'];
+            // All assets available, enable simple image-only and audio-only game types
+            $validated['game_types'] = ['image_to_word', 'audio_to_word'];
         }
         
         // Default to all vocabulary words if none are selected
@@ -139,8 +139,8 @@ class FlashcardGameController extends Controller
             $validated['game_types'] = ['image_to_word'];
             session()->flash('warning', "Some selected vocabulary items are missing audio ({$missingAudio}). Audio-based game types were disabled.");
         } else {
-            // All assets available, enable all game types
-            $validated['game_types'] = ['image_to_word', 'image_to_audio', 'audio_to_image', 'audio_to_word'];
+            // All assets available, enable simple image-only and audio-only game types
+            $validated['game_types'] = ['image_to_word', 'audio_to_word'];
         }
         
         // Handle checkbox properly - convert to boolean
@@ -271,13 +271,9 @@ class FlashcardGameController extends Controller
     {
         $types = [];
 
+        // Only enable simple image-only and audio-only modes
         if ($vocabulary->whereNotNull('image_path')->count() > 0) {
             $types[] = 'image_to_word';
-        }
-
-        if ($vocabulary->whereNotNull('image_path')->whereNotNull('word_audio_path')->count() > 0) {
-            $types[] = 'image_to_audio';
-            $types[] = 'audio_to_image';
         }
 
         if ($vocabulary->whereNotNull('word_audio_path')->count() > 0) {
