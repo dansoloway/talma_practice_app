@@ -90,17 +90,24 @@
                                         $audioExists = $item->hasAudioFile();
                                     @endphp
                                     @if($audioExists)
-                                        <span class="status active" title="Audio file exists">
-                                            <span class="status-icon">✓</span> Audio
-                                        </span>
+                                        <button 
+                                            type="button" 
+                                            class="btn-play-audio" 
+                                            data-audio-url="{{ $item->word_audio_url }}"
+                                            data-word="{{ $item->english_word }}"
+                                            title="Play audio for '{{ $item->english_word }}'"
+                                        >
+                                            <span class="play-icon">▶</span>
+                                            <span class="pause-icon" style="display: none;">⏸</span>
+                                        </button>
                                     @else
                                         <span class="status inactive" title="Audio path set but file missing">
-                                            <span class="status-icon">⚠</span> Missing
+                                            <span class="status-icon">✗</span>
                                         </span>
                                     @endif
                                 @else
                                     <span class="status inactive" title="No audio generated">
-                                        <span class="status-icon">✗</span> No Audio
+                                        <span class="status-icon">✗</span>
                                     </span>
                                 @endif
                             </td>
@@ -213,6 +220,29 @@
 
 #generate-image-modal {
     display: flex;
+}
+
+.btn-play-audio {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: background-color 0.2s;
+}
+
+.btn-play-audio:hover {
+    background: #2563eb;
+}
+
+.btn-play-audio:active {
+    background: #1d4ed8;
+    transform: scale(0.95);
 }
 </style>
 @endpush
@@ -509,6 +539,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
                 alert('An error occurred: ' + error.message);
             }
+        });
+    });
+});
+
+// Audio playback functionality
+let currentAudio = null;
+let currentButton = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-play-audio').forEach(button => {
+        button.addEventListener('click', function() {
+            const audioUrl = this.dataset.audioUrl;
+            const word = this.dataset.word;
+            
+            // If clicking the same button, pause/stop
+            if (currentButton === this && currentAudio && !currentAudio.paused) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                this.querySelector('.play-icon').style.display = 'inline';
+                this.querySelector('.pause-icon').style.display = 'none';
+                currentButton = null;
+                currentAudio = null;
+                return;
+            }
+            
+            // Stop any currently playing audio
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) {
+                    currentButton.querySelector('.play-icon').style.display = 'inline';
+                    currentButton.querySelector('.pause-icon').style.display = 'none';
+                }
+            }
+            
+            // Play new audio
+            currentAudio = new Audio(audioUrl);
+            currentButton = this;
+            
+            // Update button to show pause icon
+            this.querySelector('.play-icon').style.display = 'none';
+            this.querySelector('.pause-icon').style.display = 'inline';
+            
+            currentAudio.play().catch(err => {
+                console.error('Error playing audio:', err);
+                alert('Error playing audio for "' + word + '": ' + err.message);
+                this.querySelector('.play-icon').style.display = 'inline';
+                this.querySelector('.pause-icon').style.display = 'none';
+                currentButton = null;
+                currentAudio = null;
+            });
+            
+            // Reset button when audio ends
+            currentAudio.addEventListener('ended', function() {
+                if (currentButton) {
+                    currentButton.querySelector('.play-icon').style.display = 'inline';
+                    currentButton.querySelector('.pause-icon').style.display = 'none';
+                }
+                currentButton = null;
+                currentAudio = null;
+            });
+            
+            // Handle errors
+            currentAudio.addEventListener('error', function() {
+                console.error('Audio error:', currentAudio.error);
+                if (currentButton) {
+                    currentButton.querySelector('.play-icon').style.display = 'inline';
+                    currentButton.querySelector('.pause-icon').style.display = 'none';
+                }
+                alert('Error loading audio for "' + word + '"');
+                currentButton = null;
+                currentAudio = null;
+            });
         });
     });
 });

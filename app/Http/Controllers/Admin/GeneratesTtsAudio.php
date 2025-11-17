@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Services\Tts\ElevenLabsTtsService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -54,38 +55,26 @@ trait GeneratesTtsAudio
             }
         }
 
-        $apiKey = env('ELEVENLABS_API_KEY');
+        $ttsService = app(ElevenLabsTtsService::class);
         
-        if (!$apiKey) {
+        if (!$ttsService->enabled()) {
             Log::error('ELEVENLABS_API_KEY not found in environment');
             throw new \Exception('ELEVENLABS_API_KEY not found');
         }
 
-        $voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice
         Log::info("Making API call to ElevenLabs for word: '{$option->label}'");
         
         // Log to dedicated TTS file
         $ttsLogFile = storage_path('logs/tts_generation.log');
         file_put_contents($ttsLogFile, "[" . now() . "] Making API call for word: '{$option->label}'\n", FILE_APPEND);
 
-        $response = Http::withHeaders([
-            'xi-api-key' => $apiKey,
-            'Content-Type' => 'application/json',
-        ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
-            'text' => $option->label,
-            'model_id' => 'eleven_monolingual_v1',
-            'voice_settings' => [
-                'stability' => 0.5,
-                'similarity_boost' => 0.75,
-            ]
-        ]);
+        // Use TTS service with high stability settings for clarity
+        $audioData = $ttsService->generateVocabulary(
+            $option->label,
+            'EXAVITQu4vr4xnSDxMaL' // Rachel voice
+        );
         
-        Log::info("API response status: " . $response->status());
-        if (!$response->successful()) {
-            Log::error("API error response: " . $response->body());
-        }
-        
-        if ($response->successful()) {
+        if ($audioData !== null) {
             // Save the audio file
             $filename = "word_o{$option->id}.mp3";
             $relativePath = "tts/words/{$filename}";
@@ -99,8 +88,6 @@ trait GeneratesTtsAudio
                 Log::info("Creating directory: {$dir}");
                 mkdir($dir, 0755, true);
             }
-            
-            $audioData = $response->body();
             Log::info("Audio data size: " . strlen($audioData) . " bytes");
             
             $saved = file_put_contents($fullPath, $audioData);
@@ -118,8 +105,8 @@ trait GeneratesTtsAudio
             
             Log::info("Generated TTS for option: {$option->label}");
         } else {
-            Log::error("TTS API Error: " . $response->status() . " - " . $response->body());
-            throw new \Exception("TTS API Error: " . $response->status());
+            Log::error("TTS generation failed for word: {$option->label}");
+            throw new \Exception("TTS generation failed");
         }
     }
 
@@ -173,34 +160,26 @@ trait GeneratesTtsAudio
             }
         }
 
-        $apiKey = env('ELEVENLABS_API_KEY');
+        $ttsService = app(ElevenLabsTtsService::class);
         
-        if (!$apiKey) {
+        if (!$ttsService->enabled()) {
             throw new \Exception('ELEVENLABS_API_KEY not found');
         }
-
-        $voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice
 
         // Log to dedicated TTS file
         $ttsLogFile = storage_path('logs/tts_generation.log');
         file_put_contents($ttsLogFile, "[" . now() . "] Making API call for sentence: '{$completeSentence}'\n", FILE_APPEND);
 
-        $response = Http::withHeaders([
-            'xi-api-key' => $apiKey,
-            'Content-Type' => 'application/json',
-        ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
-            'text' => $completeSentence,
-            'model_id' => 'eleven_monolingual_v1',
-            'voice_settings' => [
-                'stability' => 0.5,
-                'similarity_boost' => 0.75,
-            ]
-        ]);
+        // Use TTS service with optimized settings for natural speech
+        $audioData = $ttsService->generateSentence(
+            $completeSentence,
+            'EXAVITQu4vr4xnSDxMaL' // Rachel voice
+        );
         
         // Log API response
-        file_put_contents($ttsLogFile, "[" . now() . "] API response status: " . $response->status() . " for sentence: '{$completeSentence}'\n", FILE_APPEND);
+        file_put_contents($ttsLogFile, "[" . now() . "] TTS generation " . ($audioData !== null ? "successful" : "failed") . " for sentence: '{$completeSentence}'\n", FILE_APPEND);
         
-        if ($response->successful()) {
+        if ($audioData !== null) {
             // Save the audio file with a unique name
             $filename = "sentence_p{$prompt->id}_o{$option->id}.mp3";
             $relativePath = "tts/sentences/{$filename}";
@@ -212,15 +191,15 @@ trait GeneratesTtsAudio
                 mkdir($dir, 0755, true);
             }
             
-            file_put_contents($fullPath, $response->body());
+            file_put_contents($fullPath, $audioData);
             
             // Store the sentence audio path in the option
             $option->update(['sentence_audio_path' => "/storage/{$relativePath}"]);
             
             Log::info("Generated sentence TTS: {$completeSentence}");
         } else {
-            Log::error("Sentence TTS API Error: " . $response->status() . " - " . $response->body());
-            throw new \Exception("Sentence TTS API Error: " . $response->status());
+            Log::error("Sentence TTS generation failed: {$completeSentence}");
+            throw new \Exception("Sentence TTS generation failed");
         }
     }
 }

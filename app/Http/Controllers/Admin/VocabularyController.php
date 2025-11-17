@@ -11,6 +11,7 @@ use App\Services\ImageGeneration\LeonardoImageGenerator;
 use App\Services\ImageGeneration\OpenAiImageGenerator;
 use App\Services\ImageGeneration\StockImageGenerator;
 use App\Services\Translation\OpenAiTranslator;
+use App\Services\Tts\ElevenLabsTtsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,7 +20,8 @@ class VocabularyController extends Controller
     protected $imageGenerator;
 
     public function __construct(
-        protected OpenAiTranslator $translator
+        protected OpenAiTranslator $translator,
+        protected ElevenLabsTtsService $ttsService
     ) {
         // Priority: Freepik > Flaticon > Stock images (Unsplash/Pixabay) > Leonardo.ai > OpenAI
         $freepikGenerator = app(FreepikImageGenerator::class);
@@ -716,8 +718,7 @@ class VocabularyController extends Controller
      */
     private function generateVocabularyAudio(Vocabulary $vocabulary)
     {
-        $apiKey = config('services.elevenlabs.api_key') ?: env('ELEVENLABS_API_KEY');
-        if (!$apiKey) {
+        if (!$this->ttsService->enabled()) {
             $errorMsg = 'ELEVENLABS_API_KEY not found, skipping audio generation for: ' . $vocabulary->english_word;
             \Log::warning($errorMsg);
             // Also log to TTS log file
@@ -731,25 +732,13 @@ class VocabularyController extends Controller
         file_put_contents($ttsLogFile, "[" . now() . "] Starting TTS generation for vocabulary word: '{$vocabulary->english_word}' (ID: {$vocabulary->id})\n", FILE_APPEND);
 
         try {
-            $voiceId = 'pNInz6obpgDQGcFmaJgB'; // Default voice ID
-            
-            $response = \Http::withHeaders([
-                'Accept' => 'audio/mpeg',
-                'Content-Type' => 'application/json',
-                'xi-api-key' => $apiKey,
-            ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
-                'text' => $vocabulary->english_word,
-                'model_id' => 'eleven_monolingual_v1',
-                'voice_settings' => [
-                    'stability' => 0.65,
-                    'similarity_boost' => 0.6,
-                    'style' => 0.2,
-                    'speed' => 0.85,
-                    'use_speaker_boost' => false,
-                ]
-            ]);
+            // Use TTS service with high stability settings for clarity and consistency
+            $audioData = $this->ttsService->generateVocabulary(
+                $vocabulary->english_word,
+                null // Use default voice
+            );
 
-            if ($response->successful()) {
+            if ($audioData !== null) {
                 $filename = 'vocabulary_' . time() . '_' . uniqid() . '.mp3';
                 // Use tts/vocabulary/ instead of vocabulary-audio/ to inherit working permissions from tts directory
                 $relativePath = 'tts/vocabulary/' . $filename;
@@ -793,7 +782,6 @@ class VocabularyController extends Controller
                     throw new \Exception($errorMsg);
                 }
                 
-                $audioData = $response->body();
                 \Log::info("Audio data size: " . strlen($audioData) . " bytes");
                 file_put_contents($ttsLogFile, "[" . now() . "] Audio data size: " . strlen($audioData) . " bytes\n", FILE_APPEND);
                 
@@ -829,9 +817,10 @@ class VocabularyController extends Controller
                 \Log::info($successMsg);
                 file_put_contents($ttsLogFile, "[" . now() . "] SUCCESS: {$successMsg}\n", FILE_APPEND);
             } else {
-                $errorMsg = "TTS API Error for '{$vocabulary->english_word}': HTTP {$response->status()}";
+                $errorMsg = "TTS generation failed for '{$vocabulary->english_word}': Service returned null";
                 \Log::error($errorMsg);
                 file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
+                throw new \Exception($errorMsg);
             }
         } catch (\Exception $e) {
             $errorMsg = "Failed to generate audio for '{$vocabulary->english_word}': " . $e->getMessage();
@@ -872,46 +861,29 @@ class VocabularyController extends Controller
             $vocabulary = null;
             
             if ($forceRecreate) {
-                // Force recreate: process all items, starting with oldest
-                // Check if item already has audio in new location (tts/vocabulary/)
+                // Force recreate: process ALL items sequentially, starting with oldest
+                // Use cache to track the last processed ID for this lesson
+                $cacheKey = 'lesson:' . $lesson->id . ':tts_last_processed_id';
+                $lastProcessedId = \Cache::get($cacheKey, 0);
+                
+                // Get the next item to process (ID greater than last processed)
                 $vocabulary = $lesson->vocabulary()
+                    ->where('id', '>', $lastProcessedId)
                     ->orderBy('id')
-                    ->get()
-                    ->first(function($vocab) use ($ttsLogFile) {
-                        if (!$vocab->word_audio_path) {
-                            file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: No path, needs generation\n", FILE_APPEND);
-                            return true; // No path, needs generation
-                        }
-                        // Normalize path: remove /storage/ or storage/ prefix if present
-                        $originalPath = $vocab->word_audio_path;
-                        $relativePath = $originalPath;
-                        // Remove leading slash if present
-                        $relativePath = ltrim($relativePath, '/');
-                        // Remove storage/ prefix (handles both /storage/ and storage/)
-                        $relativePath = preg_replace('#^storage/#', '', $relativePath);
-                        
-                        file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Original path='{$originalPath}', normalized='{$relativePath}'\n", FILE_APPEND);
-                        
-                        // If path is in old location (vocabulary-audio/), regenerate it
-                        if (strpos($relativePath, 'vocabulary-audio/') === 0) {
-                            file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Old location '{$relativePath}', needs migration\n", FILE_APPEND);
-                            return true; // Old location, migrate to new location
-                        }
-                        // If path is in new location (tts/vocabulary/), check if file exists
-                        if (strpos($relativePath, 'tts/vocabulary/') === 0) {
-                            $exists = \Storage::disk('public')->exists($relativePath);
-                            if ($exists) {
-                                file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: File exists in new location '{$relativePath}', SKIPPING\n", FILE_APPEND);
-                                return false; // File exists, skip it
-                            } else {
-                                file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Path in new location but file missing '{$relativePath}', needs generation\n", FILE_APPEND);
-                                return true; // File missing, needs generation
-                            }
-                        }
-                        // For any other path format, regenerate it
-                        file_put_contents($ttsLogFile, "[" . now() . "] Checking vocab_id={$vocab->id}: Unknown path format '{$relativePath}' (original: '{$originalPath}'), regenerating\n", FILE_APPEND);
-                        return true;
-                    });
+                    ->first();
+                
+                // If no items found with ID > last processed, start from beginning
+                if (!$vocabulary) {
+                    $vocabulary = $lesson->vocabulary()
+                        ->orderBy('id')
+                        ->first();
+                    // Reset cache if we're starting over
+                    \Cache::forget($cacheKey);
+                }
+                
+                if ($vocabulary) {
+                    file_put_contents($ttsLogFile, "[" . now() . "] Force recreate mode: Processing vocab_id={$vocabulary->id} word='{$vocabulary->english_word}' (last processed: {$lastProcessedId})\n", FILE_APPEND);
+                }
             } else {
                 // Normal mode: only process items without audio or where file is missing
                 $vocabulary = $lesson->vocabulary()
@@ -947,6 +919,12 @@ class VocabularyController extends Controller
                     $this->generateVocabularyAudio($vocabulary);
                     $processed = 1;
                     \Log::info("Successfully generated word TTS for '{$vocabulary->english_word}' (Vocabulary ID: {$vocabulary->id})");
+                    
+                    // Update cache with last processed ID (only in force recreate mode)
+                    if ($forceRecreate) {
+                        $cacheKey = 'lesson:' . $lesson->id . ':tts_last_processed_id';
+                        \Cache::put($cacheKey, $vocabulary->id, 3600); // Store for 1 hour
+                    }
                 } catch (\Exception $e) {
                     $errorMsg = "Failed to generate TTS for '{$vocabulary->english_word}': " . $e->getMessage();
                     \Log::error($errorMsg);
@@ -958,32 +936,27 @@ class VocabularyController extends Controller
 
             // Count remaining items
             if ($forceRecreate) {
-                // Count items that need regeneration (old location or missing files)
-                $totalRemaining = $lesson->vocabulary()
-                    ->get()
-                    ->filter(function($vocab) {
-                        if (!$vocab->word_audio_path) {
-                            return true; // No path, needs generation
-                        }
-                        // Normalize path: remove /storage/ or storage/ prefix if present
-                        $relativePath = $vocab->word_audio_path;
-                        // Remove leading slash if present
-                        $relativePath = ltrim($relativePath, '/');
-                        // Remove storage/ prefix (handles both /storage/ and storage/)
-                        $relativePath = preg_replace('#^storage/#', '', $relativePath);
-                        
-                        // If in old location, needs migration
-                        if (strpos($relativePath, 'vocabulary-audio/') === 0) {
-                            return true;
-                        }
-                        // If in new location (tts/vocabulary/), only count if file doesn't exist
-                        if (strpos($relativePath, 'tts/vocabulary/') === 0) {
-                            return !\Storage::disk('public')->exists($relativePath);
-                        }
-                        // For any other path format, regenerate it
-                        return true;
-                    })
-                    ->count();
+                // In force recreate mode, we need to process ALL items sequentially
+                // Count how many items come AFTER the one we just processed (by ID)
+                $total = $lesson->vocabulary()->count();
+                
+                if ($vocabulary) {
+                    // Count items with ID greater than the one we just processed
+                    $remainingCount = $lesson->vocabulary()
+                        ->where('id', '>', $vocabulary->id)
+                        ->count();
+                    // Add 1 if current item failed (so it needs to be retried)
+                    if ($processed === 0 && empty($errors)) {
+                        // Item was processed successfully, so remaining is items after it
+                        $totalRemaining = $remainingCount;
+                    } else {
+                        // Item failed or wasn't found, include current item in remaining
+                        $totalRemaining = $remainingCount + ($vocabulary ? 1 : 0);
+                    }
+                } else {
+                    // No vocabulary found to process
+                    $totalRemaining = 0;
+                }
             } else {
                 // Count items without audio_path or where file doesn't exist
                 $totalRemaining = $lesson->vocabulary()

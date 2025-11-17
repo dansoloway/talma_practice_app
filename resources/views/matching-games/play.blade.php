@@ -261,10 +261,14 @@
     min-height: 60px;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    hyphens: auto;
+    hyphens: none;
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
     max-width: 100%;
     width: 100%;
     box-sizing: border-box;
+    line-height: 1.2;
 }
 
 .play-audio-btn {
@@ -537,11 +541,99 @@ class MatchingGame {
     }
 }
 
+// Function to dynamically adjust font size based on text length and card size
+function adjustCardTextSizes() {
+    const cardWords = document.querySelectorAll('.card-word, .card-translation');
+    
+    cardWords.forEach(element => {
+        const card = element.closest('.game-card');
+        if (!card) return;
+        
+        const cardContent = element.closest('.card-content');
+        if (!cardContent) return;
+        
+        // Get default font sizes
+        const isMobile = window.innerWidth <= 768;
+        const defaultSize = element.classList.contains('card-word') 
+            ? (isMobile ? 1.0 : 1.4) 
+            : (isMobile ? 0.9 : 1.2);
+        
+        // Reset to default first
+        element.style.fontSize = defaultSize + 'rem';
+        
+        // Force reflow
+        void element.offsetWidth;
+        
+        // Get card dimensions
+        const contentRect = cardContent.getBoundingClientRect();
+        const availableWidth = contentRect.width;
+        const availableHeight = contentRect.height;
+        
+        // Measure text width without wrapping by temporarily disabling wrap
+        const originalWhiteSpace = element.style.whiteSpace;
+        element.style.whiteSpace = 'nowrap';
+        void element.offsetWidth;
+        const textWidth = element.getBoundingClientRect().width;
+        element.style.whiteSpace = originalWhiteSpace;
+        
+        // Get current font size
+        let currentFontSize = parseFloat(getComputedStyle(element).fontSize);
+        
+        // If text is wider than available space, reduce font size
+        if (textWidth > availableWidth * 0.95) {
+            const minFontSize = isMobile ? 0.6 : 0.8; // Minimum font size in rem
+            
+            // Calculate proportional font size
+            const scaleFactor = (availableWidth * 0.95) / textWidth;
+            const newFontSize = Math.max(minFontSize, currentFontSize * scaleFactor);
+            
+            element.style.fontSize = newFontSize + 'rem';
+            void element.offsetWidth;
+            
+            // Check if height also fits after resizing
+            const elementRect = element.getBoundingClientRect();
+            if (elementRect.height > availableHeight * 0.95) {
+                const heightScaleFactor = (availableHeight * 0.95) / elementRect.height;
+                const finalFontSize = Math.max(minFontSize, parseFloat(getComputedStyle(element).fontSize) * heightScaleFactor);
+                element.style.fontSize = finalFontSize + 'rem';
+            }
+        } else {
+            // Text fits, but check if we can make it larger (if it was previously reduced)
+            // Only increase if it's significantly smaller than default
+            if (currentFontSize < defaultSize * 0.9) {
+                // Try increasing gradually
+                let testSize = Math.min(defaultSize, currentFontSize * 1.1);
+                element.style.fontSize = testSize + 'rem';
+                element.style.whiteSpace = 'nowrap';
+                void element.offsetWidth;
+                const testWidth = element.getBoundingClientRect().width;
+                element.style.whiteSpace = originalWhiteSpace;
+                
+                if (testWidth <= availableWidth * 0.95) {
+                    element.style.fontSize = testSize + 'rem';
+                } else {
+                    element.style.fontSize = currentFontSize + 'rem';
+                }
+            }
+        }
+    });
+}
+
 // Start the game when page loads
 document.addEventListener('DOMContentLoaded', function() {
     new MatchingGame({
         mode: '{{ $mode }}',
         gridSize: {{ $gameData['grid_size'] }},
+    });
+    
+    // Adjust text sizes after a brief delay to ensure layout is complete
+    setTimeout(adjustCardTextSizes, 200);
+    
+    // Adjust on window resize
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(adjustCardTextSizes, 150);
     });
     
     // Handle audio playback
@@ -627,10 +719,14 @@ function changeMode(mode) {
     justify-content: center;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    hyphens: auto;
+    hyphens: none;
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
     max-width: 100%;
     width: 100%;
     box-sizing: border-box;
+    line-height: 1.2;
 }
 
 .card-translation.hebrew {
