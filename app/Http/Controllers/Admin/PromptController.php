@@ -5,12 +5,19 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\Prompt;
+use App\Services\Tts\ElevenLabsTtsService;
 use Illuminate\Http\Request;
 // (intentionally using fully qualified facade names inline to satisfy static analysis)
 
 class PromptController extends Controller
 {
     use \App\Http\Controllers\Admin\GeneratesTtsAudio;
+    
+    public function __construct(
+        protected ElevenLabsTtsService $ttsService
+    ) {
+    }
+    
     /**
      * List all prompts for a lesson.
      */
@@ -347,24 +354,56 @@ class PromptController extends Controller
             $message = "Successfully {$action} {$importedCount} prompts.";
             $startTts = (bool) $request->input('generate_tts', false);
 
+            // Count how many options need word TTS and sentence TTS
+            $totalOptions = count($createdOptions);
+            $optionsNeedingWordTts = 0;
+            $optionsNeedingSentenceTts = 0;
+            
+            foreach ($createdOptions as $option) {
+                if (!$option->word_audio_path || !file_exists(public_path(ltrim($option->word_audio_path, '/')))) {
+                    $optionsNeedingWordTts++;
+                }
+            }
+            
+            // Count sentence TTS needed (only for correct answers if set)
+            $prompts = $lesson->prompts()->with('options')->get();
+            foreach ($prompts as $prompt) {
+                $options = $prompt->options->sortBy('sort_order')->values();
+                $optionsToProcess = [];
+                
+                if ($prompt->correct_answer !== null && $prompt->correct_answer > 0) {
+                    $correctIndex = $prompt->correct_answer - 1;
+                    if (isset($options[$correctIndex])) {
+                        $optionsToProcess[] = $options[$correctIndex];
+                    }
+                } else {
+                    $optionsToProcess = $options->all();
+                }
+                
+                foreach ($optionsToProcess as $option) {
+                    if (!$option->sentence_audio_path || !file_exists(public_path(ltrim($option->sentence_audio_path, '/')))) {
+                        $optionsNeedingSentenceTts++;
+                    }
+                }
+            }
+
             // Return JSON response for AJAX handling
-            if ($request->expectsJson()) {
+            if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => $message,
                     'lesson_id' => $lesson->id,
-                    'total_options' => count($createdOptions),
-                    'total_sentences' => $importedCount * 4 // Assuming 4 options per prompt on average
+                    'total_options' => $totalOptions,
+                    'start_tts' => $startTts,
+                    'options_needing_word_tts' => $optionsNeedingWordTts,
+                    'options_needing_sentence_tts' => $optionsNeedingSentenceTts,
+                    'redirect_url' => route('admin.lessons.manage', $lesson),
                 ]);
             }
 
-            $redirect = redirect()
+            return redirect()
                 ->route('admin.lessons.manage', $lesson)
                 ->with('success', $message);
-            if ($startTts) {
-                $redirect->with('start_tts', true);
-            }
-            return $redirect;
 
         } catch (\Exception $e) {
             return redirect()
@@ -406,54 +445,69 @@ class PromptController extends Controller
     }
 
     /**
-     * Generate TTS audio for options using ElevenLabs API.
+     * Generate TTS audio for options using centralized TTS service.
      */
     private function generateTtsForOptions($options)
     {
-        $apiKey = env('ELEVENLABS_API_KEY');
-        
-        if (!$apiKey) {
+        if (!$this->ttsService->enabled()) {
             \Illuminate\Support\Facades\Log::warning('ELEVENLABS_API_KEY not found, skipping TTS generation');
             return;
         }
 
-        $voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice
-
         foreach ($options as $option) {
             try {
-                // Call ElevenLabs API
-                $response = \Illuminate\Support\Facades\Http::withHeaders([
-                    'xi-api-key' => $apiKey,
-                    'Content-Type' => 'application/json',
-                ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
-                    'text' => $option->label,
-                    'model_id' => 'eleven_monolingual_v1',
-                    'voice_settings' => [
-                        'stability' => 0.5,
-                        'similarity_boost' => 0.75,
-                    ]
-                ]);
-                
-                if ($response->successful()) {
-                    // Save the audio file
-                    $filename = "word_o{$option->id}.mp3";
-                    $relativePath = "tts/words/{$filename}";
-                    $fullPath = storage_path("app/public/{$relativePath}");
-                    
-                    // Create directory if needed
-                    $dir = dirname($fullPath);
-                    if (!file_exists($dir)) {
-                        mkdir($dir, 0755, true);
+                // Check if audio already exists for this option
+                if ($option->word_audio_path) {
+                    $fullPath = public_path(ltrim($option->word_audio_path, '/'));
+                    if (file_exists($fullPath)) {
+                        \Illuminate\Support\Facades\Log::info("Word TTS already exists for option: {$option->label}, skipping");
+                        continue; // Skip generation
+                    } else {
+                        \Illuminate\Support\Facades\Log::warning("Audio path exists in DB but file not found: {$fullPath}, regenerating");
                     }
-                    
-                    file_put_contents($fullPath, $response->body());
-                    
+                }
+
+                // Check if we already have TTS for this exact word from another option
+                $existingOption = \App\Models\Option::where('label', $option->label)
+                    ->whereNotNull('word_audio_path')
+                    ->where('id', '!=', $option->id)
+                    ->first();
+
+                if ($existingOption && $existingOption->word_audio_path) {
+                    $existingPath = public_path(ltrim($existingOption->word_audio_path, '/'));
+                    if (file_exists($existingPath)) {
+                        // Copy the existing file to a new location for this option
+                        $filename = "word_o{$option->id}.mp3";
+                        $relativePath = "tts/words/{$filename}";
+                        $newPath = storage_path("app/public/{$relativePath}");
+                        
+                        // Create directory if needed
+                        $dir = dirname($newPath);
+                        if (!file_exists($dir)) {
+                            mkdir($dir, 0755, true);
+                        }
+                        
+                        copy($existingPath, $newPath);
+                        $option->update(['word_audio_path' => "/storage/{$relativePath}"]);
+                        
+                        \Illuminate\Support\Facades\Log::info("Reused existing TTS for word: {$option->label}");
+                        continue; // Skip API generation
+                    }
+                }
+
+                // Use centralized TTS service
+                $result = $this->ttsService->generateAndSaveVocabulary(
+                    $option->label,
+                    $option->word_audio_path, // Old path to delete if regenerating
+                    'EXAVITQu4vr4xnSDxMaL' // Rachel voice
+                );
+                
+                if ($result !== null) {
                     // Update option with audio path
-                    $option->update(['word_audio_path' => "/storage/{$relativePath}"]);
-                    
+                    $option->update(['word_audio_path' => $result['path']]);
                     \Illuminate\Support\Facades\Log::info("Generated TTS for option: {$option->label}");
                 } else {
-                    \Illuminate\Support\Facades\Log::error("TTS API Error for option {$option->label}: " . $response->status());
+                    \Illuminate\Support\Facades\Log::error("TTS generation failed for option {$option->label}");
                 }
                 
                 // Rate limiting
@@ -466,61 +520,107 @@ class PromptController extends Controller
     }
 
     /**
-     * Generate TTS audio for all sentence combinations (prompt template + each option).
+     * Generate TTS audio for sentence combinations (prompt template + option).
+     * Only generates for the correct option if correct_answer is set, otherwise generates for all options.
      */
     private function generateSentenceAudio($lesson)
     {
-        $apiKey = env('ELEVENLABS_API_KEY');
-        
-        if (!$apiKey) {
+        if (!$this->ttsService->enabled()) {
             \Illuminate\Support\Facades\Log::warning('ELEVENLABS_API_KEY not found, skipping sentence TTS generation');
             return;
         }
-
-        $voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice
 
         // Get all prompts with their options for this lesson
         $prompts = $lesson->prompts()->with('options')->get();
 
         foreach ($prompts as $prompt) {
-            foreach ($prompt->options as $option) {
+            // Get options ordered by sort_order (1-indexed)
+            $options = $prompt->options->sortBy('sort_order')->values();
+            
+            // Determine which options to process
+            $optionsToProcess = [];
+            
+            if ($prompt->correct_answer !== null && $prompt->correct_answer > 0) {
+                // Only generate for the correct option (correct_answer is 1-indexed)
+                $correctIndex = $prompt->correct_answer - 1;
+                if (isset($options[$correctIndex])) {
+                    $optionsToProcess[] = $options[$correctIndex];
+                    \Illuminate\Support\Facades\Log::info("Prompt {$prompt->id}: Generating sentence TTS only for correct option #{$prompt->correct_answer}");
+                } else {
+                    \Illuminate\Support\Facades\Log::warning("Prompt {$prompt->id}: correct_answer ({$prompt->correct_answer}) is out of range, generating for all options");
+                    $optionsToProcess = $options->all();
+                }
+            } else {
+                // No correct answer set, generate for all options
+                $optionsToProcess = $options->all();
+                \Illuminate\Support\Facades\Log::info("Prompt {$prompt->id}: No correct_answer set, generating sentence TTS for all options");
+            }
+            
+            foreach ($optionsToProcess as $option) {
                 try {
                     // Create the complete sentence
                     $completeSentence = str_replace('{}', $option->label, $prompt->template);
                     
-                    // Call ElevenLabs API
-                    $response = \Illuminate\Support\Facades\Http::withHeaders([
-                        'xi-api-key' => $apiKey,
-                        'Content-Type' => 'application/json',
-                    ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
-                        'text' => $completeSentence,
-                        'model_id' => 'eleven_monolingual_v1',
-                        'voice_settings' => [
-                            'stability' => 0.5,
-                            'similarity_boost' => 0.75,
-                        ]
-                    ]);
-                    
-                    if ($response->successful()) {
-                        // Save the audio file with a unique name
-                        $filename = "sentence_p{$prompt->id}_o{$option->id}.mp3";
-                        $relativePath = "tts/sentences/{$filename}";
-                        $fullPath = storage_path("app/public/{$relativePath}");
-                        
-                        // Create directory if needed
-                        $dir = dirname($fullPath);
-                        if (!file_exists($dir)) {
-                            mkdir($dir, 0755, true);
+                    // Check if sentence audio already exists for this option
+                    if ($option->sentence_audio_path) {
+                        $fullPath = public_path(ltrim($option->sentence_audio_path, '/'));
+                        if (file_exists($fullPath)) {
+                            \Illuminate\Support\Facades\Log::info("Sentence TTS already exists: {$completeSentence}, skipping");
+                            continue; // Skip generation
+                        } else {
+                            \Illuminate\Support\Facades\Log::warning("Audio path exists in DB but file not found: {$fullPath}, regenerating");
                         }
-                        
-                        file_put_contents($fullPath, $response->body());
-                        
-                        // Store the sentence audio path in the option (we'll add a new field for this)
-                        $option->update(['sentence_audio_path' => "/storage/{$relativePath}"]);
-                        
+                    }
+
+                    // Check if we already have TTS for this exact sentence from another option
+                    $existingOption = \App\Models\Option::whereHas('prompt', function($query) use ($prompt) {
+                            $query->where('template', $prompt->template);
+                        })
+                        ->where('label', $option->label)
+                        ->whereNotNull('sentence_audio_path')
+                        ->where('id', '!=', $option->id)
+                        ->first();
+
+                    if ($existingOption && $existingOption->sentence_audio_path) {
+                        $existingPath = public_path(ltrim($existingOption->sentence_audio_path, '/'));
+                        if (file_exists($existingPath)) {
+                            // Copy the existing file to a new location for this option
+                            $filename = "sentence_p{$prompt->id}_o{$option->id}.mp3";
+                            $relativePath = "tts/sentences/{$filename}";
+                            $newPath = storage_path("app/public/{$relativePath}");
+                            
+                            // Create directory if needed
+                            $dir = dirname($newPath);
+                            if (!file_exists($dir)) {
+                                mkdir($dir, 0755, true);
+                            }
+                            
+                            copy($existingPath, $newPath);
+                            $option->update(['sentence_audio_path' => "/storage/{$relativePath}"]);
+                            
+                            \Illuminate\Support\Facades\Log::info("Reused existing sentence TTS: {$completeSentence}");
+                            continue; // Skip API generation
+                        }
+                    }
+                    
+                    // Generate filename and path
+                    $filename = "sentence_p{$prompt->id}_o{$option->id}.mp3";
+                    $relativePath = "tts/sentences/{$filename}";
+                    
+                    // Use centralized TTS service
+                    $result = $this->ttsService->generateAndSaveSentence(
+                        $completeSentence,
+                        $relativePath,
+                        $option->sentence_audio_path, // Old path to delete if regenerating
+                        'EXAVITQu4vr4xnSDxMaL' // Rachel voice
+                    );
+                    
+                    if ($result !== null) {
+                        // Store the sentence audio path in the option
+                        $option->update(['sentence_audio_path' => $result['path']]);
                         \Illuminate\Support\Facades\Log::info("Generated sentence TTS: {$completeSentence}");
                     } else {
-                        \Illuminate\Support\Facades\Log::error("Sentence TTS API Error for '{$completeSentence}': " . $response->status());
+                        \Illuminate\Support\Facades\Log::error("Sentence TTS generation failed for '{$completeSentence}'");
                     }
                     
                     // Small delay to avoid rate limiting

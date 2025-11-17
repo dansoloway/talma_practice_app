@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Services\Tts\ElevenLabsTtsService;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 trait GeneratesTtsAudio
@@ -68,42 +67,17 @@ trait GeneratesTtsAudio
         $ttsLogFile = storage_path('logs/tts_generation.log');
         file_put_contents($ttsLogFile, "[" . now() . "] Making API call for word: '{$option->label}'\n", FILE_APPEND);
 
-        // Use TTS service with high stability settings for clarity
-        $audioData = $ttsService->generateVocabulary(
+        // Use centralized TTS service method that handles everything
+        $result = $ttsService->generateAndSaveVocabulary(
             $option->label,
+            $option->word_audio_path, // Old path to delete if regenerating
             'EXAVITQu4vr4xnSDxMaL' // Rachel voice
         );
         
-        if ($audioData !== null) {
-            // Save the audio file
-            $filename = "word_o{$option->id}.mp3";
-            $relativePath = "tts/words/{$filename}";
-            $fullPath = storage_path("app/public/{$relativePath}");
-            
-            Log::info("Saving audio file to: {$fullPath}");
-            
-            // Create directory if needed
-            $dir = dirname($fullPath);
-            if (!file_exists($dir)) {
-                Log::info("Creating directory: {$dir}");
-                mkdir($dir, 0755, true);
-            }
-            Log::info("Audio data size: " . strlen($audioData) . " bytes");
-            
-            $saved = file_put_contents($fullPath, $audioData);
-            if ($saved === false) {
-                Log::error("Failed to save audio file to: {$fullPath}");
-                throw new \Exception("Failed to save audio file");
-            }
-            
-            Log::info("Successfully saved audio file, bytes written: {$saved}");
-            
+        if ($result !== null) {
             // Update option with audio path
-            $dbPath = "/storage/{$relativePath}";
-            Log::info("Updating option {$option->id} with audio path: {$dbPath}");
-            $option->update(['word_audio_path' => $dbPath]);
-            
-            Log::info("Generated TTS for option: {$option->label}");
+            $option->update(['word_audio_path' => $result['path']]);
+            Log::info("Generated TTS for option: {$option->label} (path: {$result['path']}, size: {$result['size']} bytes)");
         } else {
             Log::error("TTS generation failed for word: {$option->label}");
             throw new \Exception("TTS generation failed");
@@ -170,33 +144,25 @@ trait GeneratesTtsAudio
         $ttsLogFile = storage_path('logs/tts_generation.log');
         file_put_contents($ttsLogFile, "[" . now() . "] Making API call for sentence: '{$completeSentence}'\n", FILE_APPEND);
 
-        // Use TTS service with optimized settings for natural speech
-        $audioData = $ttsService->generateSentence(
+        // Generate filename and path
+        $filename = "sentence_p{$prompt->id}_o{$option->id}.mp3";
+        $relativePath = "tts/sentences/{$filename}";
+        
+        // Use centralized TTS service method that handles everything
+        $result = $ttsService->generateAndSaveSentence(
             $completeSentence,
+            $relativePath,
+            $option->sentence_audio_path, // Old path to delete if regenerating
             'EXAVITQu4vr4xnSDxMaL' // Rachel voice
         );
         
         // Log API response
-        file_put_contents($ttsLogFile, "[" . now() . "] TTS generation " . ($audioData !== null ? "successful" : "failed") . " for sentence: '{$completeSentence}'\n", FILE_APPEND);
+        file_put_contents($ttsLogFile, "[" . now() . "] TTS generation " . ($result !== null ? "successful" : "failed") . " for sentence: '{$completeSentence}'\n", FILE_APPEND);
         
-        if ($audioData !== null) {
-            // Save the audio file with a unique name
-            $filename = "sentence_p{$prompt->id}_o{$option->id}.mp3";
-            $relativePath = "tts/sentences/{$filename}";
-            $fullPath = storage_path("app/public/{$relativePath}");
-            
-            // Create directory if needed
-            $dir = dirname($fullPath);
-            if (!file_exists($dir)) {
-                mkdir($dir, 0755, true);
-            }
-            
-            file_put_contents($fullPath, $audioData);
-            
+        if ($result !== null) {
             // Store the sentence audio path in the option
-            $option->update(['sentence_audio_path' => "/storage/{$relativePath}"]);
-            
-            Log::info("Generated sentence TTS: {$completeSentence}");
+            $option->update(['sentence_audio_path' => $result['path']]);
+            Log::info("Generated sentence TTS: {$completeSentence} (path: {$result['path']}, size: {$result['size']} bytes)");
         } else {
             Log::error("Sentence TTS generation failed: {$completeSentence}");
             throw new \Exception("Sentence TTS generation failed");

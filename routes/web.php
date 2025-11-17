@@ -145,6 +145,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         ->name('lessons.vocabulary.generate-image');
     Route::post('lessons/{lesson}/vocabulary/generate-tts', [AdminVocabularyController::class, 'generateTts'])
         ->name('lessons.vocabulary.generate-tts');
+    Route::post('lessons/{lesson}/vocabulary/{vocabulary}/generate-tts', [AdminVocabularyController::class, 'generateSingleTts'])
+        ->name('lessons.vocabulary.generate-single-tts');
     Route::post('lessons/{lesson}/vocabulary/generate-images', [AdminVocabularyController::class, 'generateImages'])
         ->name('lessons.vocabulary.generate-images');
     Route::get('vocabulary/tts-logs', [AdminVocabularyController::class, 'viewLogs'])

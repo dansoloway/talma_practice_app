@@ -714,6 +714,28 @@ class VocabularyController extends Controller
     }
 
     /**
+     * Generate or regenerate TTS for a single vocabulary word
+     */
+    public function generateSingleTts(Request $request, Lesson $lesson, Vocabulary $vocabulary)
+    {
+        try {
+            $this->generateVocabularyAudio($vocabulary);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "TTS generated successfully for '{$vocabulary->english_word}'",
+            ]);
+        } catch (\Exception $e) {
+            \Log::error("Failed to generate TTS for vocabulary {$vocabulary->id}: " . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate TTS: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Generate TTS audio for a vocabulary word
      */
     private function generateVocabularyAudio(Vocabulary $vocabulary)
@@ -732,88 +754,18 @@ class VocabularyController extends Controller
         file_put_contents($ttsLogFile, "[" . now() . "] Starting TTS generation for vocabulary word: '{$vocabulary->english_word}' (ID: {$vocabulary->id})\n", FILE_APPEND);
 
         try {
-            // Use TTS service with high stability settings for clarity and consistency
-            $audioData = $this->ttsService->generateVocabulary(
+            // Use centralized TTS service method that handles everything
+            $result = $this->ttsService->generateAndSaveVocabulary(
                 $vocabulary->english_word,
+                $vocabulary->word_audio_path, // Old path to delete if regenerating
                 null // Use default voice
             );
 
-            if ($audioData !== null) {
-                $filename = 'vocabulary_' . time() . '_' . uniqid() . '.mp3';
-                // Use tts/vocabulary/ instead of vocabulary-audio/ to inherit working permissions from tts directory
-                $relativePath = 'tts/vocabulary/' . $filename;
-                $fullPath = storage_path("app/public/{$relativePath}");
+            if ($result !== null) {
+                // Update vocabulary with new audio path
+                $vocabulary->update(['word_audio_path' => $result['path']]);
                 
-                \Log::info("Saving vocabulary audio file to: {$fullPath}");
-                file_put_contents($ttsLogFile, "[" . now() . "] Attempting to save file to: {$fullPath}\n", FILE_APPEND);
-                
-                // Create directory if needed (same as prompts do)
-                $dir = dirname($fullPath);
-                if (!file_exists($dir)) {
-                    \Log::info("Creating directory: {$dir}");
-                    file_put_contents($ttsLogFile, "[" . now() . "] Creating directory: {$dir}\n", FILE_APPEND);
-                    
-                    $mkdirResult = @mkdir($dir, 0755, true);
-                    if (!$mkdirResult && !file_exists($dir)) {
-                        // Directory creation failed and still doesn't exist
-                        $error = error_get_last();
-                        $errorMsg = "Failed to create directory {$dir}: " . ($error['message'] ?? 'Unknown error');
-                        \Log::error($errorMsg);
-                        file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
-                        throw new \Exception($errorMsg);
-                    } elseif (!$mkdirResult && file_exists($dir)) {
-                        // Directory creation "failed" but directory actually exists (race condition or permission issue)
-                        \Log::info("Directory creation returned false but directory exists: {$dir}");
-                        file_put_contents($ttsLogFile, "[" . now() . "] Directory exists despite mkdir failure: {$dir}\n", FILE_APPEND);
-                    } else {
-                        \Log::info("Successfully created directory: {$dir}");
-                        file_put_contents($ttsLogFile, "[" . now() . "] Successfully created directory: {$dir}\n", FILE_APPEND);
-                    }
-                } else {
-                    \Log::info("Directory already exists: {$dir}");
-                    file_put_contents($ttsLogFile, "[" . now() . "] Directory already exists: {$dir}\n", FILE_APPEND);
-                }
-                
-                // Check if directory is writable
-                if (!is_writable($dir)) {
-                    $errorMsg = "Directory is not writable: {$dir}";
-                    \Log::error($errorMsg);
-                    file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
-                    throw new \Exception($errorMsg);
-                }
-                
-                \Log::info("Audio data size: " . strlen($audioData) . " bytes");
-                file_put_contents($ttsLogFile, "[" . now() . "] Audio data size: " . strlen($audioData) . " bytes\n", FILE_APPEND);
-                
-                $saved = @file_put_contents($fullPath, $audioData);
-                if ($saved === false) {
-                    $error = error_get_last();
-                    $errorMsg = "Failed to save audio file to {$fullPath}: " . ($error['message'] ?? 'Unknown error');
-                    \Log::error($errorMsg);
-                    file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
-                    throw new \Exception($errorMsg);
-                }
-                
-                \Log::info("Successfully saved audio file, bytes written: {$saved}");
-                file_put_contents($ttsLogFile, "[" . now() . "] Successfully saved audio file, bytes written: {$saved}\n", FILE_APPEND);
-                
-                // Verify file was actually written and is readable
-                if (!file_exists($fullPath) || !is_readable($fullPath)) {
-                    $errorMsg = "File was written but is not readable or doesn't exist: {$fullPath}";
-                    \Log::error($errorMsg);
-                    file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
-                    throw new \Exception($errorMsg);
-                }
-                
-                $fileSize = filesize($fullPath);
-                \Log::info("Verified file exists, size: {$fileSize} bytes");
-                file_put_contents($ttsLogFile, "[" . now() . "] Verified file exists, size: {$fileSize} bytes\n", FILE_APPEND);
-                
-                // Store path with /storage/ prefix like prompts do for consistency
-                // Only update database if file was successfully written and verified
-                $vocabulary->update(['word_audio_path' => "/storage/{$relativePath}"]);
-                
-                $successMsg = "Successfully generated and verified audio for: '{$vocabulary->english_word}' (path: /storage/{$relativePath}, size: {$fileSize} bytes)";
+                $successMsg = "Successfully generated and verified audio for: '{$vocabulary->english_word}' (path: {$result['path']}, size: {$result['size']} bytes)";
                 \Log::info($successMsg);
                 file_put_contents($ttsLogFile, "[" . now() . "] SUCCESS: {$successMsg}\n", FILE_APPEND);
             } else {
@@ -864,6 +816,13 @@ class VocabularyController extends Controller
                 // Force recreate: process ALL items sequentially, starting with oldest
                 // Use cache to track the last processed ID for this lesson
                 $cacheKey = 'lesson:' . $lesson->id . ':tts_last_processed_id';
+                
+                // Reset cache if requested (first call of a new batch)
+                if ($request->input('reset', false)) {
+                    \Cache::forget($cacheKey);
+                    file_put_contents($ttsLogFile, "[" . now() . "] Force recreate mode: Starting new batch, cache cleared\n", FILE_APPEND);
+                }
+                
                 $lastProcessedId = \Cache::get($cacheKey, 0);
                 
                 // Get the next item to process (ID greater than last processed)
@@ -872,18 +831,22 @@ class VocabularyController extends Controller
                     ->orderBy('id')
                     ->first();
                 
-                // If no items found with ID > last processed, start from beginning
+                // If no items found with ID > last processed, we're done!
                 if (!$vocabulary) {
-                    $vocabulary = $lesson->vocabulary()
-                        ->orderBy('id')
-                        ->first();
-                    // Reset cache if we're starting over
+                    // Clear cache and return completed
                     \Cache::forget($cacheKey);
+                    file_put_contents($ttsLogFile, "[" . now() . "] Force recreate mode: All items processed, starting from beginning\n", FILE_APPEND);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'processed' => 0,
+                        'errors' => [],
+                        'remaining' => 0,
+                        'completed' => true
+                    ]);
                 }
                 
-                if ($vocabulary) {
-                    file_put_contents($ttsLogFile, "[" . now() . "] Force recreate mode: Processing vocab_id={$vocabulary->id} word='{$vocabulary->english_word}' (last processed: {$lastProcessedId})\n", FILE_APPEND);
-                }
+                file_put_contents($ttsLogFile, "[" . now() . "] Force recreate mode: Processing vocab_id={$vocabulary->id} word='{$vocabulary->english_word}' (last processed: {$lastProcessedId})\n", FILE_APPEND);
             } else {
                 // Normal mode: only process items without audio or where file is missing
                 $vocabulary = $lesson->vocabulary()

@@ -113,6 +113,31 @@
                             </a>
                         </form>
                         
+                        <!-- Progress Container -->
+                        <div id="tts-progress-container" style="display: none; margin-top: 2rem;">
+                            <div class="progress-section">
+                                <h4>Word TTS Generation</h4>
+                                <div id="word-tts-progress-text" style="margin-bottom: 0.5rem; color: #666;">Initializing...</div>
+                                <div class="progress-bar">
+                                    <div id="word-tts-progress-fill" class="progress-fill"></div>
+                                </div>
+                                <div class="progress-text">
+                                    <span id="word-tts-processed">0</span> processed, <span id="word-tts-remaining">0</span> remaining
+                                </div>
+                            </div>
+                            
+                            <div class="progress-section">
+                                <h4>Sentence TTS Generation</h4>
+                                <div id="sentence-tts-progress-text" style="margin-bottom: 0.5rem; color: #666;">Waiting for word TTS...</div>
+                                <div class="progress-bar">
+                                    <div id="sentence-tts-progress-fill" class="progress-fill"></div>
+                                </div>
+                                <div class="progress-text">
+                                    <span id="sentence-tts-processed">0</span> processed, <span id="sentence-tts-remaining">0</span> remaining
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="import-note">
                             <p><strong>What happens next:</strong></p>
                             <ul>
@@ -389,11 +414,162 @@ document.addEventListener('DOMContentLoaded', function() {
     var importAndTtsBtn = document.getElementById('import-and-tts-btn');
     var importForm = document.getElementById('import-form');
     var generateTtsInput = document.getElementById('generate_tts');
+    var progressContainer = document.getElementById('tts-progress-container');
+    
     if (importAndTtsBtn && importForm && generateTtsInput) {
-        importAndTtsBtn.addEventListener('click', function() {
+        importAndTtsBtn.addEventListener('click', async function() {
             generateTtsInput.value = '1';
-            importForm.submit();
+            
+            // Disable button
+            importAndTtsBtn.disabled = true;
+            importAndTtsBtn.textContent = '⏳ Importing...';
+            
+            // Show progress container
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+            }
+            
+            try {
+                // Create FormData
+                const formData = new FormData(importForm);
+                
+                // Make AJAX request to import
+                const response = await fetch(importForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.start_tts) {
+                    // Import successful, now generate TTS
+                    await generateTtsWithProgress(data.lesson_id, data.options_needing_word_tts, data.options_needing_sentence_tts);
+                } else if (data.success) {
+                    // Import successful but no TTS requested
+                    setTimeout(function() {
+                        window.location.href = data.redirect_url;
+                    }, 1000);
+                } else {
+                    alert('Import failed: ' + (data.message || 'Unknown error'));
+                    importAndTtsBtn.disabled = false;
+                    importAndTtsBtn.textContent = 'Confirm Import + Start TTS';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+                importAndTtsBtn.disabled = false;
+                importAndTtsBtn.textContent = 'Confirm Import + Start TTS';
+            }
         });
+    }
+    
+    async function generateTtsWithProgress(lessonId, wordTtsCount, sentenceTtsCount) {
+        const lessonIdParam = lessonId;
+        
+        // Update word TTS progress
+        document.getElementById('word-tts-remaining').textContent = wordTtsCount;
+        document.getElementById('word-tts-progress-text').textContent = 'Generating word TTS...';
+        
+        // Generate word TTS
+        if (wordTtsCount > 0) {
+            let wordProcessed = 0;
+            let wordRemaining = wordTtsCount;
+            
+            while (wordRemaining > 0) {
+                try {
+                    const response = await fetch(`/admin/lessons/${lessonIdParam}/prompts/generate-word-tts`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({ reset: wordProcessed === 0 })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.completed) {
+                        wordProcessed = wordTtsCount;
+                        wordRemaining = 0;
+                    } else {
+                        wordProcessed += data.processed || 0;
+                        wordRemaining = data.remaining || 0;
+                    }
+                    
+                    // Update progress
+                    const wordProgress = (wordProcessed / wordTtsCount) * 100;
+                    document.getElementById('word-tts-progress-fill').style.width = wordProgress + '%';
+                    document.getElementById('word-tts-processed').textContent = wordProcessed;
+                    document.getElementById('word-tts-remaining').textContent = wordRemaining;
+                    
+                    if (wordRemaining > 0) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                } catch (error) {
+                    console.error('Word TTS generation error:', error);
+                    break;
+                }
+            }
+        }
+        
+        // Update sentence TTS progress
+        document.getElementById('sentence-tts-remaining').textContent = sentenceTtsCount;
+        document.getElementById('sentence-tts-progress-text').textContent = 'Generating sentence TTS...';
+        
+        // Generate sentence TTS
+        if (sentenceTtsCount > 0) {
+            let sentenceProcessed = 0;
+            let sentenceRemaining = sentenceTtsCount;
+            
+            while (sentenceRemaining > 0) {
+                try {
+                    const response = await fetch(`/admin/lessons/${lessonIdParam}/prompts/generate-sentence-tts`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({ reset: sentenceProcessed === 0 })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.completed) {
+                        sentenceProcessed = sentenceTtsCount;
+                        sentenceRemaining = 0;
+                    } else {
+                        sentenceProcessed += data.processed || 0;
+                        sentenceRemaining = data.remaining || 0;
+                    }
+                    
+                    // Update progress
+                    const sentenceProgress = (sentenceProcessed / sentenceTtsCount) * 100;
+                    document.getElementById('sentence-tts-progress-fill').style.width = sentenceProgress + '%';
+                    document.getElementById('sentence-tts-processed').textContent = sentenceProcessed;
+                    document.getElementById('sentence-tts-remaining').textContent = sentenceRemaining;
+                    
+                    if (sentenceRemaining > 0) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                } catch (error) {
+                    console.error('Sentence TTS generation error:', error);
+                    break;
+                }
+            }
+        }
+        
+        // All done - redirect
+        document.getElementById('word-tts-progress-text').textContent = 'Word TTS complete!';
+        document.getElementById('sentence-tts-progress-text').textContent = 'Sentence TTS complete!';
+        
+        setTimeout(function() {
+            window.location.href = '/admin/lessons/' + lessonIdParam + '/manage';
+        }, 2000);
     }
 });
 </script>

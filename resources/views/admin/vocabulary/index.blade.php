@@ -121,6 +121,9 @@
                                 <button type="button" class="btn btn-sm btn-primary generate-image-btn" data-vocab-id="{{ $item->id }}" data-word="{{ $item->english_word }}" data-has-image="{{ $item->image_path ? '1' : '0' }}">
                                     {{ $item->image_path ? '🔄 Re-generate' : '🎨 Generate' }} Image
                                 </button>
+                                <button type="button" class="btn btn-sm btn-secondary generate-tts-btn" data-vocab-id="{{ $item->id }}" data-word="{{ $item->english_word }}" data-url="{{ route('admin.lessons.vocabulary.generate-single-tts', [$lesson, $item]) }}" title="Generate/Regenerate TTS audio">
+                                    🔊 {{ $item->word_audio_path ? 'Regenerate' : 'Generate' }} TTS
+                                </button>
                                 <form action="{{ route('admin.lessons.vocabulary.update-image', [$lesson, $item]) }}" method="POST" enctype="multipart/form-data" class="inline-form">
                                     @csrf
                                     @method('PUT')
@@ -387,7 +390,8 @@ function generateAllTts() {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
             body: JSON.stringify({
-                force: true  // Always recreate to regenerate existing audio
+                force: true,  // Always recreate to regenerate existing audio
+                reset: ttsProcessedItems === 0  // Reset cache on first call
             })
         })
         .then(response => response.json())
@@ -539,6 +543,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
                 alert('An error occurred: ' + error.message);
             }
+        });
+    });
+});
+
+// TTS generation functionality
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.generate-tts-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const vocabId = this.dataset.vocabId;
+            const word = this.dataset.word;
+            const originalText = this.textContent;
+            
+            // Disable button and show loading state
+            this.disabled = true;
+            this.textContent = '⏳ Generating...';
+            
+            fetch(this.dataset.url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.textContent = '✅ Generated';
+                    this.classList.remove('btn-secondary');
+                    this.classList.add('btn-success');
+                    
+                    // Reload page after 1 second to show updated status and play button
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to generate TTS'));
+                    this.disabled = false;
+                    this.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+                this.disabled = false;
+                this.textContent = originalText;
+            });
         });
     });
 });
