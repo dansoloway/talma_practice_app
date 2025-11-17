@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Option;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
+use App\Services\Tts\ElevenLabsTtsService;
 
 class BuildWordAudio extends Command
 {
@@ -28,14 +28,13 @@ class BuildWordAudio extends Command
      */
     public function handle(): int
     {
-        $apiKey = env('ELEVENLABS_API_KEY');
+        // Get TTS service
+        $ttsService = app(ElevenLabsTtsService::class);
         
-        if (!$apiKey) {
+        if (!$ttsService->enabled()) {
             $this->error('ELEVENLABS_API_KEY not set in .env file');
             return 1;
         }
-        
-        $voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Rachel voice
         
         $this->info('Building word audio files...');
         
@@ -63,39 +62,18 @@ class BuildWordAudio extends Command
             $this->info("Generating: \"{$option->label}\"");
             
             try {
-                // Call ElevenLabs API
-                $response = Http::withHeaders([
-                    'xi-api-key' => $apiKey,
-                    'Content-Type' => 'application/json',
-                ])->timeout(30)->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
-                    'text' => $option->label,
-                    'model_id' => 'eleven_monolingual_v1',
-                    'voice_settings' => [
-                        'stability' => 0.5,
-                        'similarity_boost' => 0.75,
-                    ]
-                ]);
+                // Use centralized TTS service
+                $result = $ttsService->generateAndSaveVocabulary(
+                    $option->label,
+                    null, // No old path to delete
+                    'EXAVITQu4vr4xnSDxMaL' // Rachel voice
+                );
                 
-                if ($response->successful()) {
-                    // Save the audio file
-                    $filename = "word_o{$option->id}.mp3";
-                    $relativePath = "tts/words/{$filename}";
-                    $fullPath = storage_path("app/public/{$relativePath}");
-                    
-                    // Create directory if needed
-                    $dir = dirname($fullPath);
-                    if (!file_exists($dir)) {
-                        mkdir($dir, 0755, true);
-                    }
-                    
-                    file_put_contents($fullPath, $response->body());
-                    
-                    // Update option with audio path
-                    $option->update(['word_audio_path' => "/storage/{$relativePath}"]);
-                    
-                    $this->info("  ✓ Saved to: {$fullPath}");
+                if ($result !== null) {
+                    $option->update(['word_audio_path' => $result['path']]);
+                    $this->info("  ✓ Saved to: {$result['full_path']}");
                 } else {
-                    $this->error("  ✗ API Error: " . $response->status());
+                    $this->error("  ✗ Failed to generate audio");
                 }
                 
                 // Rate limiting

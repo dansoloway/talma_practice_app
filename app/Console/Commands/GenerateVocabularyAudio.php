@@ -4,8 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Vocabulary;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
+use App\Services\Tts\ElevenLabsTtsService;
 
 class GenerateVocabularyAudio extends Command
 {
@@ -16,8 +15,10 @@ class GenerateVocabularyAudio extends Command
     {
         $this->info('Generating TTS audio for vocabulary words...');
 
-        $apiKey = config('services.elevenlabs.api_key') ?: env('ELEVENLABS_API_KEY');
-        if (!$apiKey) {
+        // Get TTS service
+        $ttsService = app(ElevenLabsTtsService::class);
+        
+        if (!$ttsService->enabled()) {
             $this->error('ELEVENLABS_API_KEY not found in .env file');
             return 1;
         }
@@ -34,17 +35,25 @@ class GenerateVocabularyAudio extends Command
 
             // Check if audio already exists
             if ($vocab->word_audio_path && !$this->option('force')) {
-                $this->comment("  Audio already exists, skipping");
-                $skipped++;
-                continue;
+                $existingPath = public_path(ltrim($vocab->word_audio_path, '/'));
+                if (file_exists($existingPath)) {
+                    $this->comment("  Audio already exists, skipping");
+                    $skipped++;
+                    continue;
+                }
             }
 
             try {
-                $audioPath = $this->generateAudio($vocab->english_word, $apiKey);
+                // Use centralized TTS service
+                $result = $ttsService->generateAndSaveVocabulary(
+                    $vocab->english_word,
+                    $this->option('force') ? $vocab->word_audio_path : null, // Delete old if force
+                    null // Use default voice
+                );
                 
-                if ($audioPath) {
-                    $vocab->update(['word_audio_path' => $audioPath]);
-                    $this->info("  ✅ Generated audio: {$audioPath}");
+                if ($result !== null) {
+                    $vocab->update(['word_audio_path' => $result['path']]);
+                    $this->info("  ✅ Generated audio: {$result['path']}");
                     $generated++;
                 } else {
                     $this->error("  ❌ Failed to generate audio");
@@ -62,37 +71,5 @@ class GenerateVocabularyAudio extends Command
         $this->info("Errors: {$errors}");
 
         return 0;
-    }
-
-    private function generateAudio($text, $apiKey)
-    {
-        $voiceId = 'pNInz6obpgDQGcFmaJgB'; // Default voice ID
-        
-        $response = Http::withHeaders([
-            'Accept' => 'audio/mpeg',
-            'Content-Type' => 'application/json',
-            'xi-api-key' => $apiKey,
-        ])->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
-            'text' => $text,
-            'model_id' => 'eleven_monolingual_v1',
-            'voice_settings' => [
-                'stability' => 0.65,
-                'similarity_boost' => 0.6,
-                'style' => 0.2,
-                'speed' => 0.85,
-                'use_speaker_boost' => false,
-            ]
-        ]);
-
-        if ($response->successful()) {
-            $filename = 'vocabulary_' . time() . '_' . uniqid() . '.mp3';
-            $path = 'vocabulary-audio/' . $filename;
-            
-            Storage::disk('public')->put($path, $response->body());
-            
-            return $path;
-        }
-
-        throw new \Exception("API request failed: " . $response->body());
     }
 }
