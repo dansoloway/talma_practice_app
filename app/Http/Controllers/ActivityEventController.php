@@ -21,6 +21,7 @@ class ActivityEventController extends Controller
 
         $event = ActivityEvent::create([
             'session_id' => $request->attributes->get('practice_session_id'),
+            'device_type' => $this->detectDeviceType($request),
             'lesson_id' => $data['lesson_id'] ?? null,
             'activity_type' => $data['activity_type'],
             'activity_id' => $data['activity_id'] ?? null,
@@ -32,5 +33,29 @@ class ActivityEventController extends Controller
             'success' => true,
             'event_id' => $event->id,
         ]);
+    }
+
+    /**
+     * Detect device type from user agent.
+     */
+    private function detectDeviceType(Request $request): string
+    {
+        $userAgent = $request->userAgent() ?? '';
+        $userAgent = strtolower($userAgent);
+
+        // Check for mobile devices
+        $mobilePatterns = [
+            'mobile', 'android', 'iphone', 'ipod', 'ipad', 'blackberry',
+            'windows phone', 'opera mini', 'iemobile', 'palm', 'kindle',
+            'tablet', 'phone'
+        ];
+
+        foreach ($mobilePatterns as $pattern) {
+            if (str_contains($userAgent, $pattern)) {
+                return 'mobile';
+            }
+        }
+
+        return 'desktop';
     }
 }

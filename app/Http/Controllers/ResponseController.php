@@ -55,6 +55,7 @@ class ResponseController extends Controller
         $response = Response::create([
             'user_id' => auth()->id(),
             'session_id' => $request->attributes->get('practice_session_id'),
+            'device_type' => $this->detectDeviceType($request),
             'lesson_id' => $request->lesson_id,
             'prompt_id' => $request->prompt_id,
             'option_id' => $request->option_id,
@@ -68,6 +69,30 @@ class ResponseController extends Controller
             'response_id' => $response->id,
             'message' => 'Response saved successfully',
         ], 201);
+    }
+
+    /**
+     * Detect device type from user agent.
+     */
+    private function detectDeviceType(Request $request): string
+    {
+        $userAgent = $request->userAgent() ?? '';
+        $userAgent = strtolower($userAgent);
+
+        // Check for mobile devices
+        $mobilePatterns = [
+            'mobile', 'android', 'iphone', 'ipod', 'ipad', 'blackberry',
+            'windows phone', 'opera mini', 'iemobile', 'palm', 'kindle',
+            'tablet', 'phone'
+        ];
+
+        foreach ($mobilePatterns as $pattern) {
+            if (str_contains($userAgent, $pattern)) {
+                return 'mobile';
+            }
+        }
+
+        return 'desktop';
     }
 }
 

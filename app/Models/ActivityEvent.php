@@ -8,6 +8,7 @@ class ActivityEvent extends Model
 {
     protected $fillable = [
         'session_id',
+        'device_type',
         'lesson_id',
         'activity_type',
         'activity_id',

@@ -61,6 +61,16 @@
             <div class="stat-label">Activities Completed</div>
             <div class="stat-subtle">{{ $stats['average_responses_per_session'] }} prompt responses / session</div>
         </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ number_format($stats['mobile_sessions']) }}</div>
+            <div class="stat-label">Mobile Users</div>
+            <div class="stat-subtle">{{ $stats['mobile_percentage'] }}% of total</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ number_format($stats['desktop_sessions']) }}</div>
+            <div class="stat-label">Desktop Users</div>
+            <div class="stat-subtle">{{ $stats['desktop_percentage'] }}% of total</div>
+        </div>
     </div>
 
     <div class="dashboard-sections">

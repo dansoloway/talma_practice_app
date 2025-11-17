@@ -13,6 +13,7 @@ class Response extends Model
     protected $fillable = [
         'user_id',
         'session_id',
+        'device_type',
         'lesson_id',
         'prompt_id',
         'option_id',

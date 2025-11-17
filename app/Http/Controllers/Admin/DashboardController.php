@@ -48,6 +48,7 @@ class DashboardController extends Controller
         $lessonStats = $this->buildLessonStats();
         $activityStats = $this->buildActivityStats();
         $dailyPractice = $this->buildDailyPracticeSeries();
+        $deviceStats = $this->buildDeviceStats();
 
         $recentLessons = Lesson::latest()->take(5)->get();
         $recentResponses = Response::with(['lesson', 'prompt', 'option'])
@@ -64,6 +65,10 @@ class DashboardController extends Controller
             'median_session_duration' => $sessionStats['median_duration'],
             'average_responses_per_session' => $sessionStats['average_responses'], // Average prompt responses per session
             'total_activity_completions' => $activityStats['totals']['completed'], // Game completions
+            'mobile_sessions' => $deviceStats['mobile_sessions'],
+            'desktop_sessions' => $deviceStats['desktop_sessions'],
+            'mobile_percentage' => $deviceStats['mobile_percentage'],
+            'desktop_percentage' => $deviceStats['desktop_percentage'],
         ];
 
         return view('admin.dashboard', compact(
@@ -72,8 +77,50 @@ class DashboardController extends Controller
             'recentResponses',
             'lessonStats',
             'activityStats',
-            'dailyPractice'
+            'dailyPractice',
+            'deviceStats'
         ));
+    }
+
+    protected function buildDeviceStats(): array
+    {
+        // Get unique sessions by device type from responses
+        $mobileSessionsFromResponses = Response::where('device_type', 'mobile')
+            ->whereNotNull('session_id')
+            ->distinct('session_id')
+            ->pluck('session_id');
+        
+        $desktopSessionsFromResponses = Response::where('device_type', 'desktop')
+            ->whereNotNull('session_id')
+            ->distinct('session_id')
+            ->pluck('session_id');
+
+        // Get unique sessions by device type from activity events
+        $mobileSessionsFromActivities = ActivityEvent::where('device_type', 'mobile')
+            ->whereNotNull('session_id')
+            ->distinct('session_id')
+            ->pluck('session_id');
+        
+        $desktopSessionsFromActivities = ActivityEvent::where('device_type', 'desktop')
+            ->whereNotNull('session_id')
+            ->distinct('session_id')
+            ->pluck('session_id');
+
+        // Merge and count unique sessions
+        $mobileSessions = $mobileSessionsFromResponses->merge($mobileSessionsFromActivities)->unique()->count();
+        $desktopSessions = $desktopSessionsFromResponses->merge($desktopSessionsFromActivities)->unique()->count();
+        
+        $totalSessions = $mobileSessions + $desktopSessions;
+        
+        $mobilePercentage = $totalSessions > 0 ? round(($mobileSessions / $totalSessions) * 100, 1) : 0;
+        $desktopPercentage = $totalSessions > 0 ? round(($desktopSessions / $totalSessions) * 100, 1) : 0;
+
+        return [
+            'mobile_sessions' => $mobileSessions,
+            'desktop_sessions' => $desktopSessions,
+            'mobile_percentage' => $mobilePercentage,
+            'desktop_percentage' => $desktopPercentage,
+        ];
     }
 
     protected function buildSessionStats(): array
