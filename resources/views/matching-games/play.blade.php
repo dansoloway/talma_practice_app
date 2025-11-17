@@ -259,6 +259,12 @@
     align-items: center;
     justify-content: center;
     min-height: 60px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .play-audio-btn {
@@ -353,6 +359,22 @@
     
     .completion-actions {
         flex-direction: column;
+    }
+    
+    .card-word {
+        font-size: 1rem;
+        padding: 0.5rem;
+        min-height: 50px;
+    }
+    
+    .card-translation {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+        min-height: 50px;
+    }
+    
+    .card-content {
+        padding: 0.25rem;
     }
 }
 </style>
@@ -603,6 +625,12 @@ function changeMode(mode) {
     display: flex;
     align-items: center;
     justify-content: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .card-translation.hebrew {
