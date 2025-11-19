@@ -366,19 +366,26 @@
     }
     
     .card-word {
-        font-size: 1rem;
-        padding: 0.5rem;
+        font-size: 0.9rem;
+        padding: 0.4rem;
         min-height: 50px;
+        max-height: 100%;
     }
     
     .card-translation {
-        font-size: 0.9rem;
-        padding: 0.5rem;
+        font-size: 0.85rem;
+        padding: 0.4rem;
         min-height: 50px;
+        max-height: 100%;
     }
     
     .card-content {
         padding: 0.25rem;
+        overflow: hidden;
+    }
+    
+    .game-card {
+        overflow: hidden;
     }
 }
 </style>
@@ -558,63 +565,61 @@ function adjustCardTextSizes() {
             ? (isMobile ? 1.0 : 1.4) 
             : (isMobile ? 0.9 : 1.2);
         
-        // Reset to default first
+        // Reset to default first and ensure wrapping is enabled
         element.style.fontSize = defaultSize + 'rem';
+        element.style.whiteSpace = 'normal';
+        element.style.wordBreak = 'break-word';
+        element.style.overflowWrap = 'break-word';
         
         // Force reflow
         void element.offsetWidth;
         
         // Get card dimensions
         const contentRect = cardContent.getBoundingClientRect();
-        const availableWidth = contentRect.width;
-        const availableHeight = contentRect.height;
-        
-        // Measure text width without wrapping by temporarily disabling wrap
-        const originalWhiteSpace = element.style.whiteSpace;
-        element.style.whiteSpace = 'nowrap';
-        void element.offsetWidth;
-        const textWidth = element.getBoundingClientRect().width;
-        element.style.whiteSpace = originalWhiteSpace;
+        const availableWidth = contentRect.width - (parseFloat(getComputedStyle(element).paddingLeft) || 0) * 2;
+        const availableHeight = contentRect.height - (parseFloat(getComputedStyle(element).paddingTop) || 0) * 2;
         
         // Get current font size
         let currentFontSize = parseFloat(getComputedStyle(element).fontSize);
+        const minFontSize = isMobile ? 0.5 : 0.7; // Lower minimum for mobile
         
-        // If text is wider than available space, reduce font size
-        if (textWidth > availableWidth * 0.95) {
-            const minFontSize = isMobile ? 0.6 : 0.8; // Minimum font size in rem
-            
-            // Calculate proportional font size
-            const scaleFactor = (availableWidth * 0.95) / textWidth;
-            const newFontSize = Math.max(minFontSize, currentFontSize * scaleFactor);
-            
-            element.style.fontSize = newFontSize + 'rem';
+        // Binary search for optimal font size
+        let minSize = minFontSize;
+        let maxSize = defaultSize;
+        let optimalSize = defaultSize;
+        
+        // Test if text fits at current size
+        const testFit = (fontSize) => {
+            element.style.fontSize = fontSize + 'rem';
             void element.offsetWidth;
-            
-            // Check if height also fits after resizing
             const elementRect = element.getBoundingClientRect();
-            if (elementRect.height > availableHeight * 0.95) {
-                const heightScaleFactor = (availableHeight * 0.95) / elementRect.height;
-                const finalFontSize = Math.max(minFontSize, parseFloat(getComputedStyle(element).fontSize) * heightScaleFactor);
-                element.style.fontSize = finalFontSize + 'rem';
+            return elementRect.width <= availableWidth * 0.98 && elementRect.height <= availableHeight * 0.98;
+        };
+        
+        // Binary search for best fit
+        for (let i = 0; i < 10; i++) { // Max 10 iterations
+            const testSize = (minSize + maxSize) / 2;
+            if (testFit(testSize)) {
+                optimalSize = testSize;
+                minSize = testSize;
+            } else {
+                maxSize = testSize;
             }
-        } else {
-            // Text fits, but check if we can make it larger (if it was previously reduced)
-            // Only increase if it's significantly smaller than default
-            if (currentFontSize < defaultSize * 0.9) {
-                // Try increasing gradually
-                let testSize = Math.min(defaultSize, currentFontSize * 1.1);
-                element.style.fontSize = testSize + 'rem';
-                element.style.whiteSpace = 'nowrap';
-                void element.offsetWidth;
-                const testWidth = element.getBoundingClientRect().width;
-                element.style.whiteSpace = originalWhiteSpace;
-                
-                if (testWidth <= availableWidth * 0.95) {
-                    element.style.fontSize = testSize + 'rem';
-                } else {
-                    element.style.fontSize = currentFontSize + 'rem';
-                }
-            }
+            if (maxSize - minSize < 0.05) break; // Stop when close enough
+        }
+        
+        // Apply optimal size
+        element.style.fontSize = Math.max(minFontSize, optimalSize) + 'rem';
+        void element.offsetWidth;
+        
+        // Final check - if still overflowing, force smaller
+        const finalRect = element.getBoundingClientRect();
+        if (finalRect.width > availableWidth * 0.98 || finalRect.height > availableHeight * 0.98) {
+            const widthScale = (availableWidth * 0.98) / finalRect.width;
+            const heightScale = (availableHeight * 0.98) / finalRect.height;
+            const scale = Math.min(widthScale, heightScale);
+            const finalSize = Math.max(minFontSize, parseFloat(getComputedStyle(element).fontSize) * scale);
+            element.style.fontSize = finalSize + 'rem';
         }
     });
 }
@@ -629,12 +634,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Adjust text sizes after a brief delay to ensure layout is complete
     setTimeout(adjustCardTextSizes, 200);
     
+    // Also adjust after images load (if any)
+    window.addEventListener('load', function() {
+        setTimeout(adjustCardTextSizes, 100);
+    });
+    
     // Adjust on window resize
     let resizeTimeout;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(adjustCardTextSizes, 150);
     });
+    
+    // Adjust when cards become visible (for lazy loading scenarios)
+    const observer = new MutationObserver(function() {
+        setTimeout(adjustCardTextSizes, 100);
+    });
+    
+    const gameGrid = document.getElementById('game-grid');
+    if (gameGrid) {
+        observer.observe(gameGrid, { childList: true, subtree: true, attributes: true });
+    }
     
     // Handle audio playback
     document.addEventListener('click', function(e) {
