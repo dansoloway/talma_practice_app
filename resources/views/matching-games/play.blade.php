@@ -259,8 +259,9 @@
     align-items: center;
     justify-content: center;
     min-height: 60px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    white-space: nowrap;
+    word-wrap: normal;
+    overflow-wrap: normal;
     hyphens: none;
     -webkit-hyphens: none;
     -moz-hyphens: none;
@@ -269,6 +270,8 @@
     width: 100%;
     box-sizing: border-box;
     line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .play-audio-btn {
@@ -370,6 +373,7 @@
         padding: 0.4rem;
         min-height: 50px;
         max-height: 100%;
+        white-space: nowrap;
     }
     
     .card-translation {
@@ -377,6 +381,7 @@
         padding: 0.4rem;
         min-height: 50px;
         max-height: 100%;
+        white-space: nowrap;
     }
     
     .card-content {
@@ -565,11 +570,17 @@ function adjustCardTextSizes() {
             ? (isMobile ? 1.0 : 1.4) 
             : (isMobile ? 0.9 : 1.2);
         
-        // Reset to default first and ensure wrapping is enabled
+        // Reset to default first and prevent wrapping - keep words on single line
         element.style.fontSize = defaultSize + 'rem';
-        element.style.whiteSpace = 'normal';
-        element.style.wordBreak = 'break-word';
-        element.style.overflowWrap = 'break-word';
+        element.style.whiteSpace = 'nowrap';
+        element.style.wordBreak = 'normal';
+        element.style.overflowWrap = 'normal';
+        element.style.textOverflow = 'ellipsis';
+        
+        // Reduce padding on mobile for longer words
+        const isMobileDevice = window.innerWidth <= 768;
+        const defaultPadding = isMobileDevice ? '0.4rem' : '1rem';
+        element.style.padding = defaultPadding;
         
         // Force reflow
         void element.offsetWidth;
@@ -581,23 +592,24 @@ function adjustCardTextSizes() {
         
         // Get current font size
         let currentFontSize = parseFloat(getComputedStyle(element).fontSize);
-        const minFontSize = isMobile ? 0.5 : 0.7; // Lower minimum for mobile
+        const minFontSize = isMobile ? 0.4 : 0.6; // Lower minimum for mobile
         
-        // Binary search for optimal font size
+        // Binary search for optimal font size that fits on single line
         let minSize = minFontSize;
         let maxSize = defaultSize;
         let optimalSize = defaultSize;
         
-        // Test if text fits at current size
+        // Test if text fits at current size (single line, no wrap)
         const testFit = (fontSize) => {
             element.style.fontSize = fontSize + 'rem';
+            element.style.whiteSpace = 'nowrap';
             void element.offsetWidth;
             const elementRect = element.getBoundingClientRect();
-            return elementRect.width <= availableWidth * 0.98 && elementRect.height <= availableHeight * 0.98;
+            return elementRect.width <= availableWidth * 0.95;
         };
         
         // Binary search for best fit
-        for (let i = 0; i < 10; i++) { // Max 10 iterations
+        for (let i = 0; i < 12; i++) { // Max 12 iterations for precision
             const testSize = (minSize + maxSize) / 2;
             if (testFit(testSize)) {
                 optimalSize = testSize;
@@ -605,21 +617,29 @@ function adjustCardTextSizes() {
             } else {
                 maxSize = testSize;
             }
-            if (maxSize - minSize < 0.05) break; // Stop when close enough
+            if (maxSize - minSize < 0.03) break; // Stop when close enough
         }
         
         // Apply optimal size
-        element.style.fontSize = Math.max(minFontSize, optimalSize) + 'rem';
+        const finalSize = Math.max(minFontSize, optimalSize);
+        element.style.fontSize = finalSize + 'rem';
+        element.style.whiteSpace = 'nowrap';
         void element.offsetWidth;
         
-        // Final check - if still overflowing, force smaller
+        // If text is still too long, reduce padding further and try again
         const finalRect = element.getBoundingClientRect();
-        if (finalRect.width > availableWidth * 0.98 || finalRect.height > availableHeight * 0.98) {
-            const widthScale = (availableWidth * 0.98) / finalRect.width;
-            const heightScale = (availableHeight * 0.98) / finalRect.height;
-            const scale = Math.min(widthScale, heightScale);
-            const finalSize = Math.max(minFontSize, parseFloat(getComputedStyle(element).fontSize) * scale);
-            element.style.fontSize = finalSize + 'rem';
+        if (finalRect.width > availableWidth * 0.95 && isMobileDevice) {
+            // Reduce padding to minimum
+            element.style.padding = '0.2rem';
+            void element.offsetWidth;
+            const newAvailableWidth = cardContent.getBoundingClientRect().width - 0.4; // 0.2rem * 2
+            
+            // Recalculate with reduced padding
+            if (finalRect.width > newAvailableWidth * 0.95) {
+                const scaleFactor = (newAvailableWidth * 0.95) / finalRect.width;
+                const scaledSize = Math.max(minFontSize, finalSize * scaleFactor);
+                element.style.fontSize = scaledSize + 'rem';
+            }
         }
     });
 }
@@ -737,8 +757,9 @@ function changeMode(mode) {
     display: flex;
     align-items: center;
     justify-content: center;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    white-space: nowrap;
+    word-wrap: normal;
+    overflow-wrap: normal;
     hyphens: none;
     -webkit-hyphens: none;
     -moz-hyphens: none;
@@ -747,6 +768,8 @@ function changeMode(mode) {
     width: 100%;
     box-sizing: border-box;
     line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .card-translation.hebrew {
