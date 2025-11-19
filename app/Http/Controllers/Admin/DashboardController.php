@@ -16,29 +16,40 @@ use Illuminate\Support\Facades\DB;
 class DashboardController extends Controller
 {
     /**
+     * Office IP address to exclude from analytics.
+     */
+    private const OFFICE_IP = '141.226.32.90';
+
+    /**
      * Display the admin dashboard.
      */
     public function index()
     {
-        $totalResponses = Response::count();
+        $totalResponses = $this->excludeOfficeIp(Response::query())->count();
         
         // Count unique sessions from both Response and ActivityEvent tables
-        $uniqueSessionsFromResponses = Response::whereNotNull('session_id')
+        $uniqueSessionsFromResponses = $this->excludeOfficeIp(Response::query())
+            ->whereNotNull('session_id')
             ->distinct('session_id')
             ->pluck('session_id');
-        $uniqueSessionsFromActivities = ActivityEvent::whereNotNull('session_id')
+        $uniqueSessionsFromActivities = $this->excludeOfficeIp(ActivityEvent::query())
+            ->whereNotNull('session_id')
             ->distinct('session_id')
             ->pluck('session_id');
         $uniqueSessions = $uniqueSessionsFromResponses->merge($uniqueSessionsFromActivities)->unique()->count();
         
-        $responsesLast7Days = Response::where('created_at', '>=', now()->subDays(7))->count();
+        $responsesLast7Days = $this->excludeOfficeIp(Response::query())
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count();
         
         // Count active sessions today from both tables
-        $activeSessionsTodayFromResponses = Response::whereDate('created_at', Carbon::today())
+        $activeSessionsTodayFromResponses = $this->excludeOfficeIp(Response::query())
+            ->whereDate('created_at', Carbon::today())
             ->whereNotNull('session_id')
             ->distinct('session_id')
             ->pluck('session_id');
-        $activeSessionsTodayFromActivities = ActivityEvent::whereDate('created_at', Carbon::today())
+        $activeSessionsTodayFromActivities = $this->excludeOfficeIp(ActivityEvent::query())
+            ->whereDate('created_at', Carbon::today())
             ->whereNotNull('session_id')
             ->distinct('session_id')
             ->pluck('session_id');
@@ -49,9 +60,12 @@ class DashboardController extends Controller
         $activityStats = $this->buildActivityStats();
         $dailyPractice = $this->buildDailyPracticeSeries();
         $deviceStats = $this->buildDeviceStats();
+        $countryStats = $this->buildCountryStats();
+        $israelCityStats = $this->buildIsraelCityStats();
 
         $recentLessons = Lesson::latest()->take(5)->get();
-        $recentResponses = Response::with(['lesson', 'prompt', 'option'])
+        $recentResponses = $this->excludeOfficeIp(Response::query())
+            ->with(['lesson', 'prompt', 'option'])
             ->latest()
             ->take(10)
             ->get();
@@ -78,30 +92,156 @@ class DashboardController extends Controller
             'lessonStats',
             'activityStats',
             'dailyPractice',
-            'deviceStats'
+            'deviceStats',
+            'countryStats',
+            'israelCityStats'
         ));
+    }
+
+    /**
+     * Exclude office IP from query.
+     */
+    protected function excludeOfficeIp($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('ip_address')
+              ->orWhere('ip_address', '!=', self::OFFICE_IP);
+        });
+    }
+
+    /**
+     * Build country statistics from user locations.
+     */
+    protected function buildCountryStats(): array
+    {
+        // Get unique sessions by country from responses
+        $countrySessionsFromResponses = $this->excludeOfficeIp(Response::query())
+            ->whereNotNull('country')
+            ->whereNotNull('session_id')
+            ->select('country', 'session_id')
+            ->distinct()
+            ->get()
+            ->groupBy('country')
+            ->map(fn ($group) => $group->pluck('session_id')->unique()->count());
+
+        // Get unique sessions by country from activity events
+        $countrySessionsFromActivities = $this->excludeOfficeIp(ActivityEvent::query())
+            ->whereNotNull('country')
+            ->whereNotNull('session_id')
+            ->select('country', 'session_id')
+            ->distinct()
+            ->get()
+            ->groupBy('country')
+            ->map(fn ($group) => $group->pluck('session_id')->unique()->count());
+
+        // Merge and combine counts
+        $countryStats = [];
+        foreach ($countrySessionsFromResponses as $country => $count) {
+            $countryStats[$country] = ($countryStats[$country] ?? 0) + $count;
+        }
+        foreach ($countrySessionsFromActivities as $country => $count) {
+            $countryStats[$country] = ($countryStats[$country] ?? 0) + $count;
+        }
+
+        // Sort by count descending and take top 10
+        arsort($countryStats);
+        $topCountries = array_slice($countryStats, 0, 10, true);
+
+        $totalSessions = array_sum($countryStats);
+
+        return [
+            'top_countries' => $topCountries,
+            'total_sessions' => $totalSessions,
+        ];
+    }
+
+    /**
+     * Build Israeli city statistics from user locations.
+     */
+    protected function buildIsraelCityStats(): array
+    {
+        // Get unique sessions by city from responses (Israel only)
+        $citySessionsFromResponses = $this->excludeOfficeIp(Response::query())
+            ->where('country', 'IL')
+            ->whereNotNull('city')
+            ->whereNotNull('session_id')
+            ->select('city', 'region', 'session_id')
+            ->distinct()
+            ->get()
+            ->groupBy('city')
+            ->map(function ($group) {
+                return [
+                    'sessions' => $group->pluck('session_id')->unique()->count(),
+                    'region' => $group->first()->region,
+                ];
+            });
+
+        // Get unique sessions by city from activity events (Israel only)
+        $citySessionsFromActivities = $this->excludeOfficeIp(ActivityEvent::query())
+            ->where('country', 'IL')
+            ->whereNotNull('city')
+            ->whereNotNull('session_id')
+            ->select('city', 'region', 'session_id')
+            ->distinct()
+            ->get()
+            ->groupBy('city')
+            ->map(function ($group) {
+                return [
+                    'sessions' => $group->pluck('session_id')->unique()->count(),
+                    'region' => $group->first()->region,
+                ];
+            });
+
+        // Merge and combine counts
+        $cityStats = [];
+        foreach ($citySessionsFromResponses as $city => $data) {
+            $cityStats[$city] = [
+                'sessions' => ($cityStats[$city]['sessions'] ?? 0) + $data['sessions'],
+                'region' => $data['region'],
+            ];
+        }
+        foreach ($citySessionsFromActivities as $city => $data) {
+            $cityStats[$city] = [
+                'sessions' => ($cityStats[$city]['sessions'] ?? 0) + $data['sessions'],
+                'region' => $data['region'] ?? $cityStats[$city]['region'] ?? null,
+            ];
+        }
+
+        // Sort by session count descending
+        uasort($cityStats, fn($a, $b) => $b['sessions'] <=> $a['sessions']);
+
+        $totalSessions = array_sum(array_column($cityStats, 'sessions'));
+
+        return [
+            'cities' => $cityStats,
+            'total_sessions' => $totalSessions,
+        ];
     }
 
     protected function buildDeviceStats(): array
     {
         // Get unique sessions by device type from responses
-        $mobileSessionsFromResponses = Response::where('device_type', 'mobile')
+        $mobileSessionsFromResponses = $this->excludeOfficeIp(Response::query())
+            ->where('device_type', 'mobile')
             ->whereNotNull('session_id')
             ->distinct('session_id')
             ->pluck('session_id');
         
-        $desktopSessionsFromResponses = Response::where('device_type', 'desktop')
+        $desktopSessionsFromResponses = $this->excludeOfficeIp(Response::query())
+            ->where('device_type', 'desktop')
             ->whereNotNull('session_id')
             ->distinct('session_id')
             ->pluck('session_id');
 
         // Get unique sessions by device type from activity events
-        $mobileSessionsFromActivities = ActivityEvent::where('device_type', 'mobile')
+        $mobileSessionsFromActivities = $this->excludeOfficeIp(ActivityEvent::query())
+            ->where('device_type', 'mobile')
             ->whereNotNull('session_id')
             ->distinct('session_id')
             ->pluck('session_id');
         
-        $desktopSessionsFromActivities = ActivityEvent::where('device_type', 'desktop')
+        $desktopSessionsFromActivities = $this->excludeOfficeIp(ActivityEvent::query())
+            ->where('device_type', 'desktop')
             ->whereNotNull('session_id')
             ->distinct('session_id')
             ->pluck('session_id');
@@ -132,6 +272,10 @@ class DashboardController extends Controller
                 DB::raw('COUNT(*) as responses_count')
             )
             ->whereNotNull('session_id')
+            ->where(function ($q) {
+                $q->whereNull('ip_address')
+                  ->orWhere('ip_address', '!=', self::OFFICE_IP);
+            })
             ->groupBy('session_id')
             ->get()
             ->filter(fn ($row) => $row->duration_seconds !== null);
@@ -157,7 +301,8 @@ class DashboardController extends Controller
             $totalTimeSeconds = 0;
             
             // Time from completed activities (games) for this lesson
-            $completedActivities = ActivityEvent::where('lesson_id', $lesson->id)
+            $completedActivities = $this->excludeOfficeIp(ActivityEvent::query())
+                ->where('lesson_id', $lesson->id)
                 ->where('status', 'completed')
                 ->whereNotNull('meta')
                 ->get();
@@ -170,7 +315,8 @@ class DashboardController extends Controller
             }
             
             // Time from Response sessions for this lesson - calculate session duration from first to last response
-            $sessionDurations = Response::select('session_id')
+            $sessionDurations = $this->excludeOfficeIp(Response::query())
+                ->select('session_id')
                 ->selectRaw('TIMESTAMPDIFF(SECOND, MIN(created_at), MAX(created_at)) as duration')
                 ->where('lesson_id', $lesson->id)
                 ->whereNotNull('session_id')
@@ -189,6 +335,10 @@ class DashboardController extends Controller
                 ->select('session_id')
                 ->where('lesson_id', $lesson->id)
                 ->whereNotNull('session_id')
+                ->where(function ($q) {
+                    $q->whereNull('ip_address')
+                      ->orWhere('ip_address', '!=', self::OFFICE_IP);
+                })
                 ->groupBy('session_id')
                 ->havingRaw('COUNT(*) = 1')
                 ->count();
@@ -215,7 +365,9 @@ class DashboardController extends Controller
 
     protected function buildActivityStats(): array
     {
-        $activityEvents = ActivityEvent::orderByDesc('created_at')->get();
+        $activityEvents = $this->excludeOfficeIp(ActivityEvent::query())
+            ->orderByDesc('created_at')
+            ->get();
 
         $flashcardEvents = $activityEvents->where('activity_type', 'flashcard');
         $flashcardIds = $flashcardEvents->pluck('activity_id')->filter()->unique();
@@ -282,13 +434,15 @@ class DashboardController extends Controller
             $key = $date->toDateString();
             
             // Get unique sessions from Response table for this day
-            $sessionsFromResponses = Response::whereDate('created_at', $key)
+            $sessionsFromResponses = $this->excludeOfficeIp(Response::query())
+                ->whereDate('created_at', $key)
                 ->whereNotNull('session_id')
                 ->distinct('session_id')
                 ->pluck('session_id');
             
             // Get unique sessions from ActivityEvent table for this day
-            $sessionsFromActivities = ActivityEvent::whereDate('created_at', $key)
+            $sessionsFromActivities = $this->excludeOfficeIp(ActivityEvent::query())
+                ->whereDate('created_at', $key)
                 ->whereNotNull('session_id')
                 ->distinct('session_id')
                 ->pluck('session_id');
@@ -300,7 +454,8 @@ class DashboardController extends Controller
             $totalTimeSeconds = 0;
             
             // Time from completed activities (games) - sum duration_seconds from meta
-            $completedActivities = ActivityEvent::whereDate('created_at', $key)
+            $completedActivities = $this->excludeOfficeIp(ActivityEvent::query())
+                ->whereDate('created_at', $key)
                 ->where('status', 'completed')
                 ->whereNotNull('meta')
                 ->get();
@@ -313,7 +468,8 @@ class DashboardController extends Controller
             }
             
             // Time from Response sessions - calculate session duration from first to last response
-            $sessionDurations = Response::select('session_id')
+            $sessionDurations = $this->excludeOfficeIp(Response::query())
+                ->select('session_id')
                 ->selectRaw('TIMESTAMPDIFF(SECOND, MIN(created_at), MAX(created_at)) as duration')
                 ->whereDate('created_at', $key)
                 ->whereNotNull('session_id')
@@ -332,6 +488,10 @@ class DashboardController extends Controller
                 ->select('session_id')
                 ->whereDate('created_at', $key)
                 ->whereNotNull('session_id')
+                ->where(function ($q) {
+                    $q->whereNull('ip_address')
+                      ->orWhere('ip_address', '!=', self::OFFICE_IP);
+                })
                 ->groupBy('session_id')
                 ->havingRaw('COUNT(*) = 1')
                 ->count();

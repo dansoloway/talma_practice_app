@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityEvent;
+use App\Services\Geolocation\IpGeolocationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,9 +20,17 @@ class ActivityEventController extends Controller
             'meta' => 'nullable|array',
         ]);
 
+        $ipAddress = $request->ip();
+        $geolocationService = app(IpGeolocationService::class);
+        $location = $geolocationService->getLocationFromIp($ipAddress);
+
         $event = ActivityEvent::create([
             'session_id' => $request->attributes->get('practice_session_id'),
             'device_type' => $this->detectDeviceType($request),
+            'ip_address' => $ipAddress,
+            'country' => $location['country'],
+            'city' => $location['city'],
+            'region' => $location['region'],
             'lesson_id' => $data['lesson_id'] ?? null,
             'activity_type' => $data['activity_type'],
             'activity_id' => $data['activity_id'] ?? null,

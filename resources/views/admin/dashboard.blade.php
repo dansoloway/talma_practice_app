@@ -259,6 +259,110 @@
                 </table>
             @endif
         </div>
+
+        <div class="dashboard-section">
+            <h2>Users by Country</h2>
+            @if(empty($countryStats['top_countries']))
+                <p class="empty-text">No country data available yet.</p>
+            @else
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Country</th>
+                            <th class="text-right">Unique Sessions</th>
+                            <th class="text-right">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($countryStats['top_countries'] as $countryCode => $sessionCount)
+                            <tr>
+                                <td>
+                                    <strong>{{ $countryCode }}</strong>
+                                    @php
+                                        $countryNames = [
+                                            'US' => 'United States',
+                                            'CA' => 'Canada',
+                                            'GB' => 'United Kingdom',
+                                            'AU' => 'Australia',
+                                            'DE' => 'Germany',
+                                            'FR' => 'France',
+                                            'ES' => 'Spain',
+                                            'IT' => 'Italy',
+                                            'NL' => 'Netherlands',
+                                            'BR' => 'Brazil',
+                                            'MX' => 'Mexico',
+                                            'IN' => 'India',
+                                            'CN' => 'China',
+                                            'JP' => 'Japan',
+                                            'KR' => 'South Korea',
+                                            'IL' => 'Israel',
+                                        ];
+                                        $countryName = $countryNames[$countryCode] ?? null;
+                                    @endphp
+                                    @if($countryName)
+                                        <div class="muted-text">{{ $countryName }}</div>
+                                    @endif
+                                </td>
+                                <td class="text-right">{{ number_format($sessionCount) }}</td>
+                                <td class="text-right">
+                                    @if($countryStats['total_sessions'] > 0)
+                                        {{ number_format(($sessionCount / $countryStats['total_sessions']) * 100, 1) }}%
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @if($countryStats['total_sessions'] > 0)
+                    <p class="muted-text">Total sessions with country data: {{ number_format($countryStats['total_sessions']) }}</p>
+                @endif
+            @endif
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Users in Israel by City</h2>
+            @if(empty($israelCityStats['cities']))
+                <p class="empty-text">No Israeli city data available yet.</p>
+            @else
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>City</th>
+                            <th>Region</th>
+                            <th class="text-right">Unique Sessions</th>
+                            <th class="text-right">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($israelCityStats['cities'] as $city => $data)
+                            <tr>
+                                <td><strong>{{ $city }}</strong></td>
+                                <td>
+                                    @if($data['region'])
+                                        <span class="muted-text">{{ $data['region'] }}</span>
+                                    @else
+                                        <span class="muted-text">—</span>
+                                    @endif
+                                </td>
+                                <td class="text-right">{{ number_format($data['sessions']) }}</td>
+                                <td class="text-right">
+                                    @if($israelCityStats['total_sessions'] > 0)
+                                        {{ number_format(($data['sessions'] / $israelCityStats['total_sessions']) * 100, 1) }}%
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @if($israelCityStats['total_sessions'] > 0)
+                    <p class="muted-text">Total Israeli sessions: {{ number_format($israelCityStats['total_sessions']) }}</p>
+                @endif
+            @endif
+        </div>
     </div>
 </div>
 

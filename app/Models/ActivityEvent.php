@@ -9,6 +9,10 @@ class ActivityEvent extends Model
     protected $fillable = [
         'session_id',
         'device_type',
+        'ip_address',
+        'country',
+        'city',
+        'region',
         'lesson_id',
         'activity_type',
         'activity_id',

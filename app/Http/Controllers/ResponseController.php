@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Response;
+use App\Services\Geolocation\IpGeolocationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -52,10 +53,18 @@ class ResponseController extends Controller
             );
         }
 
+        $ipAddress = $request->ip();
+        $geolocationService = app(IpGeolocationService::class);
+        $location = $geolocationService->getLocationFromIp($ipAddress);
+
         $response = Response::create([
             'user_id' => auth()->id(),
             'session_id' => $request->attributes->get('practice_session_id'),
             'device_type' => $this->detectDeviceType($request),
+            'ip_address' => $ipAddress,
+            'country' => $location['country'],
+            'city' => $location['city'],
+            'region' => $location['region'],
             'lesson_id' => $request->lesson_id,
             'prompt_id' => $request->prompt_id,
             'option_id' => $request->option_id,
