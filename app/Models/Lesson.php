@@ -66,6 +66,11 @@ class Lesson extends Model
         return $this->hasMany(VocabularyPresentation::class)->orderBy('sort_order');
     }
 
+    public function trueFalseQuestions(): HasMany
+    {
+        return $this->hasMany(TrueFalseQuestion::class)->orderBy('sort_order');
+    }
+
     /**
      * Get all responses for this lesson.
      */

@@ -166,6 +166,30 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     // Flashcard Games
     Route::resource('lessons.flashcard-games', App\Http\Controllers\Admin\FlashcardGameController::class);
     
+    // True/False Questions
+    Route::get('lessons/{lesson}/true-false-questions', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'index'])
+        ->name('lessons.true-false-questions.index');
+    Route::get('lessons/{lesson}/true-false-questions/create', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'create'])
+        ->name('lessons.true-false-questions.create');
+    Route::post('lessons/{lesson}/true-false-questions', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'store'])
+        ->name('lessons.true-false-questions.store');
+    Route::get('lessons/{lesson}/true-false-questions/{trueFalseQuestion}', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'show'])
+        ->name('lessons.true-false-questions.show');
+    Route::get('lessons/{lesson}/true-false-questions/{trueFalseQuestion}/edit', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'edit'])
+        ->name('lessons.true-false-questions.edit');
+    Route::put('lessons/{lesson}/true-false-questions/{trueFalseQuestion}', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'update'])
+        ->name('lessons.true-false-questions.update');
+    Route::delete('lessons/{lesson}/true-false-questions/{trueFalseQuestion}', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'destroy'])
+        ->name('lessons.true-false-questions.destroy');
+    Route::post('lessons/{lesson}/true-false-questions/{trueFalseQuestion}/approve', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'approve'])
+        ->name('lessons.true-false-questions.approve');
+    Route::post('lessons/{lesson}/true-false-questions/{trueFalseQuestion}/reject', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'reject'])
+        ->name('lessons.true-false-questions.reject');
+    Route::post('lessons/{lesson}/true-false-questions/bulk-approve', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'bulkApprove'])
+        ->name('lessons.true-false-questions.bulk-approve');
+    Route::post('lessons/{lesson}/true-false-questions/generate', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'generate'])
+        ->name('lessons.true-false-questions.generate');
+    
     // Prompts
     Route::get('lessons/{lesson}/prompts', [AdminPromptController::class, 'index'])
         ->name('lessons.prompts.index');

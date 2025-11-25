@@ -1,0 +1,175 @@
+<?php
+
+namespace App\Services\QuestionGeneration;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class OpenAiQuestionGenerator
+{
+    public function enabled(): bool
+    {
+        return filled(config('services.openai.key'));
+    }
+
+    /**
+     * Generate True/False questions from lesson content
+     * 
+     * @param array $lessonData Contains vocabulary, prompts, and lesson info
+     * @param int $count Number of questions to generate (5-8)
+     * @return array Array of question objects with statement, is_true, explanation
+     */
+    public function generateQuestions(array $lessonData, int $count = 6): array
+    {
+        if (!$this->enabled()) {
+            throw new \Exception('OpenAI API key not configured');
+        }
+
+        $vocabulary = $lessonData['vocabulary'] ?? [];
+        $prompts = $lessonData['prompts'] ?? [];
+        $lessonTitle = $lessonData['title'] ?? 'Science Lesson';
+
+        // Build context for AI
+        $vocabList = array_map(fn($v) => $v['english_word'], $vocabulary);
+        $promptTemplates = array_map(fn($p) => $p['template'], $prompts);
+        
+        $context = $this->buildContext($lessonTitle, $vocabList, $promptTemplates);
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . config('services.openai.key'),
+                'Content-Type' => 'application/json',
+            ])->timeout(60)->post(config('services.openai.endpoint', 'https://api.openai.com/v1/chat/completions'), [
+                'model' => config('services.openai.translation_model', 'gpt-4o-mini'),
+                'temperature' => 0.7, // Slightly creative for variety
+                'response_format' => [
+                    'type' => 'json_schema',
+                    'json_schema' => [
+                        'name' => 'true_false_questions',
+                        'schema' => [
+                            'type' => 'object',
+                            'required' => ['questions'],
+                            'properties' => [
+                                'questions' => [
+                                    'type' => 'array',
+                                    'items' => [
+                                        'type' => 'object',
+                                        'required' => ['statement', 'is_true', 'explanation'],
+                                        'properties' => [
+                                            'statement' => [
+                                                'type' => 'string',
+                                                'description' => 'The statement for the True/False question. MUST use CEFR A1 level English: simple words, short sentences (5-10 words), simple present tense. Examples: "Ice is cold", "We use paper", "Water is wet".',
+                                            ],
+                                            'is_true' => [
+                                                'type' => 'boolean',
+                                                'description' => 'Whether the statement is true or false',
+                                            ],
+                                            'explanation' => [
+                                                'type' => 'string',
+                                                'description' => 'Brief explanation using CEFR A1 level English (simple words, short sentences). Examples: "Yes! Ice is cold.", "No. Water is wet."',
+                                            ],
+                                            'category' => [
+                                                'type' => 'string',
+                                                'enum' => ['science_facts', 'procedures', 'vocabulary', 'process', 'misconception'],
+                                                'description' => 'Category of the question',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'You are an educational content creator for English language learners at CEFR A1 level (beginner). Generate True/False questions using VERY SIMPLE English. Use only basic vocabulary, simple present tense, and short sentences (5-10 words). No complex grammar, idioms, or difficult words. Questions should be clear, simple, and easy to understand for beginners learning English.',
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $context . "\n\nGenerate exactly {$count} True/False questions using CEFR A1 level English (beginner level).\n\nIMPORTANT LANGUAGE REQUIREMENTS:\n- Use ONLY simple, common words\n- Use simple present tense (is, are, do, have)\n- Keep sentences SHORT (5-10 words maximum)\n- Use basic sentence structure: Subject + Verb + Object\n- NO complex grammar, idioms, or difficult vocabulary\n- Examples of A1 level: 'Ice is cold', 'Water is wet', 'We use paper'\n- Examples to AVOID: 'Ice undergoes a phase transition', 'Water exhibits liquid properties'\n\nMix true and false statements. Include questions about vocabulary definitions, procedural steps, science facts, and common misconceptions.",
+                    ],
+                ],
+            ]);
+
+            if (!$response->successful()) {
+                Log::error('OpenAI question generation failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                throw new \Exception('Failed to generate questions: ' . $response->status());
+            }
+
+            $content = data_get($response->json(), 'choices.0.message.content');
+            if (!$content) {
+                throw new \Exception('No content in OpenAI response');
+            }
+
+            $data = json_decode($content, true);
+            if (!is_array($data) || !isset($data['questions'])) {
+                throw new \Exception('Invalid response format from OpenAI');
+            }
+
+            return $data['questions'];
+
+        } catch (\Throwable $e) {
+            Log::error('OpenAI question generation exception', [
+                'message' => $e->getMessage(),
+                'lesson' => $lessonTitle,
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Build context string for AI prompt
+     */
+    protected function buildContext(string $lessonTitle, array $vocabulary, array $promptTemplates): string
+    {
+        $vocabText = !empty($vocabulary) 
+            ? "Vocabulary words: " . implode(', ', array_slice($vocabulary, 0, 20))
+            : "No vocabulary words available.";
+        
+        $promptsText = !empty($promptTemplates)
+            ? "Sample sentence templates:\n" . implode("\n", array_slice($promptTemplates, 0, 10))
+            : "No prompts available.";
+
+        return <<<CONTEXT
+Lesson Title: {$lessonTitle}
+
+{$vocabText}
+
+{$promptsText}
+
+Generate True/False questions based on this content using CEFR A1 level English (beginner level).
+
+CRITICAL LANGUAGE REQUIREMENTS:
+- Use ONLY simple, common words (A1 vocabulary)
+- Use simple present tense: is, are, do, have, make, use
+- Keep sentences SHORT (5-10 words maximum)
+- Simple sentence structure: Subject + Verb + Object
+- NO complex grammar, idioms, or difficult words
+- NO passive voice, conditionals, or complex tenses
+- Use basic vocabulary from the lesson
+
+Examples of GOOD A1 level questions:
+- "Ice is cold" (TRUE)
+- "Water is hot" (FALSE)
+- "We use paper" (TRUE)
+- "Ice melts in sun" (TRUE)
+- "Paper is metal" (FALSE)
+
+Examples to AVOID (too complex):
+- "Ice undergoes a phase transition" ❌
+- "Water exhibits liquid properties" ❌
+- "The process involves multiple steps" ❌
+
+Questions should:
+- Test understanding of vocabulary words (simple definitions)
+- Check comprehension of procedural steps (simple actions)
+- Reinforce science facts (simple statements)
+- Address common misconceptions (simple corrections)
+CONTEXT;
+    }
+}
+

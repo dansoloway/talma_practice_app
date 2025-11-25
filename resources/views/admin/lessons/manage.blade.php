@@ -183,6 +183,7 @@
                 <a href="{{ route('admin.lessons.prompts.create', $lesson) }}" class="btn btn-primary btn-sm">+ Prompts</a>
                 <a href="{{ route('admin.lessons.matching-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Matching</a>
                 <a href="{{ route('admin.lessons.flashcard-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Flashcard</a>
+                <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="btn btn-primary btn-sm">True/False</a>
             </div>
         </div>
 
