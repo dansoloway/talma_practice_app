@@ -76,10 +76,39 @@ let currentPromptIndex = 0;
 let score = 0;
 let totalQuestions = prompts.length;
 let answeredQuestions = 0;
+let activityStartTime = null;
+
+// Activity event tracking
+const activityEventEndpoint = '{{ route('activity-events.store') }}';
+const activityEventPayload = {
+    lesson_id: {{ $lesson->id }},
+    activity_type: 'prompts',
+    activity_id: null, // Prompts activity doesn't have a single ID
+};
+
+function logActivityEvent(status, meta = {}) {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    fetch(activityEventEndpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+        },
+        body: JSON.stringify({
+            ...activityEventPayload,
+            status,
+            meta,
+        }),
+    }).catch(() => {});
+}
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', function() {
     if (prompts.length > 0) {
+        activityStartTime = Date.now();
+        logActivityEvent('started', {
+            total_prompts: prompts.length,
+        });
         loadPrompt(currentPromptIndex);
         setupDragAndDrop();
     }
@@ -613,6 +642,18 @@ function finishGame() {
     // Calculate final score
     const percentage = Math.round((score / totalQuestions) * 100);
     
+    // Calculate duration
+    const durationSeconds = activityStartTime ? Math.round((Date.now() - activityStartTime) / 1000) : 0;
+    
+    // Log completion event
+    logActivityEvent('completed', {
+        total_prompts: totalQuestions,
+        answered_prompts: answeredQuestions,
+        score: score,
+        percentage: percentage,
+        duration_seconds: durationSeconds,
+    });
+    
     // Update score display
     document.getElementById('score-display').textContent = `${score}/${totalQuestions}`;
     document.getElementById('score-percentage').textContent = `${percentage}%`;
@@ -632,6 +673,13 @@ function restartGame() {
     // Reset all prompts as unanswered
     prompts.forEach(prompt => {
         prompt.answered = false;
+    });
+    
+    // Reset activity start time and log new start event
+    activityStartTime = Date.now();
+    logActivityEvent('started', {
+        total_prompts: prompts.length,
+        is_restart: true,
     });
     
     // Reset display
