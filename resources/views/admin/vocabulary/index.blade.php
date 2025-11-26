@@ -118,6 +118,7 @@
                                 </span>
                             </td>
                             <td class="actions">
+                                <a href="{{ route('admin.lessons.vocabulary.edit', [$lesson, $item]) }}" class="btn btn-sm btn-primary">Edit</a>
                                 <button type="button" class="btn btn-sm btn-primary generate-image-btn" data-vocab-id="{{ $item->id }}" data-word="{{ $item->english_word }}" data-has-image="{{ $item->image_path ? '1' : '0' }}">
                                     {{ $item->image_path ? '🔄 Re-generate' : '🎨 Generate' }} Image
                                 </button>

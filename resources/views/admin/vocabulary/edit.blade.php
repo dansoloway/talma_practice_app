@@ -6,7 +6,7 @@
 <div class="container">
     <div class="page-header">
         <h1 class="page-title">Edit Vocabulary: {{ $vocabulary->english_word }}</h1>
-        <a href="{{ route('admin.lessons.vocabulary.show', [$lesson, $vocabulary]) }}" class="btn">Cancel</a>
+        <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="btn">Cancel</a>
     </div>
 
     <form action="{{ route('admin.lessons.vocabulary.update', [$lesson, $vocabulary]) }}" method="POST" class="form" enctype="multipart/form-data">
@@ -80,7 +80,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Update Vocabulary</button>
-            <a href="{{ route('admin.lessons.vocabulary.show', [$lesson, $vocabulary]) }}" class="btn">Cancel</a>
+            <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="btn">Cancel</a>
         </div>
     </form>
 </div>

@@ -161,6 +161,18 @@ class VocabularyController extends Controller
 
         $vocabulary->update($validated);
 
+        // Handle JSON requests (for inline editing)
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Translation updated successfully',
+                'vocabulary' => [
+                    'hebrew_translation' => $vocabulary->hebrew_translation,
+                    'arabic_translation' => $vocabulary->arabic_translation,
+                ]
+            ]);
+        }
+
         return redirect()
             ->route('admin.lessons.vocabulary.show', [$lesson, $vocabulary])
             ->with('success', 'Vocabulary item updated successfully!');
