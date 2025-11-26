@@ -266,4 +266,35 @@ class TrueFalseQuestionController extends Controller
             ->route('admin.lessons.true-false-questions.index', $lesson)
             ->with('success', $count . ' question(s) approved!');
     }
+
+    /**
+     * Play the True/False game (student-facing)
+     */
+    public function play(Lesson $lesson)
+    {
+        // Get approved, active questions for this lesson
+        $questions = $lesson->trueFalseQuestions()
+            ->where('is_approved', true)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(function ($question) {
+                return [
+                    'id' => $question->id,
+                    'statement' => $question->statement,
+                    'is_true' => $question->is_true,
+                    'explanation' => $question->explanation,
+                    'category' => $question->category,
+                    'audio_path' => $question->audio_path ? asset($question->audio_path) : null,
+                ];
+            });
+
+        if ($questions->isEmpty()) {
+            return redirect()
+                ->route('lessons.show', $lesson->slug)
+                ->with('info', 'No True/False questions available for this lesson yet.');
+        }
+
+        return view('true-false-games.play', compact('lesson', 'questions'));
+    }
 }

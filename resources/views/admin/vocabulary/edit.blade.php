@@ -18,16 +18,36 @@
             <input type="text" id="english_word" name="english_word" value="{{ old('english_word', $vocabulary->english_word) }}" required class="form-control">
         </div>
 
-        <div class="form-group">
-            <label for="hebrew_translation">Hebrew Translation</label>
-            <input type="text" id="hebrew_translation" name="hebrew_translation" value="{{ old('hebrew_translation', $vocabulary->hebrew_translation) }}" class="form-control" placeholder="e.g., משתנה, מסקנה, השערה...">
-            <small>Enter the Hebrew translation of the word</small>
-        </div>
+        <div class="translations-section">
+            <h3>Translations</h3>
+            
+            <div class="form-group">
+                <label for="hebrew_translation">
+                    Hebrew Translation (עברית)
+                </label>
+                <input type="text" 
+                       id="hebrew_translation" 
+                       name="hebrew_translation" 
+                       value="{{ old('hebrew_translation', $vocabulary->hebrew_translation) }}" 
+                       class="form-control" 
+                       placeholder="e.g., משתנה, מסקנה, השערה..."
+                       dir="rtl">
+                <small>Enter the Hebrew translation of the word</small>
+            </div>
 
-        <div class="form-group">
-            <label for="arabic_translation">Arabic Translation</label>
-            <input type="text" id="arabic_translation" name="arabic_translation" value="{{ old('arabic_translation', $vocabulary->arabic_translation) }}" class="form-control" placeholder="e.g., متغير، استنتاج، فرضية...">
-            <small>Enter the Arabic translation of the word</small>
+            <div class="form-group">
+                <label for="arabic_translation">
+                    Arabic Translation (عربي)
+                </label>
+                <input type="text" 
+                       id="arabic_translation" 
+                       name="arabic_translation" 
+                       value="{{ old('arabic_translation', $vocabulary->arabic_translation) }}" 
+                       class="form-control" 
+                       placeholder="e.g., متغير، استنتاج، فرضية..."
+                       dir="rtl">
+                <small>Enter the Arabic translation of the word</small>
+            </div>
         </div>
 
         @if($vocabulary->image_path)
@@ -64,4 +84,45 @@
         </div>
     </form>
 </div>
+
+@push('styles')
+<style>
+.translations-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.translations-section h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #495057;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+}
+
+.translations-section .form-group {
+    margin-bottom: 1rem;
+}
+
+.translations-section .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.translations-section input[dir="rtl"] {
+    text-align: right;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1rem;
+}
+
+.translations-section label {
+    font-weight: 500;
+    color: #495057;
+}
+</style>
+@endpush
 @endsection

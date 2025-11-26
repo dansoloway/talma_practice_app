@@ -44,6 +44,7 @@ Route::get('/lessons/{lesson}/flashcard-games/{flashcard_game}/play', [App\Http\
 // Prompts (JSON API)
 Route::get('/prompts/{id}', [PromptController::class, 'show'])->name('prompts.show');
 Route::get('/lessons/{lesson}/prompts/play', [PromptController::class, 'play'])->name('prompts.play');
+Route::get('/lessons/{lesson}/true-false/play', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'play'])->name('true-false.play');
 Route::get('/prompts/{promptId}/options/{optionId}/model', [PromptModelController::class, 'show'])
     ->name('prompts.model');
 
