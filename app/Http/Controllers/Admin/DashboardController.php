@@ -381,6 +381,60 @@ class DashboardController extends Controller
         
         $lessonTimeStats = $lessons->map(function ($lesson) {
             $totalTimeSeconds = 0;
+            $sessionDurations = [];
+            
+            // Get unique sessions from responses for this lesson
+            $responseSessions = $this->excludeOfficeIp(Response::query())
+                ->where('lesson_id', $lesson->id)
+                ->whereNotNull('session_id')
+                ->select('session_id', DB::raw('MIN(created_at) as first_event'), DB::raw('MAX(created_at) as last_event'))
+                ->groupBy('session_id')
+                ->get();
+            
+            // Get unique sessions from activity events for this lesson
+            $activitySessions = $this->excludeOfficeIp(ActivityEvent::query())
+                ->where('lesson_id', $lesson->id)
+                ->whereNotNull('session_id')
+                ->select('session_id', DB::raw('MIN(created_at) as first_event'), DB::raw('MAX(created_at) as last_event'))
+                ->groupBy('session_id')
+                ->get();
+            
+            // Combine sessions and calculate duration for each unique session
+            foreach ($responseSessions as $session) {
+                $sessionId = $session->session_id;
+                if (!isset($sessionDurations[$sessionId])) {
+                    $sessionDurations[$sessionId] = [
+                        'first_event' => $session->first_event,
+                        'last_event' => $session->last_event,
+                    ];
+                } else {
+                    // Update if this session has an earlier first event or later last event
+                    if ($session->first_event < $sessionDurations[$sessionId]['first_event']) {
+                        $sessionDurations[$sessionId]['first_event'] = $session->first_event;
+                    }
+                    if ($session->last_event > $sessionDurations[$sessionId]['last_event']) {
+                        $sessionDurations[$sessionId]['last_event'] = $session->last_event;
+                    }
+                }
+            }
+            
+            foreach ($activitySessions as $session) {
+                $sessionId = $session->session_id;
+                if (!isset($sessionDurations[$sessionId])) {
+                    $sessionDurations[$sessionId] = [
+                        'first_event' => $session->first_event,
+                        'last_event' => $session->last_event,
+                    ];
+                } else {
+                    // Update if this session has an earlier first event or later last event
+                    if ($session->first_event < $sessionDurations[$sessionId]['first_event']) {
+                        $sessionDurations[$sessionId]['first_event'] = $session->first_event;
+                    }
+                    if ($session->last_event > $sessionDurations[$sessionId]['last_event']) {
+                        $sessionDurations[$sessionId]['last_event'] = $session->last_event;
+                    }
+                }
+            }
             
             // Time from completed activities (games) for this lesson
             $completedActivities = $this->excludeOfficeIp(ActivityEvent::query())
@@ -396,41 +450,35 @@ class DashboardController extends Controller
                 }
             }
             
-            // Time from Response sessions for this lesson - calculate session duration from first to last response
-            $sessionDurations = $this->excludeOfficeIp(Response::query())
-                ->select('session_id')
-                ->selectRaw('TIMESTAMPDIFF(SECOND, MIN(created_at), MAX(created_at)) as duration')
-                ->where('lesson_id', $lesson->id)
-                ->whereNotNull('session_id')
-                ->groupBy('session_id')
-                ->havingRaw('COUNT(*) > 1') // Only sessions with multiple responses
-                ->get();
-            
-            foreach ($sessionDurations as $session) {
-                if ($session->duration && $session->duration > 0) {
-                    $totalTimeSeconds += (int) $session->duration;
+            // Calculate duration for each session and add to total
+            $individualSessionDurations = [];
+            foreach ($sessionDurations as $sessionId => $data) {
+                $firstEvent = Carbon::parse($data['first_event']);
+                $lastEvent = Carbon::parse($data['last_event']);
+                $durationSeconds = $firstEvent->diffInSeconds($lastEvent);
+                
+                // Only include sessions with valid duration
+                if ($durationSeconds >= 0) {
+                    $individualSessionDurations[] = $durationSeconds;
+                    $totalTimeSeconds += $durationSeconds;
                 }
             }
             
-            // Add time for single-response sessions (estimate 30 seconds per response)
-            $singleResponseSessions = DB::table('responses')
-                ->select('session_id')
-                ->where('lesson_id', $lesson->id)
-                ->whereNotNull('session_id')
-                ->where(function ($q) {
-                    $q->whereNull('ip_address')
-                      ->orWhere('ip_address', '!=', self::OFFICE_IP);
-                })
-                ->groupBy('session_id')
-                ->havingRaw('COUNT(*) = 1')
-                ->count();
-            $totalTimeSeconds += $singleResponseSessions * 30; // Estimate 30 seconds per single response
+            // Calculate unique sessions count
+            $uniqueSessions = count($sessionDurations);
+            
+            // Calculate average time per session
+            $averageTimePerSession = count($individualSessionDurations) > 0 
+                ? array_sum($individualSessionDurations) / count($individualSessionDurations) 
+                : 0;
             
             return [
                 'lesson' => $lesson,
                 'time_seconds' => $totalTimeSeconds,
+                'unique_sessions' => $uniqueSessions,
+                'average_time_per_session' => (int) round($averageTimePerSession),
             ];
-        })->filter(fn ($item) => $item['time_seconds'] > 0)
+        })->filter(fn ($item) => $item['time_seconds'] > 0 || $item['unique_sessions'] > 0)
           ->sortByDesc('time_seconds')
           ->take(5)
           ->values();

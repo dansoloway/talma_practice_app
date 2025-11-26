@@ -109,7 +109,9 @@
                     <thead>
                         <tr>
                             <th>Lesson</th>
-                            <th class="text-right">Time Spent</th>
+                            <th class="text-right">Unique Sessions</th>
+                            <th class="text-right">Avg Time/Session</th>
+                            <th class="text-right">Total Time</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -119,6 +121,8 @@
                                     <strong>{{ $lessonStat['lesson']->title }}</strong>
                                     <div class="muted-text">{{ $lessonStat['lesson']->slug }}</div>
                                 </td>
+                                <td class="text-right">{{ number_format($lessonStat['unique_sessions']) }}</td>
+                                <td class="text-right">{{ $formatDuration($lessonStat['average_time_per_session']) }}</td>
                                 <td class="text-right">{{ $formatDuration($lessonStat['time_seconds']) }}</td>
                             </tr>
                         @endforeach
