@@ -265,10 +265,12 @@ class DashboardController extends Controller
 
     protected function buildSessionStats(): array
     {
-        $sessionRows = DB::table('responses')
+        // Get all session durations from responses table
+        $responseSessions = DB::table('responses')
             ->select(
                 'session_id',
-                DB::raw('TIMESTAMPDIFF(SECOND, MIN(created_at), MAX(created_at)) as duration_seconds'),
+                DB::raw('MIN(created_at) as first_event'),
+                DB::raw('MAX(created_at) as last_event'),
                 DB::raw('COUNT(*) as responses_count')
             )
             ->whereNotNull('session_id')
@@ -277,13 +279,93 @@ class DashboardController extends Controller
                   ->orWhere('ip_address', '!=', self::OFFICE_IP);
             })
             ->groupBy('session_id')
-            ->get()
-            ->filter(fn ($row) => $row->duration_seconds !== null);
+            ->get();
 
-        $durations = $sessionRows->pluck('duration_seconds')->sort()->values();
-        $averageDuration = $durations->avg() ?? 0;
-        $medianDuration = $this->median($durations->all());
-        $averageResponses = $sessionRows->pluck('responses_count')->avg() ?? 0;
+        // Get all session durations from activity_events table
+        $activitySessions = DB::table('activity_events')
+            ->select(
+                'session_id',
+                DB::raw('MIN(created_at) as first_event'),
+                DB::raw('MAX(created_at) as last_event'),
+                DB::raw('COUNT(*) as events_count')
+            )
+            ->whereNotNull('session_id')
+            ->where(function ($q) {
+                $q->whereNull('ip_address')
+                  ->orWhere('ip_address', '!=', self::OFFICE_IP);
+            })
+            ->groupBy('session_id')
+            ->get();
+
+        // Combine sessions and calculate duration for each unique session
+        $sessionDurations = [];
+        
+        // Process response sessions
+        foreach ($responseSessions as $session) {
+            $sessionId = $session->session_id;
+            if (!isset($sessionDurations[$sessionId])) {
+                $sessionDurations[$sessionId] = [
+                    'first_event' => $session->first_event,
+                    'last_event' => $session->last_event,
+                    'responses_count' => $session->responses_count,
+                    'events_count' => 0,
+                ];
+            } else {
+                // Update if this session has an earlier first event or later last event
+                if ($session->first_event < $sessionDurations[$sessionId]['first_event']) {
+                    $sessionDurations[$sessionId]['first_event'] = $session->first_event;
+                }
+                if ($session->last_event > $sessionDurations[$sessionId]['last_event']) {
+                    $sessionDurations[$sessionId]['last_event'] = $session->last_event;
+                }
+                $sessionDurations[$sessionId]['responses_count'] += $session->responses_count;
+            }
+        }
+        
+        // Process activity event sessions
+        foreach ($activitySessions as $session) {
+            $sessionId = $session->session_id;
+            if (!isset($sessionDurations[$sessionId])) {
+                $sessionDurations[$sessionId] = [
+                    'first_event' => $session->first_event,
+                    'last_event' => $session->last_event,
+                    'responses_count' => 0,
+                    'events_count' => $session->events_count,
+                ];
+            } else {
+                // Update if this session has an earlier first event or later last event
+                if ($session->first_event < $sessionDurations[$sessionId]['first_event']) {
+                    $sessionDurations[$sessionId]['first_event'] = $session->first_event;
+                }
+                if ($session->last_event > $sessionDurations[$sessionId]['last_event']) {
+                    $sessionDurations[$sessionId]['last_event'] = $session->last_event;
+                }
+                $sessionDurations[$sessionId]['events_count'] += $session->events_count;
+            }
+        }
+        
+        // Calculate duration for each session
+        $durations = [];
+        $responseCounts = [];
+        
+        foreach ($sessionDurations as $sessionId => $data) {
+            $firstEvent = Carbon::parse($data['first_event']);
+            $lastEvent = Carbon::parse($data['last_event']);
+            $durationSeconds = $firstEvent->diffInSeconds($lastEvent);
+            
+            // Only include sessions with valid duration
+            if ($durationSeconds >= 0) {
+                $durations[] = $durationSeconds;
+                $responseCounts[] = $data['responses_count'];
+            }
+        }
+        
+        // Sort durations for median calculation
+        sort($durations);
+        
+        $averageDuration = count($durations) > 0 ? array_sum($durations) / count($durations) : 0;
+        $medianDuration = $this->median($durations);
+        $averageResponses = count($responseCounts) > 0 ? array_sum($responseCounts) / count($responseCounts) : 0;
 
         return [
             'average_duration' => (int) round($averageDuration),
