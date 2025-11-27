@@ -118,7 +118,7 @@ class LessonController extends Controller
      */
     public function manage(Lesson $lesson)
     {
-        $lesson->load(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames']);
+        $lesson->load(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'spellingGames', 'trueFalseQuestions']);
         
         return view('admin.lessons.manage', compact('lesson'));
     }
@@ -224,7 +224,7 @@ class LessonController extends Controller
     public function deleteActivity(Request $request, Lesson $lesson)
     {
         $validated = $request->validate([
-            'activity_type' => 'required|in:prompt,prompts,matching,flashcard',
+            'activity_type' => 'required|in:prompt,prompts,matching,flashcard,spelling',
             'activity_id' => 'required',
         ]);
 
@@ -246,6 +246,10 @@ class LessonController extends Controller
                     break;
                 case 'flashcard':
                     $activity = $lesson->flashcardGames()->findOrFail($validated['activity_id']);
+                    $activity->delete();
+                    break;
+                case 'spelling':
+                    $activity = $lesson->spellingGames()->findOrFail($validated['activity_id']);
                     $activity->delete();
                     break;
             }

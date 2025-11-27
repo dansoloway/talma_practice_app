@@ -76,8 +76,8 @@ class FlashcardGameController extends Controller
             $validated['vocabulary_ids'] = $lesson->vocabulary()->pluck('id')->toArray();
         }
         
-        // Default to active
-        $validated['is_active'] = $request->boolean('is_active', true);
+        // Always active
+        $validated['is_active'] = true;
 
         $flashcardGame = FlashcardGame::create($validated);
 
@@ -143,8 +143,8 @@ class FlashcardGameController extends Controller
             $validated['game_types'] = ['image_to_word', 'audio_to_word'];
         }
         
-        // Handle checkbox properly - convert to boolean
-        $validated['is_active'] = $request->input('is_active') == '1';
+        // Always active
+        $validated['is_active'] = true;
 
         $flashcardGame->update($validated);
 

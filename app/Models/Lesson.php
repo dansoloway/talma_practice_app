@@ -71,6 +71,11 @@ class Lesson extends Model
         return $this->hasMany(TrueFalseQuestion::class)->orderBy('sort_order');
     }
 
+    public function spellingGames(): HasMany
+    {
+        return $this->hasMany(SpellingGame::class)->orderBy('sort_order');
+    }
+
     /**
      * Get all responses for this lesson.
      */

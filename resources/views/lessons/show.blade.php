@@ -118,15 +118,30 @@
                 ]);
             }
             
-            // Add True/False game if there are approved questions
-            if($lesson->trueFalseQuestions->count() > 0) {
+            foreach($lesson->spellingGames as $game) {
+                $allActivities->push((object)[
+                    'id' => $game->id,
+                    'type' => 'spelling',
+                    'title' => $game->title,
+                    'sort_order' => $game->sort_order ?? 999,
+                    'is_active' => $game->is_active ?? true,
+                    'model' => $game
+                ]);
+            }
+            
+            // Add True/False game if there are approved and active questions
+            $approvedActiveQuestions = $lesson->trueFalseQuestions()
+                ->where('is_approved', true)
+                ->where('is_active', true)
+                ->get();
+            if($approvedActiveQuestions->count() > 0) {
                 $allActivities->push((object)[
                     'id' => null,
                     'type' => 'true_false',
                     'title' => 'True/False Game',
                     'sort_order' => 999,
                     'is_active' => true,
-                    'model' => (object)['question_count' => $lesson->trueFalseQuestions->count()]
+                    'model' => (object)['question_count' => $approvedActiveQuestions->count()]
                 ]);
             }
             
@@ -147,6 +162,8 @@
                                     🔗
                                 @elseif($activity->type === 'flashcard')
                                     🎴
+                                @elseif($activity->type === 'spelling')
+                                    ✍️
                                 @elseif($activity->type === 'true_false')
                                     ✓✗
                                 @endif
@@ -160,6 +177,8 @@
                                     <div class="activity-menu-details">{{ $activity->model->grid_size }}x{{ $activity->model->grid_size }} matching grid</div>
                                 @elseif($activity->type === 'flashcard')
                                     <div class="activity-menu-details">{{ $activity->model->cards_per_game }} flashcards</div>
+                                @elseif($activity->type === 'spelling')
+                                    <div class="activity-menu-details">{{ count($activity->model->vocabulary_ids ?? []) }} words</div>
                                 @elseif($activity->type === 'true_false')
                                     <div class="activity-menu-details">{{ $activity->model->question_count }} questions</div>
                                 @endif
@@ -219,6 +238,10 @@ function startActivity(type, id) {
         case 'flashcard':
             // Go to flashcard game
             window.location.href = `/lessons/{{ $lesson->id }}/flashcard-games/${id}/play`;
+            break;
+        case 'spelling':
+            // Go to spelling game
+            window.location.href = `/lessons/{{ $lesson->id }}/spelling-games/${id}/play`;
             break;
         case 'true_false':
             // Go to True/False game

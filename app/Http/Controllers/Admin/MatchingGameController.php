@@ -50,7 +50,7 @@ class MatchingGameController extends Controller
         $validated['lesson_id'] = $lesson->id;
         $validated['vocabulary_ids'] = array_slice($validated['vocabulary_ids'], 0, $requiredPairs);
         $validated['title'] = $validated['title'] ?: $this->generateDefaultTitle($lesson);
-        $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_active'] = true; // Always active
         
         // Note: Parts are no longer used, activities belong directly to lessons
 
@@ -100,7 +100,7 @@ class MatchingGameController extends Controller
         $validated['vocabulary_ids'] = array_slice($validated['vocabulary_ids'], 0, $requiredPairs);
 
         $validated['title'] = $validated['title'] ?? $matchingGame->title;
-        $validated['is_active'] = $request->boolean('is_active', $matchingGame->is_active);
+        $validated['is_active'] = true; // Always active
 
         $matchingGame->update($validated);
 

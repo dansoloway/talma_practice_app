@@ -41,6 +41,10 @@ Route::get('/lessons/{lesson}/matching-games/{matching_game}/play', [App\Http\Co
 Route::get('/lessons/{lesson}/flashcard-games/{flashcard_game}/play', [App\Http\Controllers\Admin\FlashcardGameController::class, 'play'])
     ->name('flashcard-games.play');
 
+// Spelling Games (public)
+Route::get('/lessons/{lesson}/spelling-games/{spelling_game}/play', [App\Http\Controllers\Admin\SpellingGameController::class, 'play'])
+    ->name('spelling-games.play');
+
 // Prompts (JSON API)
 Route::get('/prompts/{id}', [PromptController::class, 'show'])->name('prompts.show');
 Route::get('/lessons/{lesson}/prompts/play', [PromptController::class, 'play'])->name('prompts.play');
@@ -166,6 +170,9 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     
     // Flashcard Games
     Route::resource('lessons.flashcard-games', App\Http\Controllers\Admin\FlashcardGameController::class);
+    
+    // Spelling Games
+    Route::resource('lessons.spelling-games', App\Http\Controllers\Admin\SpellingGameController::class);
     
     // True/False Questions
     Route::get('lessons/{lesson}/true-false-questions', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'index'])

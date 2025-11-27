@@ -42,6 +42,9 @@ class LessonController extends Controller
                 'flashcardGames' => function ($query) {
                     $query->where('is_active', true)->orderBy('sort_order');
                 },
+                'spellingGames' => function ($query) {
+                    $query->where('is_active', true)->orderBy('sort_order');
+                },
                 'trueFalseQuestions' => function ($query) {
                     $query->where('is_approved', true)
                           ->where('is_active', true)
