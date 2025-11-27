@@ -368,14 +368,7 @@
 </div>
 
 <script>
-const questions = @json($questions->map(function($q) {
-    return [
-        'correct_sentence' => $q->correct_sentence,
-        'word_options' => $q->word_options,
-        'explanation' => $q->explanation,
-        'difficulty' => $q->difficulty,
-    ];
-}));
+const questions = @json($questionsData ?? []);
 const lessonId = {{ $lesson->id }};
 const gameId = {{ $game->id }};
 let currentQuestionIndex = 0;

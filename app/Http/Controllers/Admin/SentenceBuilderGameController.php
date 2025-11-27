@@ -240,8 +240,18 @@ class SentenceBuilderGameController extends Controller
                 ->with('info', 'No questions available for this sentence builder game.');
         }
 
+        // Prepare questions data for JavaScript
+        $questionsData = $questions->map(function($q) {
+            return [
+                'correct_sentence' => $q->correct_sentence,
+                'word_options' => $q->word_options,
+                'explanation' => $q->explanation,
+                'difficulty' => $q->difficulty,
+            ];
+        })->values()->toArray();
+
         $game = $sentenceBuilderGame;
-        return view('sentence-builder-games.play', compact('lesson', 'game', 'questions'));
+        return view('sentence-builder-games.play', compact('lesson', 'game', 'questions', 'questionsData'));
     }
 
     protected function generateDefaultTitle(Lesson $lesson): string
