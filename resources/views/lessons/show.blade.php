@@ -129,19 +129,20 @@
                 ]);
             }
             
-            foreach($lesson->sentenceBuilderGames as $game) {
-                // Only show if game has active questions
-                if($game->questions->count() > 0) {
-                    $allActivities->push((object)[
-                        'id' => $game->id,
-                        'type' => 'sentence_builder',
-                        'title' => $game->title,
-                        'sort_order' => $game->sort_order ?? 999,
-                        'is_active' => $game->is_active ?? true,
-                        'model' => $game
-                    ]);
-                }
-            }
+            // Sentence Builder Games (DISABLED)
+            // foreach($lesson->sentenceBuilderGames as $game) {
+            //     // Only show if game has active questions
+            //     if($game->questions->count() > 0) {
+            //         $allActivities->push((object)[
+            //             'id' => $game->id,
+            //             'type' => 'sentence_builder',
+            //             'title' => $game->title,
+            //             'sort_order' => $game->sort_order ?? 999,
+            //             'is_active' => $game->is_active ?? true,
+            //             'model' => $game
+            //         ]);
+            //     }
+            // }
             
             // Add True/False game if there are approved and active questions
             $approvedActiveQuestions = $lesson->trueFalseQuestions()
@@ -178,8 +179,8 @@
                                     🎴
                                 @elseif($activity->type === 'spelling')
                                     ✍️
-                                @elseif($activity->type === 'sentence_builder')
-                                    🏗️
+                                {{-- @elseif($activity->type === 'sentence_builder')
+                                    🏗️ --}}
                                 @elseif($activity->type === 'true_false')
                                     ✓✗
                                 @endif
@@ -259,10 +260,10 @@ function startActivity(type, id) {
             // Go to spelling game
             window.location.href = `/lessons/{{ $lesson->id }}/spelling-games/${id}/play`;
             break;
-        case 'sentence_builder':
-            // Go to sentence builder game
-            window.location.href = `/lessons/{{ $lesson->id }}/sentence-builder-games/${id}/play`;
-            break;
+        // case 'sentence_builder':
+        //     // Go to sentence builder game
+        //     window.location.href = `/lessons/{{ $lesson->id }}/sentence-builder-games/${id}/play`;
+        //     break;
         case 'true_false':
             // Go to True/False game
             window.location.href = `/lessons/{{ $lesson->id }}/true-false/play`;

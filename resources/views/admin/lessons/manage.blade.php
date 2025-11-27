@@ -184,7 +184,7 @@
                 <a href="{{ route('admin.lessons.matching-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Matching</a>
                 <a href="{{ route('admin.lessons.flashcard-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Flashcard</a>
                 <a href="{{ route('admin.lessons.spelling-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Spelling</a>
-                <a href="{{ route('admin.lessons.sentence-builder-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Sentence Builder</a>
+                {{-- <a href="{{ route('admin.lessons.sentence-builder-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Sentence Builder</a> --}}
                 <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="btn btn-primary btn-sm">True/False</a>
             </div>
         </div>
@@ -246,18 +246,18 @@
                 ]);
             }
             
-            // Add sentence builder games
-            foreach($lesson->sentenceBuilderGames as $game) {
-                $questionCount = $game->questions()->count();
-                $allActivities->push((object)[
-                    'id' => $game->id,
-                    'type' => 'sentence_builder',
-                    'title' => $game->title . ($questionCount > 0 ? ' (' . $questionCount . ' questions)' : ''),
-                    'sort_order' => $game->sort_order ?? 999,
-                    'is_active' => $game->is_active ?? true,
-                    'model' => $game
-                ]);
-            }
+            // Add sentence builder games (DISABLED)
+            // foreach($lesson->sentenceBuilderGames as $game) {
+            //     $questionCount = $game->questions()->count();
+            //     $allActivities->push((object)[
+            //         'id' => $game->id,
+            //         'type' => 'sentence_builder',
+            //         'title' => $game->title . ($questionCount > 0 ? ' (' . $questionCount . ' questions)' : ''),
+            //         'sort_order' => $game->sort_order ?? 999,
+            //         'is_active' => $game->is_active ?? true,
+            //         'model' => $game
+            //     ]);
+            // }
             
             // Add True/False game if there are approved and active questions
             $approvedActiveQuestions = $lesson->trueFalseQuestions()
@@ -297,8 +297,8 @@
                                         🎴
                                     @elseif($activity->type === 'spelling')
                                         ✍️
-                                    @elseif($activity->type === 'sentence_builder')
-                                        🏗️
+                                    {{-- @elseif($activity->type === 'sentence_builder')
+                                        🏗️ --}}
                                     @elseif($activity->type === 'true_false')
                                         ✓✗
                                     @endif
@@ -329,10 +329,10 @@
                                 <a href="{{ route('admin.lessons.spelling-games.edit', [$lesson, $activity->model]) }}" class="btn btn-xs">Edit</a>
                                 <a href="{{ route('spelling-games.play', [$lesson, $activity->model]) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
                                 <button class="btn btn-xs btn-danger delete-activity-btn" data-type="{{ $activity->type }}" data-id="{{ $activity->id }}" data-title="{{ addslashes($activity->title) }}">Delete</button>
-                            @elseif($activity->type === 'sentence_builder')
+                            {{-- @elseif($activity->type === 'sentence_builder')
                                 <a href="{{ route('admin.lessons.sentence-builder-games.show', [$lesson, $activity->model]) }}" class="btn btn-xs">Edit</a>
                                 <a href="{{ route('sentence-builder-games.play', [$lesson, $activity->model]) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
-                                <button class="btn btn-xs btn-danger delete-activity-btn" data-type="{{ $activity->type }}" data-id="{{ $activity->id }}" data-title="{{ addslashes($activity->title) }}">Delete</button>
+                                <button class="btn btn-xs btn-danger delete-activity-btn" data-type="{{ $activity->type }}" data-id="{{ $activity->id }}" data-title="{{ addslashes($activity->title) }}">Delete</button> --}}
                             @elseif($activity->type === 'true_false')
                                 <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="btn btn-xs">Edit</a>
                                 <a href="{{ route('true-false.play', $lesson) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
