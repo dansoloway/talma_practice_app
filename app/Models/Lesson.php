@@ -76,6 +76,11 @@ class Lesson extends Model
         return $this->hasMany(SpellingGame::class)->orderBy('sort_order');
     }
 
+    public function sentenceBuilderGames(): HasMany
+    {
+        return $this->hasMany(SentenceBuilderGame::class)->orderBy('sort_order');
+    }
+
     /**
      * Get all responses for this lesson.
      */

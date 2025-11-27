@@ -157,7 +157,7 @@ class TrueFalseQuestionController extends Controller
         }
 
         // Check if OpenAI is configured
-        $questionGenerator = new OpenAiQuestionGenerator();
+        $questionGenerator = app(OpenAiQuestionGenerator::class);
         if (!$questionGenerator->enabled()) {
             return redirect()
                 ->route('admin.lessons.true-false-questions.index', $lesson)

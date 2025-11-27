@@ -45,6 +45,13 @@ class LessonController extends Controller
                 'spellingGames' => function ($query) {
                     $query->where('is_active', true)->orderBy('sort_order');
                 },
+                'sentenceBuilderGames' => function ($query) {
+                    $query->where('is_active', true)
+                          ->orderBy('sort_order')
+                          ->with(['questions' => function ($q) {
+                              $q->where('is_active', true)->orderBy('sort_order');
+                          }]);
+                },
                 'trueFalseQuestions' => function ($query) {
                     $query->where('is_approved', true)
                           ->where('is_active', true)

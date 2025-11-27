@@ -2,14 +2,21 @@
 
 namespace App\Services\QuestionGeneration;
 
-use Illuminate\Support\Facades\Http;
+use App\Services\OpenAi\OpenAiService;
 use Illuminate\Support\Facades\Log;
 
 class OpenAiQuestionGenerator
 {
+    protected OpenAiService $openAiService;
+
+    public function __construct(OpenAiService $openAiService)
+    {
+        $this->openAiService = $openAiService;
+    }
+
     public function enabled(): bool
     {
-        return filled(config('services.openai.key'));
+        return $this->openAiService->enabled();
     }
 
     /**
@@ -36,10 +43,18 @@ class OpenAiQuestionGenerator
         $context = $this->buildContext($lessonTitle, $vocabList, $promptTemplates);
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.openai.key'),
-                'Content-Type' => 'application/json',
-            ])->timeout(60)->post(config('services.openai.endpoint', 'https://api.openai.com/v1/chat/completions'), [
+            $messages = [
+                [
+                    'role' => 'system',
+                    'content' => 'You are an educational content creator for English language learners at CEFR A1 level (beginner). Generate True/False questions using VERY SIMPLE English. Use only basic vocabulary, simple present tense, and short sentences (5-10 words). No complex grammar, idioms, or difficult words. Questions should be clear, simple, and easy to understand for beginners learning English.',
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $context . "\n\nGenerate exactly {$count} True/False questions using CEFR A1 level English (beginner level).\n\nIMPORTANT LANGUAGE REQUIREMENTS:\n- Use ONLY simple, common words\n- Use simple present tense (is, are, do, have)\n- Keep sentences SHORT (5-10 words maximum)\n- Use basic sentence structure: Subject + Verb + Object\n- NO complex grammar, idioms, or difficult vocabulary\n- Examples of A1 level: 'Ice is cold', 'Water is wet', 'We use paper'\n- Examples to AVOID: 'Ice undergoes a phase transition', 'Water exhibits liquid properties'\n\nMix true and false statements. Include questions about vocabulary definitions, procedural steps, science facts, and common misconceptions.",
+                ],
+            ];
+
+            $options = [
                 'model' => config('services.openai.translation_model', 'gpt-4o-mini'),
                 'temperature' => 0.7, // Slightly creative for variety
                 'response_format' => [
@@ -80,27 +95,16 @@ class OpenAiQuestionGenerator
                         ],
                     ],
                 ],
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => 'You are an educational content creator for English language learners at CEFR A1 level (beginner). Generate True/False questions using VERY SIMPLE English. Use only basic vocabulary, simple present tense, and short sentences (5-10 words). No complex grammar, idioms, or difficult words. Questions should be clear, simple, and easy to understand for beginners learning English.',
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $context . "\n\nGenerate exactly {$count} True/False questions using CEFR A1 level English (beginner level).\n\nIMPORTANT LANGUAGE REQUIREMENTS:\n- Use ONLY simple, common words\n- Use simple present tense (is, are, do, have)\n- Keep sentences SHORT (5-10 words maximum)\n- Use basic sentence structure: Subject + Verb + Object\n- NO complex grammar, idioms, or difficult vocabulary\n- Examples of A1 level: 'Ice is cold', 'Water is wet', 'We use paper'\n- Examples to AVOID: 'Ice undergoes a phase transition', 'Water exhibits liquid properties'\n\nMix true and false statements. Include questions about vocabulary definitions, procedural steps, science facts, and common misconceptions.",
-                    ],
-                ],
-            ]);
+                'timeout' => 60,
+            ];
 
-            if (!$response->successful()) {
-                Log::error('OpenAI question generation failed', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
-                throw new \Exception('Failed to generate questions: ' . $response->status());
+            $response = $this->openAiService->chatCompletion($messages, $options);
+
+            if (!$response) {
+                throw new \Exception('Failed to generate questions: OpenAI service returned null');
             }
 
-            $content = data_get($response->json(), 'choices.0.message.content');
+            $content = $this->openAiService->extractContent($response);
             if (!$content) {
                 throw new \Exception('No content in OpenAI response');
             }

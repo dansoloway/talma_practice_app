@@ -45,6 +45,10 @@ Route::get('/lessons/{lesson}/flashcard-games/{flashcard_game}/play', [App\Http\
 Route::get('/lessons/{lesson}/spelling-games/{spelling_game}/play', [App\Http\Controllers\Admin\SpellingGameController::class, 'play'])
     ->name('spelling-games.play');
 
+// Sentence Builder Games (public)
+Route::get('/lessons/{lesson}/sentence-builder-games/{sentence_builder_game}/play', [App\Http\Controllers\Admin\SentenceBuilderGameController::class, 'play'])
+    ->name('sentence-builder-games.play');
+
 // Prompts (JSON API)
 Route::get('/prompts/{id}', [PromptController::class, 'show'])->name('prompts.show');
 Route::get('/lessons/{lesson}/prompts/play', [PromptController::class, 'play'])->name('prompts.play');
@@ -173,6 +177,17 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     
     // Spelling Games
     Route::resource('lessons.spelling-games', App\Http\Controllers\Admin\SpellingGameController::class);
+    
+    // Sentence Builder Games
+    Route::resource('lessons.sentence-builder-games', App\Http\Controllers\Admin\SentenceBuilderGameController::class);
+    Route::post('lessons/{lesson}/sentence-builder-games/{sentence_builder_game}/generate', [App\Http\Controllers\Admin\SentenceBuilderGameController::class, 'generate'])
+        ->name('lessons.sentence-builder-games.generate');
+    Route::post('lessons/{lesson}/sentence-builder-games/{sentence_builder_game}/questions', [App\Http\Controllers\Admin\SentenceBuilderGameController::class, 'storeQuestion'])
+        ->name('lessons.sentence-builder-games.store-question');
+    Route::put('lessons/{lesson}/sentence-builder-games/{sentence_builder_game}/questions/{question}', [App\Http\Controllers\Admin\SentenceBuilderGameController::class, 'updateQuestion'])
+        ->name('lessons.sentence-builder-games.update-question');
+    Route::delete('lessons/{lesson}/sentence-builder-games/{sentence_builder_game}/questions/{question}', [App\Http\Controllers\Admin\SentenceBuilderGameController::class, 'deleteQuestion'])
+        ->name('lessons.sentence-builder-games.delete-question');
     
     // True/False Questions
     Route::get('lessons/{lesson}/true-false-questions', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'index'])

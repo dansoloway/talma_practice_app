@@ -2,21 +2,28 @@
 
 namespace App\Services\Translation;
 
+use App\Services\OpenAi\OpenAiService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class OpenAiTranslator
 {
+    protected OpenAiService $openAiService;
     protected const CACHE_PREFIX = 'openai_translation_';
     protected const DEFAULT_RATE_LIMIT_DELAY_SECONDS = 0.5; // Default delay (200 RPM = ~0.3s between requests, using 0.5s for safety)
     protected static $lastRequestTime = 0.0; // Use float for microsecond precision
     protected static $rateLimitRpm = null; // Cached rate limit from API headers
     protected static $calculatedDelay = null; // Calculated delay based on rate limits
 
+    public function __construct(OpenAiService $openAiService)
+    {
+        $this->openAiService = $openAiService;
+    }
+
     public function enabled(): bool
     {
-        return filled(config('services.openai.key'));
+        return $this->openAiService->enabled();
     }
 
     /**
@@ -109,8 +116,13 @@ class OpenAiTranslator
         $maxRetries = 3;
         
         try {
+            $apiKey = $this->openAiService->getApiKey();
+            if (!$apiKey) {
+                return [];
+            }
+
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.openai.key'),
+                'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ])->timeout(30)->post(config('services.openai.endpoint', 'https://api.openai.com/v1/chat/completions'), [
                 'model' => config('services.openai.translation_model', 'gpt-4o-mini'),

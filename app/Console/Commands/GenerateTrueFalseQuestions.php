@@ -28,11 +28,11 @@ class GenerateTrueFalseQuestions extends Command
     protected OpenAiQuestionGenerator $questionGenerator;
     protected ElevenLabsTtsService $ttsService;
 
-    public function __construct()
+    public function __construct(OpenAiQuestionGenerator $questionGenerator, ElevenLabsTtsService $ttsService)
     {
         parent::__construct();
-        $this->questionGenerator = new OpenAiQuestionGenerator();
-        $this->ttsService = new ElevenLabsTtsService();
+        $this->questionGenerator = $questionGenerator;
+        $this->ttsService = $ttsService;
     }
 
     /**

@@ -118,7 +118,7 @@ class LessonController extends Controller
      */
     public function manage(Lesson $lesson)
     {
-        $lesson->load(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'spellingGames', 'trueFalseQuestions']);
+        $lesson->load(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'spellingGames', 'sentenceBuilderGames', 'trueFalseQuestions']);
         
         return view('admin.lessons.manage', compact('lesson'));
     }
@@ -250,6 +250,10 @@ class LessonController extends Controller
                     break;
                 case 'spelling':
                     $activity = $lesson->spellingGames()->findOrFail($validated['activity_id']);
+                    $activity->delete();
+                    break;
+                case 'sentence_builder':
+                    $activity = $lesson->sentenceBuilderGames()->findOrFail($validated['activity_id']);
                     $activity->delete();
                     break;
             }

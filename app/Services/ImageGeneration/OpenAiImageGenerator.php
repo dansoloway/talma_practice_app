@@ -2,26 +2,27 @@
 
 namespace App\Services\ImageGeneration;
 
+use App\Services\OpenAi\OpenAiService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class OpenAiImageGenerator
 {
-    protected $apiKey;
+    protected OpenAiService $openAiService;
     protected $model;
     protected $size;
 
-    public function __construct()
+    public function __construct(OpenAiService $openAiService)
     {
-        $this->apiKey = config('services.openai.key');
+        $this->openAiService = $openAiService;
         $this->model = config('services.openai.image_model', 'dall-e-3');
         $this->size = config('services.openai.image_size', '1024x1024');
     }
 
     public function enabled(): bool
     {
-        return filled($this->apiKey);
+        return $this->openAiService->enabled();
     }
 
     /**
@@ -42,57 +43,38 @@ class OpenAiImageGenerator
         $maxRetries = 3;
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->timeout(120)->post('https://api.openai.com/v1/images/generations', [ // Increased timeout to 120 seconds
+            $options = [
                 'model' => $this->model,
-                'prompt' => $prompt,
                 'size' => $this->size,
                 'quality' => 'standard',
                 'n' => 1,
-                'response_format' => 'url', // Get URL instead of base64 for easier handling
-            ]);
+                'response_format' => 'url',
+                'timeout' => 120,
+            ];
 
-            // Retry on server errors (500, 502, 503, 504)
-            if (!$response->successful() && in_array($response->status(), [500, 502, 503, 504]) && $retryCount < $maxRetries) {
+            $response = $this->openAiService->imageGeneration($prompt, $options);
+
+            // Handle retries for server errors (response is null on error)
+            if (!$response && $retryCount < $maxRetries) {
                 $waitTime = ($retryCount + 1) * 5; // Exponential backoff: 5s, 10s, 15s
-                Log::warning("OpenAI server error ({$response->status()}) for '{$vocabularyWord}'. Retrying in {$waitTime} seconds (attempt " . ($retryCount + 1) . "/{$maxRetries})");
+                Log::warning("OpenAI server error for '{$vocabularyWord}'. Retrying in {$waitTime} seconds (attempt " . ($retryCount + 1) . "/{$maxRetries})");
                 sleep($waitTime);
                 return $this->generateVocabularyImage($vocabularyWord, $retryCount + 1);
             }
 
-            if (!$response->successful()) {
-                $errorBody = $response->json();
-                $errorCode = $errorBody['error']['code'] ?? null;
-                $errorMessage = $errorBody['error']['message'] ?? 'Unknown error';
-                
-                // Provide helpful error messages for common issues
-                if ($errorCode === 'billing_hard_limit_reached') {
-                    Log::error('OpenAI image generation failed: Billing hard limit reached', [
-                        'word' => $vocabularyWord,
-                        'message' => $errorMessage,
-                        'help' => 'Please check your OpenAI billing settings at https://platform.openai.com/account/billing and increase or remove your spending limit.',
-                    ]);
-                } else {
-                    Log::error('OpenAI image generation failed', [
-                        'status' => $response->status(),
-                        'code' => $errorCode,
-                        'message' => $errorMessage,
-                        'body' => $response->body(),
-                        'word' => $vocabularyWord,
-                        'retry_count' => $retryCount,
-                    ]);
-                }
+            if (!$response) {
+                Log::error('OpenAI image generation failed', [
+                    'word' => $vocabularyWord,
+                    'retry_count' => $retryCount,
+                ]);
                 return null;
             }
 
-            $data = $response->json();
-            $imageUrl = $data['data'][0]['url'] ?? null;
+            $imageUrl = $this->openAiService->extractImageUrl($response);
 
             if (!$imageUrl) {
                 Log::error('No image URL in OpenAI response', [
-                    'response' => $data,
+                    'response' => $response,
                     'word' => $vocabularyWord,
                 ]);
                 return null;
