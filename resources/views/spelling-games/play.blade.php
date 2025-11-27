@@ -196,7 +196,13 @@ function loadWord(index) {
             </div>
             ` : ''}
             
-            <div class="hint-section">
+            <div class="hint-control-section">
+                <button class="show-hint-btn" id="show-hint-btn">
+                    <i class="fas fa-lightbulb"></i> Show Hint
+                </button>
+            </div>
+            
+            <div class="hint-section hidden" id="hint-section">
                 <div class="hint-text" id="hint-text">${hint}</div>
             </div>
             
@@ -241,6 +247,20 @@ function setupWordEvents(word, hint) {
         playBtn.disabled = true;
         playBtn.classList.add('disabled');
         playBtn.title = 'No audio available';
+    }
+
+    // Show/Hide hint button
+    const showHintBtn = document.getElementById('show-hint-btn');
+    const hintSection = document.getElementById('hint-section');
+    if (showHintBtn && hintSection) {
+        showHintBtn.addEventListener('click', function() {
+            hintSection.classList.toggle('hidden');
+            if (hintSection.classList.contains('hidden')) {
+                showHintBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Show Hint';
+            } else {
+                showHintBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Hint';
+            }
+        });
     }
 
     // Real-time letter feedback
@@ -559,8 +579,31 @@ function playAudio(audioPath) {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+.hint-control-section {
+    margin: 1.5rem 0;
+}
+
+.show-hint-btn {
+    background: transparent;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.show-hint-btn:hover {
+    background: var(--color-primary);
+    color: white;
+}
+
 .hint-section {
-    margin: 2rem 0;
+    margin: 1.5rem 0;
 }
 
 .hint-text {
