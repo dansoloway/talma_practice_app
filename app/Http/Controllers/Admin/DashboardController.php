@@ -11,6 +11,7 @@ use App\Models\Prompt;
 use App\Models\Option;
 use App\Models\Response;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -95,6 +96,122 @@ class DashboardController extends Controller
             'deviceStats',
             'countryStats',
             'israelCityStats'
+        ));
+    }
+
+    /**
+     * Display session length dashboard with filters.
+     */
+    public function sessionLengthDashboard(Request $request)
+    {
+        // Get filter parameters
+        $city = $request->input('city');
+        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date'))->startOfDay() : null;
+        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date'))->endOfDay() : null;
+
+        // Build base queries with filters
+        $responseQuery = $this->excludeOfficeIp(Response::query())
+            ->where('country', 'IL')
+            ->whereNotNull('city')
+            ->whereNotNull('session_id');
+
+        $activityQuery = $this->excludeOfficeIp(ActivityEvent::query())
+            ->where('country', 'IL')
+            ->whereNotNull('city')
+            ->whereNotNull('session_id');
+
+        // Apply city filter
+        if ($city) {
+            $responseQuery->where('city', $city);
+            $activityQuery->where('city', $city);
+        }
+
+        // Apply date filters
+        if ($startDate) {
+            $responseQuery->where('created_at', '>=', $startDate);
+            $activityQuery->where('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $responseQuery->where('created_at', '<=', $endDate);
+            $activityQuery->where('created_at', '<=', $endDate);
+        }
+
+        // Get unique sessions
+        $responseSessions = $responseQuery->distinct('session_id')->pluck('session_id');
+        $activitySessions = $activityQuery->distinct('session_id')->pluck('session_id');
+        $allSessions = $responseSessions->merge($activitySessions)->unique();
+        $sessionCount = $allSessions->count();
+
+        // Calculate total time from completed activities
+        $completedActivitiesQuery = $this->excludeOfficeIp(ActivityEvent::query())
+            ->where('country', 'IL')
+            ->where('status', 'completed')
+            ->whereNotNull('meta');
+
+        if ($city) {
+            $completedActivitiesQuery->where('city', $city);
+        }
+        if ($startDate) {
+            $completedActivitiesQuery->where('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $completedActivitiesQuery->where('created_at', '<=', $endDate);
+        }
+
+        $completedActivities = $completedActivitiesQuery->get();
+        $totalTimeSeconds = 0;
+        foreach ($completedActivities as $activity) {
+            $duration = data_get($activity->meta, 'duration_seconds', 0);
+            if ($duration && is_numeric($duration)) {
+                $totalTimeSeconds += (int) $duration;
+            }
+        }
+
+        // Calculate average session length
+        $averageSessionLength = $sessionCount > 0 ? $totalTimeSeconds / $sessionCount : 0;
+
+        // Get list of cities for dropdown
+        $cities = $this->excludeOfficeIp(Response::query())
+            ->where('country', 'IL')
+            ->whereNotNull('city')
+            ->distinct('city')
+            ->orderBy('city')
+            ->pluck('city');
+
+        // Format duration helper
+        $formatDuration = function (?int $seconds): string {
+            if (!$seconds || $seconds <= 0) {
+                return '—';
+            }
+            $minutes = intdiv($seconds, 60);
+            $remaining = $seconds % 60;
+            if ($minutes === 0) {
+                return "{$remaining}s";
+            }
+            $hours = intdiv($minutes, 60);
+            $minutes = $minutes % 60;
+            $parts = [];
+            if ($hours > 0) {
+                $parts[] = "{$hours}h";
+            }
+            if ($minutes > 0) {
+                $parts[] = "{$minutes}m";
+            }
+            if ($remaining > 0 && $hours === 0) {
+                $parts[] = "{$remaining}s";
+            }
+            return implode(' ', $parts);
+        };
+
+        return view('admin.session-length-dashboard', compact(
+            'averageSessionLength',
+            'totalTimeSeconds',
+            'sessionCount',
+            'cities',
+            'city',
+            'startDate',
+            'endDate',
+            'formatDuration'
         ));
     }
 
