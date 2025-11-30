@@ -101,6 +101,53 @@
         </div>
 
         <div class="dashboard-section">
+            <h2>Users in Israel by City</h2>
+            @if(empty($israelCityStats['cities']))
+                <p class="empty-text">No Israeli city data available yet.</p>
+            @else
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>City</th>
+                            <th>Region</th>
+                            <th class="text-right">Unique Sessions</th>
+                            <th class="text-right">Total Time Spent</th>
+                            <th class="text-right">Avg Session Length</th>
+                            <th class="text-right">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($israelCityStats['cities'] as $city => $data)
+                            <tr>
+                                <td><strong>{{ $city }}</strong></td>
+                                <td>
+                                    @if($data['region'])
+                                        <span class="muted-text">{{ $data['region'] }}</span>
+                                    @else
+                                        <span class="muted-text">—</span>
+                                    @endif
+                                </td>
+                                <td class="text-right">{{ number_format($data['sessions']) }}</td>
+                                <td class="text-right">{{ $formatDuration($data['total_time_seconds']) }}</td>
+                                <td class="text-right">{{ $formatDuration($data['average_session_length']) }}</td>
+                                <td class="text-right">
+                                    @if($israelCityStats['total_sessions'] > 0)
+                                        {{ number_format(($data['sessions'] / $israelCityStats['total_sessions']) * 100, 1) }}%
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @if($israelCityStats['total_sessions'] > 0)
+                    <p class="muted-text">Total Israeli sessions: {{ number_format($israelCityStats['total_sessions']) }}</p>
+                @endif
+            @endif
+        </div>
+
+        <div class="dashboard-section">
             <h2>Most Practiced Lessons</h2>
             @if($lessonStats['top_lessons']->isEmpty())
                 <p class="empty-text">No lessons have activity recorded yet.</p>
@@ -321,49 +368,6 @@
                 </table>
                 @if($countryStats['total_sessions'] > 0)
                     <p class="muted-text">Total sessions with country data: {{ number_format($countryStats['total_sessions']) }}</p>
-                @endif
-            @endif
-        </div>
-
-        <div class="dashboard-section">
-            <h2>Users in Israel by City</h2>
-            @if(empty($israelCityStats['cities']))
-                <p class="empty-text">No Israeli city data available yet.</p>
-            @else
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>City</th>
-                            <th>Region</th>
-                            <th class="text-right">Unique Sessions</th>
-                            <th class="text-right">Percentage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($israelCityStats['cities'] as $city => $data)
-                            <tr>
-                                <td><strong>{{ $city }}</strong></td>
-                                <td>
-                                    @if($data['region'])
-                                        <span class="muted-text">{{ $data['region'] }}</span>
-                                    @else
-                                        <span class="muted-text">—</span>
-                                    @endif
-                                </td>
-                                <td class="text-right">{{ number_format($data['sessions']) }}</td>
-                                <td class="text-right">
-                                    @if($israelCityStats['total_sessions'] > 0)
-                                        {{ number_format(($data['sessions'] / $israelCityStats['total_sessions']) * 100, 1) }}%
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-                @if($israelCityStats['total_sessions'] > 0)
-                    <p class="muted-text">Total Israeli sessions: {{ number_format($israelCityStats['total_sessions']) }}</p>
                 @endif
             @endif
         </div>

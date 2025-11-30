@@ -160,7 +160,7 @@ class DashboardController extends Controller
      */
     protected function buildIsraelCityStats(): array
     {
-        // Get unique sessions by city from responses (Israel only)
+        // Get all cities with their sessions from responses (Israel only)
         $citySessionsFromResponses = $this->excludeOfficeIp(Response::query())
             ->where('country', 'IL')
             ->whereNotNull('city')
@@ -168,15 +168,9 @@ class DashboardController extends Controller
             ->select('city', 'region', 'session_id')
             ->distinct()
             ->get()
-            ->groupBy('city')
-            ->map(function ($group) {
-                return [
-                    'sessions' => $group->pluck('session_id')->unique()->count(),
-                    'region' => $group->first()->region,
-                ];
-            });
+            ->groupBy('city');
 
-        // Get unique sessions by city from activity events (Israel only)
+        // Get all cities with their sessions from activity events (Israel only)
         $citySessionsFromActivities = $this->excludeOfficeIp(ActivityEvent::query())
             ->where('country', 'IL')
             ->whereNotNull('city')
@@ -184,26 +178,119 @@ class DashboardController extends Controller
             ->select('city', 'region', 'session_id')
             ->distinct()
             ->get()
-            ->groupBy('city')
-            ->map(function ($group) {
-                return [
-                    'sessions' => $group->pluck('session_id')->unique()->count(),
-                    'region' => $group->first()->region,
-                ];
-            });
+            ->groupBy('city');
 
-        // Merge and combine counts
+        // Build city stats with time calculations
         $cityStats = [];
-        foreach ($citySessionsFromResponses as $city => $data) {
+        
+        // Process each city
+        $allCities = $citySessionsFromResponses->keys()->merge($citySessionsFromActivities->keys())->unique();
+        
+        foreach ($allCities as $city) {
+            $responseSessions = $citySessionsFromResponses->get($city, collect())->pluck('session_id')->unique();
+            $activitySessions = $citySessionsFromActivities->get($city, collect())->pluck('session_id')->unique();
+            $allSessionsForCity = $responseSessions->merge($activitySessions)->unique();
+            
+            // Get region (prefer from responses, fallback to activities)
+            $region = $citySessionsFromResponses->get($city)?->first()->region 
+                   ?? $citySessionsFromActivities->get($city)?->first()->region 
+                   ?? null;
+            
+            // Calculate session durations for this city
+            $sessionDurations = [];
+            $totalTimeSeconds = 0;
+            
+            // Get session durations from responses
+            $responseSessionData = $this->excludeOfficeIp(Response::query())
+                ->where('country', 'IL')
+                ->where('city', $city)
+                ->whereNotNull('session_id')
+                ->select('session_id', DB::raw('MIN(created_at) as first_event'), DB::raw('MAX(created_at) as last_event'))
+                ->groupBy('session_id')
+                ->get();
+            
+            foreach ($responseSessionData as $session) {
+                $sessionId = $session->session_id;
+                if (!isset($sessionDurations[$sessionId])) {
+                    $sessionDurations[$sessionId] = [
+                        'first_event' => $session->first_event,
+                        'last_event' => $session->last_event,
+                    ];
+                } else {
+                    if ($session->first_event < $sessionDurations[$sessionId]['first_event']) {
+                        $sessionDurations[$sessionId]['first_event'] = $session->first_event;
+                    }
+                    if ($session->last_event > $sessionDurations[$sessionId]['last_event']) {
+                        $sessionDurations[$sessionId]['last_event'] = $session->last_event;
+                    }
+                }
+            }
+            
+            // Get session durations from activity events
+            $activitySessionData = $this->excludeOfficeIp(ActivityEvent::query())
+                ->where('country', 'IL')
+                ->where('city', $city)
+                ->whereNotNull('session_id')
+                ->select('session_id', DB::raw('MIN(created_at) as first_event'), DB::raw('MAX(created_at) as last_event'))
+                ->groupBy('session_id')
+                ->get();
+            
+            foreach ($activitySessionData as $session) {
+                $sessionId = $session->session_id;
+                if (!isset($sessionDurations[$sessionId])) {
+                    $sessionDurations[$sessionId] = [
+                        'first_event' => $session->first_event,
+                        'last_event' => $session->last_event,
+                    ];
+                } else {
+                    if ($session->first_event < $sessionDurations[$sessionId]['first_event']) {
+                        $sessionDurations[$sessionId]['first_event'] = $session->first_event;
+                    }
+                    if ($session->last_event > $sessionDurations[$sessionId]['last_event']) {
+                        $sessionDurations[$sessionId]['last_event'] = $session->last_event;
+                    }
+                }
+            }
+            
+            // Time from completed activities (games) for this city
+            $completedActivities = $this->excludeOfficeIp(ActivityEvent::query())
+                ->where('country', 'IL')
+                ->where('city', $city)
+                ->where('status', 'completed')
+                ->whereNotNull('meta')
+                ->get();
+            
+            foreach ($completedActivities as $activity) {
+                $duration = data_get($activity->meta, 'duration_seconds', 0);
+                if ($duration && is_numeric($duration)) {
+                    $totalTimeSeconds += (int) $duration;
+                }
+            }
+            
+            // Calculate duration for each session and add to total
+            $individualSessionDurations = [];
+            foreach ($sessionDurations as $sessionId => $data) {
+                $firstEvent = Carbon::parse($data['first_event']);
+                $lastEvent = Carbon::parse($data['last_event']);
+                $durationSeconds = $firstEvent->diffInSeconds($lastEvent);
+                
+                // Only include sessions with valid duration
+                if ($durationSeconds >= 0) {
+                    $individualSessionDurations[] = $durationSeconds;
+                    $totalTimeSeconds += $durationSeconds;
+                }
+            }
+            
+            // Calculate average session length
+            $averageSessionLength = count($individualSessionDurations) > 0 
+                ? array_sum($individualSessionDurations) / count($individualSessionDurations) 
+                : 0;
+            
             $cityStats[$city] = [
-                'sessions' => ($cityStats[$city]['sessions'] ?? 0) + $data['sessions'],
-                'region' => $data['region'],
-            ];
-        }
-        foreach ($citySessionsFromActivities as $city => $data) {
-            $cityStats[$city] = [
-                'sessions' => ($cityStats[$city]['sessions'] ?? 0) + $data['sessions'],
-                'region' => $data['region'] ?? $cityStats[$city]['region'] ?? null,
+                'sessions' => $allSessionsForCity->count(),
+                'region' => $region,
+                'total_time_seconds' => (int) $totalTimeSeconds,
+                'average_session_length' => (int) round($averageSessionLength),
             ];
         }
 
