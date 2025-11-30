@@ -170,6 +170,78 @@ class DashboardController extends Controller
         // Calculate average session length
         $averageSessionLength = $sessionCount > 0 ? $totalTimeSeconds / $sessionCount : 0;
 
+        // Calculate daily breakdown
+        // Determine date range for daily breakdown
+        $daysBack = 30; // Default to last 30 days
+        $breakdownStartDate = $startDate ? $startDate : Carbon::today()->subDays($daysBack);
+        $breakdownEndDate = $endDate ? $endDate : Carbon::today();
+        
+        $dailyBreakdown = [];
+        $currentDate = Carbon::parse($breakdownStartDate);
+        $endDateParsed = Carbon::parse($breakdownEndDate);
+        
+        while ($currentDate <= $endDateParsed) {
+            $date = $currentDate->copy();
+            $dayStart = $date->copy()->startOfDay();
+            $dayEnd = $date->copy()->endOfDay();
+            
+            // Get sessions for this day
+            $dayResponseQuery = $this->excludeOfficeIp(Response::query())
+                ->where('country', 'IL')
+                ->whereNotNull('city')
+                ->whereNotNull('session_id')
+                ->whereDate('created_at', $date->toDateString());
+            
+            $dayActivityQuery = $this->excludeOfficeIp(ActivityEvent::query())
+                ->where('country', 'IL')
+                ->whereNotNull('city')
+                ->whereNotNull('session_id')
+                ->whereDate('created_at', $date->toDateString());
+            
+            if ($city) {
+                $dayResponseQuery->where('city', $city);
+                $dayActivityQuery->where('city', $city);
+            }
+            
+            $dayResponseSessions = $dayResponseQuery->distinct('session_id')->pluck('session_id');
+            $dayActivitySessions = $dayActivityQuery->distinct('session_id')->pluck('session_id');
+            $daySessions = $dayResponseSessions->merge($dayActivitySessions)->unique();
+            $daySessionCount = $daySessions->count();
+            
+            // Get completed activities for this day
+            $dayCompletedActivitiesQuery = $this->excludeOfficeIp(ActivityEvent::query())
+                ->where('country', 'IL')
+                ->where('status', 'completed')
+                ->whereNotNull('meta')
+                ->whereDate('created_at', $date->toDateString());
+            
+            if ($city) {
+                $dayCompletedActivitiesQuery->where('city', $city);
+            }
+            
+            $dayCompletedActivities = $dayCompletedActivitiesQuery->get();
+            $dayTotalTimeSeconds = 0;
+            foreach ($dayCompletedActivities as $activity) {
+                $duration = data_get($activity->meta, 'duration_seconds', 0);
+                if ($duration && is_numeric($duration)) {
+                    $dayTotalTimeSeconds += (int) $duration;
+                }
+            }
+            
+            // Calculate average session length for this day
+            $dayAverageSessionLength = $daySessionCount > 0 ? $dayTotalTimeSeconds / $daySessionCount : 0;
+            
+            $dailyBreakdown[] = [
+                'date' => $date->toDateString(),
+                'date_formatted' => $date->format('M j, Y'),
+                'sessions' => $daySessionCount,
+                'total_time_seconds' => $dayTotalTimeSeconds,
+                'average_session_length' => $dayAverageSessionLength,
+            ];
+            
+            $currentDate->addDay();
+        }
+
         // Get list of cities for dropdown from both Response and ActivityEvent tables
         // Get cities from responses
         $citiesFromResponses = $this->excludeOfficeIp(Response::query())
@@ -230,6 +302,7 @@ class DashboardController extends Controller
             'averageSessionLength',
             'totalTimeSeconds',
             'sessionCount',
+            'dailyBreakdown',
             'cities',
             'city',
             'startDate',

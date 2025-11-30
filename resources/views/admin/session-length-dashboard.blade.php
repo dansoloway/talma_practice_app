@@ -75,6 +75,39 @@
         </div>
     </div>
 
+    <!-- Daily Breakdown -->
+    @if(!empty($dailyBreakdown))
+        <div class="dashboard-section">
+            <h2>Daily Breakdown</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th class="text-right">Sessions</th>
+                        <th class="text-right">Total Time</th>
+                        <th class="text-right">Avg Session Length</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($dailyBreakdown as $day)
+                        <tr>
+                            <td>{{ $day['date_formatted'] }}</td>
+                            <td class="text-right">{{ number_format($day['sessions']) }}</td>
+                            <td class="text-right">{{ $formatDuration($day['total_time_seconds']) }}</td>
+                            <td class="text-right">
+                                @if($day['sessions'] > 0)
+                                    {{ $formatDuration((int) round($day['average_session_length'])) }}
+                                @else
+                                    —
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+
     @if($sessionCount === 0)
         <div class="dashboard-section">
             <p class="empty-text">No session data found for the selected filters.</p>
@@ -189,6 +222,38 @@
 .btn:not(.btn-primary):hover {
     background: #e5e7eb;
 }
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+.table thead {
+    background: #f3f4f6;
+}
+.table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    border-bottom: 2px solid #e5e7eb;
+}
+.table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+.table tbody tr:hover {
+    background: #f9fafb;
+}
+.text-right {
+    text-align: right;
+}
+.empty-text {
+    color: var(--color-text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 2rem;
+}
 @media (max-width: 768px) {
     .filters-grid {
         grid-template-columns: 1fr;
@@ -199,6 +264,13 @@
     .metric-details {
         flex-direction: column;
         gap: 1.5rem;
+    }
+    .table {
+        font-size: 0.9rem;
+    }
+    .table th,
+    .table td {
+        padding: 0.5rem;
     }
 }
 </style>
