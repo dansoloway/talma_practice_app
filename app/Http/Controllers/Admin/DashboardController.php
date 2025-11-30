@@ -171,21 +171,23 @@ class DashboardController extends Controller
         $averageSessionLength = $sessionCount > 0 ? $totalTimeSeconds / $sessionCount : 0;
 
         // Get list of cities for dropdown from both Response and ActivityEvent tables
-        $citiesFromResponses = $this->excludeOfficeIp(Response::query())
+        // Use a union query to combine both tables
+        $responsesQuery = $this->excludeOfficeIp(Response::query())
             ->where('country', 'IL')
             ->whereNotNull('city')
             ->where('city', '!=', '')
-            ->distinct('city')
-            ->pluck('city');
+            ->select('city');
         
-        $citiesFromActivities = $this->excludeOfficeIp(ActivityEvent::query())
+        $activitiesQuery = $this->excludeOfficeIp(ActivityEvent::query())
             ->where('country', 'IL')
             ->whereNotNull('city')
             ->where('city', '!=', '')
-            ->distinct('city')
-            ->pluck('city');
+            ->select('city');
         
-        $cities = $citiesFromResponses->merge($citiesFromActivities)->unique()->sort()->values();
+        $cities = $responsesQuery->union($activitiesQuery)
+            ->distinct()
+            ->orderBy('city')
+            ->pluck('city');
 
         // Format duration helper
         $formatDuration = function (?int $seconds): string {
