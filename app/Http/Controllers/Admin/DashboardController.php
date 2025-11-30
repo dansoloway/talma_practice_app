@@ -170,13 +170,22 @@ class DashboardController extends Controller
         // Calculate average session length
         $averageSessionLength = $sessionCount > 0 ? $totalTimeSeconds / $sessionCount : 0;
 
-        // Get list of cities for dropdown
-        $cities = $this->excludeOfficeIp(Response::query())
+        // Get list of cities for dropdown from both Response and ActivityEvent tables
+        $citiesFromResponses = $this->excludeOfficeIp(Response::query())
             ->where('country', 'IL')
             ->whereNotNull('city')
+            ->where('city', '!=', '')
             ->distinct('city')
-            ->orderBy('city')
             ->pluck('city');
+        
+        $citiesFromActivities = $this->excludeOfficeIp(ActivityEvent::query())
+            ->where('country', 'IL')
+            ->whereNotNull('city')
+            ->where('city', '!=', '')
+            ->distinct('city')
+            ->pluck('city');
+        
+        $cities = $citiesFromResponses->merge($citiesFromActivities)->unique()->sort()->values();
 
         // Format duration helper
         $formatDuration = function (?int $seconds): string {
