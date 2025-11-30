@@ -86,6 +86,7 @@ Route::post('/admin/login', function (Request $request) {
 Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
     Route::get('analytics', [DashboardController::class, 'index'])->name('analytics');
     Route::get('session-length', [DashboardController::class, 'sessionLengthDashboard'])->name('session-length');
+    Route::get('session-length/day-breakdown', [DashboardController::class, 'getDayActivityBreakdown'])->name('session-length.day-breakdown');
     
     // Logout
     Route::post('/logout', function () {

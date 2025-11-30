@@ -241,6 +241,9 @@ class DashboardController extends Controller
             
             $currentDate->addDay();
         }
+        
+        // Reverse to show latest days first
+        $dailyBreakdown = array_reverse($dailyBreakdown);
 
         // Get list of cities for dropdown from both Response and ActivityEvent tables
         // Get cities from responses
@@ -309,6 +312,138 @@ class DashboardController extends Controller
             'endDate',
             'formatDuration'
         ));
+    }
+
+    /**
+     * Get activity breakdown for a specific day.
+     */
+    public function getDayActivityBreakdown(Request $request)
+    {
+        $date = $request->input('date');
+        $city = $request->input('city');
+        
+        if (!$date) {
+            return response()->json(['error' => 'Date is required'], 400);
+        }
+        
+        $dateCarbon = Carbon::parse($date)->startOfDay();
+        $dateEnd = $dateCarbon->copy()->endOfDay();
+        
+        // Get all activity events for this day
+        $activitiesQuery = $this->excludeOfficeIp(ActivityEvent::query())
+            ->where('country', 'IL')
+            ->whereDate('created_at', $dateCarbon->toDateString());
+        
+        if ($city) {
+            $activitiesQuery->where('city', $city);
+        }
+        
+        $activities = $activitiesQuery->get();
+        
+        // Group by activity type and activity_id
+        $activityGroups = $activities->groupBy(function ($activity) {
+            return $activity->activity_type . '_' . $activity->activity_id;
+        });
+        
+        $breakdown = [];
+        
+        foreach ($activityGroups as $key => $group) {
+            $firstActivity = $group->first();
+            $activityType = $firstActivity->activity_type;
+            $activityId = $firstActivity->activity_id;
+            
+            // Get activity name based on type
+            $activityName = 'Unknown Activity';
+            if ($activityType === 'matching' && $activityId) {
+                $matchingGame = MatchingGame::find($activityId);
+                $activityName = $matchingGame ? $matchingGame->title : "Matching Game #{$activityId}";
+            } elseif ($activityType === 'flashcard' && $activityId) {
+                $flashcardGame = FlashcardGame::find($activityId);
+                $activityName = $flashcardGame ? $flashcardGame->title : "Flashcard Game #{$activityId}";
+            } elseif ($activityType === 'spelling' && $activityId) {
+                $spellingGame = \App\Models\SpellingGame::find($activityId);
+                $activityName = $spellingGame ? $spellingGame->title : "Spelling Game #{$activityId}";
+            } elseif ($activityType === 'sentence_builder' && $activityId) {
+                $sentenceBuilderGame = \App\Models\SentenceBuilderGame::find($activityId);
+                $activityName = $sentenceBuilderGame ? $sentenceBuilderGame->title : "Sentence Builder Game #{$activityId}";
+            } elseif ($activityType === 'true_false' && $activityId) {
+                $trueFalse = \App\Models\TrueFalseQuestion::find($activityId);
+                $activityName = $trueFalse ? $trueFalse->question : "True/False Question #{$activityId}";
+            }
+            
+            // Count started and completed
+            $started = $group->where('status', 'started')->count();
+            $completed = $group->where('status', 'completed')->count();
+            
+            // Get unique sessions
+            $startedSessions = $group->where('status', 'started')->pluck('session_id')->unique();
+            $completedSessions = $group->where('status', 'completed')->pluck('session_id')->unique();
+            
+            // Calculate total time from completed activities
+            $totalTimeSeconds = 0;
+            $completedActivities = $group->where('status', 'completed')->whereNotNull('meta');
+            foreach ($completedActivities as $activity) {
+                $duration = data_get($activity->meta, 'duration_seconds', 0);
+                if ($duration && is_numeric($duration)) {
+                    $totalTimeSeconds += (int) $duration;
+                }
+            }
+            
+            // Calculate average time
+            $avgTimeSeconds = $completed > 0 ? $totalTimeSeconds / $completed : 0;
+            
+            $breakdown[] = [
+                'activity_type' => $activityType,
+                'activity_id' => $activityId,
+                'activity_name' => $activityName,
+                'total_students_started' => $startedSessions->count(),
+                'total_students_finished' => $completedSessions->count(),
+                'total_time_seconds' => $totalTimeSeconds,
+                'avg_time_seconds' => $avgTimeSeconds,
+            ];
+        }
+        
+        // Sort by total students started descending
+        usort($breakdown, fn($a, $b) => $b['total_students_started'] <=> $a['total_students_started']);
+        
+        // Format durations in the breakdown array
+        foreach ($breakdown as &$item) {
+            $item['total_time_formatted'] = $this->formatDurationSeconds($item['total_time_seconds']);
+            $item['avg_time_formatted'] = $this->formatDurationSeconds((int) round($item['avg_time_seconds']));
+        }
+        
+        return response()->json([
+            'date' => $dateCarbon->format('M j, Y'),
+            'breakdown' => $breakdown,
+        ]);
+    }
+
+    /**
+     * Format duration in seconds to human-readable string.
+     */
+    protected function formatDurationSeconds(?int $seconds): string
+    {
+        if (!$seconds || $seconds <= 0) {
+            return '—';
+        }
+        $minutes = intdiv($seconds, 60);
+        $remaining = $seconds % 60;
+        if ($minutes === 0) {
+            return "{$remaining}s";
+        }
+        $hours = intdiv($minutes, 60);
+        $minutes = $minutes % 60;
+        $parts = [];
+        if ($hours > 0) {
+            $parts[] = "{$hours}h";
+        }
+        if ($minutes > 0) {
+            $parts[] = "{$minutes}m";
+        }
+        if ($remaining > 0 && $hours === 0) {
+            $parts[] = "{$remaining}s";
+        }
+        return implode(' ', $parts);
     }
 
     /**

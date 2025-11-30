@@ -90,7 +90,7 @@
                 </thead>
                 <tbody>
                     @foreach($dailyBreakdown as $day)
-                        <tr>
+                        <tr class="clickable-row" data-date="{{ $day['date'] }}" data-city="{{ $city ?? '' }}" style="cursor: pointer;">
                             <td>{{ $day['date_formatted'] }}</td>
                             <td class="text-right">{{ number_format($day['sessions']) }}</td>
                             <td class="text-right">{{ $formatDuration($day['total_time_seconds']) }}</td>
@@ -107,6 +107,39 @@
             </table>
         </div>
     @endif
+
+    <!-- Activity Breakdown Modal -->
+    <div id="activityModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Activity Breakdown</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="modalLoading" style="text-align: center; padding: 2rem;">
+                    <p>Loading...</p>
+                </div>
+                <div id="modalContent" style="display: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Activity</th>
+                                <th class="text-right">Students Started</th>
+                                <th class="text-right">Students Finished</th>
+                                <th class="text-right">Total Time</th>
+                                <th class="text-right">Avg Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="modalError" style="display: none; text-align: center; padding: 2rem; color: #dc2626;">
+                    <p>Error loading activity breakdown.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if($sessionCount === 0)
         <div class="dashboard-section">
@@ -254,6 +287,56 @@
     text-align: center;
     padding: 2rem;
 }
+.clickable-row:hover {
+    background: #f0f9ff !important;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+.modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+.modal-close {
+    font-size: 2rem;
+    font-weight: 300;
+    color: #6b7280;
+    cursor: pointer;
+    line-height: 1;
+}
+.modal-close:hover {
+    color: #111827;
+}
+.modal-body {
+    padding: 2rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}
 @media (max-width: 768px) {
     .filters-grid {
         grid-template-columns: 1fr;
@@ -272,8 +355,127 @@
     .table td {
         padding: 0.5rem;
     }
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+    .modal-header,
+    .modal-body {
+        padding: 1rem;
+    }
 }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('activityModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalLoading = document.getElementById('modalLoading');
+    const modalContent = document.getElementById('modalContent');
+    const modalError = document.getElementById('modalError');
+    const modalTableBody = document.getElementById('modalTableBody');
+    const closeBtn = document.querySelector('.modal-close');
+    const clickableRows = document.querySelectorAll('.clickable-row');
+    
+    // Format duration helper (matches PHP function)
+    function formatDuration(seconds) {
+        if (!seconds || seconds <= 0) {
+            return '—';
+        }
+        const minutes = Math.floor(seconds / 60);
+        const remaining = seconds % 60;
+        if (minutes === 0) {
+            return remaining + 's';
+        }
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        const parts = [];
+        if (hours > 0) {
+            parts.push(hours + 'h');
+        }
+        if (mins > 0) {
+            parts.push(mins + 'm');
+        }
+        if (remaining > 0 && hours === 0) {
+            parts.push(remaining + 's');
+        }
+        return parts.join(' ');
+    }
+    
+    // Open modal and load data
+    clickableRows.forEach(row => {
+        row.addEventListener('click', function() {
+            const date = this.dataset.date;
+            const city = this.dataset.city || '';
+            
+            // Show modal
+            modal.style.display = 'block';
+            modalTitle.textContent = 'Activity Breakdown - ' + this.cells[0].textContent.trim();
+            modalLoading.style.display = 'block';
+            modalContent.style.display = 'none';
+            modalError.style.display = 'none';
+            
+            // Fetch data
+            const url = new URL('{{ route("admin.session-length.day-breakdown") }}', window.location.origin);
+            url.searchParams.append('date', date);
+            if (city) {
+                url.searchParams.append('city', city);
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    modalLoading.style.display = 'none';
+                    
+                    if (data.error) {
+                        modalError.style.display = 'block';
+                        return;
+                    }
+                    
+                    // Populate table
+                    modalTableBody.innerHTML = '';
+                    
+                    if (data.breakdown && data.breakdown.length > 0) {
+                        data.breakdown.forEach(activity => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td><strong>${activity.activity_name}</strong></td>
+                                <td class="text-right">${activity.total_students_started.toLocaleString()}</td>
+                                <td class="text-right">${activity.total_students_finished.toLocaleString()}</td>
+                                <td class="text-right">${activity.total_time_formatted || formatDuration(Math.round(activity.total_time_seconds))}</td>
+                                <td class="text-right">${activity.avg_time_formatted || formatDuration(Math.round(activity.avg_time_seconds))}</td>
+                            `;
+                            modalTableBody.appendChild(row);
+                        });
+                    } else {
+                        modalTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: #6b7280;">No activity data for this day.</td></tr>';
+                    }
+                    
+                    modalContent.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalLoading.style.display = 'none';
+                    modalError.style.display = 'block';
+                });
+        });
+    });
+    
+    // Close modal
+    closeBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
+</script>
 @endpush
 @endsection
 
