@@ -196,63 +196,9 @@ class DashboardController extends Controller
                    ?? $citySessionsFromActivities->get($city)?->first()->region 
                    ?? null;
             
-            // Calculate session durations for this city
-            $sessionDurations = [];
+            // Calculate total time spent from completed activities (actual game play time)
+            // This is the most accurate measure of time spent in the app
             $totalTimeSeconds = 0;
-            
-            // Get session durations from responses
-            $responseSessionData = $this->excludeOfficeIp(Response::query())
-                ->where('country', 'IL')
-                ->where('city', $city)
-                ->whereNotNull('session_id')
-                ->select('session_id', DB::raw('MIN(created_at) as first_event'), DB::raw('MAX(created_at) as last_event'))
-                ->groupBy('session_id')
-                ->get();
-            
-            foreach ($responseSessionData as $session) {
-                $sessionId = $session->session_id;
-                if (!isset($sessionDurations[$sessionId])) {
-                    $sessionDurations[$sessionId] = [
-                        'first_event' => $session->first_event,
-                        'last_event' => $session->last_event,
-                    ];
-                } else {
-                    if ($session->first_event < $sessionDurations[$sessionId]['first_event']) {
-                        $sessionDurations[$sessionId]['first_event'] = $session->first_event;
-                    }
-                    if ($session->last_event > $sessionDurations[$sessionId]['last_event']) {
-                        $sessionDurations[$sessionId]['last_event'] = $session->last_event;
-                    }
-                }
-            }
-            
-            // Get session durations from activity events
-            $activitySessionData = $this->excludeOfficeIp(ActivityEvent::query())
-                ->where('country', 'IL')
-                ->where('city', $city)
-                ->whereNotNull('session_id')
-                ->select('session_id', DB::raw('MIN(created_at) as first_event'), DB::raw('MAX(created_at) as last_event'))
-                ->groupBy('session_id')
-                ->get();
-            
-            foreach ($activitySessionData as $session) {
-                $sessionId = $session->session_id;
-                if (!isset($sessionDurations[$sessionId])) {
-                    $sessionDurations[$sessionId] = [
-                        'first_event' => $session->first_event,
-                        'last_event' => $session->last_event,
-                    ];
-                } else {
-                    if ($session->first_event < $sessionDurations[$sessionId]['first_event']) {
-                        $sessionDurations[$sessionId]['first_event'] = $session->first_event;
-                    }
-                    if ($session->last_event > $sessionDurations[$sessionId]['last_event']) {
-                        $sessionDurations[$sessionId]['last_event'] = $session->last_event;
-                    }
-                }
-            }
-            
-            // Time from completed activities (games) for this city
             $completedActivities = $this->excludeOfficeIp(ActivityEvent::query())
                 ->where('country', 'IL')
                 ->where('city', $city)
@@ -267,27 +213,15 @@ class DashboardController extends Controller
                 }
             }
             
-            // Calculate duration for each session and add to total
-            $individualSessionDurations = [];
-            foreach ($sessionDurations as $sessionId => $data) {
-                $firstEvent = Carbon::parse($data['first_event']);
-                $lastEvent = Carbon::parse($data['last_event']);
-                $durationSeconds = $firstEvent->diffInSeconds($lastEvent);
-                
-                // Only include sessions with valid duration
-                if ($durationSeconds >= 0) {
-                    $individualSessionDurations[] = $durationSeconds;
-                    $totalTimeSeconds += $durationSeconds;
-                }
-            }
-            
-            // Calculate average session length
-            $averageSessionLength = count($individualSessionDurations) > 0 
-                ? array_sum($individualSessionDurations) / count($individualSessionDurations) 
+            // Average session length = total time spent / number of sessions
+            // This gives us the average time a student spends per session
+            $sessionCount = $allSessionsForCity->count();
+            $averageSessionLength = $sessionCount > 0 
+                ? $totalTimeSeconds / $sessionCount 
                 : 0;
             
             $cityStats[$city] = [
-                'sessions' => $allSessionsForCity->count(),
+                'sessions' => $sessionCount,
                 'region' => $region,
                 'total_time_seconds' => (int) $totalTimeSeconds,
                 'average_session_length' => (int) round($averageSessionLength),
