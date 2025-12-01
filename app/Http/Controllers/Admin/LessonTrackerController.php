@@ -13,7 +13,13 @@ class LessonTrackerController extends Controller
      */
     public function index(Request $request)
     {
-        $lessons = Lesson::with([
+        // Get filter parameters
+        $assignedTo = $request->input('assigned_to');
+        $gradeLevel = $request->input('grade_level');
+        $status = $request->input('status');
+        
+        // Build query with filters
+        $query = Lesson::with([
             'vocabulary',
             'matchingGames',
             'flashcardGames',
@@ -21,10 +27,35 @@ class LessonTrackerController extends Controller
             'sentenceBuilderGames',
             'trueFalseQuestions',
             'prompts',
-        ])->orderBy('grade_level')
+        ]);
+        
+        // Apply filters
+        if ($assignedTo !== null && $assignedTo !== '') {
+            if ($assignedTo === 'Unassigned') {
+                $query->whereNull('assigned_to');
+            } else {
+                $query->where('assigned_to', $assignedTo);
+            }
+        }
+        
+        if ($gradeLevel) {
+            $query->where('grade_level', $gradeLevel);
+        }
+        
+        if ($status) {
+            $query->where('status', $status);
+        }
+        
+        $lessons = $query->orderBy('grade_level')
           ->orderBy('session_number')
           ->orderBy('sort_order')
           ->get();
+        
+        // Get unique grade levels for filter dropdown
+        $gradeLevels = Lesson::whereNotNull('grade_level')
+            ->distinct('grade_level')
+            ->orderBy('grade_level')
+            ->pluck('grade_level');
 
         // Process lessons to check component status
         $lessons = $lessons->map(function ($lesson) {
@@ -85,7 +116,7 @@ class LessonTrackerController extends Controller
             ];
         });
 
-        return view('admin.lesson-tracker', compact('lessons'));
+        return view('admin.lesson-tracker', compact('lessons', 'gradeLevels', 'assignedTo', 'gradeLevel', 'status'));
     }
 
     /**

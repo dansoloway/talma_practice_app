@@ -6,8 +6,63 @@
 <div class="container">
     <h1 class="page-title">Lesson Tracker</h1>
 
+    <!-- Filters -->
+    <div class="dashboard-section" style="margin-bottom: 2rem;">
+        <h2>Filters</h2>
+        <form method="GET" action="{{ route('admin.lesson-tracker') }}" class="filters-form">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="assigned_to">Assigned To</label>
+                    <select name="assigned_to" id="assigned_to" class="form-control">
+                        <option value="">All</option>
+                        <option value="Unassigned" {{ $assignedTo === 'Unassigned' ? 'selected' : '' }}>Unassigned</option>
+                        <option value="Leila" {{ $assignedTo === 'Leila' ? 'selected' : '' }}>Leila</option>
+                        <option value="Jen" {{ $assignedTo === 'Jen' ? 'selected' : '' }}>Jen</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="grade_level">Grade Level</label>
+                    <select name="grade_level" id="grade_level" class="form-control">
+                        <option value="">All Grades</option>
+                        @foreach($gradeLevels as $grade)
+                            <option value="{{ $grade }}" {{ $gradeLevel == $grade ? 'selected' : '' }}>
+                                Grade {{ $grade }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="status">Status</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="">All Statuses</option>
+                        <option value="not_started" {{ $status === 'not_started' ? 'selected' : '' }}>Not Started</option>
+                        <option value="in_progress" {{ $status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                        <option value="done" {{ $status === 'done' ? 'selected' : '' }}>Done</option>
+                        <option value="stuck" {{ $status === 'stuck' ? 'selected' : '' }}>Stuck</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="display: flex; align-items: flex-end;">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    @if($assignedTo || $gradeLevel || $status)
+                        <a href="{{ route('admin.lesson-tracker') }}" class="btn" style="margin-left: 0.5rem;">Clear</a>
+                    @endif
+                </div>
+            </div>
+        </form>
+    </div>
+
     <div class="dashboard-section">
-        <table class="table tracker-table">
+        @if($lessons->isEmpty())
+            <p class="empty-text">No lessons found matching the selected filters.</p>
+        @else
+            <div class="results-info" style="margin-bottom: 1rem;">
+                <p>Showing {{ $lessons->count() }} lesson{{ $lessons->count() !== 1 ? 's' : '' }}
+                @if($assignedTo || $gradeLevel || $status)
+                    matching your filters
+                @endif
+                </p>
+            </div>
+            <table class="table tracker-table">
             <thead>
                 <tr>
                     <th>Lesson</th>
@@ -139,11 +194,80 @@
                 @endforeach
             </tbody>
         </table>
+        @endif
     </div>
 </div>
 
 @push('styles')
 <style>
+.filters-form {
+    margin-top: 1rem;
+}
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    align-items: end;
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+.filter-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+}
+.filter-group .form-control {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    background: #fff;
+}
+.filter-group .form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+}
+.btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+.btn-primary:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.btn:not(.btn-primary) {
+    background: #f3f4f6;
+    color: var(--color-text);
+}
+.btn:not(.btn-primary):hover {
+    background: #e5e7eb;
+}
+.results-info {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+.empty-text {
+    color: var(--color-text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 2rem;
+}
 .tracker-table {
     width: 100%;
     border-collapse: collapse;
