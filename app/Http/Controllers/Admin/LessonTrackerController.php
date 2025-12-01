@@ -18,16 +18,18 @@ class LessonTrackerController extends Controller
         $gradeLevel = $request->input('grade_level');
         $status = $request->input('status');
         
-        // Build query with filters
-        $query = Lesson::with([
-            'vocabulary',
-            'matchingGames',
-            'flashcardGames',
-            'spellingGames',
-            'sentenceBuilderGames',
-            'trueFalseQuestions',
-            'prompts',
-        ]);
+        // Build query with filters - exclude archived and inactive lessons
+        $query = Lesson::whereNull('archived_at')
+            ->where('is_active', true)
+            ->with([
+                'vocabulary',
+                'matchingGames',
+                'flashcardGames',
+                'spellingGames',
+                'sentenceBuilderGames',
+                'trueFalseQuestions',
+                'prompts',
+            ]);
         
         // Apply filters
         if ($assignedTo !== null && $assignedTo !== '') {
