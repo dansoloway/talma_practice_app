@@ -126,15 +126,26 @@ class LessonTrackerController extends Controller
     {
         $validated = $request->validate([
             'assigned_to' => 'nullable|string|in:Unassigned,Leila,Jen',
-            'status' => 'required|string|in:not_started,in_progress,done,stuck',
+            'status' => 'nullable|string|in:not_started,in_progress,done,stuck',
         ]);
 
-        // Convert "Unassigned" to null
-        if ($validated['assigned_to'] === 'Unassigned') {
-            $validated['assigned_to'] = null;
+        $updateData = [];
+
+        // Handle assigned_to if provided
+        if (isset($validated['assigned_to'])) {
+            // Convert "Unassigned" to null
+            $updateData['assigned_to'] = $validated['assigned_to'] === 'Unassigned' ? null : $validated['assigned_to'];
         }
 
-        $lesson->update($validated);
+        // Handle status if provided
+        if (isset($validated['status'])) {
+            $updateData['status'] = $validated['status'];
+        }
+
+        // Only update if there's data to update
+        if (!empty($updateData)) {
+            $lesson->update($updateData);
+        }
 
         return response()->json([
             'success' => true,
