@@ -10,7 +10,7 @@
     <div class="dashboard-section" style="margin-bottom: 2rem;">
         <h2>Filters</h2>
         <form method="GET" action="{{ route('admin.lesson-tracker') }}" class="filters-form">
-            <div class="filters-vertical">
+            <div class="filters-horizontal">
                 <div class="filter-group">
                     <label for="assigned_to">Assigned To</label>
                     <select name="assigned_to" id="assigned_to" class="form-control">
@@ -203,20 +203,21 @@
 .filters-form {
     margin-top: 1rem;
 }
-.filters-vertical {
+.filters-horizontal {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    max-width: 300px;
+    flex-direction: row;
+    gap: 1.5rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
 }
 .filter-group {
     display: flex;
     flex-direction: column;
+    min-width: 150px;
 }
 .filter-actions {
     flex-direction: row;
     align-items: flex-end;
-    margin-top: 0.5rem;
 }
 .filter-group label {
     font-weight: 600;
