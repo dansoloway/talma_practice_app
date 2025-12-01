@@ -10,7 +10,7 @@
     <div class="dashboard-section" style="margin-bottom: 2rem;">
         <h2>Filters</h2>
         <form method="GET" action="{{ route('admin.lesson-tracker') }}" class="filters-form">
-            <div class="filters-grid">
+            <div class="filters-vertical">
                 <div class="filter-group">
                     <label for="assigned_to">Assigned To</label>
                     <select name="assigned_to" id="assigned_to" class="form-control">
@@ -41,7 +41,7 @@
                         <option value="stuck" {{ $status === 'stuck' ? 'selected' : '' }}>Stuck</option>
                     </select>
                 </div>
-                <div class="filter-group" style="display: flex; align-items: flex-end;">
+                <div class="filter-group filter-actions">
                     <button type="submit" class="btn btn-primary">Apply Filters</button>
                     @if($assignedTo || $gradeLevel || $status)
                         <a href="{{ route('admin.lesson-tracker') }}" class="btn" style="margin-left: 0.5rem;">Clear</a>
@@ -203,15 +203,20 @@
 .filters-form {
     margin-top: 1rem;
 }
-.filters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    align-items: end;
+.filters-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 300px;
 }
 .filter-group {
     display: flex;
     flex-direction: column;
+}
+.filter-actions {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-top: 0.5rem;
 }
 .filter-group label {
     font-weight: 600;
