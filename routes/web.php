@@ -8,6 +8,7 @@ use App\Http\Controllers\ResponseController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
+use App\Http\Controllers\Admin\LessonTrackerController;
 use App\Http\Controllers\Admin\PartController as AdminPartController;
 use App\Http\Controllers\Admin\VocabularyController as AdminVocabularyController;
 use App\Http\Controllers\Admin\PromptController as AdminPromptController;
@@ -87,6 +88,10 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::get('analytics', [DashboardController::class, 'index'])->name('analytics');
     Route::get('session-length', [DashboardController::class, 'sessionLengthDashboard'])->name('session-length');
     Route::get('session-length/day-breakdown', [DashboardController::class, 'getDayActivityBreakdown'])->name('session-length.day-breakdown');
+    
+    // Lesson Tracker
+    Route::get('lesson-tracker', [LessonTrackerController::class, 'index'])->name('lesson-tracker');
+    Route::put('lesson-tracker/{lesson}', [LessonTrackerController::class, 'update'])->name('lesson-tracker.update');
     
     // Logout
     Route::post('/logout', function () {

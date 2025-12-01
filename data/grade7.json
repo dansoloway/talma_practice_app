@@ -1,0 +1,2589 @@
+{
+    "export_date": "2025-11-25T09:57:49+00:00",
+    "export_version": "1.0",
+    "total_lessons": 7,
+    "lessons": [
+        {
+            "lesson": {
+                "title": "Session 1: Class Rules",
+                "slug": "session-1-class-rules",
+                "instructions": "Complete the vocabulary and practice activities.",
+                "grade_level": "7",
+                "session_number": 1,
+                "session_title": "Session 1: Class Rules",
+                "is_active": true,
+                "sort_order": 1,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "always",
+                    "hebrew_translation": "תמיד",
+                    "arabic_translation": "دائماً",
+                    "image_path": "images\/vocabulary\/1762335815_Screenshot 2025-11-05 at 11.43.25.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424295_690c75e788756.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "listen",
+                    "hebrew_translation": "להקשיב",
+                    "arabic_translation": "إستمع إلى",
+                    "image_path": "images\/vocabulary\/1762335842_Screenshot 2025-11-05 at 11.43.53.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424296_690c75e80a1bd.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "safe",
+                    "hebrew_translation": "להיות בטוחים",
+                    "arabic_translation": "كن آمنا",
+                    "image_path": "images\/vocabulary\/1762335878_Screenshot 2025-11-05 at 11.44.30.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424296_690c75e879b3e.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "students",
+                    "hebrew_translation": "לתלמידים",
+                    "arabic_translation": "الطلاب",
+                    "image_path": "images\/vocabulary\/1762335908_Screenshot 2025-11-05 at 11.44.56.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424297_690c75e9030a2.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "teacher",
+                    "hebrew_translation": "למורה",
+                    "arabic_translation": "المعلم",
+                    "image_path": "images\/vocabulary\/1762335939_Screenshot 2025-11-05 at 11.45.31.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424297_690c75e97d2e3.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "speak",
+                    "hebrew_translation": "לדבר",
+                    "arabic_translation": "يتحدث",
+                    "image_path": "images\/vocabulary\/1762335981_Screenshot 2025-11-05 at 11.46.12.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424297_690c75e9f2592.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "food",
+                    "hebrew_translation": "לאוכל",
+                    "arabic_translation": "الطعام",
+                    "image_path": "images\/vocabulary\/1762336009_Screenshot 2025-11-05 at 11.46.40.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424298_690c75ea7a2af.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "clean up",
+                    "hebrew_translation": "לנקות",
+                    "arabic_translation": "التنظيف",
+                    "image_path": "images\/vocabulary\/1762336063_Screenshot 2025-11-05 at 11.47.05.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424298_690c75eaf0a87.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "help",
+                    "hebrew_translation": "לעזור",
+                    "arabic_translation": "المساعدة",
+                    "image_path": "images\/vocabulary\/1762336105_Screenshot 2025-11-05 at 11.48.17.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424299_690c75eb7acc5.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                },
+                {
+                    "english_word": "ask",
+                    "hebrew_translation": "לבקש",
+                    "arabic_translation": "السؤال",
+                    "image_path": "images\/vocabulary\/1762336227_Screenshot 2025-11-05 at 11.50.17.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424300_690c75ec01f87.mp3",
+                    "is_active": true,
+                    "sort_order": 11
+                },
+                {
+                    "english_word": "respect",
+                    "hebrew_translation": "לכבד",
+                    "arabic_translation": "الاحترام",
+                    "image_path": "images\/vocabulary\/1762336262_Screenshot 2025-11-05 at 11.50.53.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424300_690c75ec7df47.mp3",
+                    "is_active": true,
+                    "sort_order": 12
+                }
+            ],
+            "prompts": [
+                {
+                    "prompt_text": "What should you do at the end of class?",
+                    "template": "You should {} at the end of class.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 1,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "ask",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o227.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p57_o227.mp3",
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "clean up",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o228.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p57_o228.mp3",
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "speak",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o229.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p57_o229.mp3",
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "be safe",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o230.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p57_o230.mp3",
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                }
+            ],
+            "matching_games": [
+                {
+                    "title": "Session 1: Class Rules",
+                    "vocabulary_ids": [
+                        "136",
+                        "137",
+                        "138",
+                        "139",
+                        "140",
+                        "141",
+                        "142",
+                        "143"
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 0
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Class Rules Flashcards",
+                    "game_types": [
+                        "image_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        "136",
+                        "137",
+                        "138",
+                        "139",
+                        "140",
+                        "141",
+                        "142",
+                        "143",
+                        "144",
+                        "145",
+                        "146"
+                    ],
+                    "cards_per_game": 11,
+                    "is_active": true,
+                    "sort_order": 0
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 3: Making a Volcano",
+                "slug": "making-a-volcano",
+                "instructions": "Complete the vocabulary presentation and activities for this lesson.",
+                "grade_level": "7",
+                "session_number": 3,
+                "session_title": "Session 3",
+                "is_active": true,
+                "sort_order": 2,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "science",
+                    "hebrew_translation": "מדע",
+                    "arabic_translation": "علم",
+                    "image_path": "images\/vocabulary\/1762162041_Screenshot 2025-11-03 at 11.26.45.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424266_690c75ca3dc22.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "experiment",
+                    "hebrew_translation": "ניסוי",
+                    "arabic_translation": "تجربة",
+                    "image_path": "images\/vocabulary\/1762337149_Screenshot 2025-11-05 at 12.05.38.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424267_690c75cb32326.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "volcano",
+                    "hebrew_translation": "הר געש",
+                    "arabic_translation": "بركان",
+                    "image_path": "images\/vocabulary\/1762337179_Screenshot 2025-11-05 at 12.06.11.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424267_690c75cbb0fbf.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "materials",
+                    "hebrew_translation": "חומרים",
+                    "arabic_translation": "مواد",
+                    "image_path": "images\/vocabulary\/1762337267_Screenshot 2025-11-05 at 12.07.37.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424268_690c75cc2ed9c.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "spoon",
+                    "hebrew_translation": "כפית",
+                    "arabic_translation": "ملعقة",
+                    "image_path": "images\/vocabulary\/1762337297_Screenshot 2025-11-05 at 12.08.06.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424268_690c75cca76b4.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "cup",
+                    "hebrew_translation": "כוס",
+                    "arabic_translation": "كوب",
+                    "image_path": "images\/vocabulary\/1762337343_Screenshot 2025-11-05 at 12.08.53.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424269_690c75cd1c170.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "vinegar",
+                    "hebrew_translation": "חומץ",
+                    "arabic_translation": "خل",
+                    "image_path": "images\/vocabulary\/1762337378_Screenshot 2025-11-05 at 12.09.27.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424269_690c75cdad462.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "baking soda",
+                    "hebrew_translation": "סודה לשתייה",
+                    "arabic_translation": "بيكربونات الصوديوم",
+                    "image_path": "images\/vocabulary\/1762337413_Screenshot 2025-11-05 at 12.10.03.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424270_690c75ce3ae1b.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "soap",
+                    "hebrew_translation": "סבון",
+                    "arabic_translation": "صابون",
+                    "image_path": "images\/vocabulary\/1762337460_Screenshot 2025-11-05 at 12.10.50.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424270_690c75ceafa46.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "make",
+                    "hebrew_translation": "להכין",
+                    "arabic_translation": "يصنع",
+                    "image_path": "images\/vocabulary\/1762337505_Screenshot 2025-11-05 at 12.11.34.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424271_690c75cf33546.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                }
+            ],
+            "prompts": [
+                {
+                    "prompt_text": "What did we use for this experiment?",
+                    "template": "We used many {} for this experiment.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 3,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 1,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "volcanoes",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o207.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "spoons",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o208.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "materials",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o209.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "cups",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o210.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "What did we make in class today?",
+                    "template": "We made a {} in class today.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 1,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 2,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "volcano",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o211.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "spoon",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o212.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "baking soda",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o213.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "soap",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o214.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "What did we mix to make our volcano?",
+                    "template": "We mixed {} and baking soda to make our volcano.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "spoon",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o215.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "vinegar",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "soap",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "water",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "What do we use to wash our hands?",
+                    "template": "We use {} to wash our hands.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 3,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 4,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "vinegar",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "baking soda",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "soap",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "candy",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "What will we do in We Speak class this year?",
+                    "template": "We will do many {}!",
+                    "prompt_audio_path": null,
+                    "correct_answer": 4,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 5,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "questions",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "materials",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "volcanoes",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "experiments",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                }
+            ],
+            "matching_games": [
+                {
+                    "title": "Session 3",
+                    "vocabulary_ids": [
+                        "68",
+                        "69",
+                        "70",
+                        "71",
+                        "72",
+                        "73",
+                        "74",
+                        "75"
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 0
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Flashcards",
+                    "game_types": [
+                        "image_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        "68",
+                        "69",
+                        "70",
+                        "71",
+                        "72",
+                        "73",
+                        "74",
+                        "75",
+                        "76",
+                        "77"
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 0
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 4 - Scientific Method Vocabulary A",
+                "slug": "scientitic-method-vocab",
+                "instructions": "Complete the vocabulary presentation and activities for this lesson.",
+                "grade_level": "7",
+                "session_number": 4,
+                "session_title": "Session 4 - Part A",
+                "is_active": true,
+                "sort_order": 3,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "question",
+                    "hebrew_translation": "שאלה",
+                    "arabic_translation": "سؤال",
+                    "image_path": "images\/vocabulary\/1762340012_Screenshot 2025-11-05 at 12.53.20.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424300_690c75ecee54a.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "I wonder",
+                    "hebrew_translation": "אני תוהה",
+                    "arabic_translation": "بتساءل",
+                    "image_path": "images\/vocabulary\/1762340072_Screenshot 2025-11-05 at 12.54.20.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424301_690c75ed911c9.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "hypothesize",
+                    "hebrew_translation": "משער \/ מציע השערה",
+                    "arabic_translation": "بفرض فرضية",
+                    "image_path": "images\/vocabulary\/1762340109_Screenshot 2025-11-05 at 12.54.57.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424302_690c75ee203dd.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "I think",
+                    "hebrew_translation": "אני חושב \/ חושבת",
+                    "arabic_translation": "بفكر",
+                    "image_path": "images\/vocabulary\/1762340134_Screenshot 2025-11-05 at 12.55.23.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424302_690c75eea386a.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "experiment",
+                    "hebrew_translation": "לְנַסוֹת",
+                    "arabic_translation": "تجربة",
+                    "image_path": "images\/vocabulary\/1762340158_Screenshot 2025-11-05 at 12.05.38.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424303_690c75ef2ff84.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "I do",
+                    "hebrew_translation": "אני עושה",
+                    "arabic_translation": "بعمل",
+                    "image_path": "images\/vocabulary\/1762340231_Screenshot 2025-11-05 at 12.57.00.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424303_690c75efa1a88.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "observe",
+                    "hebrew_translation": "מתבונן \/ צופה",
+                    "arabic_translation": "بيراقب",
+                    "image_path": "images\/vocabulary\/1762340423_Screenshot 2025-11-05 at 13.00.13.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424304_690c75f031d01.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "I see",
+                    "hebrew_translation": "אני רואה",
+                    "arabic_translation": "بشوف",
+                    "image_path": "images\/vocabulary\/1762340467_Screenshot 2025-11-05 at 13.00.35.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424304_690c75f09f153.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "conclude",
+                    "hebrew_translation": "מסיק מסקנה",
+                    "arabic_translation": "بستنتج",
+                    "image_path": "images\/vocabulary\/1762340560_Screenshot 2025-11-05 at 13.02.28.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424305_690c75f11cd04.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                },
+                {
+                    "english_word": "I learn",
+                    "hebrew_translation": "אני לומד \/ לומדת",
+                    "arabic_translation": "بتعلم",
+                    "image_path": "images\/vocabulary\/1762340641_Screenshot 2025-11-05 at 13.03.49.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424305_690c75f195581.mp3",
+                    "is_active": true,
+                    "sort_order": 11
+                },
+                {
+                    "english_word": "share",
+                    "hebrew_translation": "משתף \/ משתפת",
+                    "arabic_translation": "بشارك",
+                    "image_path": "images\/vocabulary\/1762340675_Screenshot 2025-11-05 at 13.04.23.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424306_690c75f217932.mp3",
+                    "is_active": true,
+                    "sort_order": 12
+                }
+            ],
+            "prompts": [
+                {
+                    "prompt_text": "What is the first step in the scientific method?",
+                    "template": "The first step in the scientific method is {}.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "experiment and observe",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o231.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "question",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o232.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "conclude and share",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o233.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "hypothesize",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o234.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "What is the second step in the scientific method?",
+                    "template": "The second step in the scientific method is {}.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 4,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "experiment and observe",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o235.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "question",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o236.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "conclude and share",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o237.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "hypothesize",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "What is the last step in the scientific method?",
+                    "template": "The last step in the scientific method is {}.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 3,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "experiment and observe",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "question",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "conclude and share",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "hypothesize",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "What step in the scientific method is \"I wonder...\"",
+                    "template": "\"I wonder...\" is {}.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "experiment and observe",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "question",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "conclude and share",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "hypothesize",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "What step in the scientific method is \"I see...\"",
+                    "template": "\"I see...\" is {}.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 1,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "experiment and observe",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "question",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "conclude and share",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "hypothesize",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                }
+            ],
+            "matching_games": [
+                {
+                    "title": "Session 4 - Part A",
+                    "vocabulary_ids": [
+                        "148",
+                        "149",
+                        "150",
+                        "151",
+                        "152",
+                        "153",
+                        "154",
+                        "155"
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Scientific Method Steps Flashcards",
+                    "game_types": [
+                        "image_to_word",
+                        "image_to_audio",
+                        "audio_to_image",
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        "148",
+                        "149",
+                        "150",
+                        "151",
+                        "152",
+                        "153",
+                        "154",
+                        "155",
+                        "156",
+                        "157",
+                        "158"
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 2
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 4 - The Scientific Method B",
+                "slug": "the-scientific-method",
+                "instructions": "Complete the vocabulary presentation and activities for this lesson.",
+                "grade_level": "7",
+                "session_number": 4,
+                "session_title": "Session 4 - Part B",
+                "is_active": true,
+                "sort_order": 4,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "ice",
+                    "hebrew_translation": "קרח",
+                    "arabic_translation": "جليد",
+                    "image_path": "images\/vocabulary\/1762341189_Screenshot 2025-11-05 at 13.12.57.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424271_690c75cfb6d85.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "melts",
+                    "hebrew_translation": "נמס",
+                    "arabic_translation": "يذوب",
+                    "image_path": "images\/vocabulary\/1762341223_Screenshot 2025-11-05 at 13.13.31.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424272_690c75d04b781.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "fast",
+                    "hebrew_translation": "מהר",
+                    "arabic_translation": "سريع",
+                    "image_path": "images\/vocabulary\/1762341254_Screenshot 2025-11-05 at 13.13.57.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424272_690c75d0cd8a1.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "warm",
+                    "hebrew_translation": "חם",
+                    "arabic_translation": "دافئ",
+                    "image_path": "images\/vocabulary\/1762343273_Screenshot 2025-11-05 at 13.47.40.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424273_690c75d154e27.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "water",
+                    "hebrew_translation": "מים",
+                    "arabic_translation": "ماء",
+                    "image_path": "images\/vocabulary\/1762343307_Screenshot 2025-11-05 at 13.48.15.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424273_690c75d1cf3be.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "seeds",
+                    "hebrew_translation": "זרעים",
+                    "arabic_translation": "بذور",
+                    "image_path": "images\/vocabulary\/1762343386_Screenshot 2025-11-05 at 13.49.31.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424274_690c75d27daa0.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "grow",
+                    "hebrew_translation": "לגדול",
+                    "arabic_translation": "ينمو",
+                    "image_path": "images\/vocabulary\/1762343427_Screenshot 2025-11-05 at 13.50.15.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424274_690c75d2f018c.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "wonder",
+                    "hebrew_translation": "לתהות",
+                    "arabic_translation": "يتساءل",
+                    "image_path": "images\/vocabulary\/1762343445_Screenshot 2025-11-05 at 12.54.20.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424275_690c75d37452e.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "sunlight",
+                    "hebrew_translation": "אור שמש",
+                    "arabic_translation": "ضوء الشمس",
+                    "image_path": "images\/vocabulary\/1762343484_Screenshot 2025-11-05 at 13.51.12.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424275_690c75d3ea8f5.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "tall",
+                    "hebrew_translation": "גבוה",
+                    "arabic_translation": "طويل",
+                    "image_path": "images\/vocabulary\/1762343520_Screenshot 2025-11-05 at 13.51.38.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424276_690c75d4866cc.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                }
+            ],
+            "prompts": [
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "The {} melts in the sun.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 1,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "grow",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o251.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p63_o251.mp3",
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "ice",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o252.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p63_o252.mp3",
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "melt",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o253.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p63_o253.mp3",
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "warm",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o254.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p63_o254.mp3",
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "The plant {} faster with sun and water.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 1,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 2,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "grows",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o255.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p64_o255.mp3",
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "ice",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o256.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "melt",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o257.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "warm",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o258.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "The ice {} faster in the sunlight.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 3,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "grow",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o259.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "ice",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o260.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "melts",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o261.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "warm",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o262.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "I {} if water makes seeds grow faster.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 4,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 4,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "grows",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o263.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "ice",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o264.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "melt",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o265.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "wonder",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o266.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "Ice melts faster in {} weather.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 5,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "water",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o267.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "warm",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o268.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "melt",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o269.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "wonder",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o270.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                }
+            ],
+            "matching_games": [
+                {
+                    "title": "Session 4 - Part B",
+                    "vocabulary_ids": [
+                        "78",
+                        "79",
+                        "80",
+                        "81",
+                        "82",
+                        "83",
+                        "84",
+                        "85"
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 0
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "The Scientific Method Part B Flashcards",
+                    "game_types": [
+                        "image_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        "78",
+                        "79",
+                        "80",
+                        "81",
+                        "82",
+                        "83",
+                        "84",
+                        "85",
+                        "86",
+                        "87"
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 0
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 4 Part C- Making a Paper Airplane",
+                "slug": "making-a-paper-airplane",
+                "instructions": "Complete the vocabulary presentation and activities for this lesson.",
+                "grade_level": "7",
+                "session_number": 4,
+                "session_title": "Session 4 - Part C",
+                "is_active": true,
+                "sort_order": 5,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "paper",
+                    "hebrew_translation": "נייר",
+                    "arabic_translation": "ورق",
+                    "image_path": "images\/vocabulary\/1761731612_Screenshot 2025-10-29 at 11.53.25.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424277_690c75d50b16d.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "notebook",
+                    "hebrew_translation": "מחברת",
+                    "arabic_translation": "دفتر",
+                    "image_path": "images\/vocabulary\/1761731634_Screenshot 2025-10-29 at 11.53.47.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424277_690c75d5940db.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "measuring tape",
+                    "hebrew_translation": "סרט מדידה",
+                    "arabic_translation": "شريط قياس",
+                    "image_path": "images\/vocabulary\/1761731661_Screenshot 2025-10-29 at 11.54.13.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424278_690c75d626b2f.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "timer",
+                    "hebrew_translation": "טיימר",
+                    "arabic_translation": "مؤقت",
+                    "image_path": "images\/vocabulary\/1761731683_Screenshot 2025-10-29 at 11.54.35.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424278_690c75d698711.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "pencil",
+                    "hebrew_translation": "עיפרון",
+                    "arabic_translation": "قلم رصاص",
+                    "image_path": "images\/vocabulary\/1761731705_Screenshot 2025-10-29 at 11.54.57.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424279_690c75d71709e.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "paper clip",
+                    "hebrew_translation": "מהדק נייר",
+                    "arabic_translation": "مشبك ورق",
+                    "image_path": "images\/vocabulary\/1761731726_Screenshot 2025-10-29 at 11.55.18.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424279_690c75d795657.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "glue",
+                    "hebrew_translation": "דבק",
+                    "arabic_translation": "غراء",
+                    "image_path": "images\/vocabulary\/1761731754_Screenshot 2025-10-29 at 11.55.46.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424280_690c75d8181df.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "airplane",
+                    "hebrew_translation": "מטוס",
+                    "arabic_translation": "طائرة",
+                    "image_path": "images\/vocabulary\/1761731775_Screenshot 2025-10-29 at 11.56.08.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424280_690c75d88aad7.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                }
+            ],
+            "prompts": [
+                {
+                    "prompt_text": "Complete the sentence",
+                    "template": "First, fold a piece of {} in half",
+                    "prompt_audio_path": null,
+                    "correct_answer": 3,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 1,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "paper clip",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o73.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p19_o73.mp3",
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "timer",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o74.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p19_o74.mp3",
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "paper",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o75.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p19_o75.mp3",
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "measuring tape",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o76.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p19_o76.mp3",
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Complete the sentence",
+                    "template": "Then fold the corners and put a {} on it.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 4,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 2,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "notebook",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o77.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p20_o77.mp3",
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "glue",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o78.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p20_o78.mp3",
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "timer",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o79.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p20_o79.mp3",
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "paper clip",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o80.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p20_o80.mp3",
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Complete the sentence",
+                    "template": "Throw the airplane and see how {} it flies.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 1,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "far",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o81.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p21_o81.mp3",
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "close",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o82.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p21_o82.mp3",
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "near",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o83.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p21_o83.mp3",
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "glue",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o84.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p21_o84.mp3",
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Complete the sentence",
+                    "template": "Use the {} to see how much time the airplane flies.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 3,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 4,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "glue",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o85.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p22_o85.mp3",
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "paperclip",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o86.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p22_o86.mp3",
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "measuring tape",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o87.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p22_o87.mp3",
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "timer",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o88.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p22_o88.mp3",
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Complete the sentence",
+                    "template": "How far did the {} fly?",
+                    "prompt_audio_path": null,
+                    "correct_answer": 1,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 5,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "airplane",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o146.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p23_o146.mp3",
+                            "is_active": true,
+                            "sort_order": 0
+                        },
+                        {
+                            "label": "long",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o89.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p23_o89.mp3",
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "far",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o90.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p23_o90.mp3",
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "close",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o91.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p23_o91.mp3",
+                            "is_active": true,
+                            "sort_order": 3
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Complete the sentence",
+                    "template": "Write the results in your {}",
+                    "prompt_audio_path": null,
+                    "correct_answer": 3,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 6,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "airplane",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o93.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p24_o93.mp3",
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "pencil",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o94.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p24_o94.mp3",
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "notebook",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o95.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p24_o95.mp3",
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "glue",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o96.mp3",
+                            "sentence_audio_path": "\/storage\/tts\/sentences\/sentence_p24_o96.mp3",
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                }
+            ],
+            "matching_games": [
+                {
+                    "title": "Session 4 - Part B",
+                    "vocabulary_ids": [
+                        "88",
+                        "89",
+                        "90",
+                        "91",
+                        "92",
+                        "93",
+                        "94",
+                        "95"
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 0
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Making an Airplane - Flashcards",
+                    "game_types": [
+                        "image_to_word",
+                        "image_to_audio",
+                        "audio_to_image",
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        "88",
+                        "89",
+                        "90",
+                        "91",
+                        "92",
+                        "93",
+                        "94",
+                        "95"
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 0
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 5: Scientific Method Deep Dive Part A",
+                "slug": "session-5-scientific-method-deep-dive",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "7",
+                "session_number": 5,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 6,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "first",
+                    "hebrew_translation": "ראשון",
+                    "arabic_translation": "أول",
+                    "image_path": "images\/vocabulary\/1762679377_Screenshot 2025-11-09 at 11.09.16.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679109_691059454b4ab.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "second",
+                    "hebrew_translation": "שני",
+                    "arabic_translation": "تاني",
+                    "image_path": "images\/vocabulary\/1762679431_Screenshot 2025-11-09 at 11.10.22.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679109_69105945ccc34.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "third",
+                    "hebrew_translation": "שלישי",
+                    "arabic_translation": "تالت",
+                    "image_path": "images\/vocabulary\/1762679476_Screenshot 2025-11-09 at 11.10.59.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679110_6910594659f74.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "fourth",
+                    "hebrew_translation": "רביעי",
+                    "arabic_translation": "رابع",
+                    "image_path": "images\/vocabulary\/1762679565_Screenshot 2025-11-09 at 11.12.37.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679110_69105946d1964.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "question",
+                    "hebrew_translation": "שאלה",
+                    "arabic_translation": "سؤال",
+                    "image_path": "images\/vocabulary\/1762679609_Screenshot 2025-11-05 at 12.53.20.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679111_6910594758ddb.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "hypothesize",
+                    "hebrew_translation": "משער \/ מציע השערה",
+                    "arabic_translation": "بفرض فرضية",
+                    "image_path": "images\/vocabulary\/1762679643_Screenshot 2025-11-05 at 12.55.23.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679111_69105947ee2d2.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "see",
+                    "hebrew_translation": "רואה",
+                    "arabic_translation": "بشوف",
+                    "image_path": "images\/vocabulary\/1762679657_Screenshot 2025-11-05 at 13.00.35.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679112_6910594877b42.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "experiment",
+                    "hebrew_translation": "ניסוי",
+                    "arabic_translation": "تجربة",
+                    "image_path": "images\/vocabulary\/1762679672_Screenshot 2025-11-05 at 12.05.38.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679113_6910594905e93.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "observe",
+                    "hebrew_translation": "מתבונן \/ צופה",
+                    "arabic_translation": "بيراقب",
+                    "image_path": "images\/vocabulary\/1762679685_Screenshot 2025-11-05 at 13.00.13.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679113_691059498b007.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                },
+                {
+                    "english_word": "conclude",
+                    "hebrew_translation": "מסיק מסקנה",
+                    "arabic_translation": "بستنتج",
+                    "image_path": "images\/vocabulary\/1762679713_Screenshot 2025-11-05 at 13.02.28.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679114_6910594a0efaf.mp3",
+                    "is_active": true,
+                    "sort_order": 11
+                },
+                {
+                    "english_word": "share",
+                    "hebrew_translation": "משתף \/ משתפת",
+                    "arabic_translation": "بشارك",
+                    "image_path": "images\/vocabulary\/1762679726_Screenshot 2025-11-05 at 13.04.23.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679114_6910594a7dc71.mp3",
+                    "is_active": true,
+                    "sort_order": 12
+                },
+                {
+                    "english_word": "wonder",
+                    "hebrew_translation": "תוהה",
+                    "arabic_translation": "بتساءل",
+                    "image_path": "images\/vocabulary\/1762679740_Screenshot 2025-11-05 at 12.53.20.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679115_6910594b10185.mp3",
+                    "is_active": true,
+                    "sort_order": 13
+                },
+                {
+                    "english_word": "think",
+                    "hebrew_translation": "חושב \/ חושבת",
+                    "arabic_translation": "بفكر",
+                    "image_path": "images\/vocabulary\/1762679799_Screenshot 2025-11-09 at 11.16.27.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679115_6910594b86612.mp3",
+                    "is_active": true,
+                    "sort_order": 14
+                },
+                {
+                    "english_word": "learn",
+                    "hebrew_translation": "לומד \/ לומדת",
+                    "arabic_translation": "بتعلم",
+                    "image_path": "images\/vocabulary\/1762680474_Screenshot 2025-11-05 at 13.03.49.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762679116_6910594c0879e.mp3",
+                    "is_active": true,
+                    "sort_order": 15
+                }
+            ],
+            "prompts": [
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "The {} step is to question.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 1,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "first",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "second",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "third",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "fourth",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "To \"observe\" means to {}.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 3,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "question",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "hypthosize",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "see",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "conclude",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "To \"wonder\" means to {}.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 1,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "question",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "hypthosize",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "see",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "conclude",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "The {} step is to conclude and share.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 4,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "first",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "second",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "third",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "fourth",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "The {} step is to hypothesize.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "first",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "second",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "third",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "fourth",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                }
+            ],
+            "matching_games": [
+                {
+                    "title": "Vocabulary Matching Game",
+                    "vocabulary_ids": [
+                        "160",
+                        "161",
+                        "162",
+                        "163",
+                        "164",
+                        "165",
+                        "166",
+                        "167"
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Scientific Method Deep Dive Vocabulary Flashcards",
+                    "game_types": [
+                        "image_to_word",
+                        "image_to_audio",
+                        "audio_to_image",
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        "160",
+                        "161",
+                        "162",
+                        "163",
+                        "164",
+                        "165",
+                        "166",
+                        "167",
+                        "168",
+                        "169",
+                        "170",
+                        "171",
+                        "172",
+                        "173"
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 2
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 5: Scientific Method Deep Dive Part B - Experiment",
+                "slug": "session-5-scientific-method-deep-dive-part-b-experiment",
+                "instructions": "Please complete the vocabulary activities.",
+                "grade_level": "7",
+                "session_number": 5,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 7,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "paper",
+                    "hebrew_translation": "נייר",
+                    "arabic_translation": "ورق",
+                    "image_path": "images\/vocabulary\/1762692234_Screenshot 2025-11-09 at 14.43.42.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692234_69108c8abda55.mp3",
+                    "is_active": true,
+                    "sort_order": 0
+                },
+                {
+                    "english_word": "crumpled",
+                    "hebrew_translation": "מקומט",
+                    "arabic_translation": "معوج \/ مطوي",
+                    "image_path": "images\/vocabulary\/1762692164_Screenshot 2025-11-09 at 14.42.33.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692114_69108c12a48f9.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "timer",
+                    "hebrew_translation": "שעון עצר",
+                    "arabic_translation": "مؤقت",
+                    "image_path": "images\/vocabulary\/1762693877_Screenshot 2025-11-09 at 15.11.05.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692115_69108c132daa4.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "pencil",
+                    "hebrew_translation": "עיפרון",
+                    "arabic_translation": "قلم رصاص",
+                    "image_path": "images\/vocabulary\/1762699886_Screenshot 2025-11-09 at 16.51.17.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692115_69108c13abfe3.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "notebook",
+                    "hebrew_translation": "מחברת",
+                    "arabic_translation": "دفتر",
+                    "image_path": "images\/vocabulary\/1762699913_Screenshot 2025-11-09 at 16.51.45.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692116_69108c1430843.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "fall",
+                    "hebrew_translation": "נופל",
+                    "arabic_translation": "يطيح",
+                    "image_path": "images\/vocabulary\/1762700001_Screenshot 2025-11-09 at 16.53.13.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692116_69108c14a5ac6.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "faster",
+                    "hebrew_translation": "מהר יותר",
+                    "arabic_translation": "أسرع",
+                    "image_path": "images\/vocabulary\/1762700035_Screenshot 2025-11-09 at 16.53.47.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692117_69108c15324d0.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "flat",
+                    "hebrew_translation": "שטוח",
+                    "arabic_translation": "مسطح",
+                    "image_path": "images\/vocabulary\/1762700107_Screenshot 2025-11-09 at 16.54.57.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692117_69108c15a7ee7.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "same",
+                    "hebrew_translation": "אותו דבר \/ זהה",
+                    "arabic_translation": "نفس الشيء",
+                    "image_path": "images\/vocabulary\/1762700133_Screenshot 2025-11-09 at 16.55.23.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692118_69108c161e8f5.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "different",
+                    "hebrew_translation": "שונה",
+                    "arabic_translation": "مختلف",
+                    "image_path": "images\/vocabulary\/1762700140_Screenshot 2025-11-09 at 16.55.23.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692118_69108c16a4cce.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                },
+                {
+                    "english_word": "write",
+                    "hebrew_translation": "כותב \/ כותבת",
+                    "arabic_translation": "يكتب",
+                    "image_path": "images\/vocabulary\/1762700174_Screenshot 2025-11-09 at 16.56.04.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692119_69108c171c57f.mp3",
+                    "is_active": true,
+                    "sort_order": 11
+                },
+                {
+                    "english_word": "number",
+                    "hebrew_translation": "מספר",
+                    "arabic_translation": "رقم",
+                    "image_path": "images\/vocabulary\/1762700207_Screenshot 2025-11-09 at 16.56.38.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692119_69108c178a2f1.mp3",
+                    "is_active": true,
+                    "sort_order": 12
+                },
+                {
+                    "english_word": "right",
+                    "hebrew_translation": "נכון",
+                    "arabic_translation": "صح",
+                    "image_path": "images\/vocabulary\/1762700274_Screenshot 2025-11-09 at 16.57.38.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692120_69108c180d3d5.mp3",
+                    "is_active": true,
+                    "sort_order": 13
+                },
+                {
+                    "english_word": "wrong",
+                    "hebrew_translation": "לא נכון",
+                    "arabic_translation": "غلط",
+                    "image_path": "images\/vocabulary\/1762700290_Screenshot 2025-11-09 at 16.58.01.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762692120_69108c1882443.mp3",
+                    "is_active": true,
+                    "sort_order": 14
+                }
+            ],
+            "prompts": [
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "I use the {} to see how long something takes.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 1,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "paper",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o291.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "timer",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o292.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "pencil",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o293.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "notebook",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o294.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "I use the {} to write on the paper.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 3,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 2,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "paper",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o295.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "timer",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o296.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "pencil",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o297.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "notebook",
+                            "image_path": "",
+                            "word_audio_path": "\/storage\/tts\/words\/word_o298.mp3",
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "My favorite {} is 8.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 1,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "number",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "right",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "wrong",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "same",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "I am happy because I got all the questions {} on my test!",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 4,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "number",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "right",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "wrong",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "same",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in the blank.",
+                    "template": "My friend and I have the {} toy.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 4,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 5,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "number",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "right",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "wrong",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "same",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                }
+            ],
+            "matching_games": [
+                {
+                    "title": "Vocabulary Matching Game",
+                    "vocabulary_ids": [
+                        "203",
+                        "190",
+                        "191",
+                        "192",
+                        "193",
+                        "194",
+                        "195",
+                        "196"
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 0
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 5: Scientific Method Deep Dive Part B - Experiment Flashcards",
+                    "game_types": [
+                        "image_to_word",
+                        "image_to_audio",
+                        "audio_to_image",
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        "203",
+                        "190",
+                        "191",
+                        "192",
+                        "193",
+                        "194",
+                        "195",
+                        "196",
+                        "197",
+                        "198",
+                        "199",
+                        "200",
+                        "201",
+                        "202"
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 0
+                }
+            ],
+            "vocabulary_presentations": []
+        }
+    ]
+}

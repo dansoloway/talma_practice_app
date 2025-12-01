@@ -1,0 +1,2610 @@
+{
+    "export_date": "2025-11-25T09:57:53+00:00",
+    "export_version": "1.0",
+    "total_lessons": 17,
+    "lessons": [
+        {
+            "lesson": {
+                "title": "Session 4 part 3",
+                "slug": "session-4-part-3",
+                "instructions": null,
+                "grade_level": "8",
+                "session_number": null,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 5,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "heat",
+                    "hebrew_translation": "חום",
+                    "arabic_translation": "حرارة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946214_69146ca6e1e5a.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "adapt",
+                    "hebrew_translation": "להתאים",
+                    "arabic_translation": "يتكيف",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946216_69146ca8176dd.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "scorpion",
+                    "hebrew_translation": "עקרב",
+                    "arabic_translation": "عقرب",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946218_69146caa51d84.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "survive",
+                    "hebrew_translation": "לְהִשָּׁאֵר בַּחַי",
+                    "arabic_translation": "يَبْقَى عَلَى قَيْدِ الْحَيَاة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946220_69146caca314c.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "blizzard",
+                    "hebrew_translation": "סופת שלגים",
+                    "arabic_translation": "عاصفة ثلجية",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946223_69146caf5569b.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "hibernate",
+                    "hebrew_translation": "חִיוּת",
+                    "arabic_translation": "سبات",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946225_69146cb1e0297.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "insulation",
+                    "hebrew_translation": "בידוד",
+                    "arabic_translation": "عزل",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946227_69146cb3ab85a.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "climate",
+                    "hebrew_translation": "אקלים",
+                    "arabic_translation": "مناخ",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946229_69146cb50ecab.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "strategies",
+                    "hebrew_translation": "אסטרטגיות",
+                    "arabic_translation": "استراتيجيات",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946231_69146cb7552c4.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 4 part 3 Matching Game 1",
+                    "vocabulary_ids": [
+                        294,
+                        295,
+                        296,
+                        297,
+                        298,
+                        299,
+                        300,
+                        301
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 4 part 3 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        294,
+                        295,
+                        296,
+                        297,
+                        298,
+                        299,
+                        300,
+                        301,
+                        302
+                    ],
+                    "cards_per_game": 9,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Scientific Method",
+                "slug": "scientific-method",
+                "instructions": "Complete the vocabulary presentation and activities for this lesson.",
+                "grade_level": "8",
+                "session_number": 1,
+                "session_title": "Session 1",
+                "is_active": true,
+                "sort_order": 1,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "hypothesis",
+                    "hebrew_translation": "השערה",
+                    "arabic_translation": "فرضية",
+                    "image_path": "images\/vocabulary\/1762773156_hypothesis.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424281_690c75d91ce71.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "observe",
+                    "hebrew_translation": "להתבונן",
+                    "arabic_translation": "يلاحظ",
+                    "image_path": "images\/vocabulary\/1762773255_observe pic.jpeg",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424281_690c75d98e286.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "measure",
+                    "hebrew_translation": "למדוד",
+                    "arabic_translation": "يقيس",
+                    "image_path": "images\/vocabulary\/1762773303_measure pic.png",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424282_690c75da0acf8.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "data",
+                    "hebrew_translation": "נתונים",
+                    "arabic_translation": "بيانات",
+                    "image_path": "images\/vocabulary\/1762773359_data pic.jpeg",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424282_690c75da83170.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "test",
+                    "hebrew_translation": "מבחן",
+                    "arabic_translation": "اختبار",
+                    "image_path": "images\/vocabulary\/1762773481_test pic.jpeg",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424282_690c75daf0a15.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "result",
+                    "hebrew_translation": "תוצאה",
+                    "arabic_translation": "نتيجة",
+                    "image_path": "images\/vocabulary\/1762773636_results pic.jpeg",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424283_690c75db7b8d5.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "conclusion",
+                    "hebrew_translation": "מסקנה",
+                    "arabic_translation": "استنتاج",
+                    "image_path": "images\/vocabulary\/1762773907_conclusion pic.jpeg",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424284_690c75dc83a8b.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "equipment",
+                    "hebrew_translation": "ציוד",
+                    "arabic_translation": "معدات",
+                    "image_path": "images\/vocabulary\/1762773966_equipment pic.jpeg",
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424285_690c75dd06e54.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                }
+            ],
+            "prompts": [
+                {
+                    "prompt_text": "Fill in the blank",
+                    "template": "In the beginning of an experiment, you make a {} about what will happen.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 4,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "test",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "conclusion",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "data",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "hypothesis",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in th e blank",
+                    "template": "If you want to check if something is correct you need to {} it.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "equipment",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "test",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "measure",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "data",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in th e blank",
+                    "template": "Before you begin your experiment, make sure you have all the {}.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 2,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "test",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "equipment",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "conclusion",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "hypothesis",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in th e blank",
+                    "template": "After you do the test, you can look at the {}.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 1,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "results",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "equipment",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "measure",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "test",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                },
+                {
+                    "prompt_text": "Fill in th e blank",
+                    "template": "If you want to know how long something is, you can {} it.",
+                    "prompt_audio_path": null,
+                    "correct_answer": 3,
+                    "tts_voice": "default",
+                    "is_active": true,
+                    "sort_order": 3,
+                    "part_id": null,
+                    "options": [
+                        {
+                            "label": "results",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 1
+                        },
+                        {
+                            "label": "conclusion",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 2
+                        },
+                        {
+                            "label": "measure",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 3
+                        },
+                        {
+                            "label": "data",
+                            "image_path": "",
+                            "word_audio_path": null,
+                            "sentence_audio_path": null,
+                            "is_active": true,
+                            "sort_order": 4
+                        }
+                    ],
+                    "assets": []
+                }
+            ],
+            "matching_games": [
+                {
+                    "title": "Session 1",
+                    "vocabulary_ids": [
+                        "97",
+                        "98",
+                        "99",
+                        "100",
+                        "101",
+                        "102",
+                        "104",
+                        "105"
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Scientific Method Flashcards",
+                    "game_types": [
+                        "image_to_word",
+                        "image_to_audio",
+                        "audio_to_image",
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        "97",
+                        "98",
+                        "99",
+                        "100",
+                        "101",
+                        "102",
+                        "104",
+                        "105"
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 2
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Introduction to the environment",
+                "slug": "introduction-to-the-environment",
+                "instructions": "Complete the vocabulary presentation and activities for this lesson.",
+                "grade_level": "8",
+                "session_number": 3,
+                "session_title": "Session 3",
+                "is_active": true,
+                "sort_order": 2,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "pollution",
+                    "hebrew_translation": "זיהום",
+                    "arabic_translation": "تلوث",
+                    "image_path": null,
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424285_690c75dd8fa5d.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "protect",
+                    "hebrew_translation": "להגן",
+                    "arabic_translation": "يحمي",
+                    "image_path": null,
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424286_690c75de0c55a.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "air",
+                    "hebrew_translation": "אוויר",
+                    "arabic_translation": "هواء",
+                    "image_path": null,
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424286_690c75de82139.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "water",
+                    "hebrew_translation": "מים",
+                    "arabic_translation": "ماء",
+                    "image_path": null,
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424287_690c75df044a8.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "plants",
+                    "hebrew_translation": "צמחים",
+                    "arabic_translation": "نباتات",
+                    "image_path": null,
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424287_690c75df7a264.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "animals",
+                    "hebrew_translation": "בעלי חיים",
+                    "arabic_translation": "حيوانات",
+                    "image_path": null,
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424288_690c75e008a60.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "energy",
+                    "hebrew_translation": "אנרגיה",
+                    "arabic_translation": "طاقة",
+                    "image_path": null,
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424288_690c75e08f282.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "environment",
+                    "hebrew_translation": "סביבה",
+                    "arabic_translation": "بيئة",
+                    "image_path": null,
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424289_690c75e113916.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "living",
+                    "hebrew_translation": "חי",
+                    "arabic_translation": "معيشة",
+                    "image_path": null,
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424289_690c75e1a06e0.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "non-living",
+                    "hebrew_translation": "לא חי",
+                    "arabic_translation": "غير حي",
+                    "image_path": null,
+                    "word_audio_path": "vocabulary-audio\/vocabulary_1762424290_690c75e22c1ed.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Introduction to the environment Matching Game 1",
+                    "vocabulary_ids": [
+                        "106",
+                        "107",
+                        "108",
+                        "109",
+                        "110",
+                        "111",
+                        "112",
+                        "113"
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Introduction to the environment Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        "106",
+                        "107",
+                        "108",
+                        "109",
+                        "110",
+                        "111",
+                        "112",
+                        "113",
+                        "114",
+                        "115"
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 2
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 4 part 1",
+                "slug": "no-title-yet",
+                "instructions": "Complete the vocabulary presentation and activities for this lesson.",
+                "grade_level": "8",
+                "session_number": 4,
+                "session_title": "Session 4 part 1",
+                "is_active": true,
+                "sort_order": 3,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "adaptation",
+                    "hebrew_translation": "הסתגלות",
+                    "arabic_translation": "تكيّف",
+                    "image_path": "images\/vocabulary\/1762777574_adaptation.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777416_6911d94809694.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "communication",
+                    "hebrew_translation": "תקשורת",
+                    "arabic_translation": "تواصل",
+                    "image_path": "images\/vocabulary\/1762777631_communication pic.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777416_6911d948938f4.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "hibernation",
+                    "hebrew_translation": "תרדמת חורף",
+                    "arabic_translation": "سبات شتوي",
+                    "image_path": "images\/vocabulary\/1762777668_hibernation pic.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777417_6911d9493314c.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "migration",
+                    "hebrew_translation": "נדידה",
+                    "arabic_translation": "هجرة",
+                    "image_path": "images\/vocabulary\/1762777743_bird migration.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777417_6911d949bc4c8.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "camouflage",
+                    "hebrew_translation": "הסוואה",
+                    "arabic_translation": "تمويه",
+                    "image_path": "images\/vocabulary\/1762777833_camouflage.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777418_6911d94a50538.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "flying",
+                    "hebrew_translation": "מעוף",
+                    "arabic_translation": "طيران",
+                    "image_path": "images\/vocabulary\/1762777888_flying pic.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777418_6911d94acc533.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "desert",
+                    "hebrew_translation": "מדבר",
+                    "arabic_translation": "صحراء",
+                    "image_path": "images\/vocabulary\/1762777927_desert pic.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777419_6911d94b5f103.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "sandy",
+                    "hebrew_translation": "חולי",
+                    "arabic_translation": "رمليّ",
+                    "image_path": "images\/vocabulary\/1762777969_sandy.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777419_6911d94be830f.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "frozen",
+                    "hebrew_translation": "קפוא",
+                    "arabic_translation": "متجمّد",
+                    "image_path": "images\/vocabulary\/1762778037_frozen.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777420_6911d94c77d11.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                },
+                {
+                    "english_word": "cactus",
+                    "hebrew_translation": "קקטוס",
+                    "arabic_translation": "صبّار",
+                    "image_path": "images\/vocabulary\/1762778096_cactus pic.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777420_6911d94ce7ed4.mp3",
+                    "is_active": true,
+                    "sort_order": 11
+                },
+                {
+                    "english_word": "dune",
+                    "hebrew_translation": "חמת חול",
+                    "arabic_translation": "كثيب رمليّ",
+                    "image_path": "images\/vocabulary\/1762778153_dune clip art.jpeg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762777421_6911d94d60e71.mp3",
+                    "is_active": true,
+                    "sort_order": 12
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 4",
+                    "vocabulary_ids": [
+                        "274",
+                        "275",
+                        "276",
+                        "277",
+                        "278",
+                        "279",
+                        "280",
+                        "281"
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 4 part 2",
+                "slug": "session-4-exploring-different-biomes-ecosystems-desert-tundra-part-1",
+                "instructions": "Review the vocabulary words and do the activities that follow.",
+                "grade_level": "8",
+                "session_number": 4,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 4,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "iceberg",
+                    "hebrew_translation": "ברדס",
+                    "arabic_translation": "جبال جليدية",
+                    "image_path": "images\/vocabulary\/vocab_1763029218_6915b0e2a46ec.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762950548_69147d94acc2b.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "moss",
+                    "hebrew_translation": "טחב",
+                    "arabic_translation": "طحلب",
+                    "image_path": "images\/vocabulary\/1763029435_moss.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762950550_69147d9626e33.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "thirsty",
+                    "hebrew_translation": "צמא",
+                    "arabic_translation": "عطشان",
+                    "image_path": "images\/vocabulary\/1763029463_dehydration.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762950551_69147d9754a03.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "windy",
+                    "hebrew_translation": "רוחני",
+                    "arabic_translation": "عاصف",
+                    "image_path": "images\/vocabulary\/vocab_1763029232_6915b0f0b69fb.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762950553_69147d990456e.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "sand",
+                    "hebrew_translation": "חול",
+                    "arabic_translation": "رمل",
+                    "image_path": "images\/vocabulary\/vocab_1763029236_6915b0f4be999.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762950554_69147d9a5234b.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "oasis",
+                    "hebrew_translation": "אוֹסִיס",
+                    "arabic_translation": "واحة",
+                    "image_path": "images\/vocabulary\/vocab_1763029240_6915b0f871760.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762950555_69147d9bad908.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "dry",
+                    "hebrew_translation": "יבש",
+                    "arabic_translation": "جاف",
+                    "image_path": "images\/vocabulary\/1763029558_view-nature-landscape-with-dry-ground-parched-soil.jpg",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762950556_69147d9cb9f9f.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "rocky",
+                    "hebrew_translation": "סלעי",
+                    "arabic_translation": "صخري",
+                    "image_path": "images\/vocabulary\/1763029588_stone.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762950558_69147d9e2ef41.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 4 part 2 Matching Game 1",
+                    "vocabulary_ids": [
+                        413,
+                        414,
+                        415,
+                        416,
+                        417,
+                        418,
+                        419,
+                        420
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 4 part 2 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        413,
+                        414,
+                        415,
+                        416,
+                        417,
+                        418,
+                        419,
+                        420
+                    ],
+                    "cards_per_game": 8,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 5",
+                "slug": "session-5",
+                "instructions": "Review the vocabulary words and do the activities connected to them.",
+                "grade_level": "8",
+                "session_number": 5,
+                "session_title": "Session 5",
+                "is_active": true,
+                "sort_order": 6,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "forest",
+                    "hebrew_translation": "יער",
+                    "arabic_translation": "غابة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946521_69146dd95bd87.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "tropical",
+                    "hebrew_translation": "טרופי",
+                    "arabic_translation": "استوائي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946522_69146ddaa67a9.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "rainforest",
+                    "hebrew_translation": "יער גשם",
+                    "arabic_translation": "غابة مطيرة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946523_69146ddbe38f7.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "rainfall",
+                    "hebrew_translation": "משקעים",
+                    "arabic_translation": "هطول الأمطار",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946526_69146dde1ed9e.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "seasons",
+                    "hebrew_translation": "עונות",
+                    "arabic_translation": "فصول",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946527_69146ddf85879.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "layers",
+                    "hebrew_translation": "שכבות",
+                    "arabic_translation": "طبقات",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946529_69146de108de5.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "temperate",
+                    "hebrew_translation": "מתון",
+                    "arabic_translation": "معتدل",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946530_69146de2617b6.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "emergent",
+                    "hebrew_translation": "מופיע",
+                    "arabic_translation": "ناشئ",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946531_69146de3a4e61.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "canopy",
+                    "hebrew_translation": "כְּתוֹפֶת",
+                    "arabic_translation": "قَنَاصَة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946534_69146de64ee74.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 5 Matching Game 1",
+                    "vocabulary_ids": [
+                        303,
+                        304,
+                        305,
+                        306,
+                        307,
+                        308,
+                        309,
+                        310
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 5 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        303,
+                        304,
+                        305,
+                        306,
+                        307,
+                        308,
+                        309,
+                        310,
+                        311
+                    ],
+                    "cards_per_game": 9,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 6",
+                "slug": "session-6",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 6,
+                "session_title": "Session 6",
+                "is_active": true,
+                "sort_order": 7,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "aquatic",
+                    "hebrew_translation": "מימי",
+                    "arabic_translation": "مائي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946739_69146eb32df4f.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "freshwater",
+                    "hebrew_translation": "מים מתוקים",
+                    "arabic_translation": "مياه عذبة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946740_69146eb45f454.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "gills",
+                    "hebrew_translation": "זימים",
+                    "arabic_translation": "خياشيم",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946741_69146eb5dc882.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "fins",
+                    "hebrew_translation": "סנפירים",
+                    "arabic_translation": "زعنفة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946743_69146eb724d40.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "coral",
+                    "hebrew_translation": "אלמוג",
+                    "arabic_translation": "مرجان",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946744_69146eb83c5c0.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "seaweed",
+                    "hebrew_translation": "אצות",
+                    "arabic_translation": "طحالب",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946745_69146eb9a0650.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "wave",
+                    "hebrew_translation": "גל",
+                    "arabic_translation": "موجة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946746_69146ebacc438.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "current",
+                    "hebrew_translation": "נוכחי",
+                    "arabic_translation": "حالي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946748_69146ebc6c107.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "marine",
+                    "hebrew_translation": "ימי",
+                    "arabic_translation": "بحري",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946750_69146ebed00c4.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "mammals",
+                    "hebrew_translation": "יונקים",
+                    "arabic_translation": "ثدييات",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946752_69146ec092711.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                },
+                {
+                    "english_word": "jellyfish",
+                    "hebrew_translation": "מדוזה",
+                    "arabic_translation": "قنديل البحر",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946754_69146ec276a8b.mp3",
+                    "is_active": true,
+                    "sort_order": 11
+                },
+                {
+                    "english_word": "dolphin",
+                    "hebrew_translation": "דולפין",
+                    "arabic_translation": "دلفين",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946756_69146ec4020b8.mp3",
+                    "is_active": true,
+                    "sort_order": 12
+                },
+                {
+                    "english_word": "eel",
+                    "hebrew_translation": "נחש מים",
+                    "arabic_translation": "ثعبان البحر",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946757_69146ec52fd17.mp3",
+                    "is_active": true,
+                    "sort_order": 13
+                },
+                {
+                    "english_word": "starfish",
+                    "hebrew_translation": "כוכב ים",
+                    "arabic_translation": "نجم البحر",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946758_69146ec69e4bd.mp3",
+                    "is_active": true,
+                    "sort_order": 14
+                },
+                {
+                    "english_word": "frog",
+                    "hebrew_translation": "צפרדע",
+                    "arabic_translation": "ضفدع",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946759_69146ec7c2404.mp3",
+                    "is_active": true,
+                    "sort_order": 15
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 6 Matching Game 1",
+                    "vocabulary_ids": [
+                        312,
+                        313,
+                        314,
+                        315,
+                        316,
+                        317,
+                        318,
+                        319,
+                        320,
+                        321,
+                        322,
+                        323,
+                        324,
+                        325
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 6 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        312,
+                        313,
+                        314,
+                        315,
+                        316,
+                        317,
+                        318,
+                        319,
+                        320,
+                        321,
+                        322,
+                        323,
+                        324,
+                        325,
+                        326
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 7",
+                "slug": "session-7",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 7,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 8,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "energy",
+                    "hebrew_translation": "אנרגיה",
+                    "arabic_translation": "طاقة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946909_69146f5d9d79a.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "food chain",
+                    "hebrew_translation": "שרשרת מזון",
+                    "arabic_translation": "سلسلة غذائية",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946911_69146f5f67b6c.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "organism",
+                    "hebrew_translation": "אורגניזם",
+                    "arabic_translation": "كائن حي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946912_69146f60a5fc6.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "producer",
+                    "hebrew_translation": "מפיק",
+                    "arabic_translation": "منتج",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946914_69146f620f1b3.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "consumer",
+                    "hebrew_translation": "צרכן",
+                    "arabic_translation": "مستهلك",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946915_69146f639af3c.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "plant",
+                    "hebrew_translation": "צמח",
+                    "arabic_translation": "نبات",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946916_69146f64ecc3e.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "herbivore",
+                    "hebrew_translation": "צמחוני",
+                    "arabic_translation": "عاشب",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946918_69146f66256a1.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "carnivore",
+                    "hebrew_translation": "טורף",
+                    "arabic_translation": "آكل اللحوم",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946919_69146f675fbe1.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "omnivore",
+                    "hebrew_translation": "אוכלי כל",
+                    "arabic_translation": "آكل كل شيء",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946920_69146f688da62.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "chain reaction",
+                    "hebrew_translation": "תגובה שרשרת",
+                    "arabic_translation": "تفاعل تسلسلي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762946921_69146f69d3f52.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 7 Matching Game 1",
+                    "vocabulary_ids": [
+                        327,
+                        328,
+                        329,
+                        330,
+                        331,
+                        332,
+                        333,
+                        334,
+                        335,
+                        336
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 7 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        327,
+                        328,
+                        329,
+                        330,
+                        331,
+                        332,
+                        333,
+                        334,
+                        335,
+                        336
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 8",
+                "slug": "session-8",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 8,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 9,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "weather",
+                    "hebrew_translation": "מזג האוויר",
+                    "arabic_translation": "الطقس",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947035_69146fdb4a48c.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "climate",
+                    "hebrew_translation": "אקלים",
+                    "arabic_translation": "مناخ",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947035_69146fdbcd0a0.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "temperature",
+                    "hebrew_translation": "טמפרטורה",
+                    "arabic_translation": "درجة الحرارة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947037_69146fdd0585d.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "greenhouse",
+                    "hebrew_translation": "חממה",
+                    "arabic_translation": "بيت زجاجي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947038_69146fde36213.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "carbon dioxide",
+                    "hebrew_translation": "דו תחמוצת הפחמן",
+                    "arabic_translation": "ثاني أكسيد الكربون",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947039_69146fdf6d0c4.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "global warming",
+                    "hebrew_translation": "התחממות גלובלית",
+                    "arabic_translation": "الاحترار العالمي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947040_69146fe0c3faa.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "impact",
+                    "hebrew_translation": "השפעה",
+                    "arabic_translation": "أثر",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947041_69146fe1efa11.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 8 Matching Game 1",
+                    "vocabulary_ids": [
+                        337,
+                        338,
+                        339,
+                        340,
+                        341,
+                        342
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 8 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        337,
+                        338,
+                        339,
+                        340,
+                        341,
+                        342,
+                        343
+                    ],
+                    "cards_per_game": 7,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 9",
+                "slug": "session-9",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 9,
+                "session_title": "Session 9",
+                "is_active": true,
+                "sort_order": 10,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "pollution",
+                    "hebrew_translation": "זיהום",
+                    "arabic_translation": "تلوث",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947329_691471014c8bb.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "waste",
+                    "hebrew_translation": "בזבוז",
+                    "arabic_translation": "نفايات",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947330_69147102cdb27.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "air pollution",
+                    "hebrew_translation": "זיהום אוויר",
+                    "arabic_translation": "تلوث الهواء",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947332_691471043afed.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "land pollution",
+                    "hebrew_translation": "זיהום קרקע",
+                    "arabic_translation": "تلوث الأرض",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947333_69147105ba00b.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "water pollution",
+                    "hebrew_translation": "זיהום מים",
+                    "arabic_translation": "تلوث المياه",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947334_69147106f1a14.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "influencer",
+                    "hebrew_translation": "משפיען",
+                    "arabic_translation": "مؤثر",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947336_691471082a5ff.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 9 Matching Game 1",
+                    "vocabulary_ids": [
+                        344,
+                        345,
+                        346,
+                        347,
+                        348,
+                        349
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 9 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        344,
+                        345,
+                        346,
+                        347,
+                        348,
+                        349
+                    ],
+                    "cards_per_game": 6,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 10",
+                "slug": "session-10",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 10,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 11,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "crisis",
+                    "hebrew_translation": "משבר",
+                    "arabic_translation": "أزمة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947815_691472e79446d.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "deforestation",
+                    "hebrew_translation": "כריתת יערות",
+                    "arabic_translation": "إزالة الغابات",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947817_691472e93716f.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "habitat",
+                    "hebrew_translation": "בית גידול",
+                    "arabic_translation": "موطن",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947818_691472ea6ae78.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "loss",
+                    "hebrew_translation": "אובדן",
+                    "arabic_translation": "فقدان",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947820_691472ec192d0.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "biodiversity",
+                    "hebrew_translation": "ביו-מגוון",
+                    "arabic_translation": "التنوع البيولوجي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947821_691472eddda7a.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "cause",
+                    "hebrew_translation": "סיבה",
+                    "arabic_translation": "سبب",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947823_691472ef16623.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "effect",
+                    "hebrew_translation": "השפעה",
+                    "arabic_translation": "أثر",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947824_691472f08741c.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 10 Matching Game 1",
+                    "vocabulary_ids": [
+                        350,
+                        351,
+                        352,
+                        353,
+                        354,
+                        355
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 10 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        350,
+                        351,
+                        352,
+                        353,
+                        354,
+                        355,
+                        356
+                    ],
+                    "cards_per_game": 7,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 11",
+                "slug": "session-11",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 11,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 12,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "resources",
+                    "hebrew_translation": "משאבים",
+                    "arabic_translation": "موارد",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947920_6914735082b19.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "renewable",
+                    "hebrew_translation": "מתחדש",
+                    "arabic_translation": "متجدد",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947921_69147351a9578.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "sustainable",
+                    "hebrew_translation": "בר קיימא",
+                    "arabic_translation": "مستدام",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947923_6914735315ca3.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "conservation",
+                    "hebrew_translation": "שימור",
+                    "arabic_translation": "الحفاظ",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947924_691473545076d.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "solar energy",
+                    "hebrew_translation": "אנרגיה סולארית",
+                    "arabic_translation": "الطاقة الشمسية",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947925_69147355e142a.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "wind energy",
+                    "hebrew_translation": "אנרגיית רוח",
+                    "arabic_translation": "طاقة الرياح",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947927_691473574646c.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "hydropower",
+                    "hebrew_translation": "אנרגיית מים",
+                    "arabic_translation": "الطاقة المائية",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947928_691473586cc76.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "coal",
+                    "hebrew_translation": "פחם",
+                    "arabic_translation": "فحم",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947929_691473598ef6d.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "oil",
+                    "hebrew_translation": "שמן",
+                    "arabic_translation": "زيت",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947930_6914735aa5761.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "global",
+                    "hebrew_translation": "גלובלי",
+                    "arabic_translation": "عالمي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947932_6914735c2098f.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                },
+                {
+                    "english_word": "protect",
+                    "hebrew_translation": "להגן",
+                    "arabic_translation": "يحمي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762947934_6914735e6452b.mp3",
+                    "is_active": true,
+                    "sort_order": 11
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 11 Matching Game 1",
+                    "vocabulary_ids": [
+                        357,
+                        358,
+                        359,
+                        360,
+                        361,
+                        362,
+                        363,
+                        364,
+                        365,
+                        366
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 11 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        357,
+                        358,
+                        359,
+                        360,
+                        361,
+                        362,
+                        363,
+                        364,
+                        365,
+                        366,
+                        367
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 12",
+                "slug": "session-12",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 12,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 13,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "paper",
+                    "hebrew_translation": "נייר",
+                    "arabic_translation": "ورق",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948462_6914756e98b5b.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "plastic",
+                    "hebrew_translation": "פלסטיק",
+                    "arabic_translation": "بلاستيك",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948464_6914757026d3e.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "metal",
+                    "hebrew_translation": "מתכת",
+                    "arabic_translation": "معدن",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948465_6914757155bc3.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "glass",
+                    "hebrew_translation": "זכוכית",
+                    "arabic_translation": "زجاج",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948466_691475729f4a6.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "food",
+                    "hebrew_translation": "אוכל",
+                    "arabic_translation": "طعام",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948467_69147573d61fa.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "electronic",
+                    "hebrew_translation": "אלקטרוני",
+                    "arabic_translation": "إلكتروني",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948469_6914757510cff.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "recycle",
+                    "hebrew_translation": "מִחְזוּר",
+                    "arabic_translation": "إعادة تدوير",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948470_691475764f22f.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "reuse",
+                    "hebrew_translation": "שימוש חוזר",
+                    "arabic_translation": "إعادة استخدام",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948471_691475775b3dc.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "reduce",
+                    "hebrew_translation": "להפחית",
+                    "arabic_translation": "يقلل",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948473_691475792bedc.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "landfill",
+                    "hebrew_translation": "מזבלה",
+                    "arabic_translation": "مكب نفايات",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948474_6914757a54b1c.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                },
+                {
+                    "english_word": "compost",
+                    "hebrew_translation": "קומפוסט",
+                    "arabic_translation": "سماد عضوي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948475_6914757b6cb80.mp3",
+                    "is_active": true,
+                    "sort_order": 11
+                },
+                {
+                    "english_word": "container",
+                    "hebrew_translation": "מיכל",
+                    "arabic_translation": "حاوية",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948476_6914757ca1372.mp3",
+                    "is_active": true,
+                    "sort_order": 12
+                },
+                {
+                    "english_word": "sort",
+                    "hebrew_translation": "מיין",
+                    "arabic_translation": "ترتيب",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948477_6914757de5baf.mp3",
+                    "is_active": true,
+                    "sort_order": 13
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 12 Matching Game 1",
+                    "vocabulary_ids": [
+                        368,
+                        369,
+                        370,
+                        371,
+                        372,
+                        373,
+                        374,
+                        375,
+                        376,
+                        377,
+                        378,
+                        379
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 12 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        368,
+                        369,
+                        370,
+                        371,
+                        372,
+                        373,
+                        374,
+                        375,
+                        376,
+                        377,
+                        378,
+                        379,
+                        380
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 13",
+                "slug": "session-13",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 13,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 14,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "drip irrigation",
+                    "hebrew_translation": "השקיה בטפטוף",
+                    "arabic_translation": "الري بالتنقيط",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948634_6914761a1cfe9.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "farming",
+                    "hebrew_translation": "חקלאות",
+                    "arabic_translation": "الزراعة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948635_6914761b20d61.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "innovation",
+                    "hebrew_translation": "חידוש",
+                    "arabic_translation": "ابتكار",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948636_6914761c41be0.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "efficient",
+                    "hebrew_translation": "יעיל",
+                    "arabic_translation": "كفء",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948637_6914761d7b23c.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "crop",
+                    "hebrew_translation": "גידול",
+                    "arabic_translation": "محصول",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948638_6914761e74ef5.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 13 Matching Game 1",
+                    "vocabulary_ids": [
+                        381,
+                        382,
+                        383,
+                        384
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 13 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        381,
+                        382,
+                        383,
+                        384,
+                        385
+                    ],
+                    "cards_per_game": 5,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Lesson 14",
+                "slug": "lesson-14-1",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 14,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 15,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "reusable bags",
+                    "hebrew_translation": "שקיות רב פעמיות",
+                    "arabic_translation": "أكياس قابلة لإعادة الاستخدام",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948751_6914768f167ae.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "save water",
+                    "hebrew_translation": "שמור מים",
+                    "arabic_translation": "وفر الماء",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948752_691476903442b.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "plant trees",
+                    "hebrew_translation": "נטיעת עצים",
+                    "arabic_translation": "زراعة الأشجار",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948753_6914769185eda.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "turn off lights",
+                    "hebrew_translation": "כבה את האורות",
+                    "arabic_translation": "أطفئ الأنوار",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948755_6914769340e98.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "walk",
+                    "hebrew_translation": "ללכת",
+                    "arabic_translation": "يمشي",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948756_69147694e2fdc.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "clean",
+                    "hebrew_translation": "נקי",
+                    "arabic_translation": "نظيف",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948758_691476961b68d.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "reuse",
+                    "hebrew_translation": "שימוש חוזר",
+                    "arabic_translation": "إعادة استخدام",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948758_6914769694961.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "help",
+                    "hebrew_translation": "עזרה",
+                    "arabic_translation": "مساعدة",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948759_69147697d6f96.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "take action",
+                    "hebrew_translation": "נקוט בפעולה",
+                    "arabic_translation": "اتخذ إجراء",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762948761_6914769964c08.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Lesson 14 Matching Game 1",
+                    "vocabulary_ids": [
+                        386,
+                        387,
+                        388,
+                        389,
+                        390,
+                        391,
+                        392,
+                        393
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Lesson 14 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        386,
+                        387,
+                        388,
+                        389,
+                        390,
+                        391,
+                        392,
+                        393,
+                        394
+                    ],
+                    "cards_per_game": 9,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 15",
+                "slug": "session-15",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 15,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 17,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "watch",
+                    "hebrew_translation": "שעון",
+                    "arabic_translation": "ساعة",
+                    "image_path": "images\/vocabulary\/vocab_1763033397_6915c13591983.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949213_6914785d38116.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "count",
+                    "hebrew_translation": "לספור",
+                    "arabic_translation": "يعد",
+                    "image_path": "images\/vocabulary\/vocab_1763033399_6915c13769bfc.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949214_6914785ebb755.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "write",
+                    "hebrew_translation": "לכתוב",
+                    "arabic_translation": "يكتب",
+                    "image_path": "images\/vocabulary\/vocab_1763033401_6915c13948242.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949216_6914786004b19.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "share",
+                    "hebrew_translation": "לשתף",
+                    "arabic_translation": "مشاركة",
+                    "image_path": "images\/vocabulary\/vocab_1763033404_6915c13ca3e02.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949217_6914786134e22.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "help",
+                    "hebrew_translation": "עזרה",
+                    "arabic_translation": "مساعدة",
+                    "image_path": "images\/vocabulary\/vocab_1763033407_6915c13f05e2a.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949217_69147861a899f.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "science",
+                    "hebrew_translation": "מדע",
+                    "arabic_translation": "علم",
+                    "image_path": "images\/vocabulary\/vocab_1763033408_6915c140dd822.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949219_69147863c1b12.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "data",
+                    "hebrew_translation": "נתונים",
+                    "arabic_translation": "بيانات",
+                    "image_path": "images\/vocabulary\/vocab_1763033410_6915c142b3b0d.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949222_691478665ff51.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                },
+                {
+                    "english_word": "measure",
+                    "hebrew_translation": "לְמַדּוֹת",
+                    "arabic_translation": "يَقِيسُ",
+                    "image_path": "images\/vocabulary\/vocab_1763033412_6915c144889f1.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949223_69147867e42d1.mp3",
+                    "is_active": true,
+                    "sort_order": 8
+                },
+                {
+                    "english_word": "grow",
+                    "hebrew_translation": "לגדול",
+                    "arabic_translation": "ينمو",
+                    "image_path": "images\/vocabulary\/vocab_1763033414_6915c1464095f.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949225_6914786971e6f.mp3",
+                    "is_active": true,
+                    "sort_order": 9
+                },
+                {
+                    "english_word": "sound",
+                    "hebrew_translation": "צליל",
+                    "arabic_translation": "صوت",
+                    "image_path": "images\/vocabulary\/vocab_1763033416_6915c14822ef0.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949226_6914786ac5838.mp3",
+                    "is_active": true,
+                    "sort_order": 10
+                },
+                {
+                    "english_word": "action",
+                    "hebrew_translation": "פעולה",
+                    "arabic_translation": "عمل",
+                    "image_path": "images\/vocabulary\/vocab_1763033417_6915c149ee5f2.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949228_6914786c0a3e2.mp3",
+                    "is_active": true,
+                    "sort_order": 11
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 15 Matching Game 1",
+                    "vocabulary_ids": [
+                        395,
+                        396,
+                        397,
+                        398,
+                        399,
+                        400,
+                        401,
+                        402,
+                        403,
+                        404
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 15 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        395,
+                        396,
+                        397,
+                        398,
+                        399,
+                        400,
+                        401,
+                        402,
+                        403,
+                        404,
+                        405
+                    ],
+                    "cards_per_game": 10,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        },
+        {
+            "lesson": {
+                "title": "Session 17",
+                "slug": "session-17",
+                "instructions": "Please review the vocabulary words for this lesson and complete the activities.",
+                "grade_level": "8",
+                "session_number": 17,
+                "session_title": null,
+                "is_active": true,
+                "sort_order": 18,
+                "archived_at": null
+            },
+            "parts": [],
+            "vocabulary": [
+                {
+                    "english_word": "future",
+                    "hebrew_translation": "עתיד",
+                    "arabic_translation": "مستقبل",
+                    "image_path": "images\/vocabulary\/vocab_1763029891_6915b383d99aa.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949317_691478c5190ca.mp3",
+                    "is_active": true,
+                    "sort_order": 1
+                },
+                {
+                    "english_word": "clean energy",
+                    "hebrew_translation": "אנרגיה נקייה",
+                    "arabic_translation": "طاقة نظيفة",
+                    "image_path": "images\/vocabulary\/vocab_1763029897_6915b389898f4.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949318_691478c6559ff.mp3",
+                    "is_active": true,
+                    "sort_order": 2
+                },
+                {
+                    "english_word": "electric car",
+                    "hebrew_translation": "מכונית חשמלית",
+                    "arabic_translation": "سيارة كهربائية",
+                    "image_path": "images\/vocabulary\/vocab_1763029974_6915b3d64df07.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949319_691478c799077.mp3",
+                    "is_active": true,
+                    "sort_order": 3
+                },
+                {
+                    "english_word": "solar panel",
+                    "hebrew_translation": "פנל סולארי",
+                    "arabic_translation": "لوحة شمسية",
+                    "image_path": "images\/vocabulary\/vocab_1763029979_6915b3dbeb8e6.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949321_691478c92029b.mp3",
+                    "is_active": true,
+                    "sort_order": 4
+                },
+                {
+                    "english_word": "green city",
+                    "hebrew_translation": "עיר ירוקה",
+                    "arabic_translation": "مدينة خضراء",
+                    "image_path": "images\/vocabulary\/vocab_1763029986_6915b3e28c103.png",
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949322_691478cab3cc3.mp3",
+                    "is_active": true,
+                    "sort_order": 5
+                },
+                {
+                    "english_word": "factory",
+                    "hebrew_translation": "מפעל",
+                    "arabic_translation": "مصنع",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949323_691478cbef2cc.mp3",
+                    "is_active": true,
+                    "sort_order": 6
+                },
+                {
+                    "english_word": "vision",
+                    "hebrew_translation": "חזון",
+                    "arabic_translation": "رؤية",
+                    "image_path": null,
+                    "word_audio_path": "\/storage\/tts\/vocabulary\/vocabulary_1762949325_691478cd48657.mp3",
+                    "is_active": true,
+                    "sort_order": 7
+                }
+            ],
+            "prompts": [],
+            "matching_games": [
+                {
+                    "title": "Session 17 Matching Game 1",
+                    "vocabulary_ids": [
+                        406,
+                        407,
+                        408,
+                        409,
+                        410,
+                        411
+                    ],
+                    "grid_size": 4,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "flashcard_games": [
+                {
+                    "title": "Session 17 Flashcards 1",
+                    "game_types": [
+                        "audio_to_word"
+                    ],
+                    "vocabulary_ids": [
+                        406,
+                        407,
+                        408,
+                        409,
+                        410,
+                        411,
+                        412
+                    ],
+                    "cards_per_game": 7,
+                    "is_active": true,
+                    "sort_order": 1
+                }
+            ],
+            "vocabulary_presentations": []
+        }
+    ]
+}

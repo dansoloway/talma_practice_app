@@ -20,6 +20,8 @@ class Lesson extends Model
         'is_active',
         'sort_order',
         'archived_at',
+        'assigned_to',
+        'status',
     ];
 
     protected $casts = [

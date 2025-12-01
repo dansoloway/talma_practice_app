@@ -30,6 +30,7 @@
             <div class="nav-links">
                 <a href="{{ route('admin.analytics') }}">Analytics</a>
                 <a href="{{ route('admin.session-length') }}">Session Length</a>
+                <a href="{{ route('admin.lesson-tracker') }}">Lesson Tracker</a>
                 <a href="{{ route('admin.lessons.index') }}">Lessons</a>
                 <a href="{{ route('admin.lessons.archived') }}">Archived</a>
                 <a href="{{ route('lessons.index') }}">Student View</a>
