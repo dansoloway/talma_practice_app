@@ -175,5 +175,60 @@ class Lesson extends Model
     {
         return $this->update(['archived_at' => null]);
     }
+
+    /**
+     * Get standardized display name with session information.
+     * Format: "Grade X - Session Y: [Title]" or "Session Y: [Title]" or just "[Title]"
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        $parts = [];
+        
+        if ($this->grade_level) {
+            $parts[] = "Grade {$this->grade_level}";
+        }
+        
+        if ($this->session_number) {
+            $parts[] = "Session {$this->session_number}";
+        }
+        
+        $prefix = !empty($parts) ? implode(' - ', $parts) . ': ' : '';
+        
+        return $prefix . $this->title;
+    }
+
+    /**
+     * Get short display name (without grade/session prefix).
+     */
+    public function getShortDisplayNameAttribute(): string
+    {
+        return $this->title;
+    }
+
+    /**
+     * Generate standardized activity name.
+     * Format: "[Display Name] - [Activity Type] [Number]"
+     */
+    public function generateActivityName(string $activityType, int $number = null): string
+    {
+        $activityTypes = [
+            'matching' => 'Matching Game',
+            'flashcard' => 'Flashcard Game',
+            'spelling' => 'Spelling Practice',
+            'sentence_builder' => 'Sentence Builder',
+            'true_false' => 'True/False Questions',
+        ];
+        
+        $typeLabel = $activityTypes[$activityType] ?? ucfirst($activityType);
+        
+        // Use short display name (just title) for activities to avoid redundancy
+        $baseName = $this->short_display_name;
+        
+        if ($number !== null) {
+            return "{$baseName} - {$typeLabel} {$number}";
+        }
+        
+        return "{$baseName} - {$typeLabel}";
+    }
 }
 

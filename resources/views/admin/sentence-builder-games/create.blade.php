@@ -27,7 +27,7 @@
         <div class="form-group">
             <label for="title">Title</label>
             <input type="text" id="title" name="title" class="form-control" 
-                   value="{{ old('title', trim($lesson->title . ' Sentence Builder ' . ($lesson->sentenceBuilderGames()->count() + 1))) }}">
+                   value="{{ old('title', $lesson->generateActivityName('sentence_builder', $lesson->sentenceBuilderGames()->count() + 1)) }}">
             <small class="form-text">Leave blank to auto-generate</small>
         </div>
 

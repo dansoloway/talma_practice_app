@@ -80,13 +80,7 @@
                     <tr data-lesson-id="{{ $lesson->id }}">
                         <td>
                             <div class="lesson-info">
-                                <strong>{{ $lesson->title }}</strong>
-                                @if($lesson->grade_level)
-                                    <span class="lesson-meta">Grade {{ $lesson->grade_level }}</span>
-                                @endif
-                                @if($lesson->session_number)
-                                    <span class="lesson-meta">Session {{ $lesson->session_number }}</span>
-                                @endif
+                                <strong>{{ $lesson->display_name }}</strong>
                                 @if($lesson->session_title)
                                     <div class="lesson-subtitle">{{ $lesson->session_title }}</div>
                                 @endif

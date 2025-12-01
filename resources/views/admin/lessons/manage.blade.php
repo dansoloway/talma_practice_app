@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', 'Manage Lesson: ' . $lesson->title)
+@section('title', 'Manage Lesson: ' . $lesson->display_name)
 
 @section('content')
 <div class="container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">Manage Lesson: {{ $lesson->title }}</h1>
+            <h1 class="page-title">Manage Lesson: {{ $lesson->display_name }}</h1>
             <div class="lesson-metadata">
                 @if($lesson->grade_level)
                     <span class="metadata-item">Grade {{ $lesson->grade_level }}</span>
