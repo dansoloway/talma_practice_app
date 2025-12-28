@@ -28,12 +28,35 @@
                 </a>
             </div>
             <div class="nav-links">
-                <a href="{{ route('admin.analytics') }}">Analytics</a>
-                <a href="{{ route('admin.session-length') }}">Session Length</a>
-                <a href="{{ route('admin.lesson-tracker') }}">Lesson Tracker</a>
-                <a href="{{ route('admin.lessons.index') }}">Lessons</a>
-                <a href="{{ route('admin.lessons.archived') }}">Archived</a>
+                <!-- Analytics Dropdown -->
+                <div class="nav-dropdown">
+                    <a href="#" class="nav-dropdown-toggle">
+                        Analytics <i class="fas fa-chevron-down"></i>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="{{ route('admin.analytics') }}">Dashboard</a>
+                        <a href="{{ route('admin.session-length') }}">Session Length</a>
+                    </div>
+                </div>
+                
+                <!-- Lessons Dropdown -->
+                <div class="nav-dropdown">
+                    <a href="#" class="nav-dropdown-toggle">
+                        Lessons <i class="fas fa-chevron-down"></i>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="{{ route('admin.lessons.index') }}">All Lessons</a>
+                        <a href="{{ route('admin.lesson-tracker') }}">Lesson Tracker</a>
+                        <a href="{{ route('admin.lessons.archived') }}">Archived</a>
+                    </div>
+                </div>
+                
+                @if(session('admin_user_role') === 'admin')
+                    <a href="{{ route('admin.users.index') }}">Users</a>
+                @endif
+                
                 <a href="{{ route('lessons.index') }}">Student View</a>
+                <span class="nav-user">{{ session('admin_user_name') }} ({{ ucfirst(session('admin_user_role')) }})</span>
                 <a href="#" onclick="logout()" class="logout-link">Logout</a>
             </div>
         </nav>
@@ -66,6 +89,108 @@
     </main>
 
     @stack('scripts')
+    
+    <style>
+    /* Navigation Dropdown Styles */
+    .nav-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .nav-dropdown-toggle {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: var(--color-white);
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition-fast);
+        padding: 0.5rem 0;
+    }
+    
+    .nav-dropdown-toggle:hover {
+        text-decoration: underline;
+    }
+    
+    .nav-dropdown-toggle i {
+        font-size: 0.7rem;
+        transition: transform 0.2s;
+        margin-left: 0.25rem;
+    }
+    
+    .nav-dropdown:hover .nav-dropdown-toggle i {
+        transform: rotate(180deg);
+    }
+    
+    .nav-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 0.25rem;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        min-width: 180px;
+        z-index: 1000;
+        padding: 0.25rem 0;
+    }
+    
+    /* Show menu when hovering over dropdown container OR the menu itself */
+    .nav-dropdown:hover .nav-dropdown-menu,
+    .nav-dropdown-menu:hover {
+        display: block;
+    }
+    
+    /* Add invisible bridge to prevent gap issues */
+    .nav-dropdown::before {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        height: 0.5rem;
+        z-index: 999;
+    }
+    
+    .nav-dropdown-menu a {
+        display: block;
+        padding: 0.75rem 1rem;
+        color: var(--color-text);
+        text-decoration: none;
+        transition: var(--transition-fast);
+        font-weight: 500;
+    }
+    
+    .nav-dropdown-menu a:hover {
+        background-color: var(--color-primary-bg);
+        color: var(--color-primary);
+    }
+    
+    .nav-dropdown-menu a.active {
+        background-color: var(--color-primary);
+        color: white;
+    }
+    
+    /* Better spacing for nav items */
+    .admin-header .nav-links {
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    /* Separate user info and logout */
+    .nav-user {
+        margin-left: 0.5rem;
+        padding-left: 1rem;
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .logout-link {
+        margin-left: 0.5rem;
+    }
+    </style>
     
     <script>
     function logout() {

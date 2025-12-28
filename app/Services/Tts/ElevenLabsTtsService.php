@@ -12,22 +12,26 @@ class ElevenLabsTtsService
     private string $defaultVoiceId;
     
     // High stability presets for clarity and consistency
-    private const PRESETS = [
-        'vocabulary' => [
-            'stability' => 0.8,           // High stability for consistent pronunciation
-            'similarity_boost' => 0.85,   // High similarity for clear voice
-            'style' => 0.0,               // Neutral style for clarity
-            'use_speaker_boost' => true,  // Enhanced clarity
-            'speed' => 1.0,               // Default speed
-        ],
-        'sentence' => [
-            'stability' => 0.75,          // High stability but slightly more natural
-            'similarity_boost' => 0.8,    // Clear voice characteristics
-            'style' => 0.1,              // Slightly expressive
-            'use_speaker_boost' => true,  // Enhanced clarity
-            'speed' => 1.0,               // Default speed
-        ],
-    ];
+    // Can be overridden via environment variables (see docs/TTS_REGENERATION_SETTINGS.md)
+    private function getPresets(): array
+    {
+        return [
+            'vocabulary' => [
+                'stability' => (float) env('ELEVENLABS_VOCAB_STABILITY', 0.8),
+                'similarity_boost' => (float) env('ELEVENLABS_VOCAB_SIMILARITY', 0.85),
+                'style' => (float) env('ELEVENLABS_VOCAB_STYLE', 0.0),
+                'use_speaker_boost' => env('ELEVENLABS_VOCAB_SPEAKER_BOOST', true) === true || env('ELEVENLABS_VOCAB_SPEAKER_BOOST', true) === 'true',
+                'speed' => (float) env('ELEVENLABS_VOCAB_SPEED', 1.0),
+            ],
+            'sentence' => [
+                'stability' => (float) env('ELEVENLABS_SENTENCE_STABILITY', 0.75),
+                'similarity_boost' => (float) env('ELEVENLABS_SENTENCE_SIMILARITY', 0.8),
+                'style' => (float) env('ELEVENLABS_SENTENCE_STYLE', 0.1),
+                'use_speaker_boost' => env('ELEVENLABS_SENTENCE_SPEAKER_BOOST', true) === true || env('ELEVENLABS_SENTENCE_SPEAKER_BOOST', true) === 'true',
+                'speed' => (float) env('ELEVENLABS_SENTENCE_SPEED', 1.0),
+            ],
+        ];
+    }
 
     public function __construct()
     {
@@ -62,18 +66,19 @@ class ElevenLabsTtsService
         }
 
         $voiceId = $voiceId ?? $this->defaultVoiceId;
-        $settings = self::PRESETS[$preset] ?? self::PRESETS['vocabulary'];
+        $presets = $this->getPresets();
+        $settings = $presets[$preset] ?? $presets['vocabulary'];
 
         try {
             $response = Http::withHeaders([
                 'Accept' => 'audio/mpeg',
                 'Content-Type' => 'application/json',
                 'xi-api-key' => $this->apiKey,
-            ])->timeout(30)->post(
+            ])->timeout((int) env('ELEVENLABS_TIMEOUT', 30))->post(
                 "https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}",
                 [
                     'text' => $text,
-                    'model_id' => 'eleven_multilingual_v2', // Upgraded to v2
+                    'model_id' => env('ELEVENLABS_MODEL', 'eleven_multilingual_v2'),
                     'voice_settings' => $settings,
                 ]
             );
@@ -108,11 +113,84 @@ class ElevenLabsTtsService
     }
 
     /**
-     * Get available presets
+     * Generate TTS with custom settings
      */
-    public function getPresets(): array
+    private function generateWithCustomSettings(
+        string $text,
+        array $customSettings,
+        ?string $voiceId = null
+    ): ?string {
+        if (!$this->enabled()) {
+            Log::warning('ELEVENLABS_API_KEY not found, skipping TTS generation');
+            return null;
+        }
+
+        $voiceId = $voiceId ?? $this->defaultVoiceId;
+        
+        // Merge custom settings with defaults and validate/clamp values
+        $presets = $this->getPresets();
+        $defaultSettings = $presets['vocabulary'];
+        
+        // Clamp values to valid ranges for ElevenLabs API
+        $stability = isset($customSettings['stability']) 
+            ? max(0.0, min(1.0, (float) $customSettings['stability'])) 
+            : $defaultSettings['stability'];
+        $similarityBoost = isset($customSettings['similarity_boost']) 
+            ? max(0.0, min(1.0, (float) $customSettings['similarity_boost'])) 
+            : $defaultSettings['similarity_boost'];
+        $style = isset($customSettings['style']) 
+            ? max(0.0, min(1.0, (float) $customSettings['style'])) 
+            : $defaultSettings['style'];
+        $speed = isset($customSettings['speed']) 
+            ? max(0.7, min(1.2, (float) $customSettings['speed'])) 
+            : $defaultSettings['speed'];
+        $useSpeakerBoost = isset($customSettings['use_speaker_boost']) 
+            ? (bool) $customSettings['use_speaker_boost'] 
+            : $defaultSettings['use_speaker_boost'];
+        
+        $settings = array_merge($defaultSettings, [
+            'stability' => $stability,
+            'similarity_boost' => $similarityBoost,
+            'style' => $style,
+            'speed' => $speed,
+            'use_speaker_boost' => $useSpeakerBoost,
+        ]);
+
+        $model = $customSettings['model'] ?? env('ELEVENLABS_MODEL', 'eleven_multilingual_v2');
+
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'audio/mpeg',
+                'Content-Type' => 'application/json',
+                'xi-api-key' => $this->apiKey,
+            ])->timeout((int) env('ELEVENLABS_TIMEOUT', 30))->post(
+                "https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}",
+                [
+                    'text' => $text,
+                    'model_id' => $model,
+                    'voice_settings' => $settings,
+                ]
+            );
+
+            if ($response->successful()) {
+                Log::info("Generated TTS with custom settings for text: '{$text}'");
+                return $response->body();
+            } else {
+                Log::error("TTS API Error: " . $response->status() . " - " . $response->body());
+                return null;
+            }
+        } catch (\Exception $e) {
+            Log::error("TTS generation exception: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get available presets (for external access)
+     */
+    public function getPresetsArray(): array
     {
-        return self::PRESETS;
+        return $this->getPresets();
     }
 
     /**
@@ -130,25 +208,41 @@ class ElevenLabsTtsService
      * @param string $word The vocabulary word
      * @param string|null $oldAudioPath Old audio path to delete (if regenerating)
      * @param string|null $voiceId Override default voice ID
+     * @param array|null $customSettings Custom TTS settings to override defaults
      * @return array|null Returns ['path' => relative_path, 'full_path' => full_path] or null on failure
      */
     public function generateAndSaveVocabulary(
         string $word,
         ?string $oldAudioPath = null,
-        ?string $voiceId = null
+        ?string $voiceId = null,
+        ?array $customSettings = null
     ): ?array {
-        // Delete old audio file if provided
+        // Delete old audio file if provided (always delete when regenerating)
         if ($oldAudioPath) {
             $oldRelativePath = ltrim($oldAudioPath, '/');
             $oldRelativePath = preg_replace('#^storage/#', '', $oldRelativePath);
-            if (Storage::disk('public')->exists($oldRelativePath)) {
-                Storage::disk('public')->delete($oldRelativePath);
-                Log::info("Deleted old audio file: {$oldRelativePath}");
+            
+            // Try multiple path formats to ensure we find and delete the old file
+            $pathsToTry = [
+                $oldRelativePath,
+                str_replace('tts/vocabulary/', 'tts/words/', $oldRelativePath), // Old format
+                'tts/vocabulary/' . basename($oldRelativePath),
+            ];
+            
+            foreach ($pathsToTry as $pathToDelete) {
+                if (Storage::disk('public')->exists($pathToDelete)) {
+                    Storage::disk('public')->delete($pathToDelete);
+                    Log::info("Deleted old audio file: {$pathToDelete}");
+                }
             }
         }
 
-        // Generate audio
-        $audioData = $this->generateVocabulary($word, $voiceId);
+        // Generate audio with custom settings if provided
+        if ($customSettings) {
+            $audioData = $this->generateWithCustomSettings($word, $customSettings, $voiceId);
+        } else {
+            $audioData = $this->generateVocabulary($word, $voiceId);
+        }
         
         if ($audioData === null) {
             return null;

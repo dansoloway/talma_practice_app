@@ -113,9 +113,20 @@ class SpellingGameController extends Controller
 
     /**
      * Play the spelling game (student-facing)
+     * Only accessible if lesson is active and not archived.
      */
     public function play(Lesson $lesson, SpellingGame $spelling_game, Request $request)
     {
+        // Ensure lesson is active and not archived
+        if (!$lesson->is_active || $lesson->archived_at) {
+            abort(404);
+        }
+
+        // Ensure game is active
+        if (!$spelling_game->is_active) {
+            abort(404);
+        }
+
         // Get vocabulary items directly from the IDs
         $vocabularyIds = $spelling_game->vocabulary_ids ?? [];
         $vocabulary = Vocabulary::whereIn('id', $vocabularyIds)

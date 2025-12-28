@@ -261,11 +261,22 @@ a:focus {
 .nav-links {
     display: flex;
     gap: 1.5rem;
+    align-items: center;
 }
 
 .nav-links a {
     font-family: var(--font-menu);
     text-decoration: none;
+}
+
+.nav-user {
+    font-family: var(--font-menu);
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.9);
+    padding: 0.25rem 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    margin-right: 0.5rem;
 }
 
 /* Main Content */

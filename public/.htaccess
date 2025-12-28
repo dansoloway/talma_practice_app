@@ -5,6 +5,12 @@
 
     RewriteEngine On
 
+    # Security: Block access to sensitive files
+    <FilesMatch "\.(env|log|ini|conf|bak|backup|old|orig|save|swp|tmp)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

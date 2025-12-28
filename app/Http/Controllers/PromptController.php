@@ -9,12 +9,18 @@ class PromptController extends Controller
 {
     /**
      * Get prompt details with options (no audio yet).
+     * Only accessible if prompt belongs to an active lesson.
      */
     public function show(int $id): JsonResponse
     {
         $prompt = Prompt::with(['options' => function ($query) {
             $query->where('is_active', true);
-        }])->findOrFail($id);
+        }])
+        ->whereHas('lesson', function ($query) {
+            $query->where('is_active', true)
+                  ->whereNull('archived_at');
+        })
+        ->findOrFail($id);
 
         return response()->json([
             'id' => $prompt->id,
@@ -34,18 +40,22 @@ class PromptController extends Controller
 
     /**
      * Play all prompts for a lesson (sentence completion activity).
+     * Only accessible if lesson is active and not archived.
      */
     public function play($lessonId)
     {
-        $lesson = \App\Models\Lesson::with([
-            'prompts' => function ($query) {
-                $query->where('is_active', true)
-                      ->orderBy('sort_order')
-                      ->with(['options' => function ($opt) {
-                          $opt->where('is_active', true)->orderBy('sort_order');
-                      }]);
-            }
-        ])->findOrFail($lessonId);
+        $lesson = \App\Models\Lesson::where('is_active', true)
+            ->whereNull('archived_at')
+            ->with([
+                'prompts' => function ($query) {
+                    $query->where('is_active', true)
+                          ->orderBy('sort_order')
+                          ->with(['options' => function ($opt) {
+                              $opt->where('is_active', true)->orderBy('sort_order');
+                          }]);
+                }
+            ])
+            ->findOrFail($lessonId);
 
         // Add full URLs for audio paths
         $lesson->prompts->each(function ($prompt) {

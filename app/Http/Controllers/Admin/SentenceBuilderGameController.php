@@ -230,8 +230,22 @@ class SentenceBuilderGameController extends Controller
     /**
      * Student-facing play view.
      */
+    /**
+     * Play the sentence builder game (student-facing)
+     * Only accessible if lesson is active and not archived.
+     */
     public function play(Lesson $lesson, SentenceBuilderGame $sentenceBuilderGame)
     {
+        // Ensure lesson is active and not archived
+        if (!$lesson->is_active || $lesson->archived_at) {
+            abort(404);
+        }
+
+        // Ensure game is active
+        if (!$sentenceBuilderGame->is_active) {
+            abort(404);
+        }
+
         $questions = $sentenceBuilderGame->activeQuestions()->ordered()->get();
 
         if ($questions->isEmpty()) {

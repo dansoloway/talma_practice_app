@@ -269,9 +269,15 @@ class TrueFalseQuestionController extends Controller
 
     /**
      * Play the True/False game (student-facing)
+     * Only accessible if lesson is active and not archived.
      */
     public function play(Lesson $lesson)
     {
+        // Ensure lesson is active and not archived
+        if (!$lesson->is_active || $lesson->archived_at) {
+            abort(404);
+        }
+
         // Get approved, active questions for this lesson
         $questions = $lesson->trueFalseQuestions()
             ->where('is_approved', true)

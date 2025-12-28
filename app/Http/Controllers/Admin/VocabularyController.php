@@ -91,7 +91,8 @@ class VocabularyController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $filename = time() . '_' . $image->getClientOriginalName();
+            // Use secure filename generation to prevent directory traversal and other attacks
+            $filename = \App\Services\FileUploadSecurity::generateSecureFilename($image, 'vocab');
             $path = $image->storeAs('images/vocabulary', $filename, 'public');
             $validated['image_path'] = 'images/vocabulary/' . $filename;
         }
@@ -154,7 +155,8 @@ class VocabularyController extends Controller
             }
             
             $image = $request->file('image');
-            $filename = time() . '_' . $image->getClientOriginalName();
+            // Use secure filename generation to prevent directory traversal and other attacks
+            $filename = \App\Services\FileUploadSecurity::generateSecureFilename($image, 'vocab');
             $path = $image->storeAs('images/vocabulary', $filename, 'public');
             $validated['image_path'] = 'images/vocabulary/' . $filename;
         }
@@ -256,16 +258,28 @@ class VocabularyController extends Controller
         $totalRows = count($csvData);
 
         foreach ($csvData as $index => $row) {
-            // Skip header row if it exists
-            if ($index === 0 && (strtolower($row[0]) === 'word' || strtolower($row[0]) === 'english_word')) {
+            // Skip header row if it exists (check for common header variations)
+            if ($index === 0 && (
+                strtolower(trim($row[0] ?? '')) === 'word' || 
+                strtolower(trim($row[0] ?? '')) === 'english_word' || 
+                strtolower(trim($row[0] ?? '')) === 'english' ||
+                strtolower(trim($row[0] ?? '')) === 'english word'
+            )) {
                 continue;
             }
 
+            // Only process the first column (English word)
             if (empty($row[0])) {
                 continue;
             }
 
             $englishWord = trim($row[0]);
+            
+            // Validate that it's only English characters (allow spaces, hyphens, apostrophes for phrases)
+            if (!preg_match('/^[a-zA-Z\s\-\']+$/', $englishWord)) {
+                $errors[] = "Row " . ($index + 1) . ": '{$englishWord}' contains non-English characters. Only English words are allowed.";
+                continue;
+            }
             
             // Check for duplicate within the CSV
             if (in_array(strtolower($englishWord), $processedWords)) {
@@ -273,43 +287,36 @@ class VocabularyController extends Controller
                 continue;
             }
             
-            // Check for duplicate in existing database (for replace mode)
-            if ($importMode === 'replace') {
+            // Check for duplicate in existing database (only in add mode)
+            if ($importMode === 'add') {
                 $existingWord = $lesson->vocabulary()->where('english_word', $englishWord)->first();
                 if ($existingWord) {
-                    $errors[] = "Row " . ($index + 1) . ": Word '{$englishWord}' already exists in the database. Use 'Add' mode to add new words or update existing ones.";
+                    $errors[] = "Row " . ($index + 1) . ": Word '{$englishWord}' already exists. Use 'Replace' mode to replace all vocabulary.";
                     continue;
                 }
             }
 
-            $hebrew = isset($row[1]) ? trim($row[1]) : null;
-            $arabic = isset($row[2]) ? trim($row[2]) : null;
-
-            $needsHebrew = blank($hebrew);
-            $needsArabic = blank($arabic);
-
-            if (($needsHebrew || $needsArabic) && $this->translator->enabled()) {
-                $translations = $this->translator->translate($englishWord, $needsHebrew, $needsArabic);
-                if ($needsHebrew && !empty($translations['hebrew'])) {
+            // Only English words in CSV - translations will be generated automatically
+            $hebrew = null;
+            $arabic = null;
+            
+            // Automatically translate if translator is enabled
+            if ($this->translator->enabled()) {
+                $translations = $this->translator->translate($englishWord, true, true);
+                if (!empty($translations['hebrew'])) {
                     $hebrew = $translations['hebrew'];
-                } elseif ($needsHebrew) {
-                    $errors[] = "Row " . ($index + 1) . ": Failed to translate '{$englishWord}' to Hebrew (may have hit rate limit).";
                 }
-                if ($needsArabic && !empty($translations['arabic'])) {
+                if (!empty($translations['arabic'])) {
                     $arabic = $translations['arabic'];
-                } elseif ($needsArabic) {
-                    $errors[] = "Row " . ($index + 1) . ": Failed to translate '{$englishWord}' to Arabic (may have hit rate limit).";
                 }
-            } elseif (($needsHebrew || $needsArabic) && !$this->translator->enabled()) {
-                $errors[] = "Row " . ($index + 1) . ": Missing translations for '{$englishWord}' and OpenAI key is not configured.";
             }
-
+            
             try {
                 $vocabulary = Vocabulary::create([
                     'lesson_id' => $lesson->id,
                     'english_word' => $englishWord,
-                    'hebrew_translation' => $hebrew ?: null,
-                    'arabic_translation' => $arabic ?: null,
+                    'hebrew_translation' => $hebrew,
+                    'arabic_translation' => $arabic,
                     'sort_order' => $imported + 1,
                     'is_active' => true,
                 ]);
@@ -363,11 +370,11 @@ class VocabularyController extends Controller
      */
     public function csvTemplate()
     {
-        $csvContent = "English Word,Hebrew Translation,Arabic Translation\n";
-        $csvContent .= "variable,משתנה,متغير\n";
-        $csvContent .= "conclusion,מסקנה,استنتاج\n";
-        $csvContent .= "hypothesis,השערה,فرضية\n";
-        $csvContent .= "experiment,ניסוי,تجربة\n";
+        $csvContent = "air pollution\n";
+        $csvContent .= "water pollution\n";
+        $csvContent .= "soil pollution\n";
+        $csvContent .= "recycle\n";
+        $csvContent .= "environment\n";
 
         return response($csvContent)
             ->header('Content-Type', 'text/csv')
@@ -387,7 +394,8 @@ class VocabularyController extends Controller
 
         // Store new image
         $image = $request->file('image');
-        $filename = time() . '_' . $image->getClientOriginalName();
+        // Use secure filename generation to prevent directory traversal and other attacks
+        $filename = \App\Services\FileUploadSecurity::generateSecureFilename($image, 'vocab');
         $path = $image->storeAs('images/vocabulary', $filename, 'public');
         
         $vocabulary->update(['image_path' => 'images/vocabulary/' . $filename]);
@@ -731,7 +739,9 @@ class VocabularyController extends Controller
     public function generateSingleTts(Request $request, Lesson $lesson, Vocabulary $vocabulary)
     {
         try {
-            $this->generateVocabularyAudio($vocabulary);
+            // Get custom settings from request if provided
+            $customSettings = $request->input('settings');
+            $this->generateVocabularyAudio($vocabulary, $customSettings);
             
             return response()->json([
                 'success' => true,
@@ -740,9 +750,15 @@ class VocabularyController extends Controller
         } catch (\Exception $e) {
             \Log::error("Failed to generate TTS for vocabulary {$vocabulary->id}: " . $e->getMessage());
             
+            // Extract user-friendly error message from API errors
+            $errorMessage = $e->getMessage();
+            if (strpos($errorMessage, 'invalid_voice_settings') !== false || strpos($errorMessage, 'Invalid setting') !== false) {
+                $errorMessage = 'Invalid TTS settings. Please check that speed is between 0.7 and 1.2, and other values are within valid ranges.';
+            }
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to generate TTS: ' . $e->getMessage(),
+                'message' => 'Failed to generate TTS: ' . $errorMessage,
             ], 500);
         }
     }
@@ -750,7 +766,7 @@ class VocabularyController extends Controller
     /**
      * Generate TTS audio for a vocabulary word
      */
-    private function generateVocabularyAudio(Vocabulary $vocabulary)
+    private function generateVocabularyAudio(Vocabulary $vocabulary, ?array $customSettings = null)
     {
         if (!$this->ttsService->enabled()) {
             $errorMsg = 'ELEVENLABS_API_KEY not found, skipping audio generation for: ' . $vocabulary->english_word;
@@ -763,14 +779,20 @@ class VocabularyController extends Controller
 
         // Create dedicated TTS log file entry
         $ttsLogFile = storage_path('logs/tts_generation.log');
-        file_put_contents($ttsLogFile, "[" . now() . "] Starting TTS generation for vocabulary word: '{$vocabulary->english_word}' (ID: {$vocabulary->id})\n", FILE_APPEND);
+        $settingsInfo = $customSettings ? json_encode($customSettings) : 'using defaults';
+        file_put_contents($ttsLogFile, "[" . now() . "] Starting TTS generation for vocabulary word: '{$vocabulary->english_word}' (ID: {$vocabulary->id}) with settings: {$settingsInfo}\n", FILE_APPEND);
 
         try {
+            // Always delete old audio file when regenerating (force regeneration)
+            $oldAudioPath = $vocabulary->word_audio_path;
+            
             // Use centralized TTS service method that handles everything
+            // Custom settings are passed as parameter to this method
             $result = $this->ttsService->generateAndSaveVocabulary(
                 $vocabulary->english_word,
-                $vocabulary->word_audio_path, // Old path to delete if regenerating
-                null // Use default voice
+                $oldAudioPath, // Old path to delete if regenerating
+                null, // Use default voice
+                $customSettings // Pass custom settings if provided (null = use defaults)
             );
 
             if ($result !== null) {
@@ -891,7 +913,9 @@ class VocabularyController extends Controller
             if ($vocabulary) {
                 file_put_contents($ttsLogFile, "[" . now() . "] Starting single vocabulary TTS for lesson {$lesson->id} | vocab_id={$vocabulary->id} word='{$vocabulary->english_word}'\n", FILE_APPEND);
                 try {
-                    $this->generateVocabularyAudio($vocabulary);
+                    // Pass custom settings if provided
+                    $customSettings = $request->input('settings');
+                    $this->generateVocabularyAudio($vocabulary, $customSettings);
                     $processed = 1;
                     \Log::info("Successfully generated word TTS for '{$vocabulary->english_word}' (Vocabulary ID: {$vocabulary->id})");
                     

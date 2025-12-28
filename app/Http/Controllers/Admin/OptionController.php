@@ -90,7 +90,8 @@ class OptionController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $filename = time() . '_' . $image->getClientOriginalName();
+            // Use secure filename generation to prevent directory traversal and other attacks
+            $filename = \App\Services\FileUploadSecurity::generateSecureFilename($image, 'option');
             $path = $image->storeAs('public/images/options', $filename);
             $validated['image_path'] = 'storage/images/options/' . $filename;
         } else {

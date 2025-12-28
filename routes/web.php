@@ -6,6 +6,7 @@ use App\Http\Controllers\PromptController;
 use App\Http\Controllers\PromptModelController;
 use App\Http\Controllers\ResponseController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\Admin\AdminLoginController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\Admin\LessonTrackerController;
@@ -50,16 +51,27 @@ Route::get('/lessons/{lesson}/spelling-games/{spelling_game}/play', [App\Http\Co
 Route::get('/lessons/{lesson}/sentence-builder-games/{sentence_builder_game}/play', [App\Http\Controllers\Admin\SentenceBuilderGameController::class, 'play'])
     ->name('sentence-builder-games.play');
 
-// Prompts (JSON API)
-Route::get('/prompts/{id}', [PromptController::class, 'show'])->name('prompts.show');
-Route::get('/lessons/{lesson}/prompts/play', [PromptController::class, 'play'])->name('prompts.play');
-Route::get('/lessons/{lesson}/true-false/play', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'play'])->name('true-false.play');
+// Prompts (JSON API) - Rate limited
+Route::get('/prompts/{id}', [PromptController::class, 'show'])
+    ->middleware('throttle:100,1')
+    ->name('prompts.show');
+Route::get('/lessons/{lesson}/prompts/play', [PromptController::class, 'play'])
+    ->middleware('throttle:100,1')
+    ->name('prompts.play');
+Route::get('/lessons/{lesson}/true-false/play', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'play'])
+    ->middleware('throttle:100,1')
+    ->name('true-false.play');
 Route::get('/prompts/{promptId}/options/{optionId}/model', [PromptModelController::class, 'show'])
+    ->middleware('throttle:100,1')
     ->name('prompts.model');
 
-// Responses
-Route::post('/responses', [ResponseController::class, 'store'])->name('responses.store');
-Route::post('/activity-events', [ActivityEventController::class, 'store'])->name('activity-events.store');
+// Responses - Rate limited
+Route::post('/responses', [ResponseController::class, 'store'])
+    ->middleware('throttle:60,1')
+    ->name('responses.store');
+Route::post('/activity-events', [ActivityEventController::class, 'store'])
+    ->middleware('throttle:60,1')
+    ->name('activity-events.store');
 
 /*
 |--------------------------------------------------------------------------
@@ -67,24 +79,18 @@ Route::post('/activity-events', [ActivityEventController::class, 'store'])->name
 |--------------------------------------------------------------------------
 */
 
-// Admin login route (redirects to lessons management)
-Route::get('/admin', function () {
-    return redirect()->route('admin.lessons.index');
-})->name('admin.dashboard')->middleware('admin.auth');
+// Admin login routes
+Route::get('/admin', [AdminLoginController::class, 'show'])->name('admin.dashboard');
+Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login');
 
-Route::post('/admin/login', function (Request $request) {
-    $password = $request->input('admin_password');
-    $correctPassword = env('ADMIN_PASSWORD', 'admin123');
-    
-    if ($password === $correctPassword) {
-        session(['admin_authenticated' => true]);
-        return redirect()->route('admin.analytics');
-    } else {
-        return redirect()->route('admin.dashboard')->with('error', 'Incorrect password. Please try again.');
-    }
-})->name('admin.login');
+// Admin password reset routes
+Route::get('/admin/password/forgot', [\App\Http\Controllers\Admin\PasswordResetController::class, 'showForgotPasswordForm'])->name('admin.password.forgot');
+Route::post('/admin/password/email', [\App\Http\Controllers\Admin\PasswordResetController::class, 'sendResetLinkEmail'])->name('admin.password.email');
+Route::get('/admin/password/reset/{token}', [\App\Http\Controllers\Admin\PasswordResetController::class, 'showResetForm'])->name('admin.password.reset');
+Route::post('/admin/password/reset', [\App\Http\Controllers\Admin\PasswordResetController::class, 'reset'])->name('admin.password.update');
 
 Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
+    // Analytics routes
     Route::get('analytics', [DashboardController::class, 'index'])->name('analytics');
     Route::get('session-length', [DashboardController::class, 'sessionLengthDashboard'])->name('session-length');
     Route::get('session-length/day-breakdown', [DashboardController::class, 'getDayActivityBreakdown'])->name('session-length.day-breakdown');
@@ -93,11 +99,11 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::get('lesson-tracker', [LessonTrackerController::class, 'index'])->name('lesson-tracker');
     Route::put('lesson-tracker/{lesson}', [LessonTrackerController::class, 'update'])->name('lesson-tracker.update');
     
+    // User Management (admin only) - includes teachers and admins
+    Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->middleware('admin.only');
+    
     // Logout
-    Route::post('/logout', function () {
-        session()->forget('admin_authenticated');
-        return response()->json(['success' => true]);
-    })->name('logout');
+    Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
     
     // Lessons
     Route::resource('lessons', AdminLessonController::class);

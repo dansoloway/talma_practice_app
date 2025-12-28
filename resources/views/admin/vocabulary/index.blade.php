@@ -11,7 +11,7 @@
                 <span id="images-btn-text">🎨 Generate Images</span>
                 <span id="images-btn-spinner" style="display: none;">⏳ Processing...</span>
             </button>
-            <button id="generate-tts-btn" class="btn btn-primary" onclick="generateAllTts()">
+            <button id="generate-tts-btn" class="btn btn-primary" onclick="showTtsSettingsModal()">
                 <span id="tts-btn-text">Generate/Recreate TTS</span>
                 <span id="tts-btn-spinner" style="display: none;">⏳ Processing...</span>
             </button>
@@ -31,6 +31,80 @@
                 <span id="images-processed">0</span> processed, <span id="images-remaining">0</span> remaining
             </div>
         </div>
+        
+        <!-- TTS Settings Modal -->
+        <div id="tts-settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <h2 style="margin-bottom: 1.5rem; color: #0024a7;">TTS Generation Settings</h2>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Stability</label>
+                    <input type="range" id="tts-stability" min="0" max="1" step="0.05" value="0.8" style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
+                        <span>More Natural (0.0)</span>
+                        <span id="tts-stability-value">0.8</span>
+                        <span>More Consistent (1.0)</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Similarity Boost</label>
+                    <input type="range" id="tts-similarity" min="0" max="1" step="0.05" value="0.85" style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
+                        <span>Different Voice (0.0)</span>
+                        <span id="tts-similarity-value">0.85</span>
+                        <span>Original Voice (1.0)</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Style</label>
+                    <input type="range" id="tts-style" min="0" max="1" step="0.05" value="0.0" style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
+                        <span>Neutral (0.0)</span>
+                        <span id="tts-style-value">0.0</span>
+                        <span>Expressive (1.0)</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Speed</label>
+                    <input type="range" id="tts-speed" min="0.7" max="1.2" step="0.05" value="1.0" style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
+                        <span>Slow (0.7x)</span>
+                        <span id="tts-speed-value">1.0</span>
+                        <span>Fast (1.2x)</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="tts-speaker-boost" checked style="width: 18px; height: 18px;">
+                        <span style="font-weight: 600;">Speaker Boost</span>
+                        <span style="font-size: 0.875rem; color: #666; margin-left: 0.5rem;">(Enhanced clarity)</span>
+                    </label>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Model</label>
+                    <select id="tts-model" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="eleven_multilingual_v2" selected>Multilingual v2 (Recommended)</option>
+                        <option value="eleven_monolingual_v1">Monolingual v1 (Faster, English only)</option>
+                        <option value="eleven_turbo_v2_5">Turbo v2.5 (Fastest)</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button onclick="startTtsGeneration()" class="btn btn-primary" style="flex: 1;">
+                        Start Generation
+                    </button>
+                    <button onclick="closeTtsSettingsModal(); currentSingleVocab = null;" class="btn" style="flex: 1;">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div id="tts-status" style="display: none; margin-bottom: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 4px; border-left: 4px solid #3b82f6;">
             <div id="tts-progress-text">Initializing TTS generation...</div>
             <div id="tts-progress-bar" style="margin-top: 0.5rem; width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
@@ -260,6 +334,8 @@ let imagesProcessedItems = 0;
 let ttsGenerationInProgress = false;
 let ttsTotalItems = {{ $vocabulary->count() }};
 let ttsProcessedItems = 0;
+// Store current vocabulary item being regenerated (null = bulk regeneration)
+let currentSingleVocab = null;
 
 function generateAllImages() {
     if (imagesGenerationInProgress) {
@@ -355,14 +431,77 @@ function generateAllImages() {
     processNext();
 }
 
-function generateAllTts() {
+function showTtsSettingsModal() {
     if (ttsGenerationInProgress) {
         return;
     }
+    document.getElementById('tts-settings-modal').style.display = 'flex';
+}
 
-    if (!confirm('This will generate/recreate TTS audio for all {{ $vocabulary->count() }} vocabulary words. This may take several minutes. Continue?')) {
+function closeTtsSettingsModal() {
+    document.getElementById('tts-settings-modal').style.display = 'none';
+    // Don't reset currentSingleVocab here - it will be reset after generation completes
+    // This allows the generation function to access the vocab data after modal closes
+}
+
+// Update slider value displays
+document.addEventListener('DOMContentLoaded', function() {
+    const stabilitySlider = document.getElementById('tts-stability');
+    const similaritySlider = document.getElementById('tts-similarity');
+    const styleSlider = document.getElementById('tts-style');
+    const speedSlider = document.getElementById('tts-speed');
+
+    if (stabilitySlider) {
+        stabilitySlider.addEventListener('input', function() {
+            document.getElementById('tts-stability-value').textContent = parseFloat(this.value).toFixed(2);
+        });
+    }
+    if (similaritySlider) {
+        similaritySlider.addEventListener('input', function() {
+            document.getElementById('tts-similarity-value').textContent = parseFloat(this.value).toFixed(2);
+        });
+    }
+    if (styleSlider) {
+        styleSlider.addEventListener('input', function() {
+            document.getElementById('tts-style-value').textContent = parseFloat(this.value).toFixed(2);
+        });
+    }
+    if (speedSlider) {
+        speedSlider.addEventListener('input', function() {
+            document.getElementById('tts-speed-value').textContent = parseFloat(this.value).toFixed(2);
+        });
+    }
+});
+
+function startTtsGeneration() {
+    if (ttsGenerationInProgress && !currentSingleVocab) {
         return;
     }
+
+    // Get settings from modal
+    const settings = {
+        stability: parseFloat(document.getElementById('tts-stability').value),
+        similarity_boost: parseFloat(document.getElementById('tts-similarity').value),
+        style: parseFloat(document.getElementById('tts-style').value),
+        speed: parseFloat(document.getElementById('tts-speed').value),
+        use_speaker_boost: document.getElementById('tts-speaker-boost').checked,
+        model: document.getElementById('tts-model').value
+    };
+
+    // Check if this is for a single vocabulary item or bulk
+    if (currentSingleVocab) {
+        // Individual vocabulary regeneration - no confirmation needed
+        // Close modal
+        closeTtsSettingsModal();
+        
+        // Generate for single vocabulary item
+        generateSingleVocabTts(settings);
+        return;
+    }
+
+    // Bulk regeneration - no confirmation needed
+    // Close modal
+    closeTtsSettingsModal();
 
     ttsGenerationInProgress = true;
     ttsProcessedItems = 0;
@@ -392,7 +531,8 @@ function generateAllTts() {
             },
             body: JSON.stringify({
                 force: true,  // Always recreate to regenerate existing audio
-                reset: ttsProcessedItems === 0  // Reset cache on first call
+                reset: ttsProcessedItems === 0,  // Reset cache on first call
+                settings: settings  // Pass TTS settings
             })
         })
         .then(response => response.json())
@@ -448,6 +588,71 @@ function generateAllTts() {
     }
 
     processNext();
+}
+
+function generateSingleVocabTts(settings) {
+    if (!currentSingleVocab) return;
+    
+    const vocab = currentSingleVocab;
+    
+    // Disable button and show loading state
+    vocab.button.disabled = true;
+    vocab.button.textContent = '⏳ Generating...';
+    
+    console.log('Starting TTS generation for:', vocab.word, 'with settings:', settings);
+    console.log('URL:', vocab.url);
+    
+    fetch(vocab.url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            settings: settings
+        })
+    })
+    .then(response => {
+        console.log('Response status:', response.status, response.statusText);
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.error('Error response body:', text);
+                throw new Error(`HTTP error! status: ${response.status} - ${text}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('TTS Generation Response:', data);
+        if (data && data.success) {
+            vocab.button.textContent = '✅ Generated';
+            vocab.button.classList.remove('btn-secondary');
+            vocab.button.classList.add('btn-success');
+            
+            // Reset current vocab
+            currentSingleVocab = null;
+            
+            // Reload page immediately to show updated status and play button
+            console.log('Reloading page...');
+            window.location.reload();
+        } else {
+            console.error('Response indicates failure:', data);
+            vocab.button.disabled = false;
+            vocab.button.textContent = vocab.originalText;
+            alert('Error: ' + (data?.message || 'Failed to generate TTS. Check console for details.'));
+            currentSingleVocab = null;
+        }
+    })
+    .catch(error => {
+        console.error('TTS Generation Error:', error);
+        console.error('Error stack:', error.stack);
+        vocab.button.disabled = false;
+        vocab.button.textContent = vocab.originalText;
+        alert('Error: ' + error.message + '\n\nCheck browser console (F12) for more details.');
+        currentSingleVocab = null;
+    });
 }
 
 // Image modal functionality
@@ -552,44 +757,17 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.generate-tts-btn').forEach(button => {
         button.addEventListener('click', function() {
-            const vocabId = this.dataset.vocabId;
-            const word = this.dataset.word;
-            const originalText = this.textContent;
+            // Store which vocabulary item this is for individual regeneration
+            currentSingleVocab = {
+                id: this.dataset.vocabId,
+                word: this.dataset.word,
+                url: this.dataset.url,
+                button: this,
+                originalText: this.textContent
+            };
             
-            // Disable button and show loading state
-            this.disabled = true;
-            this.textContent = '⏳ Generating...';
-            
-            fetch(this.dataset.url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.textContent = '✅ Generated';
-                    this.classList.remove('btn-secondary');
-                    this.classList.add('btn-success');
-                    
-                    // Reload page after 1 second to show updated status and play button
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    alert('Error: ' + (data.message || 'Failed to generate TTS'));
-                    this.disabled = false;
-                    this.textContent = originalText;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred: ' + error.message);
-                this.disabled = false;
-                this.textContent = originalText;
-            });
+            // Show settings modal
+            showTtsSettingsModal();
         });
     });
 });

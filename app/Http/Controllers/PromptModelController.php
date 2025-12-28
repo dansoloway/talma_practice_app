@@ -10,11 +10,16 @@ class PromptModelController extends Controller
 {
     /**
      * Get the model sentence and audio for a specific prompt + option.
+     * Only accessible if prompt belongs to an active lesson.
      */
     public function show(int $promptId, int $optionId): JsonResponse
     {
         $asset = PromptOptionAsset::where('prompt_id', $promptId)
             ->where('option_id', $optionId)
+            ->whereHas('prompt.lesson', function ($query) {
+                $query->where('is_active', true)
+                      ->whereNull('archived_at');
+            })
             ->firstOrFail();
 
         return response()->json([

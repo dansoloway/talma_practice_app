@@ -36,15 +36,18 @@ class ResponseController extends Controller
         // Only save recording if uploads are enabled
         if ($request->hasFile('recording') && config('app.allow_recording_upload', false)) {
             $file = $request->file('recording');
-            $userId = auth()->id() ?? 'guest';
-            $timestamp = now()->format('Ymd_His');
             
-            $filename = sprintf(
-                'p%d_%s.%s',
-                $request->prompt_id,
-                $timestamp,
-                $file->getClientOriginalExtension()
-            );
+            // Additional security: validate file content matches declared type
+            $allowedMimes = ['audio/webm', 'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a'];
+            if (!\App\Services\FileUploadSecurity::validateFileContent($file, $allowedMimes)) {
+                return response()->json([
+                    'error' => 'Invalid file type. File content does not match declared type.'
+                ], 422);
+            }
+            
+            $userId = auth()->id() ?? 'guest';
+            // Use secure filename generation to prevent directory traversal
+            $filename = \App\Services\FileUploadSecurity::generateSecureFilename($file, 'rec_' . $request->prompt_id);
 
             $recordingPath = $file->storeAs(
                 "recordings/{$userId}",

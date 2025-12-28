@@ -1,58 +1,74 @@
 @extends('layouts.app')
 
-@section('title', 'Admin Login - TALMA Practice Pal')
+@section('title', 'Reset Password - TALMA Practice Pal')
 
 @section('content')
 <div class="container">
     <div class="admin-login">
         <div class="login-card">
             <div class="login-header">
-                <h1>Admin Login</h1>
-                <p>Enter the admin password to access the admin dashboard</p>
+                <h1>Reset Password</h1>
+                <p>Enter your new password below</p>
             </div>
 
-            @if(session('error'))
+            @if($errors->any())
                 <div class="error-message">
-                    {{ session('error') }}
+                    <ul>
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
 
-            <form method="POST" action="/admin/login" class="login-form" id="login-form">
+            <form method="POST" action="{{ route('admin.password.update') }}" class="login-form">
                 @csrf
+                <input type="hidden" name="token" value="{{ $token }}">
+                
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" 
-                           class="form-control" value="{{ old('email') }}" required autofocus>
+                           class="form-control" value="{{ old('email', $email) }}" required readonly>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password">New Password</label>
                     <div class="password-input-wrapper">
                         <input type="password" id="password" name="password" 
-                               class="form-control" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Show password">
+                               class="form-control" required minlength="8">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password')" aria-label="Show password">
                             <i class="fas fa-eye" id="password-toggle-icon"></i>
                         </button>
                     </div>
                 </div>
                 
-                <button type="submit" class="btn btn-primary btn-large" id="login-submit-btn">
-                    Access Admin Dashboard
+                <div class="form-group">
+                    <label for="password_confirmation">Confirm New Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="password_confirmation" name="password_confirmation" 
+                               class="form-control" required minlength="8">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation')" aria-label="Show password">
+                            <i class="fas fa-eye" id="password_confirmation-toggle-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-large">
+                    Reset Password
                 </button>
             </form>
 
             <div class="login-footer">
-                <a href="{{ route('admin.password.forgot') }}" class="forgot-password-link">Forgot Password?</a>
-                <a href="{{ route('student.index') }}" class="back-link">← Back to Student View</a>
+                <a href="{{ route('admin.dashboard') }}" class="back-link">← Back to Login</a>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-function togglePassword() {
-    const passwordInput = document.getElementById('password');
-    const toggleIcon = document.getElementById('password-toggle-icon');
+function togglePassword(fieldId) {
+    const passwordInput = document.getElementById(fieldId);
+    const toggleIcon = document.getElementById(fieldId + '-toggle-icon');
     
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
@@ -64,7 +80,6 @@ function togglePassword() {
         toggleIcon.classList.add('fa-eye');
     }
 }
-
 </script>
 
 <style>
@@ -102,18 +117,6 @@ function togglePassword() {
     border-radius: var(--radius-sm);
 }
 
-.forgot-password-link {
-    color: var(--color-primary);
-    text-decoration: none;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-    display: inline-block;
-}
-
-.forgot-password-link:hover {
-    text-decoration: underline;
-}
-
 .login-footer {
     display: flex;
     flex-direction: column;
@@ -123,3 +126,4 @@ function togglePassword() {
 }
 </style>
 @endsection
+

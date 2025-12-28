@@ -167,9 +167,20 @@ class FlashcardGameController extends Controller
 
     /**
      * Play the flashcard game
+     * Only accessible if lesson is active and not archived.
      */
     public function play(Lesson $lesson, FlashcardGame $flashcardGame, Request $request)
     {
+        // Ensure lesson is active and not archived
+        if (!$lesson->is_active || $lesson->archived_at) {
+            abort(404);
+        }
+
+        // Ensure game is active
+        if (!$flashcardGame->is_active) {
+            abort(404);
+        }
+
         // Get vocabulary items
         $vocabularyIds = $flashcardGame->vocabulary_ids ?? [];
         $vocabulary = Vocabulary::whereIn('id', $vocabularyIds)->get();

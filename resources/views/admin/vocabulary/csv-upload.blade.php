@@ -15,11 +15,6 @@
             <p>Your CSV file should have the following format:</p>
             <div class="csv-example">
                 <table class="table">
-                    <thead>
-                        <tr>
-                            <th>English Word</th>
-                        </tr>
-                    </thead>
                     <tbody>
                         <tr>
                             <td>air pollution</td>
@@ -30,18 +25,32 @@
                         <tr>
                             <td>soil pollution</td>
                         </tr>
+                        <tr>
+                            <td>recycle</td>
+                        </tr>
+                        <tr>
+                            <td>environment</td>
+                        </tr>
                     </tbody>
                 </table>
+                <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #666; font-style: italic;">
+                    No header row needed. Translations will be generated automatically after upload.
+                </p>
             </div>
             
             <div class="csv-requirements">
                 <h4>Requirements:</h4>
                 <ul>
-                    <li>Each row should contain one English word</li>
+                    <li>Each row should contain <strong>only one English word</strong></li>
+                    <li>No header row needed - just list the words</li>
+                    <li>Additional columns will be ignored</li>
+                    <li>Only English letters, spaces, hyphens, and apostrophes are allowed</li>
                     <li>File must be CSV or TXT format</li>
                     <li>Maximum file size: 2MB</li>
-                    <li>Header row is optional (will be skipped if detected)</li>
                 </ul>
+                <p class="warning-text" style="color: #d97706; margin-top: 1rem; font-weight: 500;">
+                    <strong>Note:</strong> Only English words are accepted. Translations and other columns will be ignored.
+                </p>
             </div>
         </div>
 
@@ -104,7 +113,7 @@
             <div id="processing-progress" style="height: 100%; background: #0024a7; width: 0%; transition: width 0.3s;"></div>
         </div>
         <p style="margin-top: 1.5rem; font-size: 0.875rem; color: #999;">
-            Generating translations, images, and audio files...
+            Translating words and generating audio files...
         </p>
     </div>
 </div>
@@ -165,14 +174,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     processingProgress.style.width = progress + '%';
                     
                     // Update status messages
-                    if (progress < 20) {
+                    if (progress < 30) {
                         processingStatus.textContent = 'Uploading file...';
-                    } else if (progress < 40) {
+                    } else if (progress < 50) {
                         processingStatus.textContent = 'Parsing CSV file...';
-                    } else if (progress < 60) {
+                    } else if (progress < 50) {
+                        processingStatus.textContent = 'Validating English words...';
+                    } else if (progress < 70) {
                         processingStatus.textContent = 'Translating words...';
-                    } else if (progress < 80) {
-                        processingStatus.textContent = 'Generating images...';
                     } else {
                         processingStatus.textContent = 'Generating audio files...';
                     }
