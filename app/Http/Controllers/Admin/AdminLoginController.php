@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -44,21 +45,72 @@ class AdminLoginController extends Controller
         // Find user by email
         $user = User::where('email', $credentials['email'])->first();
 
+        // Log login attempt
+        Log::info('Admin login attempt', [
+            'email' => $credentials['email'],
+            'ip' => $request->ip(),
+            'user_exists' => $user !== null,
+            'user_id' => $user?->id,
+            'user_active' => $user?->is_active,
+            'user_role' => $user?->role,
+        ]);
+
         // Check if user exists, is active, and has admin/teacher role
-        if (!$user || !$user->is_active || !$user->canAccessAdmin()) {
+        if (!$user) {
+            Log::warning('Admin login failed: User not found', [
+                'email' => $credentials['email'],
+                'ip' => $request->ip(),
+            ]);
             RateLimiter::hit($key, 300); // 5 minutes
             return redirect()
-                ->route('admin.dashboard')
+                ->route('admin.login')
+                ->with('error', 'Invalid credentials or insufficient permissions.');
+        }
+
+        if (!$user->is_active) {
+            Log::warning('Admin login failed: User inactive', [
+                'email' => $credentials['email'],
+                'user_id' => $user->id,
+                'ip' => $request->ip(),
+            ]);
+            RateLimiter::hit($key, 300); // 5 minutes
+            return redirect()
+                ->route('admin.login')
+                ->with('error', 'Invalid credentials or insufficient permissions.');
+        }
+
+        if (!$user->canAccessAdmin()) {
+            Log::warning('Admin login failed: Insufficient permissions', [
+                'email' => $credentials['email'],
+                'user_id' => $user->id,
+                'role' => $user->role,
+                'ip' => $request->ip(),
+            ]);
+            RateLimiter::hit($key, 300); // 5 minutes
+            return redirect()
+                ->route('admin.login')
                 ->with('error', 'Invalid credentials or insufficient permissions.');
         }
 
         // Verify password
         if (!Hash::check($credentials['password'], $user->password)) {
+            Log::warning('Admin login failed: Invalid password', [
+                'email' => $credentials['email'],
+                'user_id' => $user->id,
+                'ip' => $request->ip(),
+            ]);
             RateLimiter::hit($key, 300); // 5 minutes
             return redirect()
-                ->route('admin.dashboard')
+                ->route('admin.login')
                 ->with('error', 'Invalid credentials.');
         }
+
+        Log::info('Admin login successful', [
+            'email' => $credentials['email'],
+            'user_id' => $user->id,
+            'role' => $user->role,
+            'ip' => $request->ip(),
+        ]);
 
         // Regenerate session to prevent fixation
         $request->session()->regenerate();
