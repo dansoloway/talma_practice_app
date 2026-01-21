@@ -41,9 +41,9 @@ class SecurityHeaders
         // Note: Adjust this based on your actual needs (CDNs, external scripts, etc.)
         $csp = "default-src 'self'; " .
                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; " .
-               "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; " .
+               "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; " .
                "img-src 'self' data: https:; " .
-               "font-src 'self' https://cdnjs.cloudflare.com; " .
+               "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; " .
                "connect-src 'self'; " .
                "frame-ancestors 'none';";
         
