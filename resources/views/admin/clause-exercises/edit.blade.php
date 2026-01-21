@@ -29,11 +29,6 @@
                     <strong>No vocabulary available!</strong> This lesson needs vocabulary items before regenerating clause exercises.
                     <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}">Add vocabulary</a>
                 </div>
-            @elseif($grammarSets->count() === 0)
-                <div class="alert alert-warning">
-                    <strong>No grammar sets associated!</strong> For best results, associate a grammar set with this lesson first.
-                    <a href="{{ route('admin.lessons.manage', $lesson) }}">Go back to associate a grammar set</a>
-                </div>
             @endif
 
             @if(session('error'))
@@ -81,16 +76,16 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="regenerate_grammar_set_id">Grammar Set (Optional)</label>
-                    <select id="regenerate_grammar_set_id" name="grammar_set_id" class="form-control">
-                        <option value="">Use all associated grammar sets</option>
+                    <label for="regenerate_grammar_set_id">Grammar Set *</label>
+                    <select id="regenerate_grammar_set_id" name="grammar_set_id" class="form-control" required>
+                        <option value="">-- Select a Grammar Set --</option>
                         @foreach($grammarSets as $set)
                             <option value="{{ $set->id }}" {{ old('grammar_set_id', $clauseExercise->grammar_set_id) == $set->id ? 'selected' : '' }}>
-                                {{ $set->title }} ({{ $set->concepts_count }} concepts)
+                                {{ $set->title }} ({{ $set->grammarConcepts->count() }} concepts)
                             </option>
                         @endforeach
                     </select>
-                    <small>Select a specific grammar set to focus on, or leave blank to use all associated sets</small>
+                    <small>Select a grammar set to use for generating grammar-focused blanks in the exercise</small>
                 </div>
 
                 <div class="form-group">

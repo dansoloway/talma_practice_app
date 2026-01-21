@@ -24,7 +24,8 @@ class ClauseExerciseController extends Controller
      */
     public function create(Lesson $lesson)
     {
-        $grammarSets = $lesson->grammarSets;
+        // Get all available grammar sets, not just associated ones
+        $grammarSets = GrammarSet::with('grammarConcepts')->orderBy('title')->get();
         
         return view('admin.clause-exercises.create', compact('lesson', 'grammarSets'));
     }
@@ -42,9 +43,7 @@ class ClauseExerciseController extends Controller
         ]);
 
         try {
-            $grammarSet = $validated['grammar_set_id'] 
-                ? GrammarSet::findOrFail($validated['grammar_set_id'])
-                : null;
+            $grammarSet = GrammarSet::findOrFail($validated['grammar_set_id']);
 
             // Generate exercise using AI
             try {
@@ -125,7 +124,8 @@ class ClauseExerciseController extends Controller
      */
     public function edit(Lesson $lesson, ClauseExercise $clauseExercise)
     {
-        $grammarSets = $lesson->grammarSets;
+        // Get all available grammar sets, not just associated ones
+        $grammarSets = GrammarSet::with('grammarConcepts')->orderBy('title')->get();
         return view('admin.clause-exercises.edit', compact('lesson', 'clauseExercise', 'grammarSets'));
     }
 
@@ -161,14 +161,12 @@ class ClauseExerciseController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'topic' => 'nullable|string|max:255',
-            'grammar_set_id' => 'nullable|exists:grammar_sets,id',
+            'grammar_set_id' => 'required|exists:grammar_sets,id',
             'model' => 'nullable|string|in:gpt-4o-mini,gpt-4o',
         ]);
 
         try {
-            $grammarSet = $validated['grammar_set_id'] 
-                ? GrammarSet::findOrFail($validated['grammar_set_id'])
-                : $clauseExercise->grammarSet;
+            $grammarSet = GrammarSet::findOrFail($validated['grammar_set_id']);
 
             // Generate exercise using AI
             try {
