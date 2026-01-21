@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\VocabularyController as AdminVocabularyController
 use App\Http\Controllers\Admin\PromptController as AdminPromptController;
 use App\Http\Controllers\Admin\OptionController as AdminOptionController;
 use App\Http\Controllers\Admin\FlashcardGameController as AdminFlashcardGameController;
+use App\Http\Controllers\Admin\GrammarConceptController;
+use App\Http\Controllers\Admin\OpenAiUsageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +63,11 @@ Route::get('/lessons/{lesson}/prompts/play', [PromptController::class, 'play'])
 Route::get('/lessons/{lesson}/true-false/play', [App\Http\Controllers\Admin\TrueFalseQuestionController::class, 'play'])
     ->middleware('throttle:100,1')
     ->name('true-false.play');
+
+// Clause Exercises (public)
+Route::get('/lessons/{lesson}/clause-exercises/{clauseExercise}/play', [App\Http\Controllers\Admin\ClauseExerciseController::class, 'play'])
+    ->middleware('throttle:100,1')
+    ->name('clause-exercises.play');
 Route::get('/prompts/{promptId}/options/{optionId}/model', [PromptModelController::class, 'show'])
     ->middleware('throttle:100,1')
     ->name('prompts.model');
@@ -81,6 +88,7 @@ Route::post('/activity-events', [ActivityEventController::class, 'store'])
 
 // Admin login routes
 Route::get('/admin', [AdminLoginController::class, 'show'])->name('admin.dashboard');
+Route::get('/admin/login', [AdminLoginController::class, 'show'])->name('admin.login.show');
 Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login');
 
 // Admin password reset routes
@@ -94,6 +102,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::get('analytics', [DashboardController::class, 'index'])->name('analytics');
     Route::get('session-length', [DashboardController::class, 'sessionLengthDashboard'])->name('session-length');
     Route::get('session-length/day-breakdown', [DashboardController::class, 'getDayActivityBreakdown'])->name('session-length.day-breakdown');
+    Route::get('openai-usage', [OpenAiUsageController::class, 'index'])->name('openai-usage');
     
     // Lesson Tracker
     Route::get('lesson-tracker', [LessonTrackerController::class, 'index'])->name('lesson-tracker');
@@ -167,6 +176,38 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         ->name('lessons.vocabulary.generate-image');
     Route::post('lessons/{lesson}/vocabulary/generate-tts', [AdminVocabularyController::class, 'generateTts'])
         ->name('lessons.vocabulary.generate-tts');
+    
+    // Grammar Sets for Lessons
+    Route::post('lessons/{lesson}/grammar-sets/attach', [AdminLessonController::class, 'attachGrammarSet'])
+        ->name('lessons.grammar-sets.attach');
+    Route::delete('lessons/{lesson}/grammar-sets/{grammarSet}/detach', [AdminLessonController::class, 'detachGrammarSet'])
+        ->name('lessons.grammar-sets.detach');
+    
+    // Clause Exercises
+    Route::get('lessons/{lesson}/clause-exercises/create', [\App\Http\Controllers\Admin\ClauseExerciseController::class, 'create'])
+        ->name('lessons.clause-exercises.create');
+    Route::post('lessons/{lesson}/clause-exercises', [\App\Http\Controllers\Admin\ClauseExerciseController::class, 'store'])
+        ->name('lessons.clause-exercises.store');
+    Route::get('lessons/{lesson}/clause-exercises/{clauseExercise}/edit', [\App\Http\Controllers\Admin\ClauseExerciseController::class, 'edit'])
+        ->name('lessons.clause-exercises.edit');
+    Route::put('lessons/{lesson}/clause-exercises/{clauseExercise}', [\App\Http\Controllers\Admin\ClauseExerciseController::class, 'update'])
+        ->name('lessons.clause-exercises.update');
+    Route::delete('lessons/{lesson}/clause-exercises/{clauseExercise}', [\App\Http\Controllers\Admin\ClauseExerciseController::class, 'destroy'])
+        ->name('lessons.clause-exercises.destroy');
+    
+    // Grammar Concepts
+    Route::get('grammar-concepts', [GrammarConceptController::class, 'index'])
+        ->name('grammar-concepts.index');
+    Route::get('grammar-concepts/csv/upload', [GrammarConceptController::class, 'csvUpload'])
+        ->name('grammar-concepts.csv.upload');
+    Route::post('grammar-concepts/csv/process', [GrammarConceptController::class, 'processCsv'])
+        ->name('grammar-concepts.csv.process');
+    Route::get('grammar-concepts/{grammarConcept}/edit', [GrammarConceptController::class, 'edit'])
+        ->name('grammar-concepts.edit');
+    Route::put('grammar-concepts/{grammarConcept}', [GrammarConceptController::class, 'update'])
+        ->name('grammar-concepts.update');
+    Route::delete('grammar-concepts/{grammarConcept}', [GrammarConceptController::class, 'destroy'])
+        ->name('grammar-concepts.destroy');
     Route::post('lessons/{lesson}/vocabulary/{vocabulary}/generate-tts', [AdminVocabularyController::class, 'generateSingleTts'])
         ->name('lessons.vocabulary.generate-single-tts');
     Route::post('lessons/{lesson}/vocabulary/generate-images', [AdminVocabularyController::class, 'generateImages'])

@@ -28,6 +28,11 @@ class Prompt extends Model
     ];
 
     /**
+     * The relationships that should be touched when this model is updated.
+     */
+    protected $touches = ['lesson'];
+
+    /**
      * Get the lesson this prompt belongs to.
      */
     public function lesson(): BelongsTo

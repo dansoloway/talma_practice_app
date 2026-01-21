@@ -129,6 +129,18 @@
                 ]);
             }
             
+            // Add clause exercises
+            foreach($lesson->clauseExercises as $exercise) {
+                $allActivities->push((object)[
+                    'id' => $exercise->id,
+                    'type' => 'clause_exercise',
+                    'title' => $exercise->title,
+                    'sort_order' => $exercise->sort_order ?? 999,
+                    'is_active' => $exercise->is_active ?? true,
+                    'model' => $exercise
+                ]);
+            }
+            
             // Sentence Builder Games (DISABLED)
             // foreach($lesson->sentenceBuilderGames as $game) {
             //     // Only show if game has active questions
@@ -179,6 +191,8 @@
                                     🎴
                                 @elseif($activity->type === 'spelling')
                                     ✍️
+                                @elseif($activity->type === 'clause_exercise')
+                                    📄
                                 {{-- @elseif($activity->type === 'sentence_builder')
                                     🏗️ --}}
                                 @elseif($activity->type === 'true_false')
@@ -196,6 +210,8 @@
                                     <div class="activity-menu-details">{{ $activity->model->cards_per_game }} flashcards</div>
                                 @elseif($activity->type === 'spelling')
                                     <div class="activity-menu-details">{{ count($activity->model->vocabulary_ids ?? []) }} words</div>
+                                @elseif($activity->type === 'clause_exercise')
+                                    <div class="activity-menu-details">Fill in the blanks with vocabulary words</div>
                                 @elseif($activity->type === 'true_false')
                                     <div class="activity-menu-details">{{ $activity->model->question_count }} questions</div>
                                 @endif
@@ -259,6 +275,10 @@ function startActivity(type, id) {
         case 'spelling':
             // Go to spelling game
             window.location.href = `/lessons/{{ $lesson->id }}/spelling-games/${id}/play`;
+            break;
+        case 'clause_exercise':
+            // Go to clause exercise
+            window.location.href = `/lessons/{{ $lesson->id }}/clause-exercises/${id}/play`;
             break;
         // case 'sentence_builder':
         //     // Go to sentence builder game

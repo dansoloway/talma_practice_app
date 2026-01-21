@@ -12,28 +12,46 @@
             </div>
 
             @if(session('error'))
-                <div class="error-message">
-                    {{ session('error') }}
+                <div class="error-message" style="background: #fee; color: #c33; padding: 1rem; border-radius: 8px; border: 2px solid #c33; margin-bottom: 1.5rem; font-weight: 600;">
+                    <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
                 </div>
             @endif
 
-            <form method="POST" action="/admin/login" class="login-form" id="login-form">
+            @if($errors->any())
+                <div class="error-message" style="background: #fee; color: #c33; padding: 1rem; border-radius: 8px; border: 2px solid #c33; margin-bottom: 1.5rem;">
+                    <strong><i class="fas fa-exclamation-circle"></i> Please fix the following errors:</strong>
+                    <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('admin.login') }}" class="login-form" id="login-form">
                 @csrf
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" 
-                           class="form-control" value="{{ old('email') }}" required autofocus>
+                           class="form-control @error('email') is-invalid @enderror" 
+                           value="{{ old('email') }}" required autofocus>
+                    @error('email')
+                        <div class="error-text">{{ $message }}</div>
+                    @enderror
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Password</label>
                     <div class="password-input-wrapper">
                         <input type="password" id="password" name="password" 
-                               class="form-control" required>
+                               class="form-control @error('password') is-invalid @enderror" required>
                         <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Show password">
                             <i class="fas fa-eye" id="password-toggle-icon"></i>
                         </button>
                     </div>
+                    @error('password')
+                        <div class="error-text">{{ $message }}</div>
+                    @enderror
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-large" id="login-submit-btn">

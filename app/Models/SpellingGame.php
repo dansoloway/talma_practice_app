@@ -26,6 +26,11 @@ class SpellingGame extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * The relationships that should be touched when this model is updated.
+     */
+    protected $touches = ['lesson'];
+
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);

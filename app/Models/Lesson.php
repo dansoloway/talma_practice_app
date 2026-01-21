@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Lesson extends Model
@@ -81,6 +82,32 @@ class Lesson extends Model
     public function sentenceBuilderGames(): HasMany
     {
         return $this->hasMany(SentenceBuilderGame::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Get all grammar sets associated with this lesson.
+     */
+    public function grammarSets(): BelongsToMany
+    {
+        return $this->belongsToMany(\App\Models\GrammarSet::class, 'grammar_set_lesson')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get all grammar concepts associated with this lesson (through grammar sets).
+     */
+    public function grammarConcepts(): BelongsToMany
+    {
+        return $this->belongsToMany(\App\Models\GrammarConcept::class, 'grammar_set_lesson', 'lesson_id', 'grammar_set_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get all clause exercises for this lesson.
+     */
+    public function clauseExercises(): HasMany
+    {
+        return $this->hasMany(ClauseExercise::class)->orderBy('sort_order');
     }
 
     /**

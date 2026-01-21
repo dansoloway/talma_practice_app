@@ -28,6 +28,11 @@ class Vocabulary extends Model
     ];
 
     /**
+     * The relationships that should be touched when this model is updated.
+     */
+    protected $touches = ['lesson'];
+
+    /**
      * Get the lesson that owns this vocabulary item.
      */
     public function lesson(): BelongsTo
@@ -53,10 +58,16 @@ class Vocabulary extends Model
 
     /**
      * Get the full URL for the word audio file.
+     * Returns null if the file doesn't exist on disk.
      */
     public function getWordAudioUrlAttribute(): ?string
     {
         if (!$this->word_audio_path) {
+            return null;
+        }
+
+        // Check if file exists before returning URL
+        if (!$this->hasAudioFile()) {
             return null;
         }
 

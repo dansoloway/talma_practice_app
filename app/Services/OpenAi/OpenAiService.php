@@ -75,7 +75,12 @@ class OpenAiService
               ->post("{$this->baseUrl}/chat/completions", $payload);
 
             if ($response->successful()) {
-                return $response->json();
+                $responseData = $response->json();
+                
+                // Log API usage (tokens and cost)
+                $this->logApiUsage($payload['model'], $responseData, 'chat_completion');
+                
+                return $responseData;
             } else {
                 Log::error('OpenAI API error', [
                     'status' => $response->status(),
@@ -172,6 +177,84 @@ class OpenAiService
         }
 
         return data_get($response, 'data.0.url');
+    }
+
+    /**
+     * Log API usage including tokens and cost
+     * 
+     * @param string $model The model used
+     * @param array $response The API response
+     * @param string $operation The operation type (chat_completion, image_generation, etc.)
+     */
+    protected function logApiUsage(string $model, array $response, string $operation): void
+    {
+        $usage = $response['usage'] ?? null;
+        if (!$usage) {
+            return;
+        }
+
+        $promptTokens = $usage['prompt_tokens'] ?? 0;
+        $completionTokens = $usage['completion_tokens'] ?? 0;
+        $totalTokens = $usage['total_tokens'] ?? 0;
+
+        // Calculate cost based on model pricing (as of 2024)
+        // gpt-4o-mini: $0.15/1M input, $0.60/1M output
+        // gpt-4o: $2.50/1M input, $10.00/1M output
+        // gpt-4-turbo: $10.00/1M input, $30.00/1M output
+        $cost = $this->calculateCost($model, $promptTokens, $completionTokens);
+
+        $logData = [
+            'timestamp' => now()->toIso8601String(),
+            'operation' => $operation,
+            'model' => $model,
+            'prompt_tokens' => $promptTokens,
+            'completion_tokens' => $completionTokens,
+            'total_tokens' => $totalTokens,
+            'cost_usd' => $cost,
+        ];
+
+        // Log to dedicated OpenAI usage log file
+        $logFile = storage_path('logs/openai_usage.log');
+        $logLine = json_encode($logData) . "\n";
+        file_put_contents($logFile, $logLine, FILE_APPEND);
+
+        // Also log to Laravel log for immediate visibility
+        Log::info('OpenAI API Usage', $logData);
+    }
+
+    /**
+     * Calculate cost based on model and token usage
+     * 
+     * @param string $model The model name
+     * @param int $promptTokens Input tokens
+     * @param int $completionTokens Output tokens
+     * @return float Cost in USD
+     */
+    protected function calculateCost(string $model, int $promptTokens, int $completionTokens): float
+    {
+        // Pricing per 1M tokens (as of 2024)
+        $pricing = [
+            'gpt-4o-mini' => ['input' => 0.15, 'output' => 0.60],
+            'gpt-4o' => ['input' => 2.50, 'output' => 10.00],
+            'gpt-4-turbo' => ['input' => 10.00, 'output' => 30.00],
+            'gpt-4' => ['input' => 30.00, 'output' => 60.00],
+            'gpt-3.5-turbo' => ['input' => 0.50, 'output' => 1.50],
+        ];
+
+        // Normalize model name (handle variations)
+        $modelKey = strtolower($model);
+        foreach ($pricing as $key => $rates) {
+            if (strpos($modelKey, $key) !== false) {
+                $inputCost = ($promptTokens / 1_000_000) * $rates['input'];
+                $outputCost = ($completionTokens / 1_000_000) * $rates['output'];
+                return round($inputCost + $outputCost, 6);
+            }
+        }
+
+        // Default to gpt-4o-mini pricing if model not found
+        $inputCost = ($promptTokens / 1_000_000) * 0.15;
+        $outputCost = ($completionTokens / 1_000_000) * 0.60;
+        return round($inputCost + $outputCost, 6);
     }
 }
 

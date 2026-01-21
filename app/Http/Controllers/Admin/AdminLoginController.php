@@ -25,6 +25,13 @@ class AdminLoginController extends Controller
      */
     public function login(Request $request)
     {
+        Log::info('Login form submitted', [
+            'method' => $request->method(),
+            'has_email' => $request->has('email'),
+            'has_password' => $request->has('password'),
+            'email' => $request->input('email'),
+        ]);
+
         // Rate limiting: 5 attempts per 5 minutes per IP
         $key = 'admin-login:' . $request->ip();
         
@@ -37,10 +44,20 @@ class AdminLoginController extends Controller
             ]);
         }
 
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
+        try {
+            $credentials = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|string',
+            ]);
+        } catch (ValidationException $e) {
+            Log::warning('Login validation failed', [
+                'errors' => $e->errors(),
+            ]);
+            return redirect()
+                ->route('admin.login.show')
+                ->withErrors($e->errors())
+                ->withInput();
+        }
 
         // Find user by email
         $user = User::where('email', $credentials['email'])->first();
@@ -63,7 +80,7 @@ class AdminLoginController extends Controller
             ]);
             RateLimiter::hit($key, 300); // 5 minutes
             return redirect()
-                ->route('admin.login')
+                ->route('admin.login.show')
                 ->with('error', 'Invalid credentials or insufficient permissions.');
         }
 
@@ -75,7 +92,7 @@ class AdminLoginController extends Controller
             ]);
             RateLimiter::hit($key, 300); // 5 minutes
             return redirect()
-                ->route('admin.login')
+                ->route('admin.login.show')
                 ->with('error', 'Invalid credentials or insufficient permissions.');
         }
 
@@ -88,12 +105,20 @@ class AdminLoginController extends Controller
             ]);
             RateLimiter::hit($key, 300); // 5 minutes
             return redirect()
-                ->route('admin.login')
+                ->route('admin.login.show')
                 ->with('error', 'Invalid credentials or insufficient permissions.');
         }
 
         // Verify password
-        if (!Hash::check($credentials['password'], $user->password)) {
+        $passwordMatches = Hash::check($credentials['password'], $user->password);
+        Log::info('Password verification', [
+            'email' => $credentials['email'],
+            'password_provided_length' => strlen($credentials['password']),
+            'password_matches' => $passwordMatches,
+            'stored_hash' => substr($user->password, 0, 20) . '...',
+        ]);
+        
+        if (!$passwordMatches) {
             Log::warning('Admin login failed: Invalid password', [
                 'email' => $credentials['email'],
                 'user_id' => $user->id,
@@ -101,7 +126,7 @@ class AdminLoginController extends Controller
             ]);
             RateLimiter::hit($key, 300); // 5 minutes
             return redirect()
-                ->route('admin.login')
+                ->route('admin.login.show')
                 ->with('error', 'Invalid credentials.');
         }
 

@@ -175,6 +175,85 @@
         @endif
     </div>
 
+    <!-- Grammar Sets Section -->
+    <div class="management-section">
+        <div class="section-header">
+            <h2>Grammar Sets</h2>
+            <div class="section-actions">
+                <button onclick="showGrammarSetModal()" class="btn btn-primary btn-sm">+ Associate Grammar Set</button>
+            </div>
+        </div>
+
+        @if($lesson->grammarSets->count() > 0)
+            <div class="grammar-sets-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                @foreach($lesson->grammarSets as $set)
+                    <div class="grammar-set-card" style="background: white; border: 2px solid var(--color-primary); border-radius: var(--radius-md); padding: 1.5rem;">
+                        <h3 style="color: var(--color-primary); margin: 0 0 0.5rem 0;">{{ $set->title }}</h3>
+                        @if($set->description)
+                            <p style="color: var(--color-text-muted); font-size: 0.875rem; margin: 0 0 0.5rem 0;">{{ $set->description }}</p>
+                        @endif
+                        <div style="font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: 1rem;">
+                            <strong>{{ $set->concepts_count }}</strong> grammar concepts
+                        </div>
+                        <form action="{{ route('admin.lessons.grammar-sets.detach', [$lesson, $set]) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Remove this grammar set from this lesson?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                        </form>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="empty-state">
+                <p>No grammar sets associated yet. Use the button above to associate a grammar set for clause exercises.</p>
+            </div>
+        @endif
+    </div>
+
+    <!-- Clause Exercises Section -->
+    <div class="management-section">
+        <div class="section-header">
+            <h2>Clause Exercises ({{ $lesson->clauseExercises->count() }})</h2>
+            <div class="section-actions">
+                <a href="{{ route('admin.lessons.clause-exercises.create', $lesson) }}" class="btn btn-primary btn-sm">+ Create Clause Exercise</a>
+            </div>
+        </div>
+
+        @if($lesson->clauseExercises->count() > 0)
+            <div class="clause-exercises-list" style="margin-top: 1rem;">
+                @foreach($lesson->clauseExercises as $exercise)
+                    <div class="clause-exercise-card" style="background: white; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin: 0 0 0.5rem 0; color: var(--color-primary);">{{ $exercise->title }}</h3>
+                                <div style="font-size: 0.875rem; color: var(--color-text-muted);">
+                                    Blanks: {{ count($exercise->correct_answers ?? []) }}
+                                    @if($exercise->grammarSet)
+                                        | Grammar Set: {{ $exercise->grammarSet->title }}
+                                    @endif
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="{{ route('clause-exercises.play', [$lesson, $exercise]) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
+                                <a href="{{ route('admin.lessons.clause-exercises.edit', [$lesson, $exercise]) }}" class="btn btn-secondary btn-sm">Edit</a>
+                                <form action="{{ route('admin.lessons.clause-exercises.destroy', [$lesson, $exercise]) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete this clause exercise?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div style="background: var(--color-gray-50); padding: 1rem; border-radius: var(--radius-sm); font-family: monospace; white-space: pre-wrap;">{{ \Illuminate\Support\Str::limit($exercise->paragraph_text, 200) }}</div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="empty-state">
+                <p>No clause exercises yet. <a href="{{ route('admin.lessons.clause-exercises.create', $lesson) }}">Create your first clause exercise</a> using AI.</p>
+            </div>
+        @endif
+    </div>
+
     <!-- Activities Section -->
     <div class="management-section">
         <div class="section-header">
@@ -637,5 +716,76 @@ function deleteAllPrompts(title) {
 <form id="archive-form" action="{{ route('admin.lessons.archive', $lesson) }}" method="POST" style="display: none;">
     @csrf
 </form>
+
+<!-- Grammar Set Selection Modal -->
+<div id="grammar-set-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <h2 style="margin-bottom: 1.5rem;">Select Grammar Set</h2>
+        
+        <div id="grammar-sets-options" style="display: flex; flex-direction: column; gap: 1rem;">
+            @foreach(\App\Models\GrammarSet::with('grammarConcepts')->get() as $set)
+                <label style="display: flex; align-items: start; padding: 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;">
+                    <input type="radio" name="grammar_set_id" value="{{ $set->id }}" style="margin-right: 1rem; margin-top: 0.25rem;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--color-primary); margin-bottom: 0.25rem;">{{ $set->title }}</div>
+                        @if($set->description)
+                            <div style="font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: 0.5rem;">{{ $set->description }}</div>
+                        @endif
+                        <div style="font-size: 0.875rem; color: var(--color-text-muted);">
+                            {{ $set->concepts_count }} grammar concepts
+                        </div>
+                    </div>
+                </label>
+            @endforeach
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button onclick="attachGrammarSet()" class="btn btn-primary">Attach to Lesson</button>
+            <button onclick="closeGrammarSetModal()" class="btn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showGrammarSetModal() {
+    document.getElementById('grammar-set-modal').style.display = 'flex';
+}
+
+function closeGrammarSetModal() {
+    document.getElementById('grammar-set-modal').style.display = 'none';
+    // Clear selection
+    document.querySelectorAll('input[name="grammar_set_id"]').forEach(radio => {
+        radio.checked = false;
+    });
+}
+
+function attachGrammarSet() {
+    const selected = document.querySelector('input[name="grammar_set_id"]:checked');
+    if (!selected) {
+        alert('Please select a grammar set');
+        return;
+    }
+    
+    const grammarSetId = selected.value;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ route("admin.lessons.grammar-sets.attach", $lesson) }}';
+    
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = '_token';
+    csrf.value = '{{ csrf_token() }}';
+    form.appendChild(csrf);
+    
+    const setId = document.createElement('input');
+    setId.type = 'hidden';
+    setId.name = 'grammar_set_id';
+    setId.value = grammarSetId;
+    form.appendChild(setId);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
 
 @endsection

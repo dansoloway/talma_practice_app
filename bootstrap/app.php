@@ -22,6 +22,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Log 405 Method Not Allowed errors with details
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException $e, $request) {
+            \Illuminate\Support\Facades\Log::warning('405 Method Not Allowed', [
+                'url' => $request->fullUrl(),
+                'method' => $request->method(),
+                'allowed_methods' => $e->getHeaders()['Allow'] ?? 'unknown',
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+        });
     })->create();
 

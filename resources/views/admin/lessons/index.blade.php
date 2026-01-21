@@ -13,6 +13,16 @@
     <div class="filters-section">
         <form method="GET" action="{{ route('admin.lessons.index') }}" class="filters-form">
             <div class="filter-group">
+                <label for="sort">Sort By:</label>
+                <select name="sort" id="sort" class="form-control">
+                    <option value="default" {{ request('sort', 'default') == 'default' ? 'selected' : '' }}>Default Order</option>
+                    <option value="recent" {{ request('sort') == 'recent' ? 'selected' : '' }}>Recently Modified</option>
+                    <option value="title" {{ request('sort') == 'title' ? 'selected' : '' }}>Title (A-Z)</option>
+                    <option value="grade" {{ request('sort') == 'grade' ? 'selected' : '' }}>Grade Level</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
                 <label for="grade_level">Grade Level:</label>
                 <select name="grade_level" id="grade_level" class="form-control">
                     <option value="">All Grades</option>
@@ -65,6 +75,7 @@
                     <th>Session Title</th>
                     <th>Slug</th>
                     <th>Activities</th>
+                    <th>Last Modified</th>
                     <th>Active</th>
                     <th>Actions</th>
                 </tr>
@@ -86,6 +97,10 @@
                             @if($vocabCount > 0)
                                 <br><small>{{ $vocabCount }} vocab words</small>
                             @endif
+                        </td>
+                        <td>
+                            <small>{{ $lesson->updated_at->diffForHumans() }}</small>
+                            <br><small style="color: var(--color-text-muted);">{{ $lesson->updated_at->format('M d, Y') }}</small>
                         </td>
                         <td>{{ $lesson->is_active ? '✓' : '✗' }}</td>
                         <td class="actions">

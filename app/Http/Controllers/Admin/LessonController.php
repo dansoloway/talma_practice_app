@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
+use App\Models\GrammarSet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -14,7 +15,24 @@ class LessonController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Lesson::active()->ordered();
+        $query = Lesson::active();
+        
+        // Sort by different criteria
+        $sortBy = $request->get('sort', 'default');
+        switch ($sortBy) {
+            case 'recent':
+                $query->orderBy('updated_at', 'desc');
+                break;
+            case 'title':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'grade':
+                $query->orderBy('grade_level', 'asc')->orderBy('sort_order', 'asc');
+                break;
+            default:
+                $query->ordered(); // Default: sort_order
+                break;
+        }
         
         // Filter by grade level
         if ($request->filled('grade_level')) {
@@ -118,7 +136,7 @@ class LessonController extends Controller
      */
     public function manage(Lesson $lesson)
     {
-        $lesson->load(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'spellingGames', 'sentenceBuilderGames', 'trueFalseQuestions']);
+        $lesson->load(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'spellingGames', 'sentenceBuilderGames', 'trueFalseQuestions', 'grammarSets.grammarConcepts', 'clauseExercises']);
         
         return view('admin.lessons.manage', compact('lesson'));
     }
@@ -294,6 +312,43 @@ class LessonController extends Controller
         $lessons = Lesson::archived()->ordered()->get();
         
         return view('admin.lessons.archived', compact('lessons'));
+    }
+
+    /**
+     * Attach a grammar set to a lesson.
+     */
+    public function attachGrammarSet(Request $request, Lesson $lesson)
+    {
+        $validated = $request->validate([
+            'grammar_set_id' => 'required|exists:grammar_sets,id',
+        ]);
+
+        $grammarSet = GrammarSet::findOrFail($validated['grammar_set_id']);
+        
+        // Check if already attached
+        if ($lesson->grammarSets()->where('grammar_set_id', $grammarSet->id)->exists()) {
+            return redirect()
+                ->route('admin.lessons.manage', $lesson)
+                ->with('error', 'This grammar set is already associated with this lesson.');
+        }
+
+        $lesson->grammarSets()->attach($grammarSet->id);
+
+        return redirect()
+            ->route('admin.lessons.manage', $lesson)
+            ->with('success', "Grammar set '{$grammarSet->title}' has been associated with this lesson.");
+    }
+
+    /**
+     * Detach a grammar set from a lesson.
+     */
+    public function detachGrammarSet(Lesson $lesson, GrammarSet $grammarSet)
+    {
+        $lesson->grammarSets()->detach($grammarSet->id);
+
+        return redirect()
+            ->route('admin.lessons.manage', $lesson)
+            ->with('success', "Grammar set '{$grammarSet->title}' has been removed from this lesson.");
     }
 }
 

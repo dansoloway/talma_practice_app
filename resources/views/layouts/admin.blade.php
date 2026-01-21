@@ -36,6 +36,7 @@
                     <div class="nav-dropdown-menu">
                         <a href="{{ route('admin.analytics') }}">Dashboard</a>
                         <a href="{{ route('admin.session-length') }}">Session Length</a>
+                        <a href="{{ route('admin.openai-usage') }}">OpenAI Usage & Cost</a>
                     </div>
                 </div>
                 
@@ -48,12 +49,17 @@
                         <a href="{{ route('admin.lessons.index') }}">All Lessons</a>
                         <a href="{{ route('admin.lesson-tracker') }}">Lesson Tracker</a>
                         <a href="{{ route('admin.lessons.archived') }}">Archived</a>
+                        <a href="{{ route('admin.grammar-concepts.index') }}">Grammar Concepts</a>
                     </div>
                 </div>
                 
                 @if(session('admin_user_role') === 'admin')
                     <a href="{{ route('admin.users.index') }}">Users</a>
                 @endif
+                
+                <a href="{{ route('admin.openai-usage') }}" title="View AI Cost Dashboard">
+                    <i class="fas fa-dollar-sign"></i> AI Costs
+                </a>
                 
                 <a href="{{ route('lessons.index') }}">Student View</a>
                 <span class="nav-user">{{ session('admin_user_name') }} ({{ ucfirst(session('admin_user_role')) }})</span>
