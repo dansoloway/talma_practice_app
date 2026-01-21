@@ -2845,8 +2845,8 @@ a:focus {
 }
 
 .badge-part {
-    background: var(--color-text-dark);
-    color: var(--color-white);
+    background: #333;
+    color: #fff;
 }
 
 .lesson-title {
