@@ -15,7 +15,8 @@
             <div class="filter-group">
                 <label for="sort">Sort By:</label>
                 <select name="sort" id="sort" class="form-control">
-                    <option value="default" {{ request('sort', 'default') == 'default' ? 'selected' : '' }}>Default Order</option>
+                    <option value="session" {{ request('sort', 'session') == 'session' ? 'selected' : '' }}>Session Number</option>
+                    <option value="default" {{ request('sort') == 'default' ? 'selected' : '' }}>Default Order</option>
                     <option value="recent" {{ request('sort') == 'recent' ? 'selected' : '' }}>Recently Modified</option>
                     <option value="title" {{ request('sort') == 'title' ? 'selected' : '' }}>Title (A-Z)</option>
                     <option value="grade" {{ request('sort') == 'grade' ? 'selected' : '' }}>Grade Level</option>
@@ -72,7 +73,6 @@
                     <th>Title</th>
                     <th>Grade</th>
                     <th>Session</th>
-                    <th>Session Title</th>
                     <th>Slug</th>
                     <th>Activities</th>
                     <th>Last Modified</th>
@@ -86,7 +86,6 @@
                         <td><strong>{{ $lesson->title }}</strong></td>
                         <td>{{ $lesson->grade_level ? 'Grade ' . $lesson->grade_level : '-' }}</td>
                         <td>{{ $lesson->session_number ? 'Session ' . $lesson->session_number : '-' }}</td>
-                        <td>{{ $lesson->session_title ?? '-' }}</td>
                         <td><code>{{ $lesson->slug }}</code></td>
                         <td>
                             @php

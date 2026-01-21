@@ -18,7 +18,7 @@ class LessonController extends Controller
         $query = Lesson::active();
         
         // Sort by different criteria
-        $sortBy = $request->get('sort', 'default');
+        $sortBy = $request->get('sort', 'session');
         switch ($sortBy) {
             case 'recent':
                 $query->orderBy('updated_at', 'desc');
@@ -28,6 +28,9 @@ class LessonController extends Controller
                 break;
             case 'grade':
                 $query->orderBy('grade_level', 'asc')->orderBy('sort_order', 'asc');
+                break;
+            case 'session':
+                $query->orderBy('session_number', 'asc')->orderBy('sort_order', 'asc');
                 break;
             default:
                 $query->ordered(); // Default: sort_order
