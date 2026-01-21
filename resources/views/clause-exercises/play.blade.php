@@ -81,8 +81,10 @@
 <script>
 const exerciseData = {
     paragraph_text: @json($clauseExercise->paragraph_text),
-    correct_answers: @json($clauseExercise->correct_answers),
-    blank_positions: @json($clauseExercise->blank_positions),
+    blanks: @json($clauseExercise->blanks ?? []),
+    // Backward compatibility
+    correct_answers: @json($clauseExercise->correct_answers ?? []),
+    blank_positions: @json($clauseExercise->blank_positions ?? []),
     blank_metadata: @json($clauseExercise->blank_metadata ?? []),
 };
 
@@ -143,36 +145,121 @@ document.addEventListener('DOMContentLoaded', function() {
 function renderParagraph() {
     const container = document.getElementById('paragraph-container');
     let paragraph = exerciseData.paragraph_text || '';
-    const blankMetadata = exerciseData.blank_metadata || {};
+    const blanks = exerciseData.blanks || {}; // New format: object keyed by blank_id
     
-    // Check if paragraph has {} placeholders
-    const placeholderMatches = paragraph.match(/\{\}/g);
-    const placeholderCount = placeholderMatches ? placeholderMatches.length : 0;
+    // Extract all {{blank_id}} tokens - only matches {{blank_\d+}} format
+    const tokenRegex = /\{\{(blank_\d+)\}\}/g;
+    const tokens = [];
+    let match;
+    while ((match = tokenRegex.exec(paragraph)) !== null) {
+        tokens.push(match[1]); // blank_1, blank_2, etc.
+    }
     
-    if (placeholderCount === 0) {
+    if (tokens.length === 0) {
+        // Fallback: try old {} format for backward compatibility
+        const oldPlaceholders = paragraph.match(/\{\}/g);
+        if (oldPlaceholders && oldPlaceholders.length > 0) {
+            console.warn('Using legacy {} placeholder format. Please regenerate exercise.');
+            // Use old rendering logic as fallback
+            return renderParagraphLegacy();
+        }
         container.innerHTML = `<div class="alert alert-error">
             <p><strong>Error:</strong> This exercise is missing blank placeholders.</p>
         </div>`;
         return;
     }
     
-    // Replace {} with dropdown picklists
-    let blankIndex = 0;
-    const blankIds = Object.keys(blankMetadata);
+    // Replace each token with dropdown
+    tokens.forEach(token => {
+        const blank = blanks[token];
+        
+        if (!blank) {
+            console.warn(`Missing blank data for token: ${token}`);
+            paragraph = paragraph.replace(
+                `{{${token}}}`,
+                '<select class="blank-select" disabled data-blank-id="' + escapeHtml(token) + '"><option>Blank unavailable</option></select>'
+            );
+            return;
+        }
+        
+        // Build options
+        let options = [];
+        
+        if (blank.type === 'vocab') {
+            // Use stored text, not lookup
+            const correctText = blank.correct?.text || '';
+            if (correctText) {
+                options.push({value: correctText, label: correctText, isCorrect: true});
+            }
+            
+            (blank.distractors || []).forEach(dist => {
+                const distText = dist.text || '';
+                if (distText && distText !== correctText) {
+                    options.push({value: distText, label: distText, isCorrect: false});
+                }
+            });
+        } else if (blank.type === 'grammar') {
+            const correctText = blank.correct?.text || '';
+            if (correctText) {
+                options.push({value: correctText, label: correctText, isCorrect: true});
+            }
+            
+            (blank.distractors || []).forEach(dist => {
+                const distText = dist.text || '';
+                if (distText && distText !== correctText) {
+                    options.push({value: distText, label: distText, isCorrect: false});
+                }
+            });
+        }
+        
+        // Ensure we have at least the correct answer
+        if (options.length === 0) {
+            console.warn(`No options found for blank: ${token}`);
+            paragraph = paragraph.replace(
+                `{{${token}}}`,
+                '<select class="blank-select" disabled data-blank-id="' + escapeHtml(token) + '"><option>Blank unavailable</option></select>'
+            );
+            return;
+        }
+        
+        // Shuffle options
+        const shuffled = options.sort(() => Math.random() - 0.5);
+        
+        const optionsHtml = shuffled.map(opt => 
+            `<option value="${escapeHtml(opt.value)}">${escapeHtml(opt.label)}</option>`
+        ).join('');
+        
+        const selectHtml = `<select class="blank-select" data-blank-id="${escapeHtml(token)}" data-blank-type="${escapeHtml(blank.type)}" id="${escapeHtml(token)}">
+            <option value="">_____</option>
+            ${optionsHtml}
+        </select>`;
+        
+        paragraph = paragraph.replace(`{{${token}}}`, selectHtml);
+    });
+    
+    container.innerHTML = `<div class="paragraph-text">${paragraph}</div>`;
+    setupBlankSelects();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Legacy rendering for old {} format (backward compatibility)
+function renderParagraphLegacy() {
+    const container = document.getElementById('paragraph-container');
+    let paragraph = exerciseData.paragraph_text || '';
+    const blankMetadata = exerciseData.blank_metadata || {};
     const correctAnswers = exerciseData.correct_answers || {};
     
-    // Validate that we have metadata for all blanks
-    if (blankIds.length === 0) {
-        container.innerHTML = `<div class="alert alert-error">
-            <p><strong>Error:</strong> This exercise is missing blank metadata.</p>
-        </div>`;
-        return;
-    }
+    let blankIndex = 0;
+    const blankIds = Object.keys(blankMetadata);
     
     paragraph = paragraph.replace(/\{\}/g, () => {
         if (blankIndex >= blankIds.length) {
-            console.error(`More placeholders than blank metadata entries. Blank index: ${blankIndex}, Total blanks: ${blankIds.length}`);
-            return '<select class="blank-select" disabled><option>Error: Missing blank data</option></select>';
+            return '<select class="blank-select" disabled><option>Blank unavailable</option></select>';
         }
         
         const blankId = blankIds[blankIndex];
@@ -180,34 +267,20 @@ function renderParagraph() {
         blankIndex++;
         
         if (!metadata) {
-            console.error(`Missing metadata for blankId: ${blankId}`);
-            return '<select class="blank-select" disabled><option>Error: Missing metadata</option></select>';
+            return '<select class="blank-select" disabled><option>Blank unavailable</option></select>';
         }
         
-        // Ensure correct answer exists
-        if (!correctAnswers[blankId]) {
-            console.error(`Missing correct answer for blankId: ${blankId}`);
-            return '<select class="blank-select" disabled><option>Error: Missing correct answer</option></select>';
-        }
-        
-        // Build options array: correct answer + distractors
         let options = [];
         
         if (metadata.type === 'vocab') {
-            // Vocabulary blank: options are vocab IDs
-            // Use correct answer from correct_answers, not metadata (metadata might be outdated)
             const correctVocabId = correctAnswers[blankId];
             const distractorIds = metadata.distractors || [];
             
-            // Find correct answer word
             const correctVocab = vocabulary.find(v => v.id == correctVocabId);
             if (correctVocab) {
                 options.push({value: String(correctVocabId), label: correctVocab.word, isCorrect: true});
-            } else {
-                console.error(`Vocabulary word not found for ID: ${correctVocabId} in blank ${blankId}`);
             }
             
-            // Find distractor words
             distractorIds.forEach(distractorId => {
                 const distractorVocab = vocabulary.find(v => v.id == distractorId);
                 if (distractorVocab) {
@@ -215,8 +288,6 @@ function renderParagraph() {
                 }
             });
         } else if (metadata.type === 'grammar') {
-            // Grammar blank: options are word strings
-            // Use correct answer from correct_answers, not metadata
             const correctWord = String(correctAnswers[blankId]);
             const distractors = metadata.distractors || [];
             
@@ -224,27 +295,24 @@ function renderParagraph() {
             distractors.forEach(distractor => {
                 options.push({value: String(distractor), label: String(distractor), isCorrect: false});
             });
-        } else {
-            console.error(`Unknown blank type: ${metadata.type} for blank ${blankId}`);
-            return '<select class="blank-select" disabled><option>Error: Unknown blank type</option></select>';
         }
         
-        // Shuffle options (except keep first option as placeholder)
-        const shuffledOptions = options.sort(() => Math.random() - 0.5);
+        if (options.length === 0) {
+            return '<select class="blank-select" disabled><option>Blank unavailable</option></select>';
+        }
         
-        const optionsHtml = shuffledOptions.map(opt => 
-            `<option value="${opt.value}">${opt.label}</option>`
+        const shuffled = options.sort(() => Math.random() - 0.5);
+        const optionsHtml = shuffled.map(opt => 
+            `<option value="${escapeHtml(opt.value)}">${escapeHtml(opt.label)}</option>`
         ).join('');
         
-        return `<select class="blank-select" data-blank-id="${blankId}" data-blank-type="${metadata.type}" id="${blankId}">
+        return `<select class="blank-select" data-blank-id="${escapeHtml(blankId)}" data-blank-type="${escapeHtml(metadata.type)}" id="${escapeHtml(blankId)}">
             <option value="">_____</option>
             ${optionsHtml}
         </select>`;
     });
     
     container.innerHTML = `<div class="paragraph-text">${paragraph}</div>`;
-    
-    // Setup blank selects
     setupBlankSelects();
 }
 
@@ -288,8 +356,9 @@ function renderVocabularyBank() {
 
 
 function updateCheckButton() {
-    const correctAnswers = exerciseData.correct_answers || {};
-    const totalBlanks = Object.keys(correctAnswers).length;
+    const blanks = exerciseData.blanks || {};
+    const correctAnswers = exerciseData.correct_answers || {}; // Fallback
+    const totalBlanks = Object.keys(blanks).length > 0 ? Object.keys(blanks).length : Object.keys(correctAnswers).length;
     const filledBlanks = document.querySelectorAll('.blank-select:not([value=""])').length;
     const checkBtn = document.getElementById('check-btn');
     
@@ -315,20 +384,24 @@ function setupEventListeners() {
 
 function checkAnswers() {
     checked = true;
-    const correctAnswers = exerciseData.correct_answers || {};
-    const blankMetadata = exerciseData.blank_metadata || {};
-    let correctCount = 0;
-    const totalBlanks = Object.keys(correctAnswers).length;
+    const blanks = exerciseData.blanks || {};
+    const correctAnswers = exerciseData.correct_answers || {}; // Fallback for old format
+    const blankMetadata = exerciseData.blank_metadata || {}; // Fallback for old format
+    
+    // Use new format if available, otherwise fall back to old
+    const useNewFormat = Object.keys(blanks).length > 0;
+    const totalBlanks = useNewFormat ? Object.keys(blanks).length : Object.keys(correctAnswers).length;
     
     if (totalBlanks === 0) {
-        console.error('No correct answers found in exercise data');
+        console.error('No blanks found in exercise data');
         alert('Error: This exercise has no blanks to check.');
         checked = false;
         return;
     }
     
     // Check each blank
-    Object.keys(correctAnswers).forEach(blankId => {
+    const blankIds = useNewFormat ? Object.keys(blanks) : Object.keys(correctAnswers);
+    blankIds.forEach(blankId => {
         const blankSelect = document.querySelector(`[data-blank-id="${blankId}"]`);
         if (!blankSelect) {
             console.error(`Blank select not found for blankId: ${blankId}`);
@@ -337,9 +410,23 @@ function checkAnswers() {
         
         const blankType = blankSelect.dataset.blankType;
         const userAnswer = blankSelect.value;
-        const correctAnswer = correctAnswers[blankId];
         
-        if (correctAnswer === undefined || correctAnswer === null) {
+        let correctAnswer;
+        if (useNewFormat) {
+            const blank = blanks[blankId];
+            correctAnswer = blank?.correct?.text || '';
+        } else {
+            // Old format
+            if (blankType === 'vocab') {
+                const correctVocabId = correctAnswers[blankId];
+                const correctVocab = vocabulary.find(v => v.id == correctVocabId);
+                correctAnswer = correctVocab ? String(correctVocabId) : '';
+            } else {
+                correctAnswer = String(correctAnswers[blankId] || '');
+            }
+        }
+        
+        if (!correctAnswer) {
             console.error(`Correct answer not found for blankId: ${blankId}`);
             blankSelect.classList.add('incorrect');
             blankSelect.disabled = true;
@@ -348,16 +435,22 @@ function checkAnswers() {
         
         // Compare answers based on type
         let isCorrect = false;
-        if (blankType === 'vocab') {
-            // For vocab blanks, compare IDs (both should be numbers)
-            isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
-        } else if (blankType === 'grammar') {
-            // For grammar blanks, compare word strings (case-insensitive)
+        if (useNewFormat) {
+            // New format: always compare text (case-insensitive)
             isCorrect = userAnswer.toLowerCase().trim() === String(correctAnswer).toLowerCase().trim();
         } else {
-            // Fallback: try both methods
-            isCorrect = (userAnswer == correctAnswer) || 
-                       (userAnswer.toLowerCase().trim() === String(correctAnswer).toLowerCase().trim());
+            // Old format
+            if (blankType === 'vocab') {
+                // For vocab blanks, compare IDs (both should be numbers)
+                isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
+            } else if (blankType === 'grammar') {
+                // For grammar blanks, compare word strings (case-insensitive)
+                isCorrect = userAnswer.toLowerCase().trim() === String(correctAnswer).toLowerCase().trim();
+            } else {
+                // Fallback: try both methods
+                isCorrect = (userAnswer == correctAnswer) || 
+                           (userAnswer.toLowerCase().trim() === String(correctAnswer).toLowerCase().trim());
+            }
         }
         
         if (isCorrect) {

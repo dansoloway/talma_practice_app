@@ -23,11 +23,10 @@ class ClauseExerciseGenerator
 
     /**
      * Extract all {{blank_id}} tokens from paragraph text
-     * Only matches {{blank_\d+}} format
      */
     protected function extractBlankTokens(string $paragraph): array
     {
-        preg_match_all('/\{\{(blank_\d+)\}\}/', $paragraph, $matches);
+        preg_match_all('/\{\{(\w+)\}\}/', $paragraph, $matches);
         return $matches[1] ?? []; // Returns ['blank_1', 'blank_2', ...]
     }
 
@@ -53,13 +52,11 @@ class ClauseExerciseGenerator
                 return ['different', 'wrong', 'incorrect'];
             }
             
-            // Fix array_rand bug: use array_values() after filtering to ensure sequential indices
-            $availableVocab = array_values($availableVocab);
             $selected = array_rand($availableVocab, min(3, count($availableVocab)));
             $selected = is_array($selected) ? $selected : [$selected];
             
             return array_map(function($idx) use ($availableVocab) {
-                $vocab = $availableVocab[$idx];
+                $vocab = array_values($availableVocab)[$idx];
                 return is_array($vocab) ? ($vocab['word'] ?? $vocab['english_word'] ?? '') : (string)$vocab;
             }, $selected);
             
@@ -117,16 +114,26 @@ class ClauseExerciseGenerator
         $errors = [];
         $repairs = [];
         
-        // Check token/blank consistency - DO NOT repair, fail instead
+        // Check token/blank consistency
         $missingTokens = array_diff($tokens, $blankIds);
         $orphanBlanks = array_diff($blankIds, $tokens);
         
         if (!empty($missingTokens)) {
-            $errors[] = "Paragraph contains tokens without blanks: " . implode(', ', $missingTokens) . ". Regenerate Step 2.";
+            $errors[] = "Paragraph contains tokens without blanks: " . implode(', ', $missingTokens);
+            // Repair: Remove orphan tokens from paragraph
+            foreach ($missingTokens as $token) {
+                $paragraph = str_replace("{{{$token}}}", '', $paragraph);
+                $repairs[] = "Removed orphan token: {$token}";
+            }
         }
         
         if (!empty($orphanBlanks)) {
-            $errors[] = "Blanks exist without tokens: " . implode(', ', $orphanBlanks) . ". Regenerate Step 2.";
+            $errors[] = "Blanks exist without tokens: " . implode(', ', $orphanBlanks);
+            // Repair: Remove orphan blanks
+            foreach ($orphanBlanks as $blankId) {
+                unset($blanks[$blankId]);
+                $repairs[] = "Removed orphan blank: {$blankId}";
+            }
         }
         
         // Validate each blank
@@ -447,13 +454,14 @@ class ClauseExerciseGenerator
             }
 
             // Step 3: Generate distractors for each blank based on the actual sentence context
-            // NO continue paths - abort and regenerate Step 2 if any blank is invalid
             $finalBlanks = [];
             foreach ($blankInfoArray as $blankInfo) {
                 $blankId = $blankInfo['blank_id'] ?? null;
                 if (!$blankId) {
                     Log::error('Blank missing blank_id', ['blank_info' => $blankInfo]);
-                    throw new \Exception("Step 2 failed: Blank missing blank_id. Regenerating Step 2.");
+                    // Repair: Remove token from paragraph
+                    $paragraph = str_replace("{{{$blankId}}}", '', $paragraph);
+                    continue;
                 }
                 
                 $blankType = $blankInfo['type'] ?? 'vocab';
@@ -463,8 +471,10 @@ class ClauseExerciseGenerator
                 $grammarConcept = $blankInfo['grammar_concept'] ?? '';
 
                 if (empty($correctAnswer)) {
-                    Log::error('Blank missing correct answer', ['blank_id' => $blankId]);
-                    throw new \Exception("Step 2 failed: Blank {$blankId} missing correct_answer. Regenerating Step 2.");
+                    Log::warning('Blank missing correct answer', ['blank_id' => $blankId]);
+                    // Repair: Replace token with correct word
+                    $paragraph = str_replace("{{{$blankId}}}", $correctAnswer, $paragraph);
+                    continue;
                 }
 
                 // Generate distractors for this specific blank
@@ -537,63 +547,14 @@ class ClauseExerciseGenerator
                 
                 // Fallback if AI failed
                 if (!$distractors || count($distractors) !== 3) {
-                    if ($blankType === 'grammar') {
-                        // For grammar: retry AI once, then regenerate exercise if still failing
-                        Log::info('Grammar distractor generation failed, retrying AI once', ['blank_id' => $blankId]);
-                        try {
-                            $retryResponse = $this->openAiService->chatCompletion($distractorsMessages, [
-                                'model' => $model ?? config('services.openai.translation_model', 'gpt-4o-mini'),
-                                'temperature' => 0.5,
-                                'response_format' => [
-                                    'type' => 'json_schema',
-                                    'json_schema' => [
-                                        'name' => 'distractors',
-                                        'schema' => [
-                                            'type' => 'object',
-                                            'required' => ['distractors'],
-                                            'properties' => [
-                                                'distractors' => [
-                                                    'type' => 'array',
-                                                    'items' => ['type' => 'string'],
-                                                    'minItems' => 3,
-                                                    'maxItems' => 3,
-                                                    'description' => 'Exactly 3 incorrect options that are grammatically wrong or contextually incorrect when placed in the sentence',
-                                                ],
-                                            ],
-                                        ],
-                                    ],
-                                ],
-                            ]);
-                            
-                            $retryContent = $this->openAiService->extractContent($retryResponse);
-                            if ($retryContent) {
-                                $retryData = json_decode($retryContent, true);
-                                if (isset($retryData['distractors']) && count($retryData['distractors']) === 3) {
-                                    $distractors = array_map('trim', $retryData['distractors']);
-                                }
-                            }
-                        } catch (\Exception $e) {
-                            Log::warning('Grammar distractor retry failed', [
-                                'blank_id' => $blankId,
-                                'error' => $e->getMessage()
-                            ]);
-                        }
-                        
-                        // If retry also failed, regenerate entire exercise
-                        if (!$distractors || count($distractors) !== 3) {
-                            throw new \Exception("Step 3 failed: Could not generate grammar distractors for blank {$blankId} after retry. Regenerating exercise.");
-                        }
-                    } else {
-                        // For vocab: use fallback
-                        Log::info('Using fallback distractors', ['blank_id' => $blankId]);
-                        $distractors = $this->generateFallbackDistractors(
-                            $blankType,
-                            $correctAnswer,
-                            $vocabulary->toArray(),
-                            $grammarConceptId,
-                            $grammarConcept
-                        );
-                    }
+                    Log::info('Using fallback distractors', ['blank_id' => $blankId]);
+                    $distractors = $this->generateFallbackDistractors(
+                        $blankType,
+                        $correctAnswer,
+                        $vocabulary->toArray(),
+                        $grammarConceptId,
+                        $grammarConcept
+                    );
                 }
                 
                 // Build blank entry
@@ -632,7 +593,7 @@ class ClauseExerciseGenerator
                 $finalBlanks[$blankId] = $blankEntry;
             }
             
-            // Validate - NO repairs, fail if invalid
+            // Validate and repair
             $validation = $this->validateAndRepairExercise(
                 $paragraph,
                 $finalBlanks,
@@ -641,7 +602,12 @@ class ClauseExerciseGenerator
             );
             
             if (!$validation['valid']) {
-                throw new \Exception("Exercise validation failed: " . implode('; ', $validation['errors']) . ". Regenerate exercise.");
+                throw new \Exception("Exercise validation failed: " . implode('; ', $validation['errors']));
+            }
+            
+            // Log repairs if any
+            if (!empty($validation['repairs'])) {
+                Log::info('Exercise repairs applied', ['repairs' => $validation['repairs']]);
             }
             
             $paragraph = $validation['paragraph'];
@@ -669,6 +635,281 @@ class ClauseExerciseGenerator
                                  strpos($e->getMessage(), 'tokens') !== false ||
                                  strpos($e->getMessage(), 'Blank IDs') !== false ||
                                  strpos($e->getMessage(), 'Exercise validation') !== false;
+            
+            if ($isValidationError) {
+                throw $e;
+            }
+            
+            // For other exceptions, return null (generic error)
+            return null;
+        }
+    }
+
+    /**
+     * Build the prompt for generating a complete paragraph WITHOUT blanks.
+     */
+    protected function buildCompleteParagraphPrompt(string $lessonTitle, array $vocabulary, array $grammarConcepts, ?string $topic = null): string
+    {
+        $vocabList = implode(', ', array_slice($vocabulary, 0, 20));
+                $blankType = $blank['type'] ?? 'vocab';
+                $correctAnswer = trim($blank['correct_answer'] ?? '');
+                $distractors = $blank['distractors'] ?? [];
+                
+                // Validate distractors count - be lenient, allow 2-4 distractors
+                if (count($distractors) < 2) {
+                    Log::warning('Blank has too few distractors', [
+                        'blank_id' => $blankId,
+                        'distractors_count' => count($distractors),
+                    ]);
+                    continue; // Skip if less than 2 distractors
+                }
+                // Allow 2-4 distractors, pad or trim if needed
+                if (count($distractors) > 4) {
+                    $distractors = array_slice($distractors, 0, 4);
+                }
+
+                // Find position in paragraph
+                $placeholder = '{}';
+                $pos = strpos($paragraph, $placeholder, $position);
+                if ($pos === false) {
+                    Log::warning('No more {} placeholders found in paragraph', [
+                        'blank_id' => $blankId,
+                        'position' => $position,
+                        'paragraph_length' => strlen($paragraph),
+                        'processed_blanks' => $processedBlanks,
+                    ]);
+                    break;
+                }
+
+                if ($blankType === 'vocab') {
+                    // Process vocabulary blank
+                    $vocabId = null;
+                    foreach ($vocabWithIds as $vocabWord => $vocabIdValue) {
+                        if (strtolower($vocabWord) === strtolower($correctAnswer)) {
+                            $vocabId = $vocabIdValue;
+                            break;
+                        }
+                    }
+
+                    if (!$vocabId) {
+                        Log::warning('Vocabulary word not found in lesson', [
+                            'word' => $correctAnswer,
+                            'available_words' => array_keys($vocabWithIds),
+                        ]);
+                        continue;
+                    }
+
+                    // Map distractors to vocabulary IDs
+                    $distractorIds = [];
+                    foreach ($distractors as $distractorWord) {
+                        $distractorWord = trim($distractorWord);
+                        // Check for duplicate distractor
+                        if (strtolower($distractorWord) === strtolower($correctAnswer)) {
+                            Log::warning('Distractor duplicates correct answer', [
+                                'blank_id' => $blankId,
+                                'distractor' => $distractorWord,
+                                'correct_answer' => $correctAnswer,
+                            ]);
+                            continue; // Skip this distractor
+                        }
+                        
+                        foreach ($vocabWithIds as $vocabWord => $vocabIdValue) {
+                            if (strtolower($vocabWord) === strtolower($distractorWord)) {
+                                // Check for duplicate distractor IDs
+                                if (!in_array($vocabIdValue, $distractorIds)) {
+                                    $distractorIds[] = $vocabIdValue;
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    // Be lenient - allow at least 1 distractor (minimum 2 total options including correct answer)
+                    if (count($distractorIds) < 1) {
+                        Log::warning('No distractors found in vocabulary', [
+                            'blank_id' => $blankId,
+                            'distractors_provided' => $distractors,
+                        ]);
+                        continue; // Skip if no distractors found
+                    }
+                    // If we have fewer than 3 distractors, that's okay - we'll use what we have
+                    if (count($distractorIds) < count($distractors)) {
+                        Log::info('Some distractors not found in vocabulary, using available ones', [
+                            'blank_id' => $blankId,
+                            'distractors_found' => count($distractorIds),
+                            'distractors_provided' => count($distractors),
+                        ]);
+                    }
+                    
+                    // Validate no distractor duplicates correct answer
+                    if (in_array($vocabId, $distractorIds)) {
+                        Log::warning('Distractor ID duplicates correct answer ID', [
+                            'blank_id' => $blankId,
+                            'vocab_id' => $vocabId,
+                        ]);
+                        continue;
+                    }
+
+                    $correctAnswers[$blankId] = $vocabId;
+                    $blankMetadata[$blankId] = [
+                        'type' => 'vocab',
+                        'correct_answer' => $vocabId,
+                        'distractors' => $distractorIds,
+                    ];
+                    $blankPositions[] = [
+                        'id' => $blankId,
+                        'position' => $pos,
+                        'vocabulary_id' => $vocabId,
+                    ];
+
+                } else if ($blankType === 'grammar') {
+                    // Process grammar blank - be very lenient
+                    $grammarConceptId = $blank['grammar_concept_id'] ?? null;
+                    $grammarConcept = $blank['grammar_concept'] ?? '';
+
+                    // If no grammar_concept_id, try to find one from available concepts or use null
+                    if (!$grammarConceptId && !empty($grammarConceptsWithIds)) {
+                        // Pick a random grammar concept if none specified
+                        $randomConcept = $grammarConceptsWithIds[array_rand($grammarConceptsWithIds)];
+                        $grammarConceptId = $randomConcept['id'];
+                        $grammarConcept = $randomConcept['display'];
+                        Log::info('Grammar blank missing concept_id, assigned random concept', [
+                            'blank_id' => $blankId,
+                            'assigned_concept_id' => $grammarConceptId,
+                        ]);
+                    }
+
+                    // Validate grammar concept exists - but don't fail if it doesn't
+                    $conceptExists = false;
+                    if ($grammarConceptId) {
+                        foreach ($grammarConceptsWithIds as $concept) {
+                            if ($concept['id'] == $grammarConceptId) {
+                                $conceptExists = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // If concept doesn't exist, still proceed but log it
+                    if ($grammarConceptId && !$conceptExists) {
+                        Log::warning('Grammar concept ID not found in available concepts, proceeding anyway', [
+                            'blank_id' => $blankId,
+                            'grammar_concept_id' => $grammarConceptId,
+                        ]);
+                        // Don't continue - proceed with the blank anyway
+                    }
+
+                    // Validate grammar distractors - be lenient
+                    $trimmedDistractors = array_map('trim', $distractors);
+                    $uniqueDistractors = array_values(array_unique($trimmedDistractors));
+                    
+                    // Remove duplicates but don't fail
+                    if (count($uniqueDistractors) < count($trimmedDistractors)) {
+                        Log::info('Grammar blank has duplicate distractors, removing duplicates', [
+                            'blank_id' => $blankId,
+                            'original_count' => count($trimmedDistractors),
+                            'unique_count' => count($uniqueDistractors),
+                        ]);
+                        $trimmedDistractors = $uniqueDistractors;
+                    }
+                    
+                    // Remove distractors that duplicate correct answer, but don't fail
+                    $filteredDistractors = [];
+                    foreach ($trimmedDistractors as $distractor) {
+                        if (strtolower($distractor) !== strtolower($correctAnswer)) {
+                            $filteredDistractors[] = $distractor;
+                        } else {
+                            Log::info('Removed distractor that duplicates correct answer', [
+                                'blank_id' => $blankId,
+                                'distractor' => $distractor,
+                            ]);
+                        }
+                    }
+                    
+                    // If we have at least 1 distractor, proceed (very lenient)
+                    if (count($filteredDistractors) < 1) {
+                        Log::warning('Grammar blank has no valid distractors after filtering', [
+                            'blank_id' => $blankId,
+                            'correct_answer' => $correctAnswer,
+                        ]);
+                        // Still proceed - we'll use empty distractors array
+                    }
+                    
+                    $correctAnswers[$blankId] = $correctAnswer; // Store as string for grammar
+                    $blankMetadata[$blankId] = [
+                        'type' => 'grammar',
+                        'correct_answer' => $correctAnswer,
+                        'distractors' => $filteredDistractors, // Use filtered distractors
+                        'grammar_concept_id' => $grammarConceptId, // Can be null
+                        'grammar_concept' => $grammarConcept,
+                    ];
+                    $blankPositions[] = [
+                        'id' => $blankId,
+                        'position' => $pos,
+                    ];
+                }
+
+                $position = $pos + strlen($placeholder);
+                $processedBlanks++;
+            }
+
+            // Final validation: just ensure we have at least 1 blank mapped (very lenient)
+            $mappedBlanks = count($correctAnswers);
+            $mappedVocabBlanks = count(array_filter($blankMetadata, fn($m) => $m['type'] === 'vocab'));
+            $mappedGrammarBlanks = count(array_filter($blankMetadata, fn($m) => $m['type'] === 'grammar'));
+            
+            if ($mappedBlanks < 1) {
+                throw new \Exception("Could not map any blanks. Please try regenerating.");
+            }
+            
+            // Log warnings but don't fail if we don't have both types
+            if ($mappedVocabBlanks === 0) {
+                Log::warning('No vocabulary blanks were mapped', [
+                    'mapped_blanks' => $mappedBlanks,
+                ]);
+            }
+            
+            if ($mappedGrammarBlanks === 0) {
+                Log::warning('No grammar blanks were mapped', [
+                    'mapped_blanks' => $mappedBlanks,
+                ]);
+            }
+
+            // Ensure paragraph still has at least 1 placeholder (very lenient)
+            $finalPlaceholderCount = substr_count($paragraph, '{}');
+            if ($finalPlaceholderCount < 1) {
+                throw new \Exception("Paragraph validation failed: must have at least 1 {} placeholder but found {$finalPlaceholderCount}.");
+            }
+            
+            // Don't fail if placeholders don't match blanks - just log it
+            if ($finalPlaceholderCount != count($blanks)) {
+                Log::info('Placeholder count does not match blank count (acceptable)', [
+                    'placeholders' => $finalPlaceholderCount,
+                    'blanks_defined' => count($blanks),
+                    'blanks_mapped' => $mappedBlanks,
+                ]);
+            }
+
+            return [
+                'paragraph_text' => $paragraph,
+                'correct_answers' => $correctAnswers,
+                'blank_positions' => $blankPositions,
+                'blank_metadata' => $blankMetadata,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Exception generating clause exercise', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'model' => $model ?? 'unknown',
+            ]);
+            
+            // Re-throw validation exceptions so they can be shown to the user
+            $isValidationError = strpos($e->getMessage(), 'missing') !== false || 
+                                 strpos($e->getMessage(), 'placeholders') !== false ||
+                                 strpos($e->getMessage(), 'Could not map') !== false ||
+                                 strpos($e->getMessage(), 'validation') !== false ||
+                                 strpos($e->getMessage(), 'must have at least') !== false ||
+                                 strpos($e->getMessage(), 'Expected at least') !== false;
             
             if ($isValidationError) {
                 throw $e;
