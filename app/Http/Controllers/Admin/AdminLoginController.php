@@ -14,9 +14,15 @@ class AdminLoginController extends Controller
 {
     /**
      * Show the admin login form.
+     * If already authenticated, redirect to dashboard.
      */
     public function show()
     {
+        // If already authenticated, redirect to dashboard
+        if (session('admin_authenticated', false)) {
+            return redirect()->route('admin.analytics');
+        }
+        
         return view('admin.login');
     }
 

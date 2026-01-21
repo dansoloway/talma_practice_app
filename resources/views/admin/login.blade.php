@@ -83,38 +83,106 @@ function togglePassword() {
     }
 }
 
-// Refresh CSRF token periodically to prevent expiration
+// Refresh CSRF token to prevent expiration
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('login-form');
     const csrfInput = loginForm?.querySelector('input[name="_token"]');
     const metaToken = document.querySelector('meta[name="csrf-token"]');
     
-    // Refresh CSRF token every 15 minutes (before the 2-hour session expires)
-    setInterval(function() {
-        fetch('{{ route("admin.login.show") }}', {
+    // Function to refresh CSRF token
+    function refreshCsrfToken() {
+        return fetch('{{ route("admin.login.show") }}', {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'text/html',
             },
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            cache: 'no-store'
         })
-        .then(response => response.text())
+        .then(response => {
+            // Handle redirects (if user is already logged in)
+            if (response.redirected || response.status === 302) {
+                // If redirected, the current page token should still be valid
+                return Promise.resolve(null);
+            }
+            if (!response.ok) {
+                throw new Error('Failed to refresh token');
+            }
+            return response.text();
+        })
         .then(html => {
+            if (!html) {
+                // Redirect case - use current token
+                return;
+            }
+            
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            const newToken = doc.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const newToken = doc.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                           doc.querySelector('input[name="_token"]')?.getAttribute('value');
             
-            if (newToken && csrfInput) {
-                csrfInput.value = newToken;
-            }
-            if (newToken && metaToken) {
-                metaToken.setAttribute('content', newToken);
+            if (newToken) {
+                if (csrfInput) {
+                    csrfInput.value = newToken;
+                }
+                if (metaToken) {
+                    metaToken.setAttribute('content', newToken);
+                }
             }
         })
         .catch(error => {
             console.error('Error refreshing CSRF token:', error);
         });
-    }, 15 * 60 * 1000); // Every 15 minutes
+    }
+    
+    // Refresh token before form submission
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn ? submitBtn.textContent : '';
+            
+            // Prevent default submission temporarily
+            e.preventDefault();
+            
+            // Update button state
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Logging in...';
+            }
+            
+            // Refresh token, then submit
+            refreshCsrfToken().finally(() => {
+                // Small delay to ensure token is updated in DOM
+                setTimeout(() => {
+                    // Re-enable button
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalText;
+                    }
+                    // Submit the form with the fresh token
+                    loginForm.submit();
+                }, 100);
+            });
+        });
+    }
+    
+    // Refresh token periodically (every 5 minutes to stay fresh)
+    setInterval(refreshCsrfToken, 5 * 60 * 1000);
+    
+    // Refresh token when user interacts with form fields
+    if (loginForm) {
+        ['email', 'password'].forEach(fieldName => {
+            const field = loginForm.querySelector(`[name="${fieldName}"]`);
+            if (field) {
+                field.addEventListener('focus', refreshCsrfToken, { once: true });
+            }
+        });
+    }
+    
+    // Refresh token immediately on page load to ensure it's fresh
+    // This helps if the page was loaded a while ago
+    refreshCsrfToken();
 });
 </script>
 
