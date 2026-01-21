@@ -30,7 +30,10 @@ class LessonController extends Controller
                 $query->orderBy('grade_level', 'asc')->orderBy('sort_order', 'asc');
                 break;
             case 'session':
-                $query->orderBy('session_number', 'asc')->orderBy('sort_order', 'asc');
+                // Sort by session number, then by part sort_order, then by lesson sort_order
+                $query->orderBy('session_number', 'asc')
+                      ->orderByRaw('(SELECT MIN(sort_order) FROM parts WHERE parts.lesson_id = lessons.id) ASC')
+                      ->orderBy('sort_order', 'asc');
                 break;
             default:
                 $query->ordered(); // Default: sort_order
@@ -52,7 +55,7 @@ class LessonController extends Controller
             });
         }
         
-        $lessons = $query->with(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames'])->get();
+        $lessons = $query->with(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'parts'])->get();
         
         // Get available grade levels for filter dropdown
         $gradeLevels = Lesson::active()
