@@ -32,5 +32,33 @@ return Application::configure(basePath: dirname(__DIR__))
                 'user_agent' => $request->userAgent(),
             ]);
         });
+        
+        // Handle 419 CSRF token expired errors gracefully
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            \Illuminate\Support\Facades\Log::warning('419 CSRF Token Mismatch', [
+                'url' => $request->fullUrl(),
+                'method' => $request->method(),
+                'ip' => $request->ip(),
+            ]);
+            
+            // If it's a login request, redirect back with a helpful message
+            if ($request->is('admin/login')) {
+                return redirect()
+                    ->route('admin.login.show')
+                    ->with('error', 'Your session has expired. Please try logging in again.');
+            }
+            
+            // For other requests, show a generic error
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Your session has expired. Please refresh the page and try again.',
+                ], 419);
+            }
+            
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Your session has expired. Please refresh the page and try again.');
+        });
     })->create();
 

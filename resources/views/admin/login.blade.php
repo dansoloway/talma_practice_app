@@ -83,6 +83,39 @@ function togglePassword() {
     }
 }
 
+// Refresh CSRF token periodically to prevent expiration
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('login-form');
+    const csrfInput = loginForm?.querySelector('input[name="_token"]');
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    
+    // Refresh CSRF token every 15 minutes (before the 2-hour session expires)
+    setInterval(function() {
+        fetch('{{ route("admin.login.show") }}', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newToken = doc.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            if (newToken && csrfInput) {
+                csrfInput.value = newToken;
+            }
+            if (newToken && metaToken) {
+                metaToken.setAttribute('content', newToken);
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing CSRF token:', error);
+        });
+    }, 15 * 60 * 1000); // Every 15 minutes
+});
 </script>
 
 <style>
