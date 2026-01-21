@@ -15,12 +15,14 @@ class LessonController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Lesson::active();
+        // Determine if we should show archived lessons
+        $showArchived = $request->boolean('view_archived');
         
-        // Always sort by session number, then by part number
-        $query->orderBy('session_number', 'asc')
-              ->orderBy('part_number', 'asc')
-              ->orderBy('created_at', 'asc');
+        if ($showArchived) {
+            $query = Lesson::archived();
+        } else {
+            $query = Lesson::active();
+        }
         
         // Filter by grade level
         if ($request->filled('grade_level')) {
@@ -42,23 +44,52 @@ class LessonController extends Controller
             });
         }
         
+        // Handle sorting
+        $sortBy = $request->get('sort_by', 'session_number');
+        $sortDir = $request->get('sort_dir', 'asc');
+        
+        // Validate sort direction
+        if (!in_array($sortDir, ['asc', 'desc'])) {
+            $sortDir = 'asc';
+        }
+        
+        // Apply sorting based on column
+        switch ($sortBy) {
+            case 'title':
+                $query->orderBy('title', $sortDir);
+                break;
+            case 'slug':
+                $query->orderBy('slug', $sortDir);
+                break;
+            case 'updated_at':
+                $query->orderBy('updated_at', $sortDir);
+                break;
+            case 'session_number':
+            default:
+                // Default sorting: session number, then part number, then created_at
+                $query->orderBy('session_number', $sortDir)
+                      ->orderBy('part_number', 'asc')
+                      ->orderBy('created_at', 'asc');
+                break;
+        }
+        
         $lessons = $query->with(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'parts'])->get();
         
-        // Get available grade levels for filter dropdown
-        $gradeLevels = Lesson::active()
+        // Get available grade levels for filter dropdown (from active lessons)
+        $gradeLevels = Lesson::whereNull('archived_at')
             ->whereNotNull('grade_level')
             ->distinct()
             ->orderBy('grade_level')
             ->pluck('grade_level');
         
-        // Get available session numbers for filter dropdown
-        $sessionNumbers = Lesson::active()
+        // Get available session numbers for filter dropdown (from active lessons)
+        $sessionNumbers = Lesson::whereNull('archived_at')
             ->whereNotNull('session_number')
             ->distinct()
             ->orderBy('session_number')
             ->pluck('session_number');
         
-        return view('admin.lessons.index', compact('lessons', 'gradeLevels', 'sessionNumbers'));
+        return view('admin.lessons.index', compact('lessons', 'gradeLevels', 'sessionNumbers', 'sortBy', 'sortDir', 'showArchived'));
     }
 
     /**

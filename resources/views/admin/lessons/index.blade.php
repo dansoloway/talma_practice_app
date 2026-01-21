@@ -42,6 +42,22 @@
                        placeholder="Search by title, session title, or slug..." value="{{ request('search') }}">
             </div>
             
+            <div class="filter-group">
+                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" name="view_archived" value="1" id="view_archived" 
+                           {{ $showArchived ?? false ? 'checked' : '' }}>
+                    <span>View Archived Lessons</span>
+                </label>
+            </div>
+            
+            <!-- Preserve sort parameters -->
+            @if(request('sort_by'))
+                <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
+            @endif
+            @if(request('sort_dir'))
+                <input type="hidden" name="sort_dir" value="{{ request('sort_dir') }}">
+            @endif
+            
             <div class="filter-actions">
                 <button type="submit" class="btn btn-primary btn-sm">Filter</button>
                 <a href="{{ route('admin.lessons.index') }}" class="btn btn-secondary btn-sm">Clear</a>
@@ -51,7 +67,7 @@
 
     @if($lessons->isEmpty())
         <div class="empty-state">
-            @if(request()->hasAny(['grade_level', 'session_number', 'search']))
+            @if(request()->hasAny(['grade_level', 'session_number', 'search', 'view_archived']))
                 <h3>No lessons found</h3>
                 <p>No lessons match your current filters. Try adjusting your search criteria or <a href="{{ route('admin.lessons.index') }}">clear all filters</a>.</p>
             @else
@@ -62,7 +78,7 @@
     @else
         <div class="results-info">
             <p>Showing {{ $lessons->count() }} lesson{{ $lessons->count() !== 1 ? 's' : '' }}
-            @if(request()->hasAny(['grade_level', 'session_number', 'search']))
+            @if(request()->hasAny(['grade_level', 'session_number', 'search', 'view_archived']))
                 matching your filters
             @endif
             </p>
@@ -71,13 +87,49 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Title</th>
+                    <th>
+                        @php
+                            $newSortDir = ($sortBy == 'title' && $sortDir == 'asc') ? 'desc' : 'asc';
+                            $sortUrl = request()->fullUrlWithQuery(array_merge(request()->except(['sort_by', 'sort_dir']), ['sort_by' => 'title', 'sort_dir' => $newSortDir]));
+                        @endphp
+                        <a href="{{ $sortUrl }}" 
+                           class="sortable-header" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            Title
+                            @if($sortBy == 'title')
+                                <span>{{ $sortDir == 'asc' ? '↑' : '↓' }}</span>
+                            @endif
+                        </a>
+                    </th>
                     <th>Grade</th>
                     <th>Session</th>
                     <th>Part</th>
-                    <th>Slug</th>
+                    <th>
+                        @php
+                            $newSortDir = ($sortBy == 'slug' && $sortDir == 'asc') ? 'desc' : 'asc';
+                            $sortUrl = request()->fullUrlWithQuery(array_merge(request()->except(['sort_by', 'sort_dir']), ['sort_by' => 'slug', 'sort_dir' => $newSortDir]));
+                        @endphp
+                        <a href="{{ $sortUrl }}" 
+                           class="sortable-header" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            Slug
+                            @if($sortBy == 'slug')
+                                <span>{{ $sortDir == 'asc' ? '↑' : '↓' }}</span>
+                            @endif
+                        </a>
+                    </th>
                     <th>Activities</th>
-                    <th>Last Modified</th>
+                    <th>
+                        @php
+                            $newSortDir = ($sortBy == 'updated_at' && $sortDir == 'asc') ? 'desc' : 'asc';
+                            $sortUrl = request()->fullUrlWithQuery(array_merge(request()->except(['sort_by', 'sort_dir']), ['sort_by' => 'updated_at', 'sort_dir' => $newSortDir]));
+                        @endphp
+                        <a href="{{ $sortUrl }}" 
+                           class="sortable-header" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            Last Modified
+                            @if($sortBy == 'updated_at')
+                                <span>{{ $sortDir == 'asc' ? '↑' : '↓' }}</span>
+                            @endif
+                        </a>
+                    </th>
                     <th>Active</th>
                     <th>Actions</th>
                 </tr>
@@ -131,5 +183,16 @@
         </table>
     @endif
 </div>
+
+<style>
+.sortable-header:hover {
+    color: var(--color-primary, #007bff) !important;
+    text-decoration: underline !important;
+}
+.sortable-header span {
+    font-size: 0.875em;
+    opacity: 0.7;
+}
+</style>
 @endsection
 
