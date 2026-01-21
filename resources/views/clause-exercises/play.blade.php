@@ -159,9 +159,19 @@ function renderParagraph() {
     // Replace {} with dropdown picklists
     let blankIndex = 0;
     const blankIds = Object.keys(blankMetadata);
+    const correctAnswers = exerciseData.correct_answers || {};
+    
+    // Validate that we have metadata for all blanks
+    if (blankIds.length === 0) {
+        container.innerHTML = `<div class="alert alert-error">
+            <p><strong>Error:</strong> This exercise is missing blank metadata.</p>
+        </div>`;
+        return;
+    }
     
     paragraph = paragraph.replace(/\{\}/g, () => {
         if (blankIndex >= blankIds.length) {
+            console.error(`More placeholders than blank metadata entries. Blank index: ${blankIndex}, Total blanks: ${blankIds.length}`);
             return '<select class="blank-select" disabled><option>Error: Missing blank data</option></select>';
         }
         
@@ -170,7 +180,14 @@ function renderParagraph() {
         blankIndex++;
         
         if (!metadata) {
+            console.error(`Missing metadata for blankId: ${blankId}`);
             return '<select class="blank-select" disabled><option>Error: Missing metadata</option></select>';
+        }
+        
+        // Ensure correct answer exists
+        if (!correctAnswers[blankId]) {
+            console.error(`Missing correct answer for blankId: ${blankId}`);
+            return '<select class="blank-select" disabled><option>Error: Missing correct answer</option></select>';
         }
         
         // Build options array: correct answer + distractors
@@ -178,31 +195,38 @@ function renderParagraph() {
         
         if (metadata.type === 'vocab') {
             // Vocabulary blank: options are vocab IDs
-            const correctVocabId = metadata.correct_answer;
+            // Use correct answer from correct_answers, not metadata (metadata might be outdated)
+            const correctVocabId = correctAnswers[blankId];
             const distractorIds = metadata.distractors || [];
             
             // Find correct answer word
-            const correctVocab = vocabulary.find(v => v.id === correctVocabId);
+            const correctVocab = vocabulary.find(v => v.id == correctVocabId);
             if (correctVocab) {
-                options.push({value: correctVocabId, label: correctVocab.word, isCorrect: true});
+                options.push({value: String(correctVocabId), label: correctVocab.word, isCorrect: true});
+            } else {
+                console.error(`Vocabulary word not found for ID: ${correctVocabId} in blank ${blankId}`);
             }
             
             // Find distractor words
             distractorIds.forEach(distractorId => {
-                const distractorVocab = vocabulary.find(v => v.id === distractorId);
+                const distractorVocab = vocabulary.find(v => v.id == distractorId);
                 if (distractorVocab) {
-                    options.push({value: distractorId, label: distractorVocab.word, isCorrect: false});
+                    options.push({value: String(distractorId), label: distractorVocab.word, isCorrect: false});
                 }
             });
         } else if (metadata.type === 'grammar') {
             // Grammar blank: options are word strings
-            const correctWord = metadata.correct_answer;
+            // Use correct answer from correct_answers, not metadata
+            const correctWord = String(correctAnswers[blankId]);
             const distractors = metadata.distractors || [];
             
             options.push({value: correctWord, label: correctWord, isCorrect: true});
             distractors.forEach(distractor => {
-                options.push({value: distractor, label: distractor, isCorrect: false});
+                options.push({value: String(distractor), label: String(distractor), isCorrect: false});
             });
+        } else {
+            console.error(`Unknown blank type: ${metadata.type} for blank ${blankId}`);
+            return '<select class="blank-select" disabled><option>Error: Unknown blank type</option></select>';
         }
         
         // Shuffle options (except keep first option as placeholder)
@@ -264,9 +288,17 @@ function renderVocabularyBank() {
 
 
 function updateCheckButton() {
-    const totalBlanks = Object.keys(exerciseData.correct_answers).length;
+    const correctAnswers = exerciseData.correct_answers || {};
+    const totalBlanks = Object.keys(correctAnswers).length;
     const filledBlanks = document.querySelectorAll('.blank-select:not([value=""])').length;
     const checkBtn = document.getElementById('check-btn');
+    
+    if (!checkBtn) return;
+    
+    if (totalBlanks === 0) {
+        checkBtn.disabled = true;
+        return;
+    }
     
     if (filledBlanks === totalBlanks && !checked) {
         checkBtn.disabled = false;
@@ -283,17 +315,36 @@ function setupEventListeners() {
 
 function checkAnswers() {
     checked = true;
-    const correctAnswers = exerciseData.correct_answers;
+    const correctAnswers = exerciseData.correct_answers || {};
     const blankMetadata = exerciseData.blank_metadata || {};
     let correctCount = 0;
     const totalBlanks = Object.keys(correctAnswers).length;
     
+    if (totalBlanks === 0) {
+        console.error('No correct answers found in exercise data');
+        alert('Error: This exercise has no blanks to check.');
+        checked = false;
+        return;
+    }
+    
     // Check each blank
     Object.keys(correctAnswers).forEach(blankId => {
         const blankSelect = document.querySelector(`[data-blank-id="${blankId}"]`);
+        if (!blankSelect) {
+            console.error(`Blank select not found for blankId: ${blankId}`);
+            return;
+        }
+        
         const blankType = blankSelect.dataset.blankType;
         const userAnswer = blankSelect.value;
         const correctAnswer = correctAnswers[blankId];
+        
+        if (correctAnswer === undefined || correctAnswer === null) {
+            console.error(`Correct answer not found for blankId: ${blankId}`);
+            blankSelect.classList.add('incorrect');
+            blankSelect.disabled = true;
+            return;
+        }
         
         // Compare answers based on type
         let isCorrect = false;
@@ -314,8 +365,28 @@ function checkAnswers() {
             blankSelect.classList.add('correct');
         } else {
             blankSelect.classList.add('incorrect');
-            // Set correct answer
-            blankSelect.value = correctAnswer;
+            // Set correct answer - ensure value matches option values
+            const correctValue = String(correctAnswer);
+            // Check if the value exists in the select options
+            const optionExists = Array.from(blankSelect.options).some(opt => opt.value === correctValue);
+            if (optionExists) {
+                blankSelect.value = correctValue;
+            } else {
+                // If option doesn't exist, try to find it by comparing values
+                // This handles cases where the value might be stored differently
+                const matchingOption = Array.from(blankSelect.options).find(opt => {
+                    if (blankType === 'vocab') {
+                        return parseInt(opt.value) === parseInt(correctAnswer);
+                    } else {
+                        return opt.value.toLowerCase().trim() === String(correctAnswer).toLowerCase().trim();
+                    }
+                });
+                if (matchingOption) {
+                    blankSelect.value = matchingOption.value;
+                } else {
+                    console.error(`Could not find matching option for correct answer: ${correctAnswer} in blank ${blankId}`);
+                }
+            }
             blankSelect.classList.add('show-correct');
         }
         blankSelect.disabled = true;

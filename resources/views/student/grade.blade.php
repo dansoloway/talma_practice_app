@@ -35,11 +35,7 @@
                         @endif
                         <a href="{{ route('lessons.show', $lesson->slug) }}" class="lesson-card-link">
                             <div class="lesson-session">
-                                @if($lesson->session_number)
-                                    Session {{ $lesson->session_number }}
-                                @else
-                                    Lesson
-                                @endif
+                                Play
                             </div>
                             <div class="lesson-content">
                                 <h3 class="lesson-title">{{ $lesson->title }}</h3>
