@@ -75,15 +75,14 @@ class ClauseExerciseGenerator
         // Use at least 4 blanks, but can use more based on vocabulary available
         $blankCount = max(4, min(8, (int)ceil(count($vocabList) * 0.3))); // At least 4, up to 8, roughly 30% of vocab
 
-        // Step 1: Generate paragraph with blanks first
-        $paragraphPrompt = $this->buildParagraphPrompt($lesson->title, $vocabList, $grammarConceptsWithIds, $blankCount, $topic);
-
         try {
-            // First, generate just the paragraph with placeholders
+            // Step 1: Generate a complete paragraph WITHOUT blanks first
+            $paragraphPrompt = $this->buildCompleteParagraphPrompt($lesson->title, $vocabList, $grammarConceptsWithIds, $topic);
+
             $paragraphMessages = [
                 [
                     'role' => 'system',
-                    'content' => 'You are an educational content creator for English language learners. Generate a coherent paragraph (3-5 sentences) with fill-in-the-blank exercises. Use {} (curly braces with nothing inside) as placeholders for blanks. The paragraph should naturally use vocabulary words and grammar concepts.',
+                    'content' => 'You are an educational content creator for English language learners. Generate a coherent, grammatically correct paragraph (3-5 sentences) that naturally uses vocabulary words and grammar concepts. The paragraph should be complete with all words filled in - NO blanks or placeholders.',
                 ],
                 [
                     'role' => 'user',
@@ -97,44 +96,31 @@ class ClauseExerciseGenerator
                 'response_format' => [
                     'type' => 'json_schema',
                     'json_schema' => [
-                        'name' => 'paragraph_only',
+                        'name' => 'complete_paragraph',
                         'schema' => [
                             'type' => 'object',
-                            'required' => ['paragraph', 'blank_positions'],
+                            'required' => ['paragraph', 'vocabulary_used', 'grammar_concepts_used'],
                             'properties' => [
                                 'paragraph' => [
                                     'type' => 'string',
-                                    'description' => 'A coherent paragraph (3-5 sentences) with {} placeholders for blanks. Use exactly ' . $blankCount . ' blanks.',
+                                    'description' => 'A complete, grammatically correct paragraph (3-5 sentences) with all words filled in. NO blanks or placeholders.',
                                 ],
-                                'blank_positions' => [
+                                'vocabulary_used' => [
+                                    'type' => 'array',
+                                    'items' => ['type' => 'string'],
+                                    'description' => 'List of vocabulary words from the provided list that are used in the paragraph',
+                                ],
+                                'grammar_concepts_used' => [
                                     'type' => 'array',
                                     'items' => [
                                         'type' => 'object',
-                                        'required' => ['position', 'type', 'context'],
+                                        'required' => ['id', 'display'],
                                         'properties' => [
-                                            'position' => [
-                                                'type' => 'integer',
-                                                'description' => 'The index of this blank (0-based, first {} is 0, second is 1, etc.)',
-                                            ],
-                                            'type' => [
-                                                'type' => 'string',
-                                                'enum' => ['vocab', 'grammar'],
-                                                'description' => 'Type of blank: vocab (uses vocabulary word) or grammar (tests grammar concept)',
-                                            ],
-                                            'context' => [
-                                                'type' => 'string',
-                                                'description' => 'The sentence containing this blank, with {} showing where the blank is',
-                                            ],
-                                            'grammar_concept_id' => [
-                                                'type' => 'integer',
-                                                'description' => 'Required for grammar blanks: The ID of the grammar concept being tested',
-                                            ],
-                                            'grammar_concept' => [
-                                                'type' => 'string',
-                                                'description' => 'Required for grammar blanks: The display name of the grammar concept',
-                                            ],
+                                            'id' => ['type' => 'integer'],
+                                            'display' => ['type' => 'string'],
                                         ],
                                     ],
+                                    'description' => 'List of grammar concepts from the provided list that are demonstrated in the paragraph',
                                 ],
                             ],
                         ],
@@ -146,7 +132,7 @@ class ClauseExerciseGenerator
             $paragraphContent = $this->openAiService->extractContent($paragraphResponse);
 
             if (!$paragraphContent) {
-                Log::error('Failed to generate paragraph', [
+                Log::error('Failed to generate complete paragraph', [
                     'lesson_id' => $lesson->id,
                     'response' => $paragraphResponse,
                 ]);
@@ -154,68 +140,164 @@ class ClauseExerciseGenerator
             }
 
             $paragraphData = json_decode($paragraphContent, true);
-            if (!$paragraphData || !isset($paragraphData['paragraph']) || !isset($paragraphData['blank_positions'])) {
+            if (!$paragraphData || !isset($paragraphData['paragraph'])) {
                 Log::error('Invalid paragraph response format', [
                     'content' => $paragraphContent,
                 ]);
                 return null;
             }
 
-            $paragraph = trim($paragraphData['paragraph']);
-            $blankInfoArray = $paragraphData['blank_positions'];
-            
-            // Validate paragraph has placeholders
-            $placeholderCount = substr_count($paragraph, '{}');
-            if ($placeholderCount < $blankCount) {
-                throw new \Exception("Paragraph must have at least {$blankCount} blank placeholders, but found {$placeholderCount}. Please try regenerating.");
+            $completeParagraph = trim($paragraphData['paragraph']);
+            $vocabularyUsed = $paragraphData['vocabulary_used'] ?? [];
+            $grammarConceptsUsed = $paragraphData['grammar_concepts_used'] ?? [];
+
+            // Step 2: Analyze the paragraph and add blanks strategically
+            $addBlanksPrompt = $this->buildAddBlanksPrompt($completeParagraph, $vocabList, $grammarConceptsWithIds, $vocabularyUsed, $grammarConceptsUsed, $blankCount);
+
+            $addBlanksMessages = [
+                [
+                    'role' => 'system',
+                    'content' => 'You are an educational content creator. Analyze a complete paragraph and strategically add fill-in-the-blank exercises. Extract the actual words from the paragraph as correct answers. Generate appropriate distractors that are grammatically incorrect or contextually wrong.',
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $addBlanksPrompt,
+                ],
+            ];
+
+            $addBlanksOptions = [
+                'model' => $model ?? config('services.openai.translation_model', 'gpt-4o-mini'),
+                'temperature' => 0.5,
+                'response_format' => [
+                    'type' => 'json_schema',
+                    'json_schema' => [
+                        'name' => 'paragraph_with_blanks',
+                        'schema' => [
+                            'type' => 'object',
+                            'required' => ['paragraph', 'blanks'],
+                            'properties' => [
+                                'paragraph' => [
+                                    'type' => 'string',
+                                    'description' => 'The paragraph with {} placeholders added at strategic locations. Must have exactly ' . $blankCount . ' blanks.',
+                                ],
+                                'blanks' => [
+                                    'type' => 'array',
+                                    'items' => [
+                                        'type' => 'object',
+                                        'required' => ['position', 'type', 'correct_answer', 'sentence_context'],
+                                        'properties' => [
+                                            'position' => [
+                                                'type' => 'integer',
+                                                'description' => 'The index of this blank (0-based, first {} is 0, second is 1, etc.)',
+                                            ],
+                                            'type' => [
+                                                'type' => 'string',
+                                                'enum' => ['vocab', 'grammar'],
+                                                'description' => 'Type of blank: vocab (uses vocabulary word) or grammar (tests grammar concept)',
+                                            ],
+                                            'correct_answer' => [
+                                                'type' => 'string',
+                                                'description' => 'The actual word/phrase from the original paragraph that should be the correct answer',
+                                            ],
+                                            'sentence_context' => [
+                                                'type' => 'string',
+                                                'description' => 'The full sentence containing this blank, with {} showing where the blank is',
+                                            ],
+                                            'grammar_concept_id' => [
+                                                'type' => 'integer',
+                                                'description' => 'Required for grammar blanks: The ID of the grammar concept being tested',
+                                            ],
+                                            'grammar_concept' => [
+                                                'type' => 'string',
+                                                'description' => 'Required for grammar blanks: The display name of the grammar concept',
+                                            ],
+                                        ],
+                                    ],
+                                    'minItems' => $blankCount,
+                                    'maxItems' => $blankCount,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ];
+
+            $addBlanksResponse = $this->openAiService->chatCompletion($addBlanksMessages, $addBlanksOptions);
+            $addBlanksContent = $this->openAiService->extractContent($addBlanksResponse);
+
+            if (!$addBlanksContent) {
+                Log::error('Failed to add blanks to paragraph', [
+                    'lesson_id' => $lesson->id,
+                ]);
+                return null;
             }
 
-            // Step 2: Generate options for each blank based on the actual sentence context
+            $blanksData = json_decode($addBlanksContent, true);
+            if (!$blanksData || !isset($blanksData['paragraph']) || !isset($blanksData['blanks'])) {
+                Log::error('Invalid add blanks response format', [
+                    'content' => $addBlanksContent,
+                ]);
+                return null;
+            }
+
+            $paragraph = trim($blanksData['paragraph']);
+            $blankInfoArray = $blanksData['blanks'];
+
+            // Validate paragraph has correct number of placeholders
+            $placeholderCount = substr_count($paragraph, '{}');
+            if ($placeholderCount !== $blankCount) {
+                throw new \Exception("Paragraph must have exactly {$blankCount} blank placeholders, but found {$placeholderCount}. Please try regenerating.");
+            }
+
+            // Step 3: Generate distractors for each blank based on the actual sentence context
             $blanks = [];
             foreach ($blankInfoArray as $index => $blankInfo) {
                 $blankId = "blank_" . ($index + 1);
                 $blankType = $blankInfo['type'] ?? 'vocab';
-                $context = $blankInfo['context'] ?? '';
+                $correctAnswer = trim($blankInfo['correct_answer'] ?? '');
+                $sentenceContext = $blankInfo['sentence_context'] ?? '';
                 $grammarConceptId = $blankInfo['grammar_concept_id'] ?? null;
                 $grammarConcept = $blankInfo['grammar_concept'] ?? '';
 
-                // Generate options for this specific blank
-                $optionsPrompt = $this->buildOptionsPrompt(
+                if (empty($correctAnswer)) {
+                    Log::warning('Blank missing correct answer', ['blank_id' => $blankId]);
+                    continue;
+                }
+
+                // Generate distractors for this specific blank
+                $distractorsPrompt = $this->buildDistractorsPrompt(
                     $blankId,
                     $blankType,
-                    $context,
+                    $sentenceContext,
+                    $correctAnswer,
                     $vocabList,
                     $grammarConceptsWithIds,
                     $grammarConceptId,
                     $grammarConcept
                 );
 
-                $optionsMessages = [
+                $distractorsMessages = [
                     [
                         'role' => 'system',
-                        'content' => 'You are an educational content creator. Generate appropriate options for a fill-in-the-blank exercise. The correct answer MUST fit grammatically and contextually in the sentence. All distractors MUST be grammatically incorrect or contextually wrong when placed in the sentence.',
+                        'content' => 'You are an educational content creator. Generate appropriate distractors for a fill-in-the-blank exercise. The correct answer is already known from the sentence. Generate distractors that are grammatically incorrect or contextually wrong when placed in the sentence.',
                     ],
                     [
                         'role' => 'user',
-                        'content' => $optionsPrompt,
+                        'content' => $distractorsPrompt,
                     ],
                 ];
 
-                $optionsResponse = $this->openAiService->chatCompletion($optionsMessages, [
+                $distractorsResponse = $this->openAiService->chatCompletion($distractorsMessages, [
                     'model' => $model ?? config('services.openai.translation_model', 'gpt-4o-mini'),
                     'temperature' => 0.5,
                     'response_format' => [
                         'type' => 'json_schema',
                         'json_schema' => [
-                            'name' => 'blank_options',
+                            'name' => 'distractors',
                             'schema' => [
                                 'type' => 'object',
-                                'required' => ['correct_answer', 'distractors'],
+                                'required' => ['distractors'],
                                 'properties' => [
-                                    'correct_answer' => [
-                                        'type' => 'string',
-                                        'description' => 'The correct word that fits grammatically and contextually in the sentence',
-                                    ],
                                     'distractors' => [
                                         'type' => 'array',
                                         'items' => ['type' => 'string'],
@@ -229,23 +311,23 @@ class ClauseExerciseGenerator
                     ],
                 ]);
 
-                $optionsContent = $this->openAiService->extractContent($optionsResponse);
-                if (!$optionsContent) {
-                    Log::warning('Failed to generate options for blank', ['blank_id' => $blankId]);
+                $distractorsContent = $this->openAiService->extractContent($distractorsResponse);
+                if (!$distractorsContent) {
+                    Log::warning('Failed to generate distractors for blank', ['blank_id' => $blankId]);
                     continue;
                 }
 
-                $optionsData = json_decode($optionsContent, true);
-                if (!$optionsData || !isset($optionsData['correct_answer']) || !isset($optionsData['distractors'])) {
-                    Log::warning('Invalid options response format', ['blank_id' => $blankId]);
+                $distractorsData = json_decode($distractorsContent, true);
+                if (!$distractorsData || !isset($distractorsData['distractors'])) {
+                    Log::warning('Invalid distractors response format', ['blank_id' => $blankId]);
                     continue;
                 }
 
                 $blanks[] = [
                     'id' => $blankId,
                     'type' => $blankType,
-                    'correct_answer' => trim($optionsData['correct_answer']),
-                    'distractors' => array_map('trim', $optionsData['distractors']),
+                    'correct_answer' => $correctAnswer,
+                    'distractors' => array_map('trim', $distractorsData['distractors']),
                     'grammar_concept_id' => $grammarConceptId,
                     'grammar_concept' => $grammarConcept,
                 ];
@@ -568,9 +650,9 @@ class ClauseExerciseGenerator
     }
 
     /**
-     * Build the prompt for generating the paragraph with blanks.
+     * Build the prompt for generating a complete paragraph WITHOUT blanks.
      */
-    protected function buildParagraphPrompt(string $lessonTitle, array $vocabulary, array $grammarConcepts, int $blankCount, ?string $topic = null): string
+    protected function buildCompleteParagraphPrompt(string $lessonTitle, array $vocabulary, array $grammarConcepts, ?string $topic = null): string
     {
         $vocabList = implode(', ', array_slice($vocabulary, 0, 20));
         
@@ -583,7 +665,7 @@ class ClauseExerciseGenerator
             ? "IMPORTANT: Organize the entire paragraph around the topic: \"{$topic}\"."
             : "Create a paragraph that naturally uses the vocabulary words and grammar concepts.";
 
-        return "Create a fill-in-the-blank paragraph exercise for a lesson titled: \"{$lessonTitle}\"
+        return "Create a complete, grammatically correct paragraph for a lesson titled: \"{$lessonTitle}\"
 
 VOCABULARY WORDS (use some of these in the paragraph):
 {$vocabList}
@@ -594,67 +676,128 @@ AVAILABLE GRAMMAR CONCEPTS (use some of these in the paragraph):
 {$topicInstruction}
 
 REQUIREMENTS:
-1. Create a coherent paragraph (3-5 sentences) with exactly {$blankCount} blanks
-2. Each blank MUST be represented by {} (curly braces with nothing inside)
-3. Include at least 1 vocabulary blank (uses a word from the vocabulary list)
-4. Include at least 1 grammar blank (tests a grammar concept from the list)
-5. For each blank, provide:
-   - position: The index (0-based) of this blank in the paragraph
-   - type: Either 'vocab' or 'grammar'
-   - context: The full sentence containing this blank, with {} showing where the blank is
-   - For grammar blanks: grammar_concept_id and grammar_concept
+1. Create a coherent paragraph (3-5 sentences) that is COMPLETE with all words filled in
+2. NO blanks, NO placeholders, NO {} - the paragraph must be fully written
+3. Use at least 4-8 vocabulary words from the provided list
+4. Demonstrate at least 2-3 grammar concepts from the provided list
+5. Make the paragraph educational and contextually appropriate
+6. Ensure all sentences are grammatically correct and flow naturally
 
 Return JSON with:
-- paragraph: The paragraph text with {} placeholders
-- blank_positions: Array describing each blank's position, type, and context";
+- paragraph: The complete paragraph text (NO blanks or placeholders)
+- vocabulary_used: Array of vocabulary words from the provided list that appear in the paragraph
+- grammar_concepts_used: Array of grammar concepts (with id and display) that are demonstrated in the paragraph";
     }
 
     /**
-     * Build the prompt for generating options for a specific blank.
+     * Build the prompt for adding blanks to a complete paragraph.
      */
-    protected function buildOptionsPrompt(string $blankId, string $blankType, string $context, array $vocabulary, array $grammarConcepts, ?int $grammarConceptId, ?string $grammarConcept): string
+    protected function buildAddBlanksPrompt(string $completeParagraph, array $vocabulary, array $grammarConcepts, array $vocabularyUsed, array $grammarConceptsUsed, int $blankCount): string
+    {
+        $vocabList = implode(', ', array_slice($vocabulary, 0, 20));
+        
+        $grammarConceptsList = array_map(function($concept) {
+            return "ID {$concept['id']}: {$concept['display']}";
+        }, array_slice($grammarConcepts, 0, 10));
+        $grammarConceptsText = implode("\n", $grammarConceptsList);
+
+        $vocabUsedText = implode(', ', array_slice($vocabularyUsed, 0, 10));
+        $grammarUsedText = implode(', ', array_map(function($gc) {
+            return $gc['display'] ?? '';
+        }, array_slice($grammarConceptsUsed, 0, 5)));
+
+        return "Analyze this complete paragraph and add fill-in-the-blank exercises to it.
+
+COMPLETE PARAGRAPH (no blanks yet):
+{$completeParagraph}
+
+VOCABULARY WORDS USED IN PARAGRAPH:
+{$vocabUsedText}
+
+GRAMMAR CONCEPTS DEMONSTRATED IN PARAGRAPH:
+{$grammarUsedText}
+
+ALL AVAILABLE VOCABULARY WORDS:
+{$vocabList}
+
+ALL AVAILABLE GRAMMAR CONCEPTS:
+{$grammarConceptsText}
+
+REQUIREMENTS:
+1. Add exactly {$blankCount} blanks to the paragraph by replacing words/phrases with {} placeholders
+2. Extract the ACTUAL word/phrase from the paragraph as the correct answer for each blank
+3. Include at least 1 vocabulary blank (replace a vocabulary word with {})
+4. Include at least 1 grammar blank (replace a word/phrase that demonstrates a grammar concept with {})
+5. Choose strategic locations for blanks - words that are important for understanding
+6. For vocabulary blanks: The correct answer must be a word from the vocabulary_used list
+7. For grammar blanks: The correct answer must demonstrate one of the grammar_concepts_used
+8. Maintain the paragraph's grammatical correctness and flow
+
+Return JSON with:
+- paragraph: The paragraph with {} placeholders added (exactly {$blankCount} blanks)
+- blanks: Array of objects, each with:
+  - position: The index of this blank (0-based, first {} is 0, second is 1, etc.)
+  - type: Either 'vocab' or 'grammar'
+  - correct_answer: The ACTUAL word/phrase from the original paragraph that you replaced with {}
+  - sentence_context: The full sentence containing this blank, with {} showing where the blank is
+  - For grammar blanks: grammar_concept_id and grammar_concept (from grammar_concepts_used)";
+    }
+
+    /**
+     * Build the prompt for generating distractors for a specific blank.
+     */
+    protected function buildDistractorsPrompt(string $blankId, string $blankType, string $sentenceContext, string $correctAnswer, array $vocabulary, array $grammarConcepts, ?int $grammarConceptId, ?string $grammarConcept): string
     {
         $vocabList = implode(', ', array_slice($vocabulary, 0, 20));
         
         if ($blankType === 'vocab') {
-            return "Generate options for a vocabulary fill-in-the-blank exercise.
+            return "Generate distractors for a vocabulary fill-in-the-blank exercise.
 
-SENTENCE CONTEXT:
-{$context}
+SENTENCE WITH BLANK:
+{$sentenceContext}
+
+CORRECT ANSWER (extracted from the original paragraph):
+{$correctAnswer}
 
 AVAILABLE VOCABULARY WORDS:
 {$vocabList}
 
 REQUIREMENTS:
-1. The correct answer MUST be a word from the vocabulary list that fits grammatically and contextually in the sentence
-2. Generate exactly 3 distractors that are also from the vocabulary list
+1. The correct answer is already known: \"{$correctAnswer}\"
+2. Generate exactly 3 distractors from the vocabulary list
 3. All distractors MUST be grammatically incorrect or contextually wrong when placed in the sentence
-4. Test each option mentally: if you place it in the sentence, does it make sense? If yes, it's not a good distractor
-5. No distractor should duplicate the correct answer
+4. Test each distractor: Read the sentence with the distractor inserted. Does it make sense? If yes, it's not a good distractor
+5. Choose distractors that are plausible but clearly wrong in this context
+6. No distractor should duplicate the correct answer
 
 Return JSON with:
-- correct_answer: The vocabulary word that fits correctly
-- distractors: Array of 3 vocabulary words that don't fit";
+- distractors: Array of 3 vocabulary words that don't fit in the sentence";
         } else {
             $conceptInfo = $grammarConceptId ? "Grammar Concept ID {$grammarConceptId}: {$grammarConcept}" : "Grammar concept from the available list";
             
-            return "Generate options for a grammar fill-in-the-blank exercise.
+            return "Generate distractors for a grammar fill-in-the-blank exercise.
 
-SENTENCE CONTEXT:
-{$context}
+SENTENCE WITH BLANK:
+{$sentenceContext}
+
+CORRECT ANSWER (extracted from the original paragraph):
+{$correctAnswer}
 
 GRAMMAR CONCEPT BEING TESTED:
 {$conceptInfo}
 
 REQUIREMENTS:
-1. The correct answer MUST be grammatically correct in this specific sentence and match the grammar concept
+1. The correct answer is already known: \"{$correctAnswer}\"
 2. Generate exactly 3 distractors that are grammatically incorrect when placed in this sentence
-3. Test each distractor: read the sentence with the distractor inserted. Is it grammatically wrong? If it could be correct, replace it
-4. Distractors should be wrong forms (wrong tense, wrong verb form, wrong modal, etc.)
+3. Test each distractor: Read the sentence with the distractor inserted. Is it grammatically wrong? If it could be correct, replace it
+4. Distractors should be wrong forms:
+   - Wrong tense (e.g., if correct is past tense, use present or future)
+   - Wrong verb form (e.g., if correct is \"ask\", use \"asking\" or \"asked\" if wrong)
+   - Wrong modal (e.g., if correct is \"should\", use \"must\", \"will\", \"can\" if wrong)
 5. The correct answer must be the ONLY grammatically correct option for this blank
+6. Each distractor must be clearly grammatically incorrect when placed in the sentence
 
 Return JSON with:
-- correct_answer: The grammatically correct word/phrase
 - distractors: Array of 3 grammatically incorrect options";
         }
     }
