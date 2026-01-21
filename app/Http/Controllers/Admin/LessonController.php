@@ -17,29 +17,10 @@ class LessonController extends Controller
     {
         $query = Lesson::active();
         
-        // Sort by different criteria
-        $sortBy = $request->get('sort', 'session');
-        switch ($sortBy) {
-            case 'recent':
-                $query->orderBy('updated_at', 'desc');
-                break;
-            case 'title':
-                $query->orderBy('title', 'asc');
-                break;
-            case 'grade':
-                $query->orderBy('grade_level', 'asc')->orderBy('sort_order', 'asc');
-                break;
-            case 'session':
-                // Sort by session number, then by part number, then by part sort_order, then by lesson sort_order
-                $query->orderBy('session_number', 'asc')
-                      ->orderBy('part_number', 'asc')
-                      ->orderByRaw('(SELECT MIN(sort_order) FROM parts WHERE parts.lesson_id = lessons.id) ASC')
-                      ->orderBy('sort_order', 'asc');
-                break;
-            default:
-                $query->ordered(); // Default: sort_order
-                break;
-        }
+        // Always sort by session number, then by part number
+        $query->orderBy('session_number', 'asc')
+              ->orderBy('part_number', 'asc')
+              ->orderBy('created_at', 'asc');
         
         // Filter by grade level
         if ($request->filled('grade_level')) {

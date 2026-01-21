@@ -51,10 +51,9 @@ class StudentController extends Controller
             });
         }
         
-        $lessons = $query->orderBy('sort_order')
-            ->orderBy('session_number')
-            ->orderBy('part_number')
-            ->orderBy('created_at')
+        $lessons = $query->orderBy('session_number', 'asc')
+            ->orderBy('part_number', 'asc')
+            ->orderBy('created_at', 'asc')
             ->get();
         
         // Get available session numbers for filter dropdown

@@ -13,17 +13,6 @@
     <div class="filters-section">
         <form method="GET" action="{{ route('admin.lessons.index') }}" class="filters-form">
             <div class="filter-group">
-                <label for="sort">Sort By:</label>
-                <select name="sort" id="sort" class="form-control">
-                    <option value="session" {{ request('sort', 'session') == 'session' ? 'selected' : '' }}>Session Number</option>
-                    <option value="default" {{ request('sort') == 'default' ? 'selected' : '' }}>Default Order</option>
-                    <option value="recent" {{ request('sort') == 'recent' ? 'selected' : '' }}>Recently Modified</option>
-                    <option value="title" {{ request('sort') == 'title' ? 'selected' : '' }}>Title (A-Z)</option>
-                    <option value="grade" {{ request('sort') == 'grade' ? 'selected' : '' }}>Grade Level</option>
-                </select>
-            </div>
-            
-            <div class="filter-group">
                 <label for="grade_level">Grade Level:</label>
                 <select name="grade_level" id="grade_level" class="form-control">
                     <option value="">All Grades</option>
