@@ -83,7 +83,7 @@
             <tbody>
                 @foreach($lessons as $lesson)
                     <tr>
-                        <td><strong>{{ $lesson->display_name }}</strong></td>
+                        <td><strong>{{ $lesson->title }}</strong></td>
                         <td>{{ $lesson->grade_level ? 'Grade ' . $lesson->grade_level : '-' }}</td>
                         <td>{{ $lesson->session_number ? 'Session ' . $lesson->session_number : '-' }}</td>
                         <td>{{ $lesson->session_title ?? '-' }}</td>
