@@ -48,7 +48,7 @@
                 <div class="form-group">
                     <label for="title">Exercise Title *</label>
                     <input type="text" id="title" name="title" 
-                           value="{{ old('title', 'Fill in the Blanks: ' . ($grammarSets->first()?->title ?? 'Grammar Practice')) }}" 
+                           value="{{ old('title', $defaultTitle ?? 'Fill in the Blanks 1') }}" 
                            required class="form-control">
                     <small>Give this exercise a descriptive title</small>
                 </div>

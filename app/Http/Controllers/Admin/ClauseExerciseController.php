@@ -27,7 +27,11 @@ class ClauseExerciseController extends Controller
         // Get all available grammar sets, not just associated ones
         $grammarSets = GrammarSet::with('grammarConcepts')->orderBy('title')->get();
         
-        return view('admin.clause-exercises.create', compact('lesson', 'grammarSets'));
+        // Generate default title based on existing exercises
+        $existingCount = ClauseExercise::where('lesson_id', $lesson->id)->count();
+        $defaultTitle = 'Fill in the Blanks ' . ($existingCount + 1);
+        
+        return view('admin.clause-exercises.create', compact('lesson', 'grammarSets', 'defaultTitle'));
     }
 
     /**
@@ -41,6 +45,13 @@ class ClauseExerciseController extends Controller
             'grammar_set_id' => 'nullable|exists:grammar_sets,id',
             'model' => 'nullable|string|in:gpt-4o-mini,gpt-4o',
         ]);
+
+        // Auto-generate title if it matches the old pattern (includes grammar set name) or is empty
+        // Check if title starts with "Fill in the Blanks:" (old pattern with grammar set) or is empty
+        if (empty($validated['title']) || strpos($validated['title'], 'Fill in the Blanks:') === 0) {
+            $existingCount = ClauseExercise::where('lesson_id', $lesson->id)->count();
+            $validated['title'] = 'Fill in the Blanks ' . ($existingCount + 1);
+        }
 
         try {
             $grammarSet = GrammarSet::findOrFail($validated['grammar_set_id']);
