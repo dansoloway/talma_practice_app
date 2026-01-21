@@ -21,13 +21,6 @@
                 @endif
             </div>
         @endif
-        
-        @if($lesson->instructions)
-            <div class="lesson-instructions">
-                <h3>Instructions</h3>
-                <p>{{ $lesson->instructions }}</p>
-            </div>
-        @endif
 
         @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
             <div class="vocabulary-section">
