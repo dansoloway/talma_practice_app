@@ -62,13 +62,6 @@
                     </span>
                 </div>
             </div>
-            
-            @if($lesson->instructions)
-                <div class="info-item full-width">
-                    <label>Instructions:</label>
-                    <p id="lesson-instructions">{{ $lesson->instructions }}</p>
-                </div>
-            @endif
         </div>
 
         <!-- Edit Form (Hidden by default) -->
@@ -121,12 +114,6 @@
                             @endfor
                         </select>
                     </div>
-                </div>
-
-
-                <div class="form-group">
-                    <label for="instructions">Instructions for Students</label>
-                    <textarea id="instructions" name="instructions" rows="4" class="form-control">{{ $lesson->instructions }}</textarea>
                 </div>
 
                 <div class="form-row">

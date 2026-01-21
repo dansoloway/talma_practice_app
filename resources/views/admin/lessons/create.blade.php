@@ -24,12 +24,6 @@
         </div>
 
         <div class="form-group">
-            <label for="instructions">Instructions for Students</label>
-            <textarea id="instructions" name="instructions" rows="4" class="form-control" placeholder="Enter instructions that will be shown to students at the beginning of this lesson...">{{ old('instructions') }}</textarea>
-            <small>Optional instructions to help students understand what to do in this lesson</small>
-        </div>
-
-        <div class="form-group">
             <label for="grade_level">Grade Level</label>
             <select id="grade_level" name="grade_level" class="form-control">
                 <option value="">Select Grade Level</option>

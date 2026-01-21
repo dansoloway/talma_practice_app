@@ -34,17 +34,23 @@
                             </div>
                         @endif
                         <a href="{{ route('lessons.show', $lesson->slug) }}" class="lesson-card-link">
-                            <div class="lesson-session">
-                                Play
-                            </div>
                             <div class="lesson-content">
+                                <div class="lesson-header-row">
+                                    @if($lesson->session_number || $lesson->part_number)
+                                        <div class="lesson-badge">
+                                            @if($lesson->session_number)
+                                                <span class="badge-session">Session {{ $lesson->session_number }}</span>
+                                            @endif
+                                            @if($lesson->part_number)
+                                                <span class="badge-part">Part {{ $lesson->part_number }}</span>
+                                            @endif
+                                        </div>
+                                    @endif
+                                    <div class="lesson-arrow">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </div>
+                                </div>
                                 <h3 class="lesson-title">{{ $lesson->title }}</h3>
-                                @if($lesson->session_title)
-                                    <p class="lesson-session-title">{{ $lesson->session_title }}</p>
-                                @endif
-                                @if($lesson->instructions)
-                                    <p class="lesson-description">{{ Str::limit($lesson->instructions, 100) }}</p>
-                                @endif
                                 
                                 <div class="lesson-stats">
                                     @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
@@ -65,9 +71,6 @@
                                         </span>
                                     @endif
                                 </div>
-                            </div>
-                            <div class="lesson-arrow">
-                                <i class="fas fa-chevron-right"></i>
                             </div>
                         </a>
                     </div>
@@ -152,25 +155,23 @@
     }
 
     /* Compact styling for sort mode */
-    .lesson-card.sort-mode .lesson-session {
-        padding: 0.25rem 0.75rem;
-        font-size: 0.75rem;
-        margin-right: 1rem;
+    .lesson-card.sort-mode .lesson-header-row {
+        margin-bottom: 0.5rem;
+    }
+
+    .lesson-card.sort-mode .lesson-badge {
+        font-size: 0.7rem;
+    }
+
+    .lesson-card.sort-mode .badge-session,
+    .lesson-card.sort-mode .badge-part {
+        padding: 0.25rem 0.6rem;
+        font-size: 0.7rem;
     }
 
     .lesson-card.sort-mode .lesson-title {
         font-size: 1rem;
         margin-bottom: 0.25rem;
-    }
-
-    .lesson-card.sort-mode .lesson-session-title {
-        font-size: 0.85rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .lesson-card.sort-mode .lesson-description {
-        font-size: 0.8rem;
-        display: none; /* Hide description in sort mode */
     }
 
     .lesson-card.sort-mode .lesson-stats {
@@ -179,7 +180,6 @@
 
     .lesson-card.sort-mode .lesson-arrow {
         font-size: 0.9rem;
-        margin-left: 0.5rem;
     }
 
     .drag-handle {

@@ -84,7 +84,6 @@ class LessonController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:lessons,slug',
-            'instructions' => 'nullable|string',
             'grade_level' => 'nullable|string|max:20',
             'session_number' => 'nullable|integer|min:1',
             'part_number' => 'nullable|integer|min:1|max:8',
@@ -92,6 +91,9 @@ class LessonController extends Controller
             'is_active' => 'boolean',
             'sort_order' => 'nullable|integer',
         ]);
+        
+        // Always set instructions to null
+        $validated['instructions'] = null;
 
         // Auto-generate slug if not provided
         if (empty($validated['slug'])) {
@@ -166,7 +168,6 @@ class LessonController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:lessons,slug,' . $lesson->id,
-            'instructions' => 'nullable|string',
             'grade_level' => 'nullable|string|max:20',
             'session_number' => 'nullable|integer|min:1',
             'part_number' => 'nullable|integer|min:1|max:8',
@@ -174,6 +175,9 @@ class LessonController extends Controller
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ]);
+        
+        // Always set instructions to null
+        $validated['instructions'] = null;
         
         // Normalize slug to ensure proper formatting
         $validated['slug'] = Str::slug($validated['slug']);

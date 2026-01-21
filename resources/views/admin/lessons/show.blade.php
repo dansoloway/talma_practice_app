@@ -26,12 +26,6 @@
             @if($lesson->grade_level)
                 <p class="grade-level">Grade {{ $lesson->grade_level }}</p>
             @endif
-            @if($lesson->instructions)
-                <div class="lesson-instructions">
-                    <h3>Instructions:</h3>
-                    <p>{{ $lesson->instructions }}</p>
-                </div>
-            @endif
         </div>
 
         @php
