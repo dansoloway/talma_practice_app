@@ -28,15 +28,54 @@ class StudentController extends Controller
      */
     public function grade(Request $request, $gradeLevel)
     {
-        $lessons = Lesson::active()
+        $query = Lesson::active()
             ->where('is_active', true)
-            ->where('grade_level', $gradeLevel)
-            ->orderBy('sort_order')
+            ->where('grade_level', $gradeLevel);
+        
+        // Filter by session number
+        if ($request->filled('session_number')) {
+            $query->where('session_number', $request->session_number);
+        }
+        
+        // Filter by part number
+        if ($request->filled('part_number')) {
+            $query->where('part_number', $request->part_number);
+        }
+        
+        // Filter by search text (title, slug)
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('slug', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+        
+        $lessons = $query->orderBy('sort_order')
             ->orderBy('session_number')
+            ->orderBy('part_number')
             ->orderBy('created_at')
             ->get();
+        
+        // Get available session numbers for filter dropdown
+        $sessionNumbers = Lesson::active()
+            ->where('is_active', true)
+            ->where('grade_level', $gradeLevel)
+            ->whereNotNull('session_number')
+            ->distinct()
+            ->orderBy('session_number')
+            ->pluck('session_number');
+        
+        // Get available part numbers for filter dropdown
+        $partNumbers = Lesson::active()
+            ->where('is_active', true)
+            ->where('grade_level', $gradeLevel)
+            ->whereNotNull('part_number')
+            ->distinct()
+            ->orderBy('part_number')
+            ->pluck('part_number');
 
-        return view('student.grade', compact('lessons', 'gradeLevel'));
+        return view('student.grade', compact('lessons', 'gradeLevel', 'sessionNumbers', 'partNumbers'));
     }
 
     /**
