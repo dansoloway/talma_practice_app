@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Grammar Concepts')
+@section('title', 'Grammar Sets')
 
 @section('content')
 <div class="container">
     <div class="page-header">
-        <h1 class="page-title">Grammar Concepts</h1>
+        <h1 class="page-title">Grammar Sets</h1>
         <div class="page-actions">
             <a href="{{ route('admin.grammar-concepts.csv.upload') }}" class="btn btn-primary">Upload CSV</a>
         </div>
@@ -44,12 +44,15 @@
             <div class="grammar-set-section" id="set-{{ $set->id }}" data-set-id="{{ $set->id }}" style="display: none;">
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">{{ $set->title }}</h2>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2 class="card-title" id="set-title-{{ $set->id }}">{{ $set->title }}</h2>
+                            <a href="{{ route('admin.grammar-sets.edit', $set) }}" class="btn btn-secondary btn-sm">Edit Title</a>
+                        </div>
                         @if($set->description)
                             <p style="color: var(--color-text-muted); font-size: 0.875rem; margin: 0.5rem 0 0 0;">{{ $set->description }}</p>
                         @endif
                         <div style="font-size: 0.875rem; color: var(--color-text-muted); margin-top: 0.5rem;">
-                            <strong>{{ $set->grammarConcepts->count() }}</strong> grammar concepts
+                            <strong>{{ $set->grammarConcepts->count() }}</strong> concepts
                             @if($set->lessons->count() > 0)
                                 | Used in <strong>{{ $set->lessons->count() }}</strong> lesson(s)
                             @endif

@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', 'Upload Grammar Concepts CSV')
+@section('title', 'Upload Grammar Sets CSV')
 
 @section('content')
 <div class="container">
     <div class="page-header">
-        <h1 class="page-title">Upload Grammar Concepts CSV</h1>
-        <a href="{{ route('admin.grammar-concepts.index') }}" class="btn">Back to Grammar Concepts</a>
+        <h1 class="page-title">Upload Grammar Sets CSV</h1>
+        <a href="{{ route('admin.grammar-concepts.index') }}" class="btn">Back to Grammar Sets</a>
     </div>
 
     <div class="upload-section">
@@ -76,7 +76,7 @@
             <div class="form-group">
                 <label for="csv_file">Select CSV File *</label>
                 <input type="file" id="csv_file" name="csv_file" accept=".csv,.txt" required class="form-control">
-                <small>Choose a CSV or TXT file containing your grammar concepts</small>
+                <small>Choose a CSV or TXT file containing your grammar concepts (which will be organized into grammar sets)</small>
             </div>
 
             <div class="form-group">

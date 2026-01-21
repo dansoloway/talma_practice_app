@@ -195,7 +195,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::delete('lessons/{lesson}/clause-exercises/{clauseExercise}', [\App\Http\Controllers\Admin\ClauseExerciseController::class, 'destroy'])
         ->name('lessons.clause-exercises.destroy');
     
-    // Grammar Concepts
+    // Grammar Sets (formerly Grammar Concepts)
     Route::get('grammar-concepts', [GrammarConceptController::class, 'index'])
         ->name('grammar-concepts.index');
     Route::get('grammar-concepts/csv/upload', [GrammarConceptController::class, 'csvUpload'])
@@ -208,6 +208,12 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         ->name('grammar-concepts.update');
     Route::delete('grammar-concepts/{grammarConcept}', [GrammarConceptController::class, 'destroy'])
         ->name('grammar-concepts.destroy');
+    
+    // Grammar Set management
+    Route::get('grammar-sets/{grammarSet}/edit', [GrammarConceptController::class, 'editSet'])
+        ->name('grammar-sets.edit');
+    Route::put('grammar-sets/{grammarSet}', [GrammarConceptController::class, 'updateSet'])
+        ->name('grammar-sets.update');
     Route::post('lessons/{lesson}/vocabulary/{vocabulary}/generate-tts', [AdminVocabularyController::class, 'generateSingleTts'])
         ->name('lessons.vocabulary.generate-single-tts');
     Route::post('lessons/{lesson}/vocabulary/generate-images', [AdminVocabularyController::class, 'generateImages'])

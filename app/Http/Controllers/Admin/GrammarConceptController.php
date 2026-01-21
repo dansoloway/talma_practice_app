@@ -235,4 +235,29 @@ class GrammarConceptController extends Controller
             ->route('admin.grammar-concepts.index')
             ->with('success', 'Grammar concept deleted successfully!');
     }
+
+    /**
+     * Show the form for editing a grammar set.
+     */
+    public function editSet(GrammarSet $grammarSet)
+    {
+        return view('admin.grammar-sets.edit', compact('grammarSet'));
+    }
+
+    /**
+     * Update the specified grammar set.
+     */
+    public function updateSet(Request $request, GrammarSet $grammarSet)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $grammarSet->update($validated);
+
+        return redirect()
+            ->route('admin.grammar-concepts.index')
+            ->with('success', 'Grammar set updated successfully!');
+    }
 }

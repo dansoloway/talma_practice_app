@@ -15,7 +15,7 @@
         </div>
         <div class="card-body">
             <p style="margin-bottom: 1.5rem;">
-                AI will generate a paragraph exercise using vocabulary from this lesson and grammar concepts from associated grammar sets.
+                AI will generate a paragraph exercise using vocabulary from this lesson and concepts from associated grammar sets.
                 Students will fill in the blanks with the correct vocabulary words.
             </p>
 

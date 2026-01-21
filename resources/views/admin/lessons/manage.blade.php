@@ -185,7 +185,7 @@
                             <p style="color: var(--color-text-muted); font-size: 0.875rem; margin: 0 0 0.5rem 0;">{{ $set->description }}</p>
                         @endif
                         <div style="font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: 1rem;">
-                            <strong>{{ $set->concepts_count }}</strong> grammar concepts
+                            <strong>{{ $set->concepts_count }}</strong> concepts
                         </div>
                         <form action="{{ route('admin.lessons.grammar-sets.detach', [$lesson, $set]) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Remove this grammar set from this lesson?');">
                             @csrf
@@ -724,7 +724,7 @@ function deleteAllPrompts(title) {
                             <div style="font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: 0.5rem;">{{ $set->description }}</div>
                         @endif
                         <div style="font-size: 0.875rem; color: var(--color-text-muted);">
-                            {{ $set->concepts_count }} grammar concepts
+                            {{ $set->concepts_count }} concepts
                         </div>
                     </div>
                 </label>

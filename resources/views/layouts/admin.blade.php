@@ -49,7 +49,7 @@
                         <a href="{{ route('admin.lessons.index') }}">All Lessons</a>
                         <a href="{{ route('admin.lesson-tracker') }}">Lesson Tracker</a>
                         <a href="{{ route('admin.lessons.archived') }}">Archived</a>
-                        <a href="{{ route('admin.grammar-concepts.index') }}">Grammar Concepts</a>
+                        <a href="{{ route('admin.grammar-concepts.index') }}">Grammar Sets</a>
                     </div>
                 </div>
                 

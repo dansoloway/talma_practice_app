@@ -6,7 +6,7 @@
 <div class="container">
     <div class="page-header">
         <h1 class="page-title">Edit Grammar Concept</h1>
-        <a href="{{ route('admin.grammar-concepts.index') }}" class="btn">Back to Grammar Concepts</a>
+        <a href="{{ route('admin.grammar-concepts.index') }}" class="btn">Back to Grammar Sets</a>
     </div>
 
     <div class="card">
