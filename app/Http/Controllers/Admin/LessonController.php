@@ -30,8 +30,9 @@ class LessonController extends Controller
                 $query->orderBy('grade_level', 'asc')->orderBy('sort_order', 'asc');
                 break;
             case 'session':
-                // Sort by session number, then by part sort_order, then by lesson sort_order
+                // Sort by session number, then by part number, then by part sort_order, then by lesson sort_order
                 $query->orderBy('session_number', 'asc')
+                      ->orderBy('part_number', 'asc')
                       ->orderByRaw('(SELECT MIN(sort_order) FROM parts WHERE parts.lesson_id = lessons.id) ASC')
                       ->orderBy('sort_order', 'asc');
                 break;
@@ -86,6 +87,7 @@ class LessonController extends Controller
             'instructions' => 'nullable|string',
             'grade_level' => 'nullable|string|max:20',
             'session_number' => 'nullable|integer|min:1',
+            'part_number' => 'nullable|integer|min:1|max:8',
             'session_title' => 'nullable|string|max:255',
             'is_active' => 'boolean',
             'sort_order' => 'nullable|integer',
@@ -167,6 +169,7 @@ class LessonController extends Controller
             'instructions' => 'nullable|string',
             'grade_level' => 'nullable|string|max:20',
             'session_number' => 'nullable|integer|min:1',
+            'part_number' => 'nullable|integer|min:1|max:8',
             'session_title' => 'nullable|string|max:255',
             'is_active' => 'boolean',
             'sort_order' => 'integer',

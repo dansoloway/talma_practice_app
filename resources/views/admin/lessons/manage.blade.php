@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', 'Manage Lesson: ' . $lesson->display_name)
+@section('title', 'Manage Lesson: ' . $lesson->title)
 
 @section('content')
 <div class="container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">Manage Lesson: {{ $lesson->display_name }}</h1>
+            <h1 class="page-title">Manage Lesson: {{ $lesson->title }}</h1>
             <div class="lesson-metadata">
                 @if($lesson->grade_level)
                     <span class="metadata-item">Grade {{ $lesson->grade_level }}</span>
@@ -14,8 +14,8 @@
                 @if($lesson->session_number)
                     <span class="metadata-item">Session {{ $lesson->session_number }}</span>
                 @endif
-                @if($lesson->session_title)
-                    <span class="metadata-item">"{{ $lesson->session_title }}"</span>
+                @if($lesson->part_number)
+                    <span class="metadata-item">Part {{ $lesson->part_number }}</span>
                 @endif
             </div>
         </div>
@@ -52,8 +52,8 @@
                     <span id="lesson-session">{{ $lesson->session_number ?: 'Not set' }}</span>
                 </div>
                 <div class="info-item">
-                    <label>Session Title:</label>
-                    <span id="lesson-session-title">{{ $lesson->session_title ?: 'Not set' }}</span>
+                    <label>Part Number:</label>
+                    <span id="lesson-part">{{ $lesson->part_number ? 'Part ' . $lesson->part_number : 'Not set' }}</span>
                 </div>
                 <div class="info-item">
                     <label>Status:</label>
@@ -112,12 +112,17 @@
                         <label for="session_number">Session Number</label>
                         <input type="number" id="session_number" name="session_number" value="{{ $lesson->session_number }}" min="1" class="form-control">
                     </div>
+                    <div class="form-group">
+                        <label for="part_number">Part Number</label>
+                        <select id="part_number" name="part_number" class="form-control">
+                            <option value="">Not set</option>
+                            @for($i = 1; $i <= 8; $i++)
+                                <option value="{{ $i }}" {{ $lesson->part_number == $i ? 'selected' : '' }}>Part {{ $i }}</option>
+                            @endfor
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="session_title">Session Title</label>
-                    <input type="text" id="session_title" name="session_title" value="{{ $lesson->session_title }}" class="form-control">
-                </div>
 
                 <div class="form-group">
                     <label for="instructions">Instructions for Students</label>

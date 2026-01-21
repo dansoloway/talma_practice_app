@@ -17,6 +17,7 @@ class Lesson extends Model
         'instructions',
         'grade_level',
         'session_number',
+        'part_number',
         'session_title',
         'is_active',
         'sort_order',
