@@ -36,9 +36,21 @@
             </div>
             
             <div class="filter-group">
+                <label for="session_number">Session Number:</label>
+                <select name="session_number" id="session_number" class="form-control">
+                    <option value="">All Sessions</option>
+                    @foreach($sessionNumbers as $session)
+                        <option value="{{ $session }}" {{ request('session_number') == $session ? 'selected' : '' }}>
+                            Session {{ $session }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="filter-group">
                 <label for="search">Search:</label>
                 <input type="text" name="search" id="search" class="form-control" 
-                       placeholder="Search lessons..." value="{{ request('search') }}">
+                       placeholder="Search by title, session title, or slug..." value="{{ request('search') }}">
             </div>
             
             <div class="filter-actions">
@@ -50,7 +62,7 @@
 
     @if($lessons->isEmpty())
         <div class="empty-state">
-            @if(request()->hasAny(['grade_level', 'search']))
+            @if(request()->hasAny(['grade_level', 'session_number', 'search']))
                 <h3>No lessons found</h3>
                 <p>No lessons match your current filters. Try adjusting your search criteria or <a href="{{ route('admin.lessons.index') }}">clear all filters</a>.</p>
             @else
@@ -61,7 +73,7 @@
     @else
         <div class="results-info">
             <p>Showing {{ $lessons->count() }} lesson{{ $lessons->count() !== 1 ? 's' : '' }}
-            @if(request()->hasAny(['grade_level', 'search']))
+            @if(request()->hasAny(['grade_level', 'session_number', 'search']))
                 matching your filters
             @endif
             </p>

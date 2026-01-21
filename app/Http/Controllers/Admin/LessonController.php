@@ -46,13 +46,18 @@ class LessonController extends Controller
             $query->where('grade_level', $request->grade_level);
         }
         
-        // Filter by search text (title, session_title, instructions)
+        // Filter by session number
+        if ($request->filled('session_number')) {
+            $query->where('session_number', $request->session_number);
+        }
+        
+        // Filter by search text (title, session_title, slug)
         if ($request->filled('search')) {
             $searchTerm = $request->search;
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('title', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('session_title', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('instructions', 'LIKE', "%{$searchTerm}%");
+                  ->orWhere('slug', 'LIKE', "%{$searchTerm}%");
             });
         }
         
@@ -65,7 +70,14 @@ class LessonController extends Controller
             ->orderBy('grade_level')
             ->pluck('grade_level');
         
-        return view('admin.lessons.index', compact('lessons', 'gradeLevels'));
+        // Get available session numbers for filter dropdown
+        $sessionNumbers = Lesson::active()
+            ->whereNotNull('session_number')
+            ->distinct()
+            ->orderBy('session_number')
+            ->pluck('session_number');
+        
+        return view('admin.lessons.index', compact('lessons', 'gradeLevels', 'sessionNumbers'));
     }
 
     /**
