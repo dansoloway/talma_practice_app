@@ -147,8 +147,9 @@ function renderParagraph() {
     let paragraph = exerciseData.paragraph_text || '';
     const blanks = exerciseData.blanks || {}; // New format: object keyed by blank_id
     
-    // Extract all {{blank_id}} tokens - only matches {{blank_\d+}} format
-    const tokenRegex = /\{\{(blank_\d+)\}\}/g;
+    // Extract all blank_id tokens - only matches blank_\d+ format
+    // Use RegExp constructor to avoid Blade parsing {{ as directive
+    const tokenRegex = new RegExp('\\{\\{' + '(blank_\\d+)' + '\\}\\}', 'g');
     const tokens = [];
     let match;
     while ((match = tokenRegex.exec(paragraph)) !== null) {
