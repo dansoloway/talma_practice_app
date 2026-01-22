@@ -93,10 +93,12 @@
                             $sortUrl = request()->fullUrlWithQuery(array_merge(request()->except(['sort_by', 'sort_dir']), ['sort_by' => 'title', 'sort_dir' => $newSortDir]));
                         @endphp
                         <a href="{{ $sortUrl }}" 
-                           class="sortable-header" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            Title
+                           class="sortable-header" title="Click to sort">
+                            <span>Title</span>
                             @if($sortBy == 'title')
-                                <span>{{ $sortDir == 'asc' ? '↑' : '↓' }}</span>
+                                <span class="sort-indicator active">{{ $sortDir == 'asc' ? '↑' : '↓' }}</span>
+                            @else
+                                <span class="sort-indicator">↕</span>
                             @endif
                         </a>
                     </th>
@@ -109,10 +111,12 @@
                             $sortUrl = request()->fullUrlWithQuery(array_merge(request()->except(['sort_by', 'sort_dir']), ['sort_by' => 'slug', 'sort_dir' => $newSortDir]));
                         @endphp
                         <a href="{{ $sortUrl }}" 
-                           class="sortable-header" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            Slug
+                           class="sortable-header" title="Click to sort">
+                            <span>Slug</span>
                             @if($sortBy == 'slug')
-                                <span>{{ $sortDir == 'asc' ? '↑' : '↓' }}</span>
+                                <span class="sort-indicator active">{{ $sortDir == 'asc' ? '↑' : '↓' }}</span>
+                            @else
+                                <span class="sort-indicator">↕</span>
                             @endif
                         </a>
                     </th>
@@ -123,10 +127,12 @@
                             $sortUrl = request()->fullUrlWithQuery(array_merge(request()->except(['sort_by', 'sort_dir']), ['sort_by' => 'updated_at', 'sort_dir' => $newSortDir]));
                         @endphp
                         <a href="{{ $sortUrl }}" 
-                           class="sortable-header" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            Last Modified
+                           class="sortable-header" title="Click to sort">
+                            <span>Last Modified</span>
                             @if($sortBy == 'updated_at')
-                                <span>{{ $sortDir == 'asc' ? '↑' : '↓' }}</span>
+                                <span class="sort-indicator active">{{ $sortDir == 'asc' ? '↑' : '↓' }}</span>
+                            @else
+                                <span class="sort-indicator">↕</span>
                             @endif
                         </a>
                     </th>
@@ -173,13 +179,49 @@
 </div>
 
 <style>
-.sortable-header:hover {
-    color: var(--color-primary, #007bff) !important;
-    text-decoration: underline !important;
+.sortable-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin: -0.5rem -0.75rem;
+    border-radius: 4px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
 }
-.sortable-header span {
+
+.sortable-header:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+    color: var(--color-primary, #007bff) !important;
+    text-decoration: underline;
+}
+
+.sortable-header:active {
+    background-color: rgba(0, 123, 255, 0.2);
+}
+
+.sort-indicator {
     font-size: 0.875em;
-    opacity: 0.7;
+    opacity: 0.5;
+    font-weight: normal;
+    transition: opacity 0.2s ease;
+}
+
+.sortable-header:hover .sort-indicator {
+    opacity: 1;
+}
+
+.sort-indicator.active {
+    opacity: 1;
+    font-weight: bold;
+    color: var(--color-primary, #007bff);
+}
+
+th {
+    position: relative;
 }
 </style>
 @endsection
