@@ -414,6 +414,8 @@ function checkAnswers() {
         return;
     }
     
+    let correctCount = 0; // Initialize counter
+    
     // Check each blank
     const blankIds = useNewFormat ? Object.keys(blanks) : Object.keys(correctAnswers);
     blankIds.forEach(blankId => {
