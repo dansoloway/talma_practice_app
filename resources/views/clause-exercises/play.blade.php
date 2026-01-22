@@ -175,8 +175,10 @@ function renderParagraph() {
         
         if (!blank) {
             console.warn(`Missing blank data for token: ${token}`);
+            // Use regex to match the token pattern, avoiding Blade parsing issues
+            const tokenPattern = new RegExp('\\{\\{' + token + '\\}\\}', 'g');
             paragraph = paragraph.replace(
-                `{{${token}}}`,
+                tokenPattern,
                 '<select class="blank-select" disabled data-blank-id="' + escapeHtml(token) + '"><option>Blank unavailable</option></select>'
             );
             return;
@@ -215,8 +217,10 @@ function renderParagraph() {
         // Ensure we have at least the correct answer
         if (options.length === 0) {
             console.warn(`No options found for blank: ${token}`);
+            // Use regex to match the token pattern, avoiding Blade parsing issues
+            const tokenPattern = new RegExp('\\{\\{' + token + '\\}\\}', 'g');
             paragraph = paragraph.replace(
-                `{{${token}}}`,
+                tokenPattern,
                 '<select class="blank-select" disabled data-blank-id="' + escapeHtml(token) + '"><option>Blank unavailable</option></select>'
             );
             return;
@@ -234,7 +238,9 @@ function renderParagraph() {
             ${optionsHtml}
         </select>`;
         
-        paragraph = paragraph.replace(`{{${token}}}`, selectHtml);
+        // Use regex to match the token pattern, avoiding Blade parsing issues
+        const tokenPattern = new RegExp('\\{\\{' + token + '\\}\\}', 'g');
+        paragraph = paragraph.replace(tokenPattern, selectHtml);
     });
     
     container.innerHTML = `<div class="paragraph-text">${paragraph}</div>`;
