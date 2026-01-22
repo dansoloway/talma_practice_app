@@ -79,13 +79,21 @@
 </div>
 
 <script>
+@php
+    // Pre-encode to avoid Blade parsing issues with {{ in paragraph_text
+    $paragraphTextJson = json_encode($clauseExercise->paragraph_text ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    $blanksJson = json_encode($clauseExercise->blanks ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    $correctAnswersJson = json_encode($clauseExercise->correct_answers ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    $blankPositionsJson = json_encode($clauseExercise->blank_positions ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    $blankMetadataJson = json_encode($clauseExercise->blank_metadata ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+@endphp
 const exerciseData = {
-    paragraph_text: @json($clauseExercise->paragraph_text),
-    blanks: @json($clauseExercise->blanks ?? []),
+    paragraph_text: {!! $paragraphTextJson !!},
+    blanks: {!! $blanksJson !!},
     // Backward compatibility
-    correct_answers: @json($clauseExercise->correct_answers ?? []),
-    blank_positions: @json($clauseExercise->blank_positions ?? []),
-    blank_metadata: @json($clauseExercise->blank_metadata ?? []),
+    correct_answers: {!! $correctAnswersJson !!},
+    blank_positions: {!! $blankPositionsJson !!},
+    blank_metadata: {!! $blankMetadataJson !!},
 };
 
 @php
@@ -148,7 +156,7 @@ function renderParagraph() {
     const blanks = exerciseData.blanks || {}; // New format: object keyed by blank_id
     
     // Extract all blank_id tokens - only matches blank_\d+ format
-    // Use RegExp constructor to avoid Blade parsing {{ as directive
+    // Use RegExp constructor to avoid Blade parsing issues
     const tokenRegex = new RegExp('\\{\\{' + '(blank_\\d+)' + '\\}\\}', 'g');
     const tokens = [];
     let match;
