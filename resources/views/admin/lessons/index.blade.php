@@ -140,19 +140,7 @@
                         <td><strong>{{ $lesson->title }}</strong></td>
                         <td>{{ $lesson->grade_level ? 'Grade ' . $lesson->grade_level : '-' }}</td>
                         <td>{{ $lesson->session_number ? 'Session ' . $lesson->session_number : '-' }}</td>
-                        <td>
-                            @if($lesson->parts->count() > 0)
-                                @php
-                                    $firstPart = $lesson->parts->sortBy('sort_order')->first();
-                                @endphp
-                                {{ $firstPart->title }}
-                                @if($lesson->parts->count() > 1)
-                                    <br><small style="color: var(--color-text-muted);">+{{ $lesson->parts->count() - 1 }} more</small>
-                                @endif
-                            @else
-                                -
-                            @endif
-                        </td>
+                        <td>{{ $lesson->part_number ? 'Part ' . $lesson->part_number : '-' }}</td>
                         <td><code>{{ $lesson->slug }}</code></td>
                         <td>
                             @php
