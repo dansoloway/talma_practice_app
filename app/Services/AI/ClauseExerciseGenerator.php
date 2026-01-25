@@ -1120,7 +1120,8 @@ CRITICAL FINAL CHECKLIST - VERIFY BEFORE RETURNING:
 - [ ] No distractor duplicates its correct answer
 - [ ] {} placeholders are in the same order as blanks array
 - [ ] For grammar blanks: The correct answer is grammatically correct in the sentence AND matches the grammar concept
-- [ ] For grammar blanks: ALL distractors are grammatically incorrect when placed in the sentence
+- [ ] For grammar blanks: ALL distractors are grammatically incorrect when placed in the sentence";
+    }
 
     /**
      * Fill in all blanks with correct answers to create completed paragraph
@@ -1131,7 +1132,7 @@ CRITICAL FINAL CHECKLIST - VERIFY BEFORE RETURNING:
         $filledCount = 0;
         
         foreach ($blanks as $blankId => $blank) {
-            $correctText = trim($blank['correct']['text'] ?? '');
+            $correctText = trim(isset($blank['correct']['text']) ? $blank['correct']['text'] : '');
             if (empty($correctText)) {
                 Log::error('Cannot fill blank - missing correct answer', [
                     'blank_id' => $blankId,
@@ -1141,7 +1142,7 @@ CRITICAL FINAL CHECKLIST - VERIFY BEFORE RETURNING:
             }
             
             // Replace {{blank_id}} token with correct answer
-            $token = "{{{$blankId}}}";
+            $token = '{{' . $blankId . '}}';
             $beforeReplace = $completed;
             $completed = str_replace($token, $correctText, $completed);
             
@@ -1177,7 +1178,7 @@ CRITICAL FINAL CHECKLIST - VERIFY BEFORE RETURNING:
     {
         $systemMessage = 'You are an English language expert. Analyze a completed paragraph and determine if it makes grammatical and content sense. Check for: grammatical errors, logical flow, coherence, and whether the sentences make sense together.';
         
-            $userMessage = "Analyze this completed paragraph from a fill-in-the-blank exercise. The blanks have been filled with the correct answers.\n\n" .
+        $userMessage = "Analyze this completed paragraph from a fill-in-the-blank exercise. The blanks have been filled with the correct answers.\n\n" .
             "LESSON TITLE: {$lessonTitle}\n\n" .
             "COMPLETED PARAGRAPH:\n{$completedParagraph}\n\n" .
             "VALIDATION REQUIREMENTS:\n" .
@@ -1259,14 +1260,5 @@ CRITICAL FINAL CHECKLIST - VERIFY BEFORE RETURNING:
             // If validation fails, assume valid (don't block on validation service failure)
             return ['valid' => true, 'errors' => [], 'explanation' => 'Validation service error'];
         }
-    }
-
-⚠️ FINAL VERIFICATION - TEST EACH GRAMMAR BLANK:
-1. Count how many blanks have type=\"vocab\" and how many have type=\"grammar\". You MUST have at least 1 of each.
-2. For EACH grammar blank:
-   a. Read the full sentence with the correct answer inserted. Is it grammatically correct? Does it match the grammar concept? If NO, fix it.
-   b. Read the full sentence with EACH distractor inserted one at a time. Is it grammatically incorrect? If ANY distractor could be correct, replace it with a clearly wrong option.
-   c. Verify the correct answer is the ONLY grammatically correct option for this blank in this sentence.
-3. If any grammar blank fails these tests, regenerate that blank with better options.";
     }
 }
