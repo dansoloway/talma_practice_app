@@ -149,52 +149,29 @@
             //     }
             // }
             
-            // Add True/False game - check each version
-            $trueFalseVersions = [];
-            foreach(['easy', 'medium', 'hard'] as $version) {
-                $count = $lesson->trueFalseQuestions()
-                    ->forVersion($version)
-                    ->where('is_approved', true)
-                    ->where('is_active', true)
-                    ->count();
-                if($count > 0) {
-                    $trueFalseVersions[$version] = $count;
-                }
-            }
-            
-            if(!empty($trueFalseVersions)) {
-                if(count($trueFalseVersions) === 1) {
-                    // Single version - show as single activity
-                    $version = array_key_first($trueFalseVersions);
-                    $allActivities->push((object)[
-                        'id' => null,
-                        'type' => 'true_false',
-                        'title' => 'True/False Game (' . ucfirst($version) . ')',
-                        'sort_order' => 999,
-                        'is_active' => true,
-                        'model' => (object)[
-                            'question_count' => $trueFalseVersions[$version],
-                            'version' => $version,
-                            'available_versions' => $trueFalseVersions
-                        ]
-                    ]);
-                } else {
-                    // Multiple versions - show separate activities
-                    foreach($trueFalseVersions as $version => $count) {
+            // Add True/False games (new game-based approach)
+            try {
+                foreach($lesson->trueFalseGames as $game) {
+                    if(!$game->is_active) continue;
+                    
+                    $approvedCount = $game->questions()
+                        ->where('is_approved', true)
+                        ->where('is_active', true)
+                        ->count();
+                    
+                    if($approvedCount > 0) {
                         $allActivities->push((object)[
-                            'id' => null,
+                            'id' => $game->id,
                             'type' => 'true_false',
-                            'title' => 'True/False Game (' . ucfirst($version) . ')',
-                            'sort_order' => 999 + ($version === 'easy' ? 0 : ($version === 'medium' ? 1 : 2)),
-                            'is_active' => true,
-                            'model' => (object)[
-                                'question_count' => $count,
-                                'version' => $version,
-                                'available_versions' => $trueFalseVersions
-                            ]
+                            'title' => $game->title . ' (' . $approvedCount . ' questions)',
+                            'sort_order' => $game->sort_order ?? 999,
+                            'is_active' => $game->is_active ?? true,
+                            'model' => $game
                         ]);
                     }
                 }
+            } catch (\Exception $e) {
+                // Table doesn't exist yet - skip
             }
             
             $allActivities = $allActivities->where('is_active', true)->sortBy('sort_order');

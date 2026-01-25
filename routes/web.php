@@ -62,6 +62,7 @@ Route::get('/lessons/{lesson}/prompts/play', [PromptController::class, 'play'])
     ->name('prompts.play');
 Route::get('/lessons/{lesson}/true-false-games/{trueFalseGame}/play', [App\Http\Controllers\Admin\TrueFalseGameController::class, 'play'])
     ->middleware('throttle:100,1')
+    ->scopeBindings()
     ->name('true-false-games.play');
 
 // Clause Exercises (public)

@@ -110,6 +110,11 @@ class TrueFalseGameController extends Controller
      */
     public function play(Lesson $lesson, TrueFalseGame $trueFalseGame)
     {
+        // Ensure the game belongs to this lesson
+        if ($trueFalseGame->lesson_id !== $lesson->id) {
+            abort(404);
+        }
+        
         // Ensure lesson and game are active
         if (!$lesson->is_active || $lesson->archived_at || !$trueFalseGame->is_active) {
             abort(404);
