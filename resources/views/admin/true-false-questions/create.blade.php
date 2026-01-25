@@ -70,6 +70,19 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="grammar_set_id">Grammar Set (Optional)</label>
+                    <select id="grammar_set_id" name="grammar_set_id" class="form-control">
+                        <option value="">None</option>
+                        @foreach($grammarSets as $set)
+                            <option value="{{ $set->id }}" {{ old('grammar_set_id') == $set->id ? 'selected' : '' }}>
+                                {{ $set->title }} ({{ $set->grammarConcepts->count() }} concepts)
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="form-text">Optional: Link this question to a grammar set to test specific grammar concepts.</small>
+                </div>
+
+                <div class="form-group">
                     <label for="category">Category</label>
                     <select id="category" name="category" class="form-control">
                         <option value="">None</option>

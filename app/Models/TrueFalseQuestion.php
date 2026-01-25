@@ -9,6 +9,7 @@ class TrueFalseQuestion extends Model
 {
     protected $fillable = [
         'lesson_id',
+        'grammar_set_id',
         'statement',
         'is_true',
         'explanation',
@@ -36,6 +37,14 @@ class TrueFalseQuestion extends Model
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
+    }
+
+    /**
+     * Get the grammar set this question belongs to.
+     */
+    public function grammarSet(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\GrammarSet::class);
     }
 
     /**

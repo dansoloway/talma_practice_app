@@ -22,7 +22,7 @@ class OpenAiQuestionGenerator
     /**
      * Generate True/False questions from lesson content
      * 
-     * @param array $lessonData Contains vocabulary, prompts, and lesson info
+     * @param array $lessonData Contains vocabulary, prompts, lesson info, and optional grammar_set
      * @param int $count Number of questions to generate (5-8)
      * @return array Array of question objects with statement, is_true, explanation
      */
@@ -35,22 +35,37 @@ class OpenAiQuestionGenerator
         $vocabulary = $lessonData['vocabulary'] ?? [];
         $prompts = $lessonData['prompts'] ?? [];
         $lessonTitle = $lessonData['title'] ?? 'Science Lesson';
+        $grammarSet = $lessonData['grammar_set'] ?? null;
 
         // Build context for AI
         $vocabList = array_map(fn($v) => $v['english_word'], $vocabulary);
         $promptTemplates = array_map(fn($p) => $p['template'], $prompts);
         
-        $context = $this->buildContext($lessonTitle, $vocabList, $promptTemplates);
+        $context = $this->buildContext($lessonTitle, $vocabList, $promptTemplates, $grammarSet);
 
         try {
+            // Build grammar-focused instructions if grammar set is provided
+            $grammarInstructions = '';
+            if ($grammarSet && !empty($grammarSet['concepts'])) {
+                $conceptNames = array_map(fn($c) => $c['display_name'], $grammarSet['concepts']);
+                $grammarInstructions = "\n\nGRAMMAR FOCUS:\nThe questions should test understanding of these grammar concepts:\n" . implode("\n", array_slice($conceptNames, 0, 10));
+                if (count($conceptNames) > 10) {
+                    $grammarInstructions .= "\n(and " . (count($conceptNames) - 10) . " more concepts)";
+                }
+                $grammarInstructions .= "\n\nCreate questions that specifically test these grammar rules. For example:\n";
+                $grammarInstructions .= "- If testing 'Modals - can', create statements like 'We can swim' or 'Birds can fly'\n";
+                $grammarInstructions .= "- If testing 'Present Simple', create statements using present simple tense\n";
+                $grammarInstructions .= "- Make sure the grammar in each statement demonstrates or tests the selected concepts\n";
+            }
+
             $messages = [
                 [
                     'role' => 'system',
-                    'content' => 'You are an educational content creator for English language learners at CEFR A1 level (beginner). Generate True/False questions using VERY SIMPLE English. Use only basic vocabulary, simple present tense, and short sentences (5-10 words). No complex grammar, idioms, or difficult words. Questions should be clear, simple, and easy to understand for beginners learning English.',
+                    'content' => 'You are an educational content creator for English language learners at CEFR A1 level (beginner). Generate True/False questions using VERY SIMPLE English. Use only basic vocabulary, simple present tense, and short sentences (5-10 words). No complex grammar, idioms, or difficult words. Questions should be clear, simple, and easy to understand for beginners learning English.' . ($grammarSet ? ' When a grammar set is provided, focus questions on testing those specific grammar concepts while maintaining A1 level simplicity.' : ''),
                 ],
                 [
                     'role' => 'user',
-                    'content' => $context . "\n\nGenerate exactly {$count} True/False questions using CEFR A1 level English (beginner level).\n\nIMPORTANT LANGUAGE REQUIREMENTS:\n- Use ONLY simple, common words\n- Use simple present tense (is, are, do, have)\n- Keep sentences SHORT (5-10 words maximum)\n- Use basic sentence structure: Subject + Verb + Object\n- NO complex grammar, idioms, or difficult vocabulary\n- Examples of A1 level: 'Ice is cold', 'Water is wet', 'We use paper'\n- Examples to AVOID: 'Ice undergoes a phase transition', 'Water exhibits liquid properties'\n\nMix true and false statements. Include questions about vocabulary definitions, procedural steps, science facts, and common misconceptions.",
+                    'content' => $context . "\n\nGenerate exactly {$count} True/False questions using CEFR A1 level English (beginner level).\n\nIMPORTANT LANGUAGE REQUIREMENTS:\n- Use ONLY simple, common words\n- Use simple present tense (is, are, do, have)\n- Keep sentences SHORT (5-10 words maximum)\n- Use basic sentence structure: Subject + Verb + Object\n- NO complex grammar, idioms, or difficult vocabulary\n- Examples of A1 level: 'Ice is cold', 'Water is wet', 'We use paper'\n- Examples to AVOID: 'Ice undergoes a phase transition', 'Water exhibits liquid properties'\n\nMix true and false statements. Include questions about vocabulary definitions, procedural steps, science facts, and common misconceptions." . $grammarInstructions,
                 ],
             ];
 
@@ -128,7 +143,7 @@ class OpenAiQuestionGenerator
     /**
      * Build context string for AI prompt
      */
-    protected function buildContext(string $lessonTitle, array $vocabulary, array $promptTemplates): string
+    protected function buildContext(string $lessonTitle, array $vocabulary, array $promptTemplates, ?array $grammarSet = null): string
     {
         $vocabText = !empty($vocabulary) 
             ? "Vocabulary words: " . implode(', ', array_slice($vocabulary, 0, 20))
@@ -138,12 +153,26 @@ class OpenAiQuestionGenerator
             ? "Sample sentence templates:\n" . implode("\n", array_slice($promptTemplates, 0, 10))
             : "No prompts available.";
 
+        $grammarText = '';
+        if ($grammarSet && !empty($grammarSet['concepts'])) {
+            $conceptList = array_map(function($c) {
+                return "- " . $c['display_name'];
+            }, array_slice($grammarSet['concepts'], 0, 15));
+            
+            $grammarText = "\n\nGrammar Set: {$grammarSet['title']}\n";
+            $grammarText .= "Grammar Concepts to focus on:\n" . implode("\n", $conceptList);
+            if (count($grammarSet['concepts']) > 15) {
+                $grammarText .= "\n(and " . (count($grammarSet['concepts']) - 15) . " more concepts)";
+            }
+        }
+
         return <<<CONTEXT
 Lesson Title: {$lessonTitle}
 
 {$vocabText}
 
 {$promptsText}
+{$grammarText}
 
 Generate True/False questions based on this content using CEFR A1 level English (beginner level).
 

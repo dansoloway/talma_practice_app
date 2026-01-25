@@ -55,6 +55,18 @@
                 </div>
                 
                 <div class="form-group-inline">
+                    <label for="grammar_set_id">Grammar Set:</label>
+                    <select id="grammar_set_id" name="grammar_set_id" class="form-control-sm">
+                        <option value="">None (General Questions)</option>
+                        @foreach($grammarSets as $set)
+                            <option value="{{ $set->id }}">
+                                {{ $set->title }} ({{ $set->grammarConcepts->count() }} concepts)
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <div class="form-group-inline">
                     <label class="checkbox-label">
                         <input type="checkbox" name="auto_approve" value="1">
                         <span class="checkmark"></span>
@@ -103,6 +115,7 @@
                             </th>
                             <th>Statement</th>
                             <th>Answer</th>
+                            <th>Grammar Set</th>
                             <th>Category</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -126,6 +139,15 @@
                                     <span class="badge {{ $question->is_true ? 'badge-success' : 'badge-danger' }}">
                                         {{ $question->is_true ? 'TRUE' : 'FALSE' }}
                                     </span>
+                                </td>
+                                <td>
+                                    @if($question->grammarSet)
+                                        <span class="badge badge-info" title="{{ $question->grammarSet->title }}">
+                                            {{ Str::limit($question->grammarSet->title, 30) }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @if($question->category)
@@ -167,6 +189,7 @@
                     <tr>
                         <th>Statement</th>
                         <th>Answer</th>
+                        <th>Grammar Set</th>
                         <th>Category</th>
                         <th>Status</th>
                         <th>Sort Order</th>
@@ -188,6 +211,15 @@
                                 <span class="badge {{ $question->is_true ? 'badge-success' : 'badge-danger' }}">
                                     {{ $question->is_true ? 'TRUE' : 'FALSE' }}
                                 </span>
+                            </td>
+                            <td>
+                                @if($question->grammarSet)
+                                    <span class="badge badge-info" title="{{ $question->grammarSet->title }}">
+                                        {{ Str::limit($question->grammarSet->title, 30) }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
                             </td>
                             <td>
                                 @if($question->category)

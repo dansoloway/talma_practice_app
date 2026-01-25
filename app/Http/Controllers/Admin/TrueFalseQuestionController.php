@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
+use App\Models\GrammarSet;
 use App\Models\TrueFalseQuestion;
 use App\Services\QuestionGeneration\OpenAiQuestionGenerator;
 use App\Services\Tts\ElevenLabsTtsService;
@@ -18,6 +19,7 @@ class TrueFalseQuestionController extends Controller
     public function index(Lesson $lesson)
     {
         $questions = $lesson->trueFalseQuestions()
+            ->with('grammarSet')
             ->orderBy('is_approved')
             ->orderBy('sort_order')
             ->get();
@@ -25,7 +27,9 @@ class TrueFalseQuestionController extends Controller
         $pendingCount = $questions->where('is_approved', false)->count();
         $approvedCount = $questions->where('is_approved', true)->where('is_active', true)->count();
         
-        return view('admin.true-false-questions.index', compact('lesson', 'questions', 'pendingCount', 'approvedCount'));
+        $grammarSets = GrammarSet::with('grammarConcepts')->orderBy('title')->get();
+        
+        return view('admin.true-false-questions.index', compact('lesson', 'questions', 'pendingCount', 'approvedCount', 'grammarSets'));
     }
 
     /**
@@ -33,7 +37,8 @@ class TrueFalseQuestionController extends Controller
      */
     public function create(Lesson $lesson)
     {
-        return view('admin.true-false-questions.create', compact('lesson'));
+        $grammarSets = GrammarSet::with('grammarConcepts')->orderBy('title')->get();
+        return view('admin.true-false-questions.create', compact('lesson', 'grammarSets'));
     }
 
     /**
@@ -46,6 +51,7 @@ class TrueFalseQuestionController extends Controller
             'is_true' => 'required|boolean',
             'explanation' => 'required|string|max:1000',
             'category' => 'nullable|string|max:50',
+            'grammar_set_id' => 'nullable|exists:grammar_sets,id',
             'is_approved' => 'boolean',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
@@ -76,7 +82,8 @@ class TrueFalseQuestionController extends Controller
      */
     public function edit(Lesson $lesson, TrueFalseQuestion $trueFalseQuestion)
     {
-        return view('admin.true-false-questions.edit', compact('lesson', 'trueFalseQuestion'));
+        $grammarSets = GrammarSet::with('grammarConcepts')->orderBy('title')->get();
+        return view('admin.true-false-questions.edit', compact('lesson', 'trueFalseQuestion', 'grammarSets'));
     }
 
     /**
@@ -89,6 +96,7 @@ class TrueFalseQuestionController extends Controller
             'is_true' => 'required|boolean',
             'explanation' => 'required|string|max:1000',
             'category' => 'nullable|string|max:50',
+            'grammar_set_id' => 'nullable|exists:grammar_sets,id',
             'is_approved' => 'boolean',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
@@ -156,6 +164,10 @@ class TrueFalseQuestionController extends Controller
                 ->with('error', 'Count must be between 5 and 8');
         }
 
+        // Get grammar set if provided
+        $grammarSetId = $request->input('grammar_set_id');
+        $grammarSet = $grammarSetId ? GrammarSet::with('grammarConcepts')->find($grammarSetId) : null;
+
         // Check if OpenAI is configured
         $questionGenerator = app(OpenAiQuestionGenerator::class);
         if (!$questionGenerator->enabled()) {
@@ -180,6 +192,16 @@ class TrueFalseQuestionController extends Controller
                     'template' => $p->template,
                     'options' => $p->options->pluck('label')->toArray(),
                 ])->toArray(),
+                'grammar_set' => $grammarSet ? [
+                    'id' => $grammarSet->id,
+                    'title' => $grammarSet->title,
+                    'concepts' => $grammarSet->grammarConcepts->map(fn($c) => [
+                        'id' => $c->id,
+                        'display_name' => $c->display_name,
+                        'grammar_topic' => $c->grammar_topic,
+                        'grammar_sub_topic' => $c->grammar_sub_topic,
+                    ])->toArray(),
+                ] : null,
             ];
 
             // Generate questions
@@ -211,6 +233,7 @@ class TrueFalseQuestionController extends Controller
 
                 TrueFalseQuestion::create([
                     'lesson_id' => $lesson->id,
+                    'grammar_set_id' => $grammarSetId,
                     'statement' => $questionData['statement'],
                     'is_true' => $questionData['is_true'],
                     'explanation' => $questionData['explanation'],
