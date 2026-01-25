@@ -196,41 +196,52 @@ function renderParagraph() {
         // Build options
         let options = [];
         
-        if (blank.type === 'vocab') {
-            // Use stored text, not lookup
-            const correctText = blank.correct?.text || '';
-            if (correctText) {
-                options.push({value: correctText, label: correctText, isCorrect: true});
-            }
-            
-            (blank.distractors || []).forEach(dist => {
-                const distText = dist.text || '';
-                if (distText && distText !== correctText) {
-                    options.push({value: distText, label: distText, isCorrect: false});
-                }
-            });
-        } else if (blank.type === 'grammar') {
-            const correctText = blank.correct?.text || '';
-            if (correctText) {
-                options.push({value: correctText, label: correctText, isCorrect: true});
-            }
-            
-            (blank.distractors || []).forEach(dist => {
-                const distText = dist.text || '';
-                if (distText && distText !== correctText) {
-                    options.push({value: distText, label: distText, isCorrect: false});
-                }
-            });
-        }
+        // CRITICAL: Always get the correct answer first
+        const correctText = blank.correct?.text || '';
         
-        // Ensure we have at least the correct answer
-        if (options.length === 0) {
-            console.warn(`No options found for blank: ${token}`);
+        if (!correctText) {
+            console.error(`CRITICAL ERROR: Blank ${token} has no correct answer!`, blank);
             // Use regex to match the token pattern, avoiding Blade parsing issues
             const tokenPattern = new RegExp('\\{\\{' + token + '\\}\\}', 'g');
             paragraph = paragraph.replace(
                 tokenPattern,
-                '<select class="blank-select" disabled data-blank-id="' + escapeHtml(token) + '"><option>Blank unavailable</option></select>'
+                '<select class="blank-select" disabled data-blank-id="' + escapeHtml(token) + '" style="border: 2px solid red;"><option>ERROR: Missing correct answer</option></select>'
+            );
+            return;
+        }
+        
+        // ALWAYS add correct answer first (most important!)
+        options.push({value: correctText, label: correctText, isCorrect: true});
+        
+        // Add distractors
+        (blank.distractors || []).forEach(dist => {
+            const distText = dist.text || '';
+            if (distText && distText !== correctText) {
+                options.push({value: distText, label: distText, isCorrect: false});
+            }
+        });
+        
+        // CRITICAL VALIDATION: Ensure correct answer is in options
+        const hasCorrectAnswer = options.some(opt => opt.isCorrect && opt.value === correctText);
+        if (!hasCorrectAnswer) {
+            console.error(`CRITICAL ERROR: Correct answer "${correctText}" not found in options for blank ${token}!`, options);
+            // Force add correct answer if missing
+            options.unshift({value: correctText, label: correctText, isCorrect: true});
+        }
+        
+        // Ensure we have at least 4 options (1 correct + 3 distractors)
+        if (options.length < 4) {
+            console.warn(`Blank ${token} has only ${options.length} options (expected 4). Correct answer: "${correctText}"`, blank);
+        }
+        
+        // Ensure we have at least the correct answer
+        if (options.length === 0) {
+            console.error(`CRITICAL: No options found for blank: ${token}`, blank);
+            // Use regex to match the token pattern, avoiding Blade parsing issues
+            const tokenPattern = new RegExp('\\{\\{' + token + '\\}\\}', 'g');
+            paragraph = paragraph.replace(
+                tokenPattern,
+                '<select class="blank-select" disabled data-blank-id="' + escapeHtml(token) + '" style="border: 2px solid red;"><option>ERROR: No options available</option></select>'
             );
             return;
         }

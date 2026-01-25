@@ -6,9 +6,9 @@
 <div class="container">
     <div class="page-header">
         <div>
-            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="back-link">&larr; Back to Questions</a>
+            <a href="{{ route('admin.lessons.true-false-games.show', [$lesson, $trueFalseGame]) }}" class="back-link">&larr; Back to Game</a>
             <h1 class="page-title">Create True/False Question</h1>
-            <p class="page-subtitle">{{ $lesson->title }}</p>
+            <p class="page-subtitle">{{ $trueFalseGame->title }} • {{ $lesson->title }}</p>
         </div>
     </div>
 
@@ -29,7 +29,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.lessons.true-false-questions.store', $lesson) }}" method="POST" class="form">
+    <form action="{{ route('admin.lessons.true-false-games.questions.store', [$lesson, $trueFalseGame]) }}" method="POST" class="form">
         @csrf
 
         <div class="card">
@@ -38,20 +38,20 @@
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="game_version">Difficulty Level <span class="required">*</span></label>
-                    <select id="game_version" name="game_version" class="form-control" required>
-                        <option value="easy" {{ old('game_version', $gameVersion) == 'easy' ? 'selected' : '' }}>Easy</option>
-                        <option value="medium" {{ old('game_version', $gameVersion) == 'medium' ? 'selected' : '' }}>Medium</option>
-                        <option value="hard" {{ old('game_version', $gameVersion) == 'hard' ? 'selected' : '' }}>Hard</option>
-                    </select>
-                    <small class="form-text">
-                        <strong>Easy:</strong> Direct meaning, no negation, no tricks<br>
-                        <strong>Medium:</strong> One reasoning lever (usage context, simple contrast, or inference)<br>
-                        <strong>Hard:</strong> Near-miss meanings, partial correctness, subtle details
-                    </small>
-                    @error('game_version')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
+                    <label>Difficulty Level</label>
+                    <div class="form-control" style="background: #f8f9fa; padding: 0.75rem;">
+                        <strong>{{ ucfirst($trueFalseGame->game_version) }}</strong>
+                        <small class="form-text" style="margin-top: 0.25rem; display: block;">
+                            @if($trueFalseGame->game_version === 'easy')
+                                Direct meaning, no negation, no tricks
+                            @elseif($trueFalseGame->game_version === 'medium')
+                                One reasoning lever (usage context, simple contrast, or inference)
+                            @else
+                                Near-miss meanings, partial correctness, subtle details
+                            @endif
+                        </small>
+                    </div>
+                    <small class="form-text">Difficulty is set by the game. <a href="{{ route('admin.lessons.true-false-games.edit', [$lesson, $trueFalseGame]) }}">Change game difficulty</a></small>
                 </div>
 
                 <div class="form-group">
@@ -155,7 +155,7 @@
 
                 <div class="form-group">
                     <label for="sort_order">Sort Order</label>
-                    <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $lesson->trueFalseQuestions()->forVersion($gameVersion)->max('sort_order') + 1) }}" min="0" class="form-control">
+                    <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $trueFalseGame->questions()->max('sort_order') + 1) }}" min="0" class="form-control">
                     <small class="form-text">Lower numbers appear first in the game.</small>
                 </div>
             </div>
@@ -163,7 +163,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Question</button>
-            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="btn">Cancel</a>
+            <a href="{{ route('admin.lessons.true-false-games.show', [$lesson, $trueFalseGame]) }}" class="btn">Cancel</a>
         </div>
     </form>
 </div>

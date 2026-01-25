@@ -138,9 +138,10 @@ class ClauseExerciseGenerator
                 $blankErrors[] = "Invalid type";
             }
             
-            // Check correct answer exists
-            if (empty($blank['correct']['text'] ?? '')) {
-                $blankErrors[] = "Missing correct answer text";
+            // CRITICAL: Check correct answer exists and is non-empty
+            $correctText = trim($blank['correct']['text'] ?? '');
+            if (empty($correctText)) {
+                $blankErrors[] = "CRITICAL: Missing correct answer text - blank has no correct answer";
             }
             
             // Check distractors count
@@ -149,11 +150,24 @@ class ClauseExerciseGenerator
                 $blankErrors[] = "Expected 3 distractors, found " . count($distractors);
             }
             
-            // Check for duplicates
+            // CRITICAL: Check for duplicates AND ensure correct answer is present
+            $correctText = trim($blank['correct']['text'] ?? '');
             $allOptions = array_merge(
-                [$blank['correct']['text']],
+                [$correctText],
                 array_column($distractors, 'text')
             );
+            
+            // Must have exactly 4 options (1 correct + 3 distractors)
+            if (count($allOptions) !== 4) {
+                $blankErrors[] = "CRITICAL: Must have exactly 4 options (1 correct + 3 distractors), found " . count($allOptions);
+            }
+            
+            // Correct answer must be in the options
+            if (!in_array($correctText, $allOptions)) {
+                $blankErrors[] = "CRITICAL: Correct answer '{$correctText}' is not in options list";
+            }
+            
+            // Check for duplicates
             if (count($allOptions) !== count(array_unique($allOptions))) {
                 $blankErrors[] = "Duplicate options found";
             }
@@ -336,7 +350,7 @@ class ClauseExerciseGenerator
             $addBlanksMessages = [
                 [
                     'role' => 'system',
-                    'content' => 'You are an educational content creator. Analyze a complete paragraph and strategically add fill-in-the-blank exercises. Extract the actual words from the paragraph as correct answers. You must use explicit blank identifiers in the format {{blank_1}}, {{blank_2}}, etc. Each blank must have a unique identifier that matches between the paragraph and the blanks array.',
+                    'content' => 'You are an educational content creator. Analyze a complete paragraph and strategically add fill-in-the-blank exercises. Extract the actual words from the paragraph as correct answers. You must use explicit blank identifiers in the format {{blank_1}}, {{blank_2}}, etc. Each blank must have a unique identifier that matches between the paragraph and the blanks array. ⚠️ CRITICAL: You MUST create EXACTLY ' . $blankCount . ' blanks. The paragraph MUST contain EXACTLY ' . $blankCount . ' tokens, and the blanks array MUST contain EXACTLY ' . $blankCount . ' items. Count them before returning your response.',
                 ],
                 [
                     'role' => 'user',
@@ -357,7 +371,7 @@ class ClauseExerciseGenerator
                             'properties' => [
                                 'paragraph' => [
                                     'type' => 'string',
-                                    'description' => 'The paragraph with {{blank_1}}, {{blank_2}}, etc. tokens. Must contain exactly ' . $blankCount . ' tokens.',
+                                    'description' => 'The paragraph with {{blank_1}}, {{blank_2}}, etc. tokens. MUST contain EXACTLY ' . $blankCount . ' tokens. Count them before returning. If blankCount is ' . $blankCount . ', you MUST have ' . $blankCount . ' tokens.',
                                 ],
                                 'blanks' => [
                                     'type' => 'array',
@@ -403,6 +417,7 @@ class ClauseExerciseGenerator
                                     ],
                                     'minItems' => $blankCount,
                                     'maxItems' => $blankCount,
+                                    'description' => 'Array of EXACTLY ' . $blankCount . ' blank objects. Count them before returning. If blankCount is ' . $blankCount . ', you MUST return ' . $blankCount . ' items.',
                                 ],
                             ],
                         ],
@@ -434,8 +449,41 @@ class ClauseExerciseGenerator
             // Validate paragraph has correct number of tokens
             $tokens = $this->extractBlankTokens($paragraph);
             $tokenCount = count($tokens);
+            
+            // Retry Step 2 if token count is wrong (max 2 retries)
+            $step2Retries = 0;
+            $maxStep2Retries = 2;
+            
+            while ($tokenCount !== $blankCount && $step2Retries < $maxStep2Retries) {
+                Log::warning('Step 2 generated wrong token count, retrying', [
+                    'expected' => $blankCount,
+                    'found' => $tokenCount,
+                    'retry' => $step2Retries + 1,
+                ]);
+                
+                // Retry Step 2
+                $addBlanksResponse = $this->openAiService->chatCompletion($addBlanksMessages, $addBlanksOptions);
+                $addBlanksContent = $this->openAiService->extractContent($addBlanksResponse);
+                
+                if (!$addBlanksContent) {
+                    break; // Exit retry loop if response is invalid
+                }
+                
+                $blanksData = json_decode($addBlanksContent, true);
+                if (!$blanksData || !isset($blanksData['paragraph']) || !isset($blanksData['blanks'])) {
+                    break; // Exit retry loop if format is invalid
+                }
+                
+                $paragraph = trim($blanksData['paragraph']);
+                $blankInfoArray = $blanksData['blanks'];
+                $tokens = $this->extractBlankTokens($paragraph);
+                $tokenCount = count($tokens);
+                $step2Retries++;
+            }
+            
+            // Final validation - fail hard if still wrong
             if ($tokenCount !== $blankCount) {
-                throw new \Exception("Paragraph must have exactly {$blankCount} {{blank_id}} tokens, but found {$tokenCount}. Please try regenerating.");
+                throw new \Exception("Paragraph must have exactly {$blankCount} {{blank_id}} tokens, but found {$tokenCount} after {$maxStep2Retries} retries. The AI is not following instructions. Please try regenerating the exercise.");
             }
 
             // Validate blank_ids match tokens
@@ -596,20 +644,70 @@ class ClauseExerciseGenerator
                     }
                 }
                 
+                // Validate correct answer is not empty
+                if (empty(trim($correctAnswer))) {
+                    Log::error('Blank has empty correct answer after processing', [
+                        'blank_id' => $blankId,
+                        'blank_info' => $blankInfo
+                    ]);
+                    throw new \Exception("Step 2 failed: Blank {$blankId} has empty correct_answer. Regenerating Step 2.");
+                }
+                
+                // Validate we have exactly 3 distractors
+                if (count($distractors) !== 3) {
+                    Log::error('Blank has incorrect distractor count', [
+                        'blank_id' => $blankId,
+                        'distractor_count' => count($distractors)
+                    ]);
+                    throw new \Exception("Step 3 failed: Blank {$blankId} must have exactly 3 distractors, found " . count($distractors) . ". Regenerating exercise.");
+                }
+                
                 // Build blank entry
                 $blankEntry = [
                     'type' => $blankType,
-                    'correct' => ['text' => $correctAnswer],
+                    'correct' => ['text' => trim($correctAnswer)], // Ensure trimmed
                     'distractors' => array_map(function($dist) {
-                        return ['text' => $dist];
+                        return ['text' => trim($dist)]; // Ensure trimmed
                     }, $distractors),
                     'sentence_context' => $sentenceContext,
                 ];
                 
+                // Final validation: ensure correct answer is in the options
+                $allOptionTexts = array_merge(
+                    [$blankEntry['correct']['text']],
+                    array_column($blankEntry['distractors'], 'text')
+                );
+                
+                if (empty($blankEntry['correct']['text']) || !in_array($blankEntry['correct']['text'], $allOptionTexts)) {
+                    throw new \Exception("Step 3 failed: Blank {$blankId} correct answer is missing or invalid. Regenerating exercise.");
+                }
+                
                 // Add vocab-specific data
                 if ($blankType === 'vocab') {
-                    $correctVocabText = $blankInfo['correct_vocab_text'] ?? $correctAnswer;
-                    $blankEntry['correct']['text'] = $correctVocabText;
+                    // Use correct_vocab_text if provided and non-empty, otherwise use correct_answer
+                    $correctVocabText = !empty(trim($blankInfo['correct_vocab_text'] ?? '')) 
+                        ? trim($blankInfo['correct_vocab_text']) 
+                        : trim($correctAnswer);
+                    
+                    // Validate: correct_vocab_text should equal correct_answer (per spec)
+                    if (!empty($blankInfo['correct_vocab_text']) && 
+                        strtolower(trim($blankInfo['correct_vocab_text'])) !== strtolower(trim($correctAnswer))) {
+                        Log::warning('Vocab text mismatch, using correct_answer', [
+                            'blank_id' => $blankId,
+                            'correct_answer' => $correctAnswer,
+                            'correct_vocab_text' => $blankInfo['correct_vocab_text']
+                        ]);
+                        $correctVocabText = trim($correctAnswer);
+                    }
+                    
+                    // Ensure we don't overwrite with empty value
+                    if (!empty($correctVocabText)) {
+                        $blankEntry['correct']['text'] = $correctVocabText;
+                    } else {
+                        // Fallback: use correct_answer if vocab_text is empty
+                        $blankEntry['correct']['text'] = trim($correctAnswer);
+                    }
+                    
                     $blankEntry['correct']['vocab_id'] = $blankInfo['correct_vocab_id'] ?? null;
                     
                     // Match distractors to vocab IDs
@@ -629,7 +727,66 @@ class ClauseExerciseGenerator
                     $blankEntry['grammar_concept'] = $grammarConcept;
                 }
                 
+                // CRITICAL FINAL VALIDATION: Ensure correct answer is ALWAYS present and non-empty
+                if (empty($blankEntry['correct']['text'] ?? '')) {
+                    Log::error('CRITICAL: Blank entry missing correct answer after all processing', [
+                        'blank_id' => $blankId,
+                        'blank_type' => $blankType,
+                        'correct_answer_original' => $correctAnswer,
+                        'blank_entry' => $blankEntry
+                    ]);
+                    throw new \Exception("CRITICAL ERROR: Blank {$blankId} is missing correct answer. This should never happen. Regenerating exercise.");
+                }
+                
+                // Ensure correct answer is in the final options list
+                $finalAllOptions = array_merge(
+                    [$blankEntry['correct']['text']],
+                    array_column($blankEntry['distractors'] ?? [], 'text')
+                );
+                
+                if (!in_array($blankEntry['correct']['text'], $finalAllOptions)) {
+                    Log::error('CRITICAL: Correct answer not found in options', [
+                        'blank_id' => $blankId,
+                        'correct_text' => $blankEntry['correct']['text'],
+                        'all_options' => $finalAllOptions
+                    ]);
+                    throw new \Exception("CRITICAL ERROR: Blank {$blankId} correct answer is not in options list. Regenerating exercise.");
+                }
+                
+                // Ensure we have exactly 4 options total (1 correct + 3 distractors)
+                $totalOptions = count($finalAllOptions);
+                if ($totalOptions !== 4) {
+                    Log::error('CRITICAL: Wrong total option count', [
+                        'blank_id' => $blankId,
+                        'expected' => 4,
+                        'found' => $totalOptions,
+                        'correct' => $blankEntry['correct']['text'],
+                        'distractors' => array_column($blankEntry['distractors'] ?? [], 'text')
+                    ]);
+                    throw new \Exception("CRITICAL ERROR: Blank {$blankId} must have exactly 4 options (1 correct + 3 distractors), found {$totalOptions}. Regenerating exercise.");
+                }
+                
                 $finalBlanks[$blankId] = $blankEntry;
+            }
+            
+            // CRITICAL PRE-VALIDATION: Ensure every blank has a correct answer before final validation
+            foreach ($finalBlanks as $blankId => $blank) {
+                if (empty($blank['correct']['text'] ?? '')) {
+                    throw new \Exception("CRITICAL: Blank {$blankId} missing correct answer before final validation. Regenerating exercise.");
+                }
+                
+                $allOpts = array_merge(
+                    [$blank['correct']['text']],
+                    array_column($blank['distractors'] ?? [], 'text')
+                );
+                
+                if (count($allOpts) !== 4) {
+                    throw new \Exception("CRITICAL: Blank {$blankId} must have exactly 4 options (1 correct + 3 distractors), found " . count($allOpts) . ". Regenerating exercise.");
+                }
+                
+                if (!in_array($blank['correct']['text'], $allOpts)) {
+                    throw new \Exception("CRITICAL: Blank {$blankId} correct answer not found in options. Regenerating exercise.");
+                }
             }
             
             // Validate - NO repairs, fail if invalid
@@ -644,8 +801,36 @@ class ClauseExerciseGenerator
                 throw new \Exception("Exercise validation failed: " . implode('; ', $validation['errors']) . ". Regenerate exercise.");
             }
             
+            // FINAL CRITICAL CHECK: After validation, ensure correct answers are still present
+            foreach ($validation['blanks'] as $blankId => $blank) {
+                if (empty($blank['correct']['text'] ?? '')) {
+                    throw new \Exception("CRITICAL: Blank {$blankId} lost correct answer during validation. Regenerating exercise.");
+                }
+                
+                $finalOpts = array_merge(
+                    [$blank['correct']['text']],
+                    array_column($blank['distractors'] ?? [], 'text')
+                );
+                
+                if (!in_array($blank['correct']['text'], $finalOpts) || count($finalOpts) !== 4) {
+                    throw new \Exception("CRITICAL: Blank {$blankId} invalid after validation. Regenerating exercise.");
+                }
+            }
+            
             $paragraph = $validation['paragraph'];
             $finalBlanks = $validation['blanks'];
+            
+            // STEP 4: Self-check - Fill in correct answers and validate the completed paragraph
+            $completedParagraph = $this->fillBlanksWithCorrectAnswers($paragraph, $finalBlanks);
+            $selfCheckResult = $this->validateCompletedParagraph($completedParagraph, $lesson->title, $model);
+            
+            if (!$selfCheckResult['valid']) {
+                Log::warning('Self-check failed: Completed paragraph does not make sense', [
+                    'errors' => $selfCheckResult['errors'],
+                    'completed_paragraph' => $completedParagraph
+                ]);
+                throw new \Exception("Self-check failed: The exercise doesn't make sense when completed. " . implode('; ', $selfCheckResult['errors']) . ". Regenerating exercise.");
+            }
 
             // Return new format with blanks as single source of truth
             return [
@@ -753,9 +938,9 @@ ALL AVAILABLE VOCABULARY WORDS:
 ALL AVAILABLE GRAMMAR CONCEPTS:
 {$grammarConceptsText}
 
-CRITICAL REQUIREMENTS:
-1. Add exactly {$blankCount} blanks to the paragraph by replacing words/phrases with {{blank_1}}, {{blank_2}}, {{blank_3}}, etc.
-2. Use EXACTLY these token formats: {{blank_1}}, {{blank_2}}, {{blank_3}}, ... {{blank_{$blankCount}}}
+CRITICAL REQUIREMENTS (MANDATORY - DO NOT DEVIATE):
+1. ⚠️ YOU MUST ADD EXACTLY {$blankCount} BLANKS - NO MORE, NO LESS. If you add {$blankCount} blanks, the paragraph MUST contain exactly {$blankCount} instances of {{blank_X}} tokens.
+2. Use EXACTLY these token formats in sequence: {{blank_1}}, {{blank_2}}, {{blank_3}}, ... {{blank_{$blankCount}}}
 3. Extract the ACTUAL word/phrase from the paragraph as the correct answer for each blank
 4. Include at least 1 vocabulary blank (replace a vocabulary word with {{blank_X}})
 5. Include at least 1 grammar blank (replace a word/phrase that demonstrates a grammar concept with {{blank_X}})
@@ -763,8 +948,9 @@ CRITICAL REQUIREMENTS:
 7. For vocabulary blanks: The correct answer must be a word from the vocabulary_used list
 8. For grammar blanks: The correct answer must demonstrate one of the grammar_concepts_used
 9. Maintain the paragraph's grammatical correctness and flow
-10. The paragraph MUST contain exactly {$blankCount} tokens in the format {{blank_X}}
+10. ⚠️ VALIDATION: Count your tokens before returning. The paragraph MUST contain exactly {$blankCount} tokens. If you have {$blankCount} blanks, you MUST have {$blankCount} tokens.
 11. Each blank_id (blank_1, blank_2, etc.) must appear exactly once in the paragraph
+12. ⚠️ YOUR RESPONSE WILL BE REJECTED IF THE TOKEN COUNT DOES NOT MATCH {$blankCount}
 
 Return JSON with:
 - paragraph: The paragraph with {{blank_1}}, {{blank_2}}, etc. tokens added (exactly {$blankCount} tokens)
@@ -935,6 +1121,145 @@ CRITICAL FINAL CHECKLIST - VERIFY BEFORE RETURNING:
 - [ ] {} placeholders are in the same order as blanks array
 - [ ] For grammar blanks: The correct answer is grammatically correct in the sentence AND matches the grammar concept
 - [ ] For grammar blanks: ALL distractors are grammatically incorrect when placed in the sentence
+
+    /**
+     * Fill in all blanks with correct answers to create completed paragraph
+     */
+    protected function fillBlanksWithCorrectAnswers(string $paragraph, array $blanks): string
+    {
+        $completed = $paragraph;
+        $filledCount = 0;
+        
+        foreach ($blanks as $blankId => $blank) {
+            $correctText = trim($blank['correct']['text'] ?? '');
+            if (empty($correctText)) {
+                Log::error('Cannot fill blank - missing correct answer', [
+                    'blank_id' => $blankId,
+                    'blank' => $blank
+                ]);
+                throw new \Exception("Cannot create completed paragraph: Blank {$blankId} has no correct answer.");
+            }
+            
+            // Replace {{blank_id}} token with correct answer
+            $token = "{{{$blankId}}}";
+            $beforeReplace = $completed;
+            $completed = str_replace($token, $correctText, $completed);
+            
+            // Verify replacement happened
+            if ($completed === $beforeReplace) {
+                Log::warning('Token not found in paragraph', [
+                    'blank_id' => $blankId,
+                    'token' => $token,
+                    'paragraph_preview' => substr($paragraph, 0, 200)
+                ]);
+            } else {
+                $filledCount++;
+            }
+        }
+        
+        // Verify all tokens were replaced
+        $remainingTokens = $this->extractBlankTokens($completed);
+        if (!empty($remainingTokens)) {
+            Log::warning('Some tokens remain after filling blanks', [
+                'remaining_tokens' => $remainingTokens,
+                'filled_count' => $filledCount,
+                'total_blanks' => count($blanks)
+            ]);
+        }
+        
+        return $completed;
+    }
+    
+    /**
+     * Validate that the completed paragraph makes grammatical and content sense
+     */
+    protected function validateCompletedParagraph(string $completedParagraph, string $lessonTitle, ?string $model = null): array
+    {
+        $systemMessage = 'You are an English language expert. Analyze a completed paragraph and determine if it makes grammatical and content sense. Check for: grammatical errors, logical flow, coherence, and whether the sentences make sense together.';
+        
+            $userMessage = "Analyze this completed paragraph from a fill-in-the-blank exercise. The blanks have been filled with the correct answers.\n\n" .
+            "LESSON TITLE: {$lessonTitle}\n\n" .
+            "COMPLETED PARAGRAPH:\n{$completedParagraph}\n\n" .
+            "VALIDATION REQUIREMENTS:\n" .
+            "1. Check if the paragraph is grammatically correct (no grammar errors, proper sentence structure)\n" .
+            "2. Check if the sentences flow logically (smooth transitions, logical sequence)\n" .
+            "3. Check if the content makes sense (no contradictions, logical connections between ideas)\n" .
+            "4. Check if the paragraph is coherent and well-structured (clear topic, unified theme)\n" .
+            "5. Check tense consistency (all verbs use appropriate and consistent tenses)\n" .
+            "6. Check word choice (words fit the context and meaning)\n" .
+            "7. Check if the paragraph reads naturally (not awkward or forced)\n\n" .
+            "Be strict but fair. Only mark as invalid if there are clear grammatical errors, logical contradictions, or the paragraph doesn't make sense.\n\n" .
+            "Return JSON with:\n" .
+            "- valid: true if paragraph is grammatically correct and makes content sense, false otherwise\n" .
+            "- errors: array of specific issues found (empty if valid is true). Be specific: e.g., 'Tense inconsistency: past tense mixed with present', 'Logical contradiction: says X but then contradicts it', 'Grammar error: subject-verb disagreement'\n" .
+            "- explanation: brief explanation of why it's valid or what's wrong";
+        
+        $messages = [
+            ['role' => 'system', 'content' => $systemMessage],
+            ['role' => 'user', 'content' => $userMessage],
+        ];
+        
+        $options = [
+            'model' => $model ?? config('services.openai.translation_model', 'gpt-4o-mini'),
+            'temperature' => 0.3, // Lower temperature for more consistent validation
+            'response_format' => [
+                'type' => 'json_schema',
+                'json_schema' => [
+                    'name' => 'paragraph_validation',
+                    'schema' => [
+                        'type' => 'object',
+                        'required' => ['valid', 'errors'],
+                        'properties' => [
+                            'valid' => [
+                                'type' => 'boolean',
+                                'description' => 'True if paragraph is grammatically correct and makes content sense',
+                            ],
+                            'errors' => [
+                                'type' => 'array',
+                                'items' => ['type' => 'string'],
+                                'description' => 'Array of specific issues found (empty if valid)',
+                            ],
+                            'explanation' => [
+                                'type' => 'string',
+                                'description' => 'Brief explanation of validation result',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        
+        try {
+            $response = $this->openAiService->chatCompletion($messages, $options);
+            $content = $this->openAiService->extractContent($response);
+            
+            if (!$content) {
+                Log::warning('Self-check validation failed to get response');
+                // If validation fails, assume valid (don't block on validation service failure)
+                return ['valid' => true, 'errors' => [], 'explanation' => 'Validation service unavailable'];
+            }
+            
+            $result = json_decode($content, true);
+            
+            if (!isset($result['valid'])) {
+                Log::warning('Self-check validation returned invalid format', ['content' => $content]);
+                return ['valid' => true, 'errors' => [], 'explanation' => 'Validation format error'];
+            }
+            
+            return [
+                'valid' => (bool)$result['valid'],
+                'errors' => $result['errors'] ?? [],
+                'explanation' => $result['explanation'] ?? '',
+            ];
+        } catch (\Exception $e) {
+            Log::error('Self-check validation exception', [
+                'error' => $e->getMessage(),
+                'paragraph' => substr($completedParagraph, 0, 200),
+            ]);
+            // If validation fails, assume valid (don't block on validation service failure)
+            return ['valid' => true, 'errors' => [], 'explanation' => 'Validation service error'];
+        }
+    }
 
 ⚠️ FINAL VERIFICATION - TEST EACH GRAMMAR BLANK:
 1. Count how many blanks have type=\"vocab\" and how many have type=\"grammar\". You MUST have at least 1 of each.

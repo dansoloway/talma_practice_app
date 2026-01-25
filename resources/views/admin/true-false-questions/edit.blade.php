@@ -6,9 +6,9 @@
 <div class="container">
     <div class="page-header">
         <div>
-            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="back-link">&larr; Back to Questions</a>
+            <a href="{{ route('admin.lessons.true-false-games.show', [$lesson, $trueFalseGame]) }}" class="back-link">&larr; Back to Game</a>
             <h1 class="page-title">Edit True/False Question</h1>
-            <p class="page-subtitle">{{ $lesson->title }} - {{ ucfirst($trueFalseQuestion->game_version) }} Level</p>
+            <p class="page-subtitle">{{ $trueFalseGame->title }} • {{ $lesson->title }}</p>
         </div>
     </div>
 
@@ -22,7 +22,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.lessons.true-false-questions.update', [$lesson, $trueFalseQuestion]) }}" method="POST" class="form">
+    <form action="{{ route('admin.lessons.true-false-games.questions.update', [$lesson, $trueFalseGame, $trueFalseQuestion]) }}" method="POST" class="form">
         @csrf
         @method('PUT')
 
@@ -32,15 +32,11 @@
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="game_version">Difficulty Level <span class="required">*</span></label>
-                    <select id="game_version" name="game_version" class="form-control" required>
-                        <option value="easy" {{ old('game_version', $trueFalseQuestion->game_version) == 'easy' ? 'selected' : '' }}>Easy</option>
-                        <option value="medium" {{ old('game_version', $trueFalseQuestion->game_version) == 'medium' ? 'selected' : '' }}>Medium</option>
-                        <option value="hard" {{ old('game_version', $trueFalseQuestion->game_version) == 'hard' ? 'selected' : '' }}>Hard</option>
-                    </select>
-                    @error('game_version')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
+                    <label>Difficulty Level</label>
+                    <div class="form-control" style="background: #f8f9fa; padding: 0.75rem;">
+                        <strong>{{ ucfirst($trueFalseGame->game_version) }}</strong>
+                    </div>
+                    <small class="form-text">Difficulty is set by the game. <a href="{{ route('admin.lessons.true-false-games.edit', [$lesson, $trueFalseGame]) }}">Change game difficulty</a></small>
                 </div>
 
                 <div class="form-group">
@@ -162,7 +158,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Update Question</button>
-            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="btn">Cancel</a>
+            <a href="{{ route('admin.lessons.true-false-games.show', [$lesson, $trueFalseGame]) }}" class="btn">Cancel</a>
             <form action="{{ route('admin.lessons.true-false-questions.destroy', [$lesson, $trueFalseQuestion]) }}" method="POST" class="inline-form">
                 @csrf
                 @method('DELETE')

@@ -310,9 +310,8 @@ function startActivity(type, id) {
         //     window.location.href = `/lessons/{{ $lesson->id }}/sentence-builder-games/${id}/play`;
         //     break;
         case 'true_false':
-            // Go to True/False game with version
-            const version = activity.model?.version || 'easy';
-            window.location.href = `/lessons/{{ $lesson->id }}/true-false/play?version=${version}`;
+            // Go to True/False game
+            window.location.href = `/lessons/{{ $lesson->id }}/true-false-games/${id}/play`;
             break;
     }
 }

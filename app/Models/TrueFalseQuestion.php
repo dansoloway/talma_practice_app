@@ -10,6 +10,7 @@ class TrueFalseQuestion extends Model
 {
     protected $fillable = [
         'lesson_id',
+        'true_false_game_id',
         'game_version',
         'statement',
         'is_true',
@@ -38,6 +39,14 @@ class TrueFalseQuestion extends Model
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
+    }
+
+    /**
+     * Get the game this question belongs to.
+     */
+    public function game(): BelongsTo
+    {
+        return $this->belongsTo(TrueFalseGame::class, 'true_false_game_id');
     }
 
     /**

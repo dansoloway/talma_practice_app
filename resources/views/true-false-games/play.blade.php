@@ -28,20 +28,8 @@
 <div class="true-false-game-container">
     <div class="game-header">
         <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
-        <h1 class="game-title">True/False Game - {{ ucfirst($gameVersion) }}</h1>
-        <p class="game-subtitle">{{ $lesson->title }}</p>
-        @if(count($availableVersions) > 1)
-            <div class="version-selector" style="margin-top: 1rem;">
-                <span style="margin-right: 0.5rem;">Difficulty:</span>
-                @foreach($availableVersions as $version)
-                    <a href="{{ route('true-false.play', [$lesson, 'version' => $version]) }}" 
-                       class="version-btn {{ $version === $gameVersion ? 'active' : '' }}"
-                       style="display: inline-block; padding: 0.5rem 1rem; margin-right: 0.5rem; border: 2px solid var(--color-primary); border-radius: 4px; text-decoration: none; color: var(--color-primary); {{ $version === $gameVersion ? 'background: var(--color-primary); color: white;' : '' }}">
-                        {{ ucfirst($version) }}
-                    </a>
-                @endforeach
-            </div>
-        @endif
+        <h1 class="game-title">{{ $trueFalseGame->title }}</h1>
+        <p class="game-subtitle">{{ $lesson->title }} • <span class="badge badge-{{ $trueFalseGame->game_version === 'easy' ? 'success' : ($trueFalseGame->game_version === 'medium' ? 'warning' : 'danger') }}">{{ ucfirst($trueFalseGame->game_version) }}</span></p>
     </div>
 
     @if($questions->count() > 0)
