@@ -215,7 +215,7 @@
                                 @elseif($activity->type === 'clause_exercise')
                                     <div class="activity-menu-details">Fill in the blanks with vocabulary words</div>
                                 @elseif($activity->type === 'true_false')
-                                    <div class="activity-menu-details">{{ $activity->model->question_count }} questions</div>
+                                    <div class="activity-menu-details">Vocabulary True/False questions</div>
                                 @endif
                             </div>
                             <div class="activity-menu-arrow">
