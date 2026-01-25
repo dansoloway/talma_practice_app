@@ -22,48 +22,60 @@ class LessonController extends Controller
      */
     public function show(string $slug)
     {
+        // Build eager loading array
+        $withRelations = [
+            'vocabulary' => function ($query) {
+                $query->where('is_active', true)->orderBy('sort_order');
+            },
+            'prompts' => function ($query) {
+                $query->where('is_active', true)
+                      ->orderBy('sort_order')
+                      ->with(['options' => function ($opt) {
+                          $opt->where('is_active', true)->orderBy('sort_order');
+                      }]);
+            },
+            'matchingGames' => function ($query) {
+                $query->where('is_active', true)->orderBy('sort_order');
+            },
+            'flashcardGames' => function ($query) {
+                $query->where('is_active', true)->orderBy('sort_order');
+            },
+            'spellingGames' => function ($query) {
+                $query->where('is_active', true)->orderBy('sort_order');
+            },
+            'clauseExercises' => function ($query) {
+                $query->where('is_active', true)->orderBy('sort_order');
+            },
+            'sentenceBuilderGames' => function ($query) {
+                $query->where('is_active', true)
+                      ->orderBy('sort_order')
+                      ->with(['questions' => function ($q) {
+                          $q->where('is_active', true)->orderBy('sort_order');
+                      }]);
+            },
+            'trueFalseQuestions' => function ($query) {
+                $query->where('is_approved', true)
+                      ->where('is_active', true)
+                      ->orderBy('sort_order');
+            }
+        ];
+        
+        // Only eager load trueFalseGames if table exists (after migrations)
+        try {
+            // Check if table exists by attempting a simple query
+            \DB::table('true_false_games')->limit(1)->get();
+            $withRelations['trueFalseGames'] = function ($query) {
+                $query->where('is_active', true)->orderBy('sort_order');
+            };
+        } catch (\Exception $e) {
+            // Table doesn't exist yet - migrations not run
+            // Skip eager loading trueFalseGames
+        }
+        
         $lesson = Lesson::active()
             ->where('slug', $slug)
             ->where('is_active', true)
-            ->with([
-                'vocabulary' => function ($query) {
-                    $query->where('is_active', true)->orderBy('sort_order');
-                },
-                'prompts' => function ($query) {
-                    $query->where('is_active', true)
-                          ->orderBy('sort_order')
-                          ->with(['options' => function ($opt) {
-                              $opt->where('is_active', true)->orderBy('sort_order');
-                          }]);
-                },
-                'matchingGames' => function ($query) {
-                    $query->where('is_active', true)->orderBy('sort_order');
-                },
-                'flashcardGames' => function ($query) {
-                    $query->where('is_active', true)->orderBy('sort_order');
-                },
-                'spellingGames' => function ($query) {
-                    $query->where('is_active', true)->orderBy('sort_order');
-                },
-                'trueFalseGames' => function ($query) {
-                    $query->where('is_active', true)->orderBy('sort_order');
-                },
-                'clauseExercises' => function ($query) {
-                    $query->where('is_active', true)->orderBy('sort_order');
-                },
-                'sentenceBuilderGames' => function ($query) {
-                    $query->where('is_active', true)
-                          ->orderBy('sort_order')
-                          ->with(['questions' => function ($q) {
-                              $q->where('is_active', true)->orderBy('sort_order');
-                          }]);
-                },
-                'trueFalseQuestions' => function ($query) {
-                    $query->where('is_approved', true)
-                          ->where('is_active', true)
-                          ->orderBy('sort_order');
-                }
-            ])
+            ->with($withRelations)
             ->firstOrFail();
         
         // Add full URLs for audio paths in prompts
