@@ -44,28 +44,77 @@ class OpenAiQuestionGenerator
         $context = $this->buildContext($lessonTitle, $vocabList, $promptTemplates, $grammarSet);
 
         try {
+            // Determine if we should use grammar-focused generation
+            $hasGrammarSet = $grammarSet && !empty($grammarSet['concepts']);
+            
             // Build grammar-focused instructions if grammar set is provided
             $grammarInstructions = '';
-            if ($grammarSet && !empty($grammarSet['concepts'])) {
-                $conceptNames = array_map(fn($c) => $c['display_name'], $grammarSet['concepts']);
-                $grammarInstructions = "\n\nGRAMMAR FOCUS:\nThe questions should test understanding of these grammar concepts:\n" . implode("\n", array_slice($conceptNames, 0, 10));
-                if (count($conceptNames) > 10) {
-                    $grammarInstructions .= "\n(and " . (count($conceptNames) - 10) . " more concepts)";
+            $systemPrompt = 'You are an educational content creator for English language learners. Generate True/False questions that are clear, grammatically correct, and factually accurate.';
+            
+            if ($hasGrammarSet) {
+                $concepts = $grammarSet['concepts'];
+                $conceptList = array_map(function($c) {
+                    return "- " . $c['display_name'] . " (" . ($c['grammar_topic'] ?? '') . ($c['grammar_sub_topic'] ? ' - ' . $c['grammar_sub_topic'] : '') . ")";
+                }, array_slice($concepts, 0, 15));
+                
+                $grammarInstructions = "\n\nCRITICAL: You MUST create questions that TEST these specific grammar concepts:\n" . implode("\n", $conceptList);
+                if (count($concepts) > 15) {
+                    $grammarInstructions .= "\n(and " . (count($concepts) - 15) . " more concepts)";
                 }
-                $grammarInstructions .= "\n\nCreate questions that specifically test these grammar rules. For example:\n";
-                $grammarInstructions .= "- If testing 'Modals - can', create statements like 'We can swim' or 'Birds can fly'\n";
-                $grammarInstructions .= "- If testing 'Present Simple', create statements using present simple tense\n";
-                $grammarInstructions .= "- Make sure the grammar in each statement demonstrates or tests the selected concepts\n";
+                
+                $grammarInstructions .= "\n\nHOW TO CREATE GRAMMAR-FOCUSED QUESTIONS:\n";
+                $grammarInstructions .= "1. Each statement MUST USE the grammar form being tested\n";
+                $grammarInstructions .= "2. The statement should be grammatically correct if TRUE, or grammatically incorrect if FALSE\n";
+                $grammarInstructions .= "3. Use vocabulary from the lesson when possible\n";
+                $grammarInstructions .= "4. Make statements FACTUALLY ACCURATE and LOGICAL\n";
+                $grammarInstructions .= "5. Set the 'category' field to match the grammar concept being tested\n\n";
+                
+                $grammarInstructions .= "EXAMPLES:\n";
+                $grammarInstructions .= "- Testing 'Present progressive - positive': 'The wind is blowing now.' (TRUE) - Uses 'is + verb-ing'\n";
+                $grammarInstructions .= "- Testing 'Present simple - negative': 'Sand is not wet.' (FALSE - sand CAN be wet) - Uses 'is not'\n";
+                $grammarInstructions .= "- Testing 'Present simple - questions': 'Is an oasis dry?' (FALSE - oases have water) - Uses question form\n";
+                $grammarInstructions .= "- Testing 'Present progressive - negative': 'I am not thirsty now.' (TRUE) - Uses 'am not + verb-ing'\n\n";
+                
+                $grammarInstructions .= "IMPORTANT:\n";
+                $grammarInstructions .= "- Each question should test ONE specific grammar concept\n";
+                $grammarInstructions .= "- Statements must be FACTUALLY CORRECT (if TRUE) or FACTUALLY INCORRECT (if FALSE)\n";
+                $grammarInstructions .= "- Avoid ambiguous statements like 'Sand is not wet' - be specific and accurate\n";
+                $grammarInstructions .= "- Use appropriate vocabulary for the grade level\n";
+                
+                // Adjust system prompt for grammar-focused generation
+                $systemPrompt = 'You are an educational content creator for English language learners. Generate True/False questions that test specific grammar concepts. Questions must be grammatically correct, factually accurate, and logically sound.';
+            } else {
+                // Default A1 level for general questions
+                $systemPrompt = 'You are an educational content creator for English language learners at CEFR A1 level (beginner). Generate True/False questions using VERY SIMPLE English. Use only basic vocabulary, simple present tense, and short sentences (5-10 words). No complex grammar, idioms, or difficult words.';
             }
+
+            $userPrompt = $context . "\n\nGenerate exactly {$count} True/False questions.";
+            
+            if ($hasGrammarSet) {
+                $userPrompt .= "\n\nGRAMMAR REQUIREMENTS:\n";
+                $userPrompt .= "- Each question MUST test one of the grammar concepts listed above\n";
+                $userPrompt .= "- Use the EXACT grammar form being tested in each statement\n";
+                $userPrompt .= "- Make statements factually accurate and logically sound\n";
+                $userPrompt .= "- Set 'category' to match the grammar concept (e.g., 'Present progressive - positive')\n";
+            } else {
+                $userPrompt .= "\n\nLANGUAGE REQUIREMENTS:\n";
+                $userPrompt .= "- Use ONLY simple, common words (A1 vocabulary)\n";
+                $userPrompt .= "- Use simple present tense (is, are, do, have)\n";
+                $userPrompt .= "- Keep sentences SHORT (5-10 words maximum)\n";
+                $userPrompt .= "- Simple sentence structure: Subject + Verb + Object\n";
+                $userPrompt .= "- NO complex grammar, idioms, or difficult vocabulary\n";
+            }
+            
+            $userPrompt .= "\n\nMix true and false statements. Ensure all statements are factually accurate and make logical sense.";
 
             $messages = [
                 [
                     'role' => 'system',
-                    'content' => 'You are an educational content creator for English language learners at CEFR A1 level (beginner). Generate True/False questions using VERY SIMPLE English. Use only basic vocabulary, simple present tense, and short sentences (5-10 words). No complex grammar, idioms, or difficult words. Questions should be clear, simple, and easy to understand for beginners learning English.' . ($grammarSet ? ' When a grammar set is provided, focus questions on testing those specific grammar concepts while maintaining A1 level simplicity.' : ''),
+                    'content' => $systemPrompt,
                 ],
                 [
                     'role' => 'user',
-                    'content' => $context . "\n\nGenerate exactly {$count} True/False questions using CEFR A1 level English (beginner level).\n\nIMPORTANT LANGUAGE REQUIREMENTS:\n- Use ONLY simple, common words\n- Use simple present tense (is, are, do, have)\n- Keep sentences SHORT (5-10 words maximum)\n- Use basic sentence structure: Subject + Verb + Object\n- NO complex grammar, idioms, or difficult vocabulary\n- Examples of A1 level: 'Ice is cold', 'Water is wet', 'We use paper'\n- Examples to AVOID: 'Ice undergoes a phase transition', 'Water exhibits liquid properties'\n\nMix true and false statements. Include questions about vocabulary definitions, procedural steps, science facts, and common misconceptions." . $grammarInstructions,
+                    'content' => $userPrompt . $grammarInstructions,
                 ],
             ];
 
@@ -100,8 +149,7 @@ class OpenAiQuestionGenerator
                                             ],
                                             'category' => [
                                                 'type' => 'string',
-                                                'enum' => ['science_facts', 'procedures', 'vocabulary', 'process', 'misconception'],
-                                                'description' => 'Category of the question',
+                                                'description' => 'Category of the question. If testing a grammar concept, use the grammar concept name (e.g., "Present progressive - positive", "Present simple - negative"). Otherwise use: science_facts, procedures, vocabulary, process, or misconception.',
                                             ],
                                         ],
                                     ],
@@ -166,13 +214,19 @@ class OpenAiQuestionGenerator
             }
         }
 
-        return <<<CONTEXT
+        $baseContext = <<<CONTEXT
 Lesson Title: {$lessonTitle}
 
 {$vocabText}
 
 {$promptsText}
 {$grammarText}
+CONTEXT;
+
+        // Only add A1 level instructions if no grammar set is provided
+        if (!$grammarSet || empty($grammarSet['concepts'])) {
+            $baseContext .= <<<CONTEXT
+
 
 Generate True/False questions based on this content using CEFR A1 level English (beginner level).
 
@@ -203,6 +257,9 @@ Questions should:
 - Reinforce science facts (simple statements)
 - Address common misconceptions (simple corrections)
 CONTEXT;
+        }
+
+        return $baseContext;
     }
 }
 
