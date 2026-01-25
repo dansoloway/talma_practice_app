@@ -11,7 +11,7 @@
             <p class="page-subtitle">{{ $lesson->title }}</p>
         </div>
         <div class="page-actions">
-            <a href="{{ route('admin.lessons.true-false-questions.create', [$lesson, 'version' => $gameVersion]) }}" class="btn btn-primary">+ Create Question</a>
+            <a href="{{ route('admin.lessons.true-false-questions.create', $lesson) }}" class="btn btn-primary">+ Create Question</a>
             <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn">Back to Lesson</a>
         </div>
     </div>
@@ -23,31 +23,6 @@
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
-
-    <!-- Version Tabs -->
-    <div class="version-tabs">
-        <a href="{{ route('admin.lessons.true-false-questions.index', [$lesson, 'version' => 'easy']) }}" 
-           class="tab {{ $gameVersion === 'easy' ? 'active' : '' }}">
-            Easy
-            @if(isset($versionCounts['easy']))
-                <span class="tab-badge">{{ $versionCounts['easy']['approved'] }}</span>
-            @endif
-        </a>
-        <a href="{{ route('admin.lessons.true-false-questions.index', [$lesson, 'version' => 'medium']) }}" 
-           class="tab {{ $gameVersion === 'medium' ? 'active' : '' }}">
-            Medium
-            @if(isset($versionCounts['medium']))
-                <span class="tab-badge">{{ $versionCounts['medium']['approved'] }}</span>
-            @endif
-        </a>
-        <a href="{{ route('admin.lessons.true-false-questions.index', [$lesson, 'version' => 'hard']) }}" 
-           class="tab {{ $gameVersion === 'hard' ? 'active' : '' }}">
-            Hard
-            @if(isset($versionCounts['hard']))
-                <span class="tab-badge">{{ $versionCounts['hard']['approved'] }}</span>
-            @endif
-        </a>
-    </div>
 
     <!-- Stats -->
     <div class="stats-row">
@@ -67,12 +42,11 @@
 
     <!-- Generate Questions Form -->
     <div class="generate-section">
-        <h3>Generate {{ ucfirst($gameVersion) }} Questions with AI</h3>
-        <p>Use AI to automatically generate 5-8 vocabulary-focused True/False questions for <strong>{{ ucfirst($gameVersion) }}</strong> level.</p>
+        <h3>Generate Questions with AI</h3>
+        <p>Use AI to automatically generate 5-8 vocabulary-focused True/False questions.</p>
         
         <form action="{{ route('admin.lessons.true-false-questions.generate', $lesson) }}" method="POST" id="generate-form">
             @csrf
-            <input type="hidden" name="game_version" value="{{ $gameVersion }}">
             <div class="generate-form-fields">
                 <div class="form-group-inline">
                     <label for="count">Number of Questions:</label>
@@ -81,6 +55,15 @@
                         <option value="6" selected>6</option>
                         <option value="7">7</option>
                         <option value="8">8</option>
+                    </select>
+                </div>
+                
+                <div class="form-group-inline">
+                    <label for="game_version">Difficulty:</label>
+                    <select id="game_version" name="game_version" class="form-control-sm" required>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
                     </select>
                 </div>
                 
@@ -113,6 +96,21 @@
         </div>
     </div>
 
+    <!-- Filter Questions -->
+    <div class="filter-section" style="margin-bottom: 1.5rem;">
+        <form method="GET" action="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" id="filter-form">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <label for="filter_version" style="margin: 0; font-weight: 500;">Filter by Difficulty:</label>
+                <select id="filter_version" name="filter_version" class="form-control-sm" onchange="document.getElementById('filter-form').submit();" style="min-width: 150px;">
+                    <option value="">All Difficulties</option>
+                    <option value="easy" {{ $filterVersion === 'easy' ? 'selected' : '' }}>Easy ({{ $versionCounts['easy']['total'] ?? 0 }})</option>
+                    <option value="medium" {{ $filterVersion === 'medium' ? 'selected' : '' }}>Medium ({{ $versionCounts['medium']['total'] ?? 0 }})</option>
+                    <option value="hard" {{ $filterVersion === 'hard' ? 'selected' : '' }}>Hard ({{ $versionCounts['hard']['total'] ?? 0 }})</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
     @if($questions->count() > 0)
         <!-- Pending Questions -->
         @if($pendingCount > 0)
@@ -120,7 +118,6 @@
                 <h2>Pending Approval ({{ $pendingCount }})</h2>
                 <form action="{{ route('admin.lessons.true-false-questions.bulk-approve', $lesson) }}" method="POST" id="bulk-approve-form" style="display: none;">
                     @csrf
-                    <input type="hidden" name="version" value="{{ $gameVersion }}">
                     <button type="submit" class="btn btn-sm btn-success">Approve Selected</button>
                 </form>
             </div>
@@ -134,6 +131,7 @@
                             </th>
                             <th>Statement</th>
                             <th>Answer</th>
+                            <th>Difficulty</th>
                             <th>Vocabulary</th>
                             <th>Category</th>
                             <th>Status</th>
@@ -158,6 +156,9 @@
                                     <span class="badge {{ $question->is_true ? 'badge-success' : 'badge-danger' }}">
                                         {{ $question->is_true ? 'TRUE' : 'FALSE' }}
                                     </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-secondary">{{ ucfirst($question->game_version) }}</span>
                                 </td>
                                 <td>
                                     @if($question->vocabulary->isNotEmpty())
@@ -211,6 +212,7 @@
                     <tr>
                         <th>Statement</th>
                         <th>Answer</th>
+                        <th>Difficulty</th>
                         <th>Vocabulary</th>
                         <th>Category</th>
                         <th>Status</th>
@@ -233,6 +235,9 @@
                                 <span class="badge {{ $question->is_true ? 'badge-success' : 'badge-danger' }}">
                                     {{ $question->is_true ? 'TRUE' : 'FALSE' }}
                                 </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-secondary">{{ ucfirst($question->game_version) }}</span>
                             </td>
                             <td>
                                 @if($question->vocabulary->isNotEmpty())
@@ -275,55 +280,16 @@
         </div>
     @else
         <div class="empty-state">
-            <h3>No {{ ucfirst($gameVersion) }} Questions Yet</h3>
+            <h3>No True/False Questions Yet</h3>
             <p>Create questions manually or generate them using AI.</p>
             <div class="empty-state-actions">
-                <a href="{{ route('admin.lessons.true-false-questions.create', [$lesson, 'version' => $gameVersion]) }}" class="btn btn-primary">Create Question</a>
+                <a href="{{ route('admin.lessons.true-false-questions.create', $lesson) }}" class="btn btn-primary">Create Question</a>
             </div>
         </div>
     @endif
 </div>
 
 <style>
-.version-tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-    border-bottom: 2px solid #ddd;
-}
-
-.tab {
-    padding: 0.75rem 1.5rem;
-    text-decoration: none;
-    color: #666;
-    border-bottom: 3px solid transparent;
-    margin-bottom: -2px;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s;
-}
-
-.tab:hover {
-    color: var(--color-primary);
-    background: #f8f9fa;
-}
-
-.tab.active {
-    color: var(--color-primary);
-    border-bottom-color: var(--color-primary);
-    font-weight: 600;
-}
-
-.tab-badge {
-    background: var(--color-primary);
-    color: white;
-    padding: 0.125rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: normal;
-}
-
 .stats-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

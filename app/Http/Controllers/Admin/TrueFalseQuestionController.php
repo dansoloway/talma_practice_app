@@ -14,20 +14,19 @@ use Illuminate\Support\Facades\Log;
 class TrueFalseQuestionController extends Controller
 {
     /**
-     * Display a listing of questions for a lesson, filtered by game version.
+     * Display a listing of questions for a lesson.
      */
     public function index(Lesson $lesson, Request $request)
     {
-        $gameVersion = $request->get('version', 'easy');
+        // Get all questions, optionally filter by version
+        $query = $lesson->trueFalseQuestions()->with('vocabulary');
         
-        if (!in_array($gameVersion, ['easy', 'medium', 'hard'])) {
-            $gameVersion = 'easy';
+        $filterVersion = $request->get('filter_version');
+        if ($filterVersion && in_array($filterVersion, ['easy', 'medium', 'hard'])) {
+            $query->forVersion($filterVersion);
         }
-
-        $questions = $lesson->trueFalseQuestions()
-            ->with('vocabulary')
-            ->forVersion($gameVersion)
-            ->orderBy('is_approved')
+        
+        $questions = $query->orderBy('is_approved')
             ->orderBy('sort_order')
             ->get();
         
@@ -44,7 +43,7 @@ class TrueFalseQuestionController extends Controller
             ];
         }
         
-        return view('admin.true-false-questions.index', compact('lesson', 'questions', 'pendingCount', 'approvedCount', 'gameVersion', 'versionCounts'));
+        return view('admin.true-false-questions.index', compact('lesson', 'questions', 'pendingCount', 'approvedCount', 'filterVersion', 'versionCounts'));
     }
 
     /**
@@ -93,7 +92,7 @@ class TrueFalseQuestionController extends Controller
         $question->vocabulary()->attach($validated['vocabulary_ids']);
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $validated['game_version']])
+            ->route('admin.lessons.true-false-questions.index', $lesson)
             ->with('success', 'True/False question created successfully!');
     }
 
@@ -145,7 +144,7 @@ class TrueFalseQuestionController extends Controller
         $trueFalseQuestion->vocabulary()->sync($validated['vocabulary_ids']);
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $validated['game_version']])
+            ->route('admin.lessons.true-false-questions.index', $lesson)
             ->with('success', 'Question updated successfully!');
     }
 
@@ -154,11 +153,10 @@ class TrueFalseQuestionController extends Controller
      */
     public function destroy(Lesson $lesson, TrueFalseQuestion $trueFalseQuestion)
     {
-        $gameVersion = $trueFalseQuestion->game_version;
         $trueFalseQuestion->delete();
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
+            ->route('admin.lessons.true-false-questions.index', $lesson)
             ->with('success', 'Question deleted successfully!');
     }
 
@@ -170,7 +168,7 @@ class TrueFalseQuestionController extends Controller
         $trueFalseQuestion->update(['is_approved' => true]);
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $trueFalseQuestion->game_version])
+            ->route('admin.lessons.true-false-questions.index', $lesson)
             ->with('success', 'Question approved!');
     }
 
@@ -182,7 +180,7 @@ class TrueFalseQuestionController extends Controller
         $trueFalseQuestion->update(['is_approved' => false]);
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $trueFalseQuestion->game_version])
+            ->route('admin.lessons.true-false-questions.index', $lesson)
             ->with('success', 'Question rejected.');
     }
 
@@ -199,13 +197,13 @@ class TrueFalseQuestionController extends Controller
         // Validate inputs
         if ($count < 5 || $count > 8) {
             return redirect()
-                ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
+                ->route('admin.lessons.true-false-questions.index', $lesson)
                 ->with('error', 'Count must be between 5 and 8');
         }
 
         if (!in_array($gameVersion, ['easy', 'medium', 'hard'])) {
             return redirect()
-                ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => 'easy'])
+                ->route('admin.lessons.true-false-questions.index', $lesson)
                 ->with('error', 'Invalid game version');
         }
 
@@ -213,7 +211,7 @@ class TrueFalseQuestionController extends Controller
         $questionGenerator = app(OpenAiQuestionGenerator::class);
         if (!$questionGenerator->enabled()) {
             return redirect()
-                ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
+                ->route('admin.lessons.true-false-questions.index', $lesson)
                 ->with('error', 'OpenAI API key not configured. Set OPENAI_API_KEY in .env');
         }
 
@@ -223,7 +221,7 @@ class TrueFalseQuestionController extends Controller
             
             if ($lesson->vocabulary->isEmpty()) {
                 return redirect()
-                    ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
+                    ->route('admin.lessons.true-false-questions.index', $lesson)
                     ->with('error', 'This lesson has no vocabulary. Add vocabulary first.');
             }
 
@@ -241,7 +239,7 @@ class TrueFalseQuestionController extends Controller
 
             if (empty($questions)) {
                 return redirect()
-                    ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
+                    ->route('admin.lessons.true-false-questions.index', $lesson)
                     ->with('error', 'Failed to generate valid questions. Please try again.');
             }
 
@@ -313,7 +311,7 @@ class TrueFalseQuestionController extends Controller
             }
 
             return redirect()
-                ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
+                ->route('admin.lessons.true-false-questions.index', $lesson)
                 ->with('success', $message);
 
         } catch (\Exception $e) {
@@ -324,7 +322,7 @@ class TrueFalseQuestionController extends Controller
             ]);
 
             return redirect()
-                ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
+                ->route('admin.lessons.true-false-questions.index', $lesson)
                 ->with('error', 'Failed to generate questions: ' . $e->getMessage());
         }
     }
@@ -334,8 +332,6 @@ class TrueFalseQuestionController extends Controller
      */
     public function bulkApprove(Request $request, Lesson $lesson)
     {
-        $gameVersion = $request->input('version', 'easy');
-        
         $questionIds = $request->input('question_ids');
         if (is_string($questionIds)) {
             $questionIds = json_decode($questionIds, true);
@@ -353,7 +349,7 @@ class TrueFalseQuestionController extends Controller
             ->update(['is_approved' => true]);
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
+            ->route('admin.lessons.true-false-questions.index', $lesson)
             ->with('success', $count . ' question(s) approved!');
     }
 

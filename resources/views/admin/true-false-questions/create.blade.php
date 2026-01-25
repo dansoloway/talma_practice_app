@@ -6,9 +6,9 @@
 <div class="container">
     <div class="page-header">
         <div>
-            <a href="{{ route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion]) }}" class="back-link">&larr; Back to Questions</a>
+            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="back-link">&larr; Back to Questions</a>
             <h1 class="page-title">Create True/False Question</h1>
-            <p class="page-subtitle">{{ $lesson->title }} - {{ ucfirst($gameVersion) }} Level</p>
+            <p class="page-subtitle">{{ $lesson->title }}</p>
         </div>
     </div>
 
@@ -163,7 +163,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Question</button>
-            <a href="{{ route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion]) }}" class="btn">Cancel</a>
+            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="btn">Cancel</a>
         </div>
     </form>
 </div>
