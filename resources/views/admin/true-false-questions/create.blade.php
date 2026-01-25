@@ -31,13 +31,29 @@
 
     <form action="{{ route('admin.lessons.true-false-questions.store', $lesson) }}" method="POST" class="form">
         @csrf
-        <input type="hidden" name="game_version" value="{{ $gameVersion }}">
 
         <div class="card">
             <div class="card-header">
                 <h2 class="card-title">Question Details</h2>
             </div>
             <div class="card-body">
+                <div class="form-group">
+                    <label for="game_version">Difficulty Level <span class="required">*</span></label>
+                    <select id="game_version" name="game_version" class="form-control" required>
+                        <option value="easy" {{ old('game_version', $gameVersion) == 'easy' ? 'selected' : '' }}>Easy</option>
+                        <option value="medium" {{ old('game_version', $gameVersion) == 'medium' ? 'selected' : '' }}>Medium</option>
+                        <option value="hard" {{ old('game_version', $gameVersion) == 'hard' ? 'selected' : '' }}>Hard</option>
+                    </select>
+                    <small class="form-text">
+                        <strong>Easy:</strong> Direct meaning, no negation, no tricks<br>
+                        <strong>Medium:</strong> One reasoning lever (usage context, simple contrast, or inference)<br>
+                        <strong>Hard:</strong> Near-miss meanings, partial correctness, subtle details
+                    </small>
+                    @error('game_version')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <div class="form-group">
                     <label for="statement">Statement <span class="required">*</span></label>
                     <textarea id="statement" name="statement" rows="3" required class="form-control" 
