@@ -4,22 +4,29 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
-use App\Models\GrammarSet;
 use App\Models\TrueFalseQuestion;
+use App\Models\Vocabulary;
 use App\Services\QuestionGeneration\OpenAiQuestionGenerator;
 use App\Services\Tts\ElevenLabsTtsService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class TrueFalseQuestionController extends Controller
 {
     /**
-     * Display a listing of questions for a lesson.
+     * Display a listing of questions for a lesson, filtered by game version.
      */
-    public function index(Lesson $lesson)
+    public function index(Lesson $lesson, Request $request)
     {
+        $gameVersion = $request->get('version', 'easy');
+        
+        if (!in_array($gameVersion, ['easy', 'medium', 'hard'])) {
+            $gameVersion = 'easy';
+        }
+
         $questions = $lesson->trueFalseQuestions()
-            ->with('grammarSet')
+            ->with('vocabulary')
+            ->forVersion($gameVersion)
             ->orderBy('is_approved')
             ->orderBy('sort_order')
             ->get();
@@ -27,18 +34,32 @@ class TrueFalseQuestionController extends Controller
         $pendingCount = $questions->where('is_approved', false)->count();
         $approvedCount = $questions->where('is_approved', true)->where('is_active', true)->count();
         
-        $grammarSets = GrammarSet::with('grammarConcepts')->orderBy('title')->get();
+        // Get counts for each version
+        $versionCounts = [];
+        foreach (['easy', 'medium', 'hard'] as $version) {
+            $versionCounts[$version] = [
+                'total' => $lesson->trueFalseQuestions()->forVersion($version)->count(),
+                'approved' => $lesson->trueFalseQuestions()->forVersion($version)->where('is_approved', true)->where('is_active', true)->count(),
+                'pending' => $lesson->trueFalseQuestions()->forVersion($version)->where('is_approved', false)->count(),
+            ];
+        }
         
-        return view('admin.true-false-questions.index', compact('lesson', 'questions', 'pendingCount', 'approvedCount', 'grammarSets'));
+        return view('admin.true-false-questions.index', compact('lesson', 'questions', 'pendingCount', 'approvedCount', 'gameVersion', 'versionCounts'));
     }
 
     /**
      * Show the form for creating a new question.
      */
-    public function create(Lesson $lesson)
+    public function create(Lesson $lesson, Request $request)
     {
-        $grammarSets = GrammarSet::with('grammarConcepts')->orderBy('title')->get();
-        return view('admin.true-false-questions.create', compact('lesson', 'grammarSets'));
+        $gameVersion = $request->get('version', 'easy');
+        if (!in_array($gameVersion, ['easy', 'medium', 'hard'])) {
+            $gameVersion = 'easy';
+        }
+
+        $vocabulary = $lesson->vocabulary()->active()->ordered()->get();
+        
+        return view('admin.true-false-questions.create', compact('lesson', 'gameVersion', 'vocabulary'));
     }
 
     /**
@@ -50,8 +71,10 @@ class TrueFalseQuestionController extends Controller
             'statement' => 'required|string|max:500',
             'is_true' => 'required|boolean',
             'explanation' => 'required|string|max:1000',
-            'category' => 'nullable|string|max:50',
-            'grammar_set_id' => 'nullable|exists:grammar_sets,id',
+            'category' => 'nullable|string|max:100',
+            'game_version' => 'required|in:easy,medium,hard',
+            'vocabulary_ids' => 'required|array|min:1',
+            'vocabulary_ids.*' => 'exists:vocabulary,id',
             'is_approved' => 'boolean',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
@@ -60,12 +83,17 @@ class TrueFalseQuestionController extends Controller
         $validated['lesson_id'] = $lesson->id;
         $validated['is_approved'] = $request->boolean('is_approved', true);
         $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['sort_order'] = $validated['sort_order'] ?? $lesson->trueFalseQuestions()->max('sort_order') + 1;
+        $validated['sort_order'] = $validated['sort_order'] ?? $lesson->trueFalseQuestions()
+            ->forVersion($validated['game_version'])
+            ->max('sort_order') + 1;
 
-        TrueFalseQuestion::create($validated);
+        $question = TrueFalseQuestion::create($validated);
+        
+        // Attach vocabulary items
+        $question->vocabulary()->attach($validated['vocabulary_ids']);
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', $lesson)
+            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $validated['game_version']])
             ->with('success', 'True/False question created successfully!');
     }
 
@@ -74,6 +102,7 @@ class TrueFalseQuestionController extends Controller
      */
     public function show(Lesson $lesson, TrueFalseQuestion $trueFalseQuestion)
     {
+        $trueFalseQuestion->load('vocabulary');
         return view('admin.true-false-questions.show', compact('lesson', 'trueFalseQuestion'));
     }
 
@@ -82,8 +111,11 @@ class TrueFalseQuestionController extends Controller
      */
     public function edit(Lesson $lesson, TrueFalseQuestion $trueFalseQuestion)
     {
-        $grammarSets = GrammarSet::with('grammarConcepts')->orderBy('title')->get();
-        return view('admin.true-false-questions.edit', compact('lesson', 'trueFalseQuestion', 'grammarSets'));
+        $trueFalseQuestion->load('vocabulary');
+        $vocabulary = $lesson->vocabulary()->active()->ordered()->get();
+        $selectedVocabIds = $trueFalseQuestion->vocabulary->pluck('id')->toArray();
+        
+        return view('admin.true-false-questions.edit', compact('lesson', 'trueFalseQuestion', 'vocabulary', 'selectedVocabIds'));
     }
 
     /**
@@ -95,8 +127,10 @@ class TrueFalseQuestionController extends Controller
             'statement' => 'required|string|max:500',
             'is_true' => 'required|boolean',
             'explanation' => 'required|string|max:1000',
-            'category' => 'nullable|string|max:50',
-            'grammar_set_id' => 'nullable|exists:grammar_sets,id',
+            'category' => 'nullable|string|max:100',
+            'game_version' => 'required|in:easy,medium,hard',
+            'vocabulary_ids' => 'required|array|min:1',
+            'vocabulary_ids.*' => 'exists:vocabulary,id',
             'is_approved' => 'boolean',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
@@ -106,9 +140,12 @@ class TrueFalseQuestionController extends Controller
         $validated['is_active'] = $request->boolean('is_active', $trueFalseQuestion->is_active);
 
         $trueFalseQuestion->update($validated);
+        
+        // Sync vocabulary items
+        $trueFalseQuestion->vocabulary()->sync($validated['vocabulary_ids']);
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', $lesson)
+            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $validated['game_version']])
             ->with('success', 'Question updated successfully!');
     }
 
@@ -117,10 +154,11 @@ class TrueFalseQuestionController extends Controller
      */
     public function destroy(Lesson $lesson, TrueFalseQuestion $trueFalseQuestion)
     {
+        $gameVersion = $trueFalseQuestion->game_version;
         $trueFalseQuestion->delete();
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', $lesson)
+            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
             ->with('success', 'Question deleted successfully!');
     }
 
@@ -132,7 +170,7 @@ class TrueFalseQuestionController extends Controller
         $trueFalseQuestion->update(['is_approved' => true]);
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', $lesson)
+            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $trueFalseQuestion->game_version])
             ->with('success', 'Question approved!');
     }
 
@@ -144,7 +182,7 @@ class TrueFalseQuestionController extends Controller
         $trueFalseQuestion->update(['is_approved' => false]);
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', $lesson)
+            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $trueFalseQuestion->game_version])
             ->with('success', 'Question rejected.');
     }
 
@@ -154,61 +192,64 @@ class TrueFalseQuestionController extends Controller
     public function generate(Lesson $lesson, Request $request)
     {
         $count = (int) $request->input('count', 6);
+        $gameVersion = $request->input('game_version', 'easy');
         $generateAudio = $request->boolean('generate_audio', false);
         $autoApprove = $request->boolean('auto_approve', false);
 
-        // Validate count
+        // Validate inputs
         if ($count < 5 || $count > 8) {
             return redirect()
-                ->route('admin.lessons.true-false-questions.index', $lesson)
+                ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
                 ->with('error', 'Count must be between 5 and 8');
         }
 
-        // Get grammar set if provided
-        $grammarSetId = $request->input('grammar_set_id');
-        $grammarSet = $grammarSetId ? GrammarSet::with('grammarConcepts')->find($grammarSetId) : null;
+        if (!in_array($gameVersion, ['easy', 'medium', 'hard'])) {
+            return redirect()
+                ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => 'easy'])
+                ->with('error', 'Invalid game version');
+        }
 
         // Check if OpenAI is configured
         $questionGenerator = app(OpenAiQuestionGenerator::class);
         if (!$questionGenerator->enabled()) {
             return redirect()
-                ->route('admin.lessons.true-false-questions.index', $lesson)
+                ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
                 ->with('error', 'OpenAI API key not configured. Set OPENAI_API_KEY in .env');
         }
 
         try {
-            // Load lesson data
-            $lesson->load(['vocabulary', 'prompts.options']);
+            // Load lesson vocabulary
+            $lesson->load('vocabulary');
             
+            if ($lesson->vocabulary->isEmpty()) {
+                return redirect()
+                    ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
+                    ->with('error', 'This lesson has no vocabulary. Add vocabulary first.');
+            }
+
             $lessonData = [
                 'title' => $lesson->title,
+                'game_version' => $gameVersion,
                 'vocabulary' => $lesson->vocabulary->map(fn($v) => [
                     'english_word' => $v->english_word,
-                    'hebrew_translation' => $v->hebrew_translation,
-                    'arabic_translation' => $v->arabic_translation,
+                    'id' => $v->id,
                 ])->toArray(),
-                'prompts' => $lesson->prompts->map(fn($p) => [
-                    'prompt_text' => $p->prompt_text,
-                    'template' => $p->template,
-                    'options' => $p->options->pluck('label')->toArray(),
-                ])->toArray(),
-                'grammar_set' => $grammarSet ? [
-                    'id' => $grammarSet->id,
-                    'title' => $grammarSet->title,
-                    'concepts' => $grammarSet->grammarConcepts->map(fn($c) => [
-                        'id' => $c->id,
-                        'display_name' => $c->display_name,
-                        'grammar_topic' => $c->grammar_topic,
-                        'grammar_sub_topic' => $c->grammar_sub_topic,
-                    ])->toArray(),
-                ] : null,
             ];
 
             // Generate questions
             $questions = $questionGenerator->generateQuestions($lessonData, $count);
 
+            if (empty($questions)) {
+                return redirect()
+                    ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
+                    ->with('error', 'Failed to generate valid questions. Please try again.');
+            }
+
             $ttsService = new ElevenLabsTtsService();
             $created = 0;
+            $maxSortOrder = $lesson->trueFalseQuestions()
+                ->forVersion($gameVersion)
+                ->max('sort_order') ?? 0;
 
             foreach ($questions as $index => $questionData) {
                 $audioPath = null;
@@ -218,7 +259,7 @@ class TrueFalseQuestionController extends Controller
                     try {
                         $result = $ttsService->generateAndSaveSentence(
                             $questionData['statement'],
-                            "tts/true-false/question_{$lesson->id}_" . ($index + 1) . ".mp3",
+                            "tts/true-false/question_{$lesson->id}_{$gameVersion}_" . ($index + 1) . ".mp3",
                             null,
                             'EXAVITQu4vr4xnSDxMaL' // Rachel voice
                         );
@@ -226,14 +267,28 @@ class TrueFalseQuestionController extends Controller
                             $audioPath = $result['path'];
                         }
                     } catch (\Exception $e) {
-                        // Continue without audio if generation fails
-                        \Illuminate\Support\Facades\Log::warning("Failed to generate audio for question: " . $e->getMessage());
+                        Log::warning("Failed to generate audio for question: " . $e->getMessage());
                     }
                 }
 
-                TrueFalseQuestion::create([
+                // Find vocabulary IDs from vocab_words array
+                $vocabWords = $questionData['vocab_words'] ?? [];
+                $vocabIds = [];
+                foreach ($vocabWords as $vocabWord) {
+                    $vocab = $lesson->vocabulary->firstWhere('english_word', $vocabWord);
+                    if ($vocab) {
+                        $vocabIds[] = $vocab->id;
+                    }
+                }
+
+                // If no vocab IDs found, use first vocab as fallback
+                if (empty($vocabIds) && $lesson->vocabulary->isNotEmpty()) {
+                    $vocabIds = [$lesson->vocabulary->first()->id];
+                }
+
+                $question = TrueFalseQuestion::create([
                     'lesson_id' => $lesson->id,
-                    'grammar_set_id' => $grammarSetId,
+                    'game_version' => $gameVersion,
                     'statement' => $questionData['statement'],
                     'is_true' => $questionData['is_true'],
                     'explanation' => $questionData['explanation'],
@@ -241,8 +296,13 @@ class TrueFalseQuestionController extends Controller
                     'audio_path' => $audioPath,
                     'is_approved' => $autoApprove,
                     'is_active' => true,
-                    'sort_order' => $lesson->trueFalseQuestions()->max('sort_order') + $index + 1,
+                    'sort_order' => $maxSortOrder + $index + 1,
                 ]);
+
+                // Attach vocabulary items
+                if (!empty($vocabIds)) {
+                    $question->vocabulary()->attach($vocabIds);
+                }
 
                 $created++;
             }
@@ -253,12 +313,18 @@ class TrueFalseQuestionController extends Controller
             }
 
             return redirect()
-                ->route('admin.lessons.true-false-questions.index', $lesson)
+                ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
                 ->with('success', $message);
 
         } catch (\Exception $e) {
+            Log::error('Question generation failed', [
+                'lesson_id' => $lesson->id,
+                'game_version' => $gameVersion,
+                'error' => $e->getMessage(),
+            ]);
+
             return redirect()
-                ->route('admin.lessons.true-false-questions.index', $lesson)
+                ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
                 ->with('error', 'Failed to generate questions: ' . $e->getMessage());
         }
     }
@@ -268,7 +334,8 @@ class TrueFalseQuestionController extends Controller
      */
     public function bulkApprove(Request $request, Lesson $lesson)
     {
-        // Handle JSON string from JavaScript
+        $gameVersion = $request->input('version', 'easy');
+        
         $questionIds = $request->input('question_ids');
         if (is_string($questionIds)) {
             $questionIds = json_decode($questionIds, true);
@@ -286,44 +353,64 @@ class TrueFalseQuestionController extends Controller
             ->update(['is_approved' => true]);
 
         return redirect()
-            ->route('admin.lessons.true-false-questions.index', $lesson)
+            ->route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion])
             ->with('success', $count . ' question(s) approved!');
     }
 
     /**
      * Play the True/False game (student-facing)
-     * Only accessible if lesson is active and not archived.
      */
-    public function play(Lesson $lesson)
+    public function play(Lesson $lesson, Request $request)
     {
         // Ensure lesson is active and not archived
         if (!$lesson->is_active || $lesson->archived_at) {
             abort(404);
         }
 
-        // Get approved, active questions for this lesson
+        $gameVersion = $request->get('version', 'easy');
+        
+        if (!in_array($gameVersion, ['easy', 'medium', 'hard'])) {
+            $gameVersion = 'easy';
+        }
+
+        // Get approved, active questions for this lesson and version
         $questions = $lesson->trueFalseQuestions()
+            ->forVersion($gameVersion)
             ->where('is_approved', true)
             ->where('is_active', true)
             ->orderBy('sort_order')
-            ->get()
-            ->map(function ($question) {
-                return [
-                    'id' => $question->id,
-                    'statement' => $question->statement,
-                    'is_true' => $question->is_true,
-                    'explanation' => $question->explanation,
-                    'category' => $question->category,
-                    'audio_path' => $question->audio_path ? asset($question->audio_path) : null,
-                ];
-            });
+            ->get();
 
         if ($questions->isEmpty()) {
             return redirect()
                 ->route('lessons.show', $lesson->slug)
-                ->with('info', 'No True/False questions available for this lesson yet.');
+                ->with('info', "No {$gameVersion} level True/False questions available for this lesson yet.");
         }
 
-        return view('true-false-games.play', compact('lesson', 'questions'));
+        // Check which versions are available
+        $availableVersions = [];
+        foreach (['easy', 'medium', 'hard'] as $version) {
+            $count = $lesson->trueFalseQuestions()
+                ->forVersion($version)
+                ->where('is_approved', true)
+                ->where('is_active', true)
+                ->count();
+            if ($count > 0) {
+                $availableVersions[] = $version;
+            }
+        }
+
+        $questions = $questions->map(function ($question) {
+            return [
+                'id' => $question->id,
+                'statement' => $question->statement,
+                'is_true' => $question->is_true,
+                'explanation' => $question->explanation,
+                'category' => $question->category,
+                'audio_path' => $question->audio_path ? asset($question->audio_path) : null,
+            ];
+        });
+
+        return view('true-false-games.play', compact('lesson', 'questions', 'gameVersion', 'availableVersions'));
     }
 }

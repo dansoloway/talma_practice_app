@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class TrueFalseQuestion extends Model
 {
     protected $fillable = [
         'lesson_id',
-        'grammar_set_id',
+        'game_version',
         'statement',
         'is_true',
         'explanation',
@@ -40,11 +41,12 @@ class TrueFalseQuestion extends Model
     }
 
     /**
-     * Get the grammar set this question belongs to.
+     * Get the vocabulary items this question tests.
      */
-    public function grammarSet(): BelongsTo
+    public function vocabulary(): BelongsToMany
     {
-        return $this->belongsTo(\App\Models\GrammarSet::class);
+        return $this->belongsToMany(Vocabulary::class, 'true_false_question_vocabulary')
+            ->withTimestamps();
     }
 
     /**
@@ -69,5 +71,21 @@ class TrueFalseQuestion extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order');
+    }
+
+    /**
+     * Scope to filter by game version.
+     */
+    public function scopeForVersion($query, string $version)
+    {
+        return $query->where('game_version', $version);
+    }
+
+    /**
+     * Get available game versions.
+     */
+    public static function getGameVersions(): array
+    {
+        return ['easy', 'medium', 'hard'];
     }
 }

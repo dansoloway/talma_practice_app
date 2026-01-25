@@ -6,9 +6,9 @@
 <div class="container">
     <div class="page-header">
         <div>
-            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="back-link">&larr; Back to Questions</a>
+            <a href="{{ route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion]) }}" class="back-link">&larr; Back to Questions</a>
             <h1 class="page-title">Create True/False Question</h1>
-            <p class="page-subtitle">{{ $lesson->title }}</p>
+            <p class="page-subtitle">{{ $lesson->title }} - {{ ucfirst($gameVersion) }} Level</p>
         </div>
     </div>
 
@@ -22,8 +22,16 @@
         </div>
     @endif
 
+    @if($vocabulary->isEmpty())
+        <div class="alert alert-warning">
+            <strong>No vocabulary available!</strong> This lesson needs vocabulary items before creating True/False questions.
+            <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}">Add vocabulary</a>
+        </div>
+    @endif
+
     <form action="{{ route('admin.lessons.true-false-questions.store', $lesson) }}" method="POST" class="form">
         @csrf
+        <input type="hidden" name="game_version" value="{{ $gameVersion }}">
 
         <div class="card">
             <div class="card-header">
@@ -33,8 +41,8 @@
                 <div class="form-group">
                     <label for="statement">Statement <span class="required">*</span></label>
                     <textarea id="statement" name="statement" rows="3" required class="form-control" 
-                              placeholder="e.g., Ice melts faster in warm water than cold water">{{ old('statement') }}</textarea>
-                    <small class="form-text">The statement students will hear/read. Should be a complete sentence.</small>
+                              placeholder="e.g., An oasis is a place with water in a desert.">{{ old('statement') }}</textarea>
+                    <small class="form-text">The statement students will hear/read. Must test vocabulary understanding. Must NOT contain "?", "means", "a kind of", "a type of".</small>
                     @error('statement')
                         <div class="text-danger small">{{ $message }}</div>
                     @enderror
@@ -54,6 +62,7 @@
                             <span class="radio-text">False</span>
                         </label>
                     </div>
+                    <small class="form-text">TRUE means the statement correctly reflects vocabulary meaning/usage. FALSE means it incorrectly reflects vocabulary meaning/usage.</small>
                     @error('is_true')
                         <div class="text-danger small">{{ $message }}</div>
                     @enderror
@@ -62,7 +71,7 @@
                 <div class="form-group">
                     <label for="explanation">Explanation <span class="required">*</span></label>
                     <textarea id="explanation" name="explanation" rows="3" required class="form-control" 
-                              placeholder="e.g., Yes! Warm water has more energy, so ice melts faster in it.">{{ old('explanation') }}</textarea>
+                              placeholder="e.g., Yes! An oasis has water, which is why travelers can rest there.">{{ old('explanation') }}</textarea>
                     <small class="form-text">This explanation will be shown to students after they answer. Keep it friendly and educational (1-2 sentences).</small>
                     @error('explanation')
                         <div class="text-danger small">{{ $message }}</div>
@@ -70,29 +79,39 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="grammar_set_id">Grammar Set (Optional)</label>
-                    <select id="grammar_set_id" name="grammar_set_id" class="form-control">
-                        <option value="">None</option>
-                        @foreach($grammarSets as $set)
-                            <option value="{{ $set->id }}" {{ old('grammar_set_id') == $set->id ? 'selected' : '' }}>
-                                {{ $set->title }} ({{ $set->grammarConcepts->count() }} concepts)
-                            </option>
-                        @endforeach
-                    </select>
-                    <small class="form-text">Optional: Link this question to a grammar set to test specific grammar concepts.</small>
+                    <label for="vocabulary_ids">Vocabulary Words Being Tested <span class="required">*</span></label>
+                    @if($vocabulary->isNotEmpty())
+                        <div class="vocabulary-selection" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 1rem;">
+                            @foreach($vocabulary as $vocab)
+                                <label class="checkbox-label" style="display: block; padding: 0.5rem; margin-bottom: 0.25rem;">
+                                    <input type="checkbox" name="vocabulary_ids[]" value="{{ $vocab->id }}" 
+                                           {{ in_array($vocab->id, old('vocabulary_ids', [])) ? 'checked' : '' }}>
+                                    <span class="checkmark"></span>
+                                    <strong>{{ $vocab->english_word }}</strong>
+                                    @if($vocab->hebrew_translation)
+                                        <span class="text-muted">({{ $vocab->hebrew_translation }})</span>
+                                    @endif
+                                </label>
+                            @endforeach
+                        </div>
+                        <small class="form-text">Select at least one vocabulary word that this question tests.</small>
+                    @else
+                        <div class="alert alert-warning">No vocabulary available. <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}">Add vocabulary first</a>.</div>
+                    @endif
+                    @error('vocabulary_ids')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-group">
                     <label for="category">Category</label>
-                    <select id="category" name="category" class="form-control">
-                        <option value="">None</option>
-                        <option value="science_facts" {{ old('category') == 'science_facts' ? 'selected' : '' }}>Science Facts</option>
-                        <option value="procedures" {{ old('category') == 'procedures' ? 'selected' : '' }}>Procedures</option>
-                        <option value="vocabulary" {{ old('category') == 'vocabulary' ? 'selected' : '' }}>Vocabulary</option>
-                        <option value="process" {{ old('category') == 'process' ? 'selected' : '' }}>Process</option>
-                        <option value="misconception" {{ old('category') == 'misconception' ? 'selected' : '' }}>Misconception</option>
-                    </select>
-                    <small class="form-text">Optional: Categorize the question type.</small>
+                    <input type="text" id="category" name="category" class="form-control" 
+                           value="{{ old('category') }}" 
+                           placeholder="e.g., oasis, vocabulary, meaning">
+                    <small class="form-text">Optional: Use the vocabulary word being tested or a simple reasoning label.</small>
+                    @error('category')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
         </div>
@@ -120,7 +139,7 @@
 
                 <div class="form-group">
                     <label for="sort_order">Sort Order</label>
-                    <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $lesson->trueFalseQuestions()->max('sort_order') + 1) }}" min="0" class="form-control">
+                    <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $lesson->trueFalseQuestions()->forVersion($gameVersion)->max('sort_order') + 1) }}" min="0" class="form-control">
                     <small class="form-text">Lower numbers appear first in the game.</small>
                 </div>
             </div>
@@ -128,7 +147,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Question</button>
-            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="btn">Cancel</a>
+            <a href="{{ route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $gameVersion]) }}" class="btn">Cancel</a>
         </div>
     </form>
 </div>
@@ -223,6 +242,14 @@
     margin-right: 0.5rem;
 }
 
+.vocabulary-selection {
+    background: #f8f9fa;
+}
+
+.vocabulary-selection label:hover {
+    background: #e9ecef;
+}
+
 .form-actions {
     display: flex;
     gap: 1rem;
@@ -230,4 +257,3 @@
 }
 </style>
 @endsection
-

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Vocabulary extends Model
 {
@@ -115,5 +116,14 @@ class Vocabulary extends Model
         $relativePath = preg_replace('#^storage/#', '', $normalizedPath);
         
         return \Illuminate\Support\Facades\Storage::disk('public')->exists($relativePath);
+    }
+
+    /**
+     * Get the True/False questions that test this vocabulary item.
+     */
+    public function trueFalseQuestions(): BelongsToMany
+    {
+        return $this->belongsToMany(TrueFalseQuestion::class, 'true_false_question_vocabulary')
+            ->withTimestamps();
     }
 }

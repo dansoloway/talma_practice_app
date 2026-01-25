@@ -149,20 +149,52 @@
             //     }
             // }
             
-            // Add True/False game if there are approved and active questions
-            $approvedActiveQuestions = $lesson->trueFalseQuestions()
-                ->where('is_approved', true)
-                ->where('is_active', true)
-                ->get();
-            if($approvedActiveQuestions->count() > 0) {
-                $allActivities->push((object)[
-                    'id' => null,
-                    'type' => 'true_false',
-                    'title' => 'True/False Game',
-                    'sort_order' => 999,
-                    'is_active' => true,
-                    'model' => (object)['question_count' => $approvedActiveQuestions->count()]
-                ]);
+            // Add True/False game - check each version
+            $trueFalseVersions = [];
+            foreach(['easy', 'medium', 'hard'] as $version) {
+                $count = $lesson->trueFalseQuestions()
+                    ->forVersion($version)
+                    ->where('is_approved', true)
+                    ->where('is_active', true)
+                    ->count();
+                if($count > 0) {
+                    $trueFalseVersions[$version] = $count;
+                }
+            }
+            
+            if(!empty($trueFalseVersions)) {
+                if(count($trueFalseVersions) === 1) {
+                    // Single version - show as single activity
+                    $version = array_key_first($trueFalseVersions);
+                    $allActivities->push((object)[
+                        'id' => null,
+                        'type' => 'true_false',
+                        'title' => 'True/False Game (' . ucfirst($version) . ')',
+                        'sort_order' => 999,
+                        'is_active' => true,
+                        'model' => (object)[
+                            'question_count' => $trueFalseVersions[$version],
+                            'version' => $version,
+                            'available_versions' => $trueFalseVersions
+                        ]
+                    ]);
+                } else {
+                    // Multiple versions - show separate activities
+                    foreach($trueFalseVersions as $version => $count) {
+                        $allActivities->push((object)[
+                            'id' => null,
+                            'type' => 'true_false',
+                            'title' => 'True/False Game (' . ucfirst($version) . ')',
+                            'sort_order' => 999 + ($version === 'easy' ? 0 : ($version === 'medium' ? 1 : 2)),
+                            'is_active' => true,
+                            'model' => (object)[
+                                'question_count' => $count,
+                                'version' => $version,
+                                'available_versions' => $trueFalseVersions
+                            ]
+                        ]);
+                    }
+                }
             }
             
             $allActivities = $allActivities->where('is_active', true)->sortBy('sort_order');
@@ -278,8 +310,9 @@ function startActivity(type, id) {
         //     window.location.href = `/lessons/{{ $lesson->id }}/sentence-builder-games/${id}/play`;
         //     break;
         case 'true_false':
-            // Go to True/False game
-            window.location.href = `/lessons/{{ $lesson->id }}/true-false/play`;
+            // Go to True/False game with version
+            const version = activity.model?.version || 'easy';
+            window.location.href = `/lessons/{{ $lesson->id }}/true-false/play?version=${version}`;
             break;
     }
 }

@@ -6,9 +6,9 @@
 <div class="container">
     <div class="page-header">
         <div>
-            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="back-link">&larr; Back to Questions</a>
+            <a href="{{ route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $trueFalseQuestion->game_version]) }}" class="back-link">&larr; Back to Questions</a>
             <h1 class="page-title">Edit True/False Question</h1>
-            <p class="page-subtitle">{{ $lesson->title }}</p>
+            <p class="page-subtitle">{{ $lesson->title }} - {{ ucfirst($trueFalseQuestion->game_version) }} Level</p>
         </div>
     </div>
 
@@ -32,9 +32,21 @@
             </div>
             <div class="card-body">
                 <div class="form-group">
+                    <label for="game_version">Difficulty Level <span class="required">*</span></label>
+                    <select id="game_version" name="game_version" class="form-control" required>
+                        <option value="easy" {{ old('game_version', $trueFalseQuestion->game_version) == 'easy' ? 'selected' : '' }}>Easy</option>
+                        <option value="medium" {{ old('game_version', $trueFalseQuestion->game_version) == 'medium' ? 'selected' : '' }}>Medium</option>
+                        <option value="hard" {{ old('game_version', $trueFalseQuestion->game_version) == 'hard' ? 'selected' : '' }}>Hard</option>
+                    </select>
+                    @error('game_version')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
                     <label for="statement">Statement <span class="required">*</span></label>
                     <textarea id="statement" name="statement" rows="3" required class="form-control">{{ old('statement', $trueFalseQuestion->statement) }}</textarea>
-                    <small class="form-text">The statement students will hear/read. Should be a complete sentence.</small>
+                    <small class="form-text">The statement students will hear/read. Must test vocabulary understanding. Must NOT contain "?", "means", "a kind of", "a type of".</small>
                     @error('statement')
                         <div class="text-danger small">{{ $message }}</div>
                     @enderror
@@ -54,6 +66,7 @@
                             <span class="radio-text">False</span>
                         </label>
                     </div>
+                    <small class="form-text">TRUE means the statement correctly reflects vocabulary meaning/usage. FALSE means it incorrectly reflects vocabulary meaning/usage.</small>
                     @error('is_true')
                         <div class="text-danger small">{{ $message }}</div>
                     @enderror
@@ -69,29 +82,39 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="grammar_set_id">Grammar Set (Optional)</label>
-                    <select id="grammar_set_id" name="grammar_set_id" class="form-control">
-                        <option value="">None</option>
-                        @foreach($grammarSets as $set)
-                            <option value="{{ $set->id }}" {{ old('grammar_set_id', $trueFalseQuestion->grammar_set_id) == $set->id ? 'selected' : '' }}>
-                                {{ $set->title }} ({{ $set->grammarConcepts->count() }} concepts)
-                            </option>
-                        @endforeach
-                    </select>
-                    <small class="form-text">Optional: Link this question to a grammar set to test specific grammar concepts.</small>
+                    <label for="vocabulary_ids">Vocabulary Words Being Tested <span class="required">*</span></label>
+                    @if($vocabulary->isNotEmpty())
+                        <div class="vocabulary-selection" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 1rem;">
+                            @foreach($vocabulary as $vocab)
+                                <label class="checkbox-label" style="display: block; padding: 0.5rem; margin-bottom: 0.25rem;">
+                                    <input type="checkbox" name="vocabulary_ids[]" value="{{ $vocab->id }}" 
+                                           {{ in_array($vocab->id, old('vocabulary_ids', $selectedVocabIds)) ? 'checked' : '' }}>
+                                    <span class="checkmark"></span>
+                                    <strong>{{ $vocab->english_word }}</strong>
+                                    @if($vocab->hebrew_translation)
+                                        <span class="text-muted">({{ $vocab->hebrew_translation }})</span>
+                                    @endif
+                                </label>
+                            @endforeach
+                        </div>
+                        <small class="form-text">Select at least one vocabulary word that this question tests.</small>
+                    @else
+                        <div class="alert alert-warning">No vocabulary available. <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}">Add vocabulary first</a>.</div>
+                    @endif
+                    @error('vocabulary_ids')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-group">
                     <label for="category">Category</label>
-                    <select id="category" name="category" class="form-control">
-                        <option value="">None</option>
-                        <option value="science_facts" {{ old('category', $trueFalseQuestion->category) == 'science_facts' ? 'selected' : '' }}>Science Facts</option>
-                        <option value="procedures" {{ old('category', $trueFalseQuestion->category) == 'procedures' ? 'selected' : '' }}>Procedures</option>
-                        <option value="vocabulary" {{ old('category', $trueFalseQuestion->category) == 'vocabulary' ? 'selected' : '' }}>Vocabulary</option>
-                        <option value="process" {{ old('category', $trueFalseQuestion->category) == 'process' ? 'selected' : '' }}>Process</option>
-                        <option value="misconception" {{ old('category', $trueFalseQuestion->category) == 'misconception' ? 'selected' : '' }}>Misconception</option>
-                    </select>
-                    <small class="form-text">Optional: Categorize the question type.</small>
+                    <input type="text" id="category" name="category" class="form-control" 
+                           value="{{ old('category', $trueFalseQuestion->category) }}" 
+                           placeholder="e.g., oasis, vocabulary, meaning">
+                    <small class="form-text">Optional: Use the vocabulary word being tested or a simple reasoning label.</small>
+                    @error('category')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 @if($trueFalseQuestion->audio_path)
@@ -139,7 +162,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Update Question</button>
-            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="btn">Cancel</a>
+            <a href="{{ route('admin.lessons.true-false-questions.index', [$lesson, 'version' => $trueFalseQuestion->game_version]) }}" class="btn">Cancel</a>
             <form action="{{ route('admin.lessons.true-false-questions.destroy', [$lesson, $trueFalseQuestion]) }}" method="POST" class="inline-form">
                 @csrf
                 @method('DELETE')
@@ -239,6 +262,14 @@
     margin-right: 0.5rem;
 }
 
+.vocabulary-selection {
+    background: #f8f9fa;
+}
+
+.vocabulary-selection label:hover {
+    background: #e9ecef;
+}
+
 .audio-preview {
     margin-top: 0.5rem;
 }
@@ -259,4 +290,3 @@
 }
 </style>
 @endsection
-
