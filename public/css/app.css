@@ -1,7 +1,7 @@
 /* TALMA Practice Pal - Modern Stylesheet */
 
-/* Modern Fonts - Inter for content, Poppins for headings */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+/* Modern Fonts - Poppins for everything */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 /* Modern CSS Variables */
 :root {
@@ -62,7 +62,7 @@
     --color-border-dark: #d1d5db;
     
     /* Typography */
-    --font-content: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-content: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     
     /* Spacing scale */

@@ -704,16 +704,17 @@ function autoResizeText(element) {
 .progress-text {
     text-align: center;
     color: var(--color-text-light);
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
 .flashcard {
     background: var(--color-white);
     border: 1px solid var(--color-border);
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 2rem;
     margin-bottom: 1rem;
-    min-height: 300px;
+    min-height: 350px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -726,26 +727,26 @@ function autoResizeText(element) {
 }
 
 .card-image img {
-    max-width: 200px;
-    max-height: 200px;
-    border-radius: 8px;
-    margin-bottom: 0.75rem;
+    max-width: 280px;
+    max-height: 280px;
+    border-radius: 12px;
+    margin-bottom: 1rem;
 }
 
 .card-prompt {
-    font-size: 1.2rem;
-    font-weight: 500;
-    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
     color: var(--color-text);
 }
 
 .card-answer {
-    font-size: 1.5rem;
-    font-weight: bold;
+    font-size: 2rem;
+    font-weight: 700;
     color: var(--color-primary);
-    padding: 1rem;
+    padding: 1.25rem;
     background: #f8f9fa;
-    border-radius: 8px;
+    border-radius: 12px;
     margin-top: 1rem;
 }
 
@@ -757,18 +758,19 @@ function autoResizeText(element) {
 }
 
 .audio-option, .image-option, .word-option {
-    padding: 1rem 1.5rem;
+    padding: 1.25rem 2rem;
     border: 2px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: 12px;
     background: var(--color-white);
     cursor: pointer;
     transition: all 0.2s ease;
-    min-width: 120px;
+    min-width: 140px;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
     line-height: 1.4;
     text-align: center;
 }
@@ -835,14 +837,15 @@ function autoResizeText(element) {
     color: white;
     border: none;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
     flex-shrink: 0;
+    font-size: 1.25rem;
 }
 
 .audio-play-preview-btn:hover {
@@ -852,12 +855,13 @@ function autoResizeText(element) {
 
 .audio-select-btn {
     flex: 1;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1.5rem;
     border: 2px solid var(--color-primary);
-    border-radius: 6px;
+    border-radius: 8px;
     background: white;
     color: var(--color-primary);
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 1.25rem;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -868,10 +872,10 @@ function autoResizeText(element) {
 }
 
 .image-option img {
-    width: 100px;
-    height: 100px;
+    width: 140px;
+    height: 140px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: 8px;
 }
 
 /* Answer content styling */
@@ -922,8 +926,8 @@ function autoResizeText(element) {
     color: white;
     border: none;
     border-radius: 50%;
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -940,7 +944,7 @@ function autoResizeText(element) {
 }
 
 .big-play-btn i {
-    font-size: 2rem;
+    font-size: 2.5rem;
 }
 
 .big-audio-btn {
@@ -948,8 +952,8 @@ function autoResizeText(element) {
     color: white;
     border: none;
     border-radius: 50%;
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -966,11 +970,25 @@ function autoResizeText(element) {
 }
 
 .big-audio-btn i {
-    font-size: 2rem;
+    font-size: 2.5rem;
 }
 
 .game-controls {
     text-align: center;
+}
+
+.game-controls .btn {
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding: 1rem 2rem;
+    min-width: 160px;
+}
+
+.completion-actions .btn {
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding: 1rem 2rem;
+    min-width: 160px;
 }
 
 .feedback {
@@ -1000,6 +1018,18 @@ function autoResizeText(element) {
     padding: 3rem;
 }
 
+.game-complete h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.game-complete #completion-message {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
 .game-complete.celebrate h2 {
     animation: bounce 1s ease-in-out 2;
 }
@@ -1021,14 +1051,15 @@ function autoResizeText(element) {
 
 .stat-value {
     display: block;
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: bold;
     color: var(--color-primary);
 }
 
 .stat-label {
     color: var(--color-text-light);
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
 .completion-actions {
