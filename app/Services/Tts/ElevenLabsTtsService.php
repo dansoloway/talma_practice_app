@@ -11,17 +11,17 @@ class ElevenLabsTtsService
     private string $apiKey;
     private string $defaultVoiceId;
     
-    // High stability presets for clarity and consistency
+    // Optimized presets for single English words - consistent, clear pronunciation
     // Can be overridden via environment variables (see docs/TTS_REGENERATION_SETTINGS.md)
     private function getPresets(): array
     {
         return [
             'vocabulary' => [
-                'stability' => (float) env('ELEVENLABS_VOCAB_STABILITY', 0.8),
+                'stability' => (float) env('ELEVENLABS_VOCAB_STABILITY', 0.90), // Increased from 0.8 for consistency
                 'similarity_boost' => (float) env('ELEVENLABS_VOCAB_SIMILARITY', 0.85),
-                'style' => (float) env('ELEVENLABS_VOCAB_STYLE', 0.0),
+                'style' => (float) env('ELEVENLABS_VOCAB_STYLE', 0.0), // Keep at 0 for clear, neutral pronunciation
                 'use_speaker_boost' => env('ELEVENLABS_VOCAB_SPEAKER_BOOST', true) === true || env('ELEVENLABS_VOCAB_SPEAKER_BOOST', true) === 'true',
-                'speed' => (float) env('ELEVENLABS_VOCAB_SPEED', 1.0),
+                'speed' => (float) env('ELEVENLABS_VOCAB_SPEED', 0.92), // Optimized from 1.0 for clarity
             ],
             'sentence' => [
                 'stability' => (float) env('ELEVENLABS_SENTENCE_STABILITY', 0.75),
@@ -78,7 +78,7 @@ class ElevenLabsTtsService
                 "https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}",
                 [
                     'text' => $text,
-                    'model_id' => env('ELEVENLABS_MODEL', 'eleven_multilingual_v2'),
+                    'model_id' => env('ELEVENLABS_MODEL', 'eleven_flash_v2'), // Optimized for English-only, fast, cost-effective
                     'voice_settings' => $settings,
                 ]
             );
@@ -156,7 +156,7 @@ class ElevenLabsTtsService
             'use_speaker_boost' => $useSpeakerBoost,
         ]);
 
-        $model = $customSettings['model'] ?? env('ELEVENLABS_MODEL', 'eleven_multilingual_v2');
+        $model = $customSettings['model'] ?? env('ELEVENLABS_MODEL', 'eleven_flash_v2'); // Optimized for English-only
 
         try {
             $response = Http::withHeaders([
