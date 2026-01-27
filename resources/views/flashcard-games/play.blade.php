@@ -641,6 +641,45 @@ function autoResizeText(element) {
 
 @push('styles')
 <style>
+.game-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    align-items: flex-start;
+}
+
+.game-header .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+    margin-bottom: 0;
+}
+
+.game-header .back-link:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+.game-header .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.game-header .game-description {
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
 .flashcard-container {
     max-width: 600px;
     margin: 0 auto;
@@ -726,11 +765,19 @@ function autoResizeText(element) {
     width: 100%;
 }
 
+.card-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
 .card-image img {
     max-width: 280px;
     max-height: 280px;
     border-radius: 12px;
-    margin-bottom: 1rem;
+    display: block;
+    margin: 0 auto;
 }
 
 .card-prompt {
