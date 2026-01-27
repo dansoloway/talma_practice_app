@@ -95,6 +95,15 @@
                     
                     <!-- Card Content -->
                     <div class="flex flex-col h-full">
+                        <!-- Cover Image -->
+                        @if($lesson->cover_image_path)
+                            <div class="mb-4 -mx-6 -mt-6 rounded-t-2xl overflow-hidden">
+                                <img src="{{ $lesson->cover_image_url }}" 
+                                     alt="{{ $lesson->title }}" 
+                                     class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                            </div>
+                        @endif
+                        
                         <!-- Header Row: Badges + Arrow -->
                         <div class="flex justify-between items-start mb-4">
                             @if($lesson->session_number || $lesson->part_number)
