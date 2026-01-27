@@ -32,7 +32,7 @@ class MatchingGameController extends Controller
             'title' => 'nullable|string|max:255',
             'vocabulary_ids' => 'required|array|min:2',
             'vocabulary_ids.*' => 'exists:vocabulary,id',
-            'grid_size' => 'required|integer|min:4|max:8',
+            'grid_size' => 'required|integer|min:2|max:8',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ]);
@@ -82,7 +82,7 @@ class MatchingGameController extends Controller
             'title' => 'required|string|max:255',
             'vocabulary_ids' => 'required|array|min:2',
             'vocabulary_ids.*' => 'exists:vocabulary,id',
-            'grid_size' => 'required|integer|min:4|max:8',
+            'grid_size' => 'required|integer|min:2|max:8',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ]);

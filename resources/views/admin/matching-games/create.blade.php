@@ -29,11 +29,12 @@
         <div class="form-group">
             <label for="grid_size">Grid Size</label>
             <select id="grid_size" name="grid_size" class="form-control" onchange="updateVocabularyRequirement()">
+                <option value="2" {{ old('grid_size', 2) == 2 ? 'selected' : '' }}>2x2 (2 pairs)</option>
                 <option value="4" {{ old('grid_size', 4) == 4 ? 'selected' : '' }}>4x4 (8 pairs)</option>
                 <option value="6" {{ old('grid_size') == 6 ? 'selected' : '' }}>6x6 (18 pairs)</option>
                 <option value="8" {{ old('grid_size') == 8 ? 'selected' : '' }}>8x8 (32 pairs)</option>
             </select>
-            <small id="grid-info">You need 8 vocabulary items for a 4x4 grid</small>
+            <small id="grid-info">You need 2 vocabulary items for a 2x2 grid</small>
         </div>
 
         <div class="form-group">
@@ -187,10 +188,10 @@
 
 <script>
 function updateVocabularyRequirement() {
-    const gridSize = document.getElementById('grid_size').value;
+    const gridSize = parseInt(document.getElementById('grid_size').value);
     const requiredPairs = (gridSize * gridSize) / 2;
     document.getElementById('required-count').textContent = requiredPairs;
-    document.getElementById('grid-info').textContent = `You need ${requiredPairs} vocabulary items for a ${gridSize}x${gridSize} grid`;
+    document.getElementById('grid-info').textContent = `You need ${requiredPairs} vocabulary item${requiredPairs === 1 ? '' : 's'} for a ${gridSize}x${gridSize} grid`;
     updateSelectionCount();
 }
 
