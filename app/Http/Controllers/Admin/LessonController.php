@@ -44,13 +44,13 @@ class LessonController extends Controller
             });
         }
         
-        // Handle sorting
-        $sortBy = $request->get('sort_by', 'session_number');
-        $sortDir = $request->get('sort_dir', 'asc');
+        // Handle sorting - default to updated_at desc (most recently updated first)
+        $sortBy = $request->get('sort_by', 'updated_at');
+        $sortDir = $request->get('sort_dir', 'desc');
         
         // Validate sort direction
         if (!in_array($sortDir, ['asc', 'desc'])) {
-            $sortDir = 'asc';
+            $sortDir = 'desc'; // Default to desc for updated_at
         }
         
         // Apply sorting based on column
@@ -65,11 +65,14 @@ class LessonController extends Controller
                 $query->orderBy('updated_at', $sortDir);
                 break;
             case 'session_number':
-            default:
-                // Default sorting: session number, then part number, then created_at
+                // Session number sorting: session number, then part number, then created_at
                 $query->orderBy('session_number', $sortDir)
                       ->orderBy('part_number', 'asc')
                       ->orderBy('created_at', 'asc');
+                break;
+            default:
+                // Default sorting: updated_at desc (most recently updated first)
+                $query->orderBy('updated_at', 'desc');
                 break;
         }
         

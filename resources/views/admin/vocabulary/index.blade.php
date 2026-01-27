@@ -43,30 +43,40 @@
     </div>
 
     <!-- Bulk Paste Section -->
-    <div class="bulk-paste-section" style="background: white; border: 1px solid var(--color-border, #ddd); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
-        <h2 style="margin: 0 0 1rem 0; font-size: 1.25rem; color: var(--color-primary, #0024a7);">📋 Paste Words (One Per Line)</h2>
-        <form id="bulk-paste-form" action="{{ route('admin.lessons.vocabulary.bulk-store', $lesson) }}" method="POST">
-            @csrf
-            <div style="margin-bottom: 1rem;">
-                <label for="bulk-words" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Paste words here (one word per line):</label>
-                <textarea 
-                    id="bulk-words" 
-                    name="words" 
-                    rows="8" 
-                    class="form-control" 
-                    placeholder="cat&#10;dog&#10;bird&#10;fish"
-                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.95rem; resize: vertical;"
-                ></textarea>
-                <small style="display: block; margin-top: 0.5rem; color: #666;">Each line will be created as a separate vocabulary word. Empty lines will be ignored.</small>
+    <div class="bulk-paste-section" id="bulk-paste-section" style="background: white; border: 1px solid var(--color-border, #ddd); border-radius: 8px; margin-bottom: 2rem; overflow: hidden;">
+        <div style="padding: 1rem 1.5rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="toggleBulkPaste()">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <h2 style="margin: 0; font-size: 1.25rem; color: var(--color-primary, #0024a7); display: flex; align-items: center; gap: 0.5rem;">
+                    <span id="bulk-paste-arrow" style="transition: transform 0.2s; display: inline-block;">▶</span>
+                    <span>📋 Paste Words (One Per Line)</span>
+                </h2>
+                <span style="color: #64748b; font-size: 0.875rem;">Click to expand</span>
             </div>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-                <button type="submit" class="btn btn-primary" id="bulk-paste-btn">
-                    <span id="bulk-paste-text">Add Words</span>
-                    <span id="bulk-paste-spinner" style="display: none;">⏳ Processing...</span>
-                </button>
-                <span id="bulk-paste-status" style="display: none; color: #10b981; font-weight: 600;"></span>
-            </div>
-        </form>
+        </div>
+        <div id="bulk-paste-content" style="display: none; padding: 1.5rem;">
+            <form id="bulk-paste-form" action="{{ route('admin.lessons.vocabulary.bulk-store', $lesson) }}" method="POST">
+                @csrf
+                <div style="margin-bottom: 1rem;">
+                    <label for="bulk-words" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Paste words here (one word per line):</label>
+                    <textarea 
+                        id="bulk-words" 
+                        name="words" 
+                        rows="8" 
+                        class="form-control" 
+                        placeholder="cat&#10;dog&#10;bird&#10;fish"
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.95rem; resize: vertical;"
+                    ></textarea>
+                    <small style="display: block; margin-top: 0.5rem; color: #666;">Each line will be created as a separate vocabulary word. Empty lines will be ignored.</small>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button type="submit" class="btn btn-primary" id="bulk-paste-btn">
+                        <span id="bulk-paste-text">Add Words</span>
+                        <span id="bulk-paste-spinner" style="display: none;">⏳ Processing...</span>
+                    </button>
+                    <span id="bulk-paste-status" style="display: none; color: #10b981; font-weight: 600;"></span>
+                </div>
+            </form>
+        </div>
     </div>
 
     @if($vocabulary->count() > 0)
@@ -987,13 +997,33 @@ function toggleAddWordsMenu() {
     }
 }
 
+function toggleBulkPaste() {
+    const content = document.getElementById('bulk-paste-content');
+    const arrow = document.getElementById('bulk-paste-arrow');
+    const isVisible = content.style.display === 'block';
+    
+    if (isVisible) {
+        content.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+    } else {
+        content.style.display = 'block';
+        arrow.style.transform = 'rotate(90deg)';
+    }
+}
+
 function scrollToBulkPaste() {
     // Close the menu
     toggleAddWordsMenu();
     
     // Scroll to bulk paste section
-    const bulkPasteSection = document.querySelector('.bulk-paste-section');
+    const bulkPasteSection = document.getElementById('bulk-paste-section');
     if (bulkPasteSection) {
+        // Expand it if collapsed
+        const content = document.getElementById('bulk-paste-content');
+        if (content.style.display !== 'block') {
+            toggleBulkPaste();
+        }
+        
         bulkPasteSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         // Highlight it briefly
         bulkPasteSection.style.transition = 'background-color 0.3s';
