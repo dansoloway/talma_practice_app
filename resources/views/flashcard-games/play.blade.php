@@ -36,34 +36,8 @@
     </div>
 
     <div id="flashcard-app" class="flashcard-container">
-        <!-- Game Selection Screen -->
-        <div class="game-selection" id="game-selection">
-            <h2>Choose Your Game Type</h2>
-            <p>Select how you want to practice your vocabulary:</p>
-            <div class="game-type-grid">
-                @foreach($gameData['game_types'] as $type)
-                    <button class="game-type-btn" data-type="{{ $type }}">
-                        <div class="game-type-icon">
-                            @if($type === 'image_to_word')
-                                🖼️
-                            @elseif($type === 'audio_to_word')
-                                🔊
-                            @elseif($type === 'image_to_audio')
-                                🖼️ → 🔊
-                            @elseif($type === 'audio_to_image')
-                                🔊 → 🖼️
-                            @endif
-                        </div>
-                        <div class="game-type-label">
-                            {{ \App\Models\FlashcardGame::getGameTypes()[$type] }}
-                        </div>
-                    </button>
-                @endforeach
-            </div>
-        </div>
-
         <!-- Game Screen -->
-        <div class="game-screen hidden" id="game-screen">
+        <div class="game-screen" id="game-screen">
             @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
                 <div class="mode-selector-container">
                     <div class="mode-selector" id="mode-selector">
@@ -162,7 +136,6 @@ let userAnswers = [];
 let gameStartTime = null;
 
 // DOM elements
-const gameSelection = document.getElementById('game-selection');
 const gameScreen = document.getElementById('game-screen');
 const gameComplete = document.getElementById('game-complete');
 const flashcard = document.getElementById('flashcard');
@@ -197,42 +170,48 @@ function changeMode(mode) {
 
 // Initialize game
 document.addEventListener('DOMContentLoaded', function() {
-    // Set up game type buttons
-    document.querySelectorAll('.game-type-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            currentGameType = this.dataset.type;
-            // Only show mode selector for audio_to_word (where they can choose language)
-            // Hide for all other game types
-            const modeSelector = document.querySelector('.mode-selector');
-            if (modeSelector && currentGameType === 'audio_to_word') {
-                modeSelector.style.display = 'block';
-            } else if (modeSelector) {
-                modeSelector.style.display = 'none';
-            }
-            startGame();
-        });
-    });
-
     // Set up control buttons
     nextBtn.addEventListener('click', nextCard);
     restartBtn.addEventListener('click', restartGame);
     playAgainBtn.addEventListener('click', restartGame);
     
+    // Auto-select game type: prefer image_to_word, fallback to audio_to_word
+    let defaultGameType = null;
+    if (gameData.game_types.includes('image_to_word')) {
+        defaultGameType = 'image_to_word';
+    } else if (gameData.game_types.includes('audio_to_word')) {
+        defaultGameType = 'audio_to_word';
+    } else if (gameData.game_types.length > 0) {
+        // Fallback to first available game type
+        defaultGameType = gameData.game_types[0];
+    }
+    
     // Check if there's a gameType in the URL (from mode change during game)
     const urlParams = new URLSearchParams(window.location.search);
     const gameTypeFromUrl = urlParams.get('gameType');
     if (gameTypeFromUrl && gameData.game_types.includes(gameTypeFromUrl)) {
-        // Auto-start the game with the specified type
         currentGameType = gameTypeFromUrl;
-        // Hide/show mode selector appropriately
-        const modeSelector = document.querySelector('.mode-selector');
-        if (modeSelector && currentGameType === 'audio_to_word') {
-            modeSelector.style.display = 'block';
-        } else if (modeSelector) {
-            modeSelector.style.display = 'none';
-        }
-        startGame();
-        // Clean up the URL
+    } else if (defaultGameType) {
+        currentGameType = defaultGameType;
+    } else {
+        // No game types available - show error or redirect
+        console.error('No game types available');
+        return;
+    }
+    
+    // Hide/show mode selector appropriately
+    const modeSelector = document.querySelector('.mode-selector');
+    if (modeSelector && currentGameType === 'audio_to_word') {
+        modeSelector.style.display = 'block';
+    } else if (modeSelector) {
+        modeSelector.style.display = 'none';
+    }
+    
+    // Auto-start the game
+    startGame();
+    
+    // Clean up the URL if needed
+    if (urlParams.has('gameType')) {
         urlParams.delete('gameType');
         window.history.replaceState({}, '', window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : ''));
     }
@@ -251,9 +230,7 @@ function startGame() {
         cards_planned: gameCards.length,
     });
 
-    // Show game screen
-    gameSelection.classList.add('hidden');
-    gameScreen.classList.remove('hidden');
+    // Show game screen (already visible, just ensure completion screen is hidden)
     gameComplete.classList.add('hidden');
 
     // Load first card
@@ -603,12 +580,17 @@ function endGame() {
 }
 
 function restartGame() {
-    // Reset to game selection
-    gameSelection.classList.remove('hidden');
-    gameScreen.classList.add('hidden');
+    // Reset game state
+    gameScreen.classList.remove('hidden');
     gameComplete.classList.add('hidden');
     gameComplete.classList.remove('celebrate');
     gameStartTime = null;
+    currentCardIndex = 0;
+    correctAnswers = 0;
+    userAnswers = [];
+    
+    // Restart the game
+    startGame();
 }
 
 function updateProgress() {
@@ -699,53 +681,6 @@ function autoResizeText(element) {
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-.game-selection {
-    text-align: center;
-    padding: 1rem;
-}
-
-.game-type-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-top: 1.5rem;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-@media (max-width: 640px) {
-    .game-type-grid {
-        grid-template-columns: 1fr;
-        max-width: 100%;
-    }
-}
-
-.game-type-btn {
-    background: var(--color-white);
-    border: 2px solid var(--color-border);
-    border-radius: 8px;
-    padding: 1.5rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-}
-
-.game-type-btn:hover {
-    border-color: var(--color-primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.game-type-icon {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-}
-
-.game-type-label {
-    font-weight: 500;
-    color: var(--color-text);
-}
 
 .game-progress {
     margin-bottom: 1rem;
