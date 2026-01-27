@@ -63,10 +63,7 @@
 
             <div class="flashcard-container">
                 <div class="card-type-selector-container" id="card-type-selector-container">
-                    <label for="card-type-select">Card Type:</label>
-                    <select id="card-type-select" onchange="changeCardType(this.value)">
-                        <!-- Options will be populated by JavaScript -->
-                    </select>
+                    <!-- Icon buttons will be populated by JavaScript -->
                 </div>
                 <div class="flashcard" id="flashcard">
                     <!-- Content will be dynamically loaded -->
@@ -184,6 +181,7 @@ function changeCardType(gameType) {
     currentGameType = gameType;
     
     // Re-render the current card with the new game type
+    // This will also update the button active states via updateCardTypeSelector
     if (currentCardIndex < gameCards.length) {
         const card = gameCards[currentCardIndex];
         renderCard(card);
@@ -220,10 +218,9 @@ function getAvailableGameTypesForCard(card) {
 }
 
 function updateCardTypeSelector(card) {
-    const selector = document.getElementById('card-type-select');
     const container = document.getElementById('card-type-selector-container');
     
-    if (!selector || !container) return;
+    if (!container) return;
     
     const availableTypes = getAvailableGameTypesForCard(card);
     
@@ -235,23 +232,44 @@ function updateCardTypeSelector(card) {
     
     container.style.display = 'flex';
     
-    // Clear existing options
-    selector.innerHTML = '';
+    // Clear existing buttons
+    container.innerHTML = '';
     
-    // Add available game types
-    const typeLabels = {
-        'image_to_word': 'Image → Word',
-        'image_to_audio': 'Image → Audio',
-        'audio_to_image': 'Audio → Image',
-        'audio_to_word': 'Audio → Word'
+    // Icon mappings for each game type
+    const typeIcons = {
+        'image_to_word': '<i class="fas fa-image"></i><i class="fas fa-arrow-right"></i><i class="fas fa-font"></i>',
+        'image_to_audio': '<i class="fas fa-image"></i><i class="fas fa-arrow-right"></i><i class="fas fa-volume-up"></i>',
+        'audio_to_image': '<i class="fas fa-volume-up"></i><i class="fas fa-arrow-right"></i><i class="fas fa-image"></i>',
+        'audio_to_word': '<i class="fas fa-volume-up"></i><i class="fas fa-arrow-right"></i><i class="fas fa-font"></i>'
     };
     
+    const typeTitles = {
+        'image_to_word': 'Image to Word',
+        'image_to_audio': 'Image to Audio',
+        'audio_to_image': 'Audio to Image',
+        'audio_to_word': 'Audio to Word'
+    };
+    
+    // Create icon buttons for each available type
     availableTypes.forEach(type => {
-        const option = document.createElement('option');
-        option.value = type;
-        option.textContent = typeLabels[type] || type;
-        option.selected = type === currentGameType;
-        selector.appendChild(option);
+        const button = document.createElement('button');
+        button.className = 'card-type-btn';
+        button.type = 'button';
+        button.innerHTML = typeIcons[type] || type;
+        button.title = typeTitles[type] || type;
+        button.dataset.gameType = type;
+        
+        // Mark as active if it's the current type
+        if (type === currentGameType) {
+            button.classList.add('active');
+        }
+        
+        // Add click handler
+        button.addEventListener('click', function() {
+            changeCardType(type);
+        });
+        
+        container.appendChild(button);
     });
 }
 
@@ -835,29 +853,48 @@ function autoResizeText(element) {
     padding: 0.75rem;
     background: #f8f9fa;
     border-radius: 8px;
+    flex-wrap: wrap;
 }
 
-.card-type-selector-container label {
-    font-weight: 600;
-    color: #495057;
-    font-size: 0.95rem;
-}
-
-.card-type-selector-container select {
-    padding: 0.5rem 1rem;
+.card-type-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
     border: 2px solid #dee2e6;
-    border-radius: 6px;
+    border-radius: 8px;
     background: white;
-    font-size: 0.95rem;
-    cursor: pointer;
-    font-weight: 500;
     color: #495057;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    height: 50px;
 }
 
-.card-type-selector-container select:focus {
-    outline: none;
+.card-type-btn:hover {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    background: #e3f2fd;
+    color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card-type-btn.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: white;
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+}
+
+.card-type-btn.active:hover {
+    background: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+}
+
+.card-type-btn i {
+    font-size: 1rem;
 }
 
 
