@@ -62,6 +62,12 @@
             </div>
 
             <div class="flashcard-container">
+                <div class="card-type-selector-container" id="card-type-selector-container">
+                    <label for="card-type-select">Card Type:</label>
+                    <select id="card-type-select" onchange="changeCardType(this.value)">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
                 <div class="flashcard" id="flashcard">
                     <!-- Content will be dynamically loaded -->
                 </div>
@@ -168,6 +174,87 @@ function changeMode(mode) {
     }
 }
 
+// Per-card game type change functionality
+function changeCardType(gameType) {
+    if (!gameData.game_types.includes(gameType)) {
+        console.error('Invalid game type:', gameType);
+        return;
+    }
+    
+    currentGameType = gameType;
+    
+    // Re-render the current card with the new game type
+    if (currentCardIndex < gameCards.length) {
+        const card = gameCards[currentCardIndex];
+        renderCard(card);
+    }
+}
+
+function getAvailableGameTypesForCard(card) {
+    const available = [];
+    
+    // Check what resources are available for this card
+    const hasImage = card.image_path && card.image_path.trim() !== '';
+    const hasAudio = card.audio_path && card.audio_path.trim() !== '';
+    
+    // Check if there are other cards with images (for audio_to_image mode)
+    const hasOtherCardsWithImages = gameData.cards && gameData.cards.some(c => 
+        c.id !== card.id && c.image_path && c.image_path.trim() !== ''
+    );
+    
+    // Filter available game types based on card resources
+    gameData.game_types.forEach(type => {
+        if (type === 'image_to_word' && hasImage) {
+            available.push(type);
+        } else if (type === 'image_to_audio' && hasImage) {
+            available.push(type);
+        } else if (type === 'audio_to_image' && hasAudio && hasOtherCardsWithImages) {
+            available.push(type);
+        } else if (type === 'audio_to_word' && hasAudio) {
+            available.push(type);
+        }
+    });
+    
+    // Fallback to all game types if none match (shouldn't happen, but safety check)
+    return available.length > 0 ? available : gameData.game_types;
+}
+
+function updateCardTypeSelector(card) {
+    const selector = document.getElementById('card-type-select');
+    const container = document.getElementById('card-type-selector-container');
+    
+    if (!selector || !container) return;
+    
+    const availableTypes = getAvailableGameTypesForCard(card);
+    
+    // Hide selector if only one type available
+    if (availableTypes.length <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.style.display = 'flex';
+    
+    // Clear existing options
+    selector.innerHTML = '';
+    
+    // Add available game types
+    const typeLabels = {
+        'image_to_word': 'Image → Word',
+        'image_to_audio': 'Image → Audio',
+        'audio_to_image': 'Audio → Image',
+        'audio_to_word': 'Audio → Word'
+    };
+    
+    availableTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = typeLabels[type] || type;
+        option.selected = type === currentGameType;
+        selector.appendChild(option);
+    });
+}
+
 // Initialize game
 document.addEventListener('DOMContentLoaded', function() {
     // Set up control buttons
@@ -249,6 +336,16 @@ function loadCard() {
 }
 
 function renderCard(card) {
+    // Update the card type selector for this card
+    updateCardTypeSelector(card);
+    
+    // Ensure current game type is available for this card
+    const availableTypes = getAvailableGameTypesForCard(card);
+    if (!availableTypes.includes(currentGameType)) {
+        // Fallback to first available type
+        currentGameType = availableTypes[0] || gameData.game_types[0];
+    }
+    
     const cardHtml = generateCardHTML(card);
     flashcard.innerHTML = cardHtml;
     
@@ -653,16 +750,25 @@ function autoResizeText(element) {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--color-primary);
+    color: white;
+    background: var(--color-primary);
     text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s ease;
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
     margin-bottom: 0;
+    border: 2px solid var(--color-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .game-header .back-link:hover {
-    color: var(--color-primary-dark);
-    text-decoration: underline;
+    background: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
 }
 
 .game-header .page-title {
@@ -715,6 +821,40 @@ function autoResizeText(element) {
 }
 
 .mode-selector select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.card-type-selector-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.card-type-selector-container label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.card-type-selector-container select {
+    padding: 0.5rem 1rem;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: #495057;
+}
+
+.card-type-selector-container select:focus {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
