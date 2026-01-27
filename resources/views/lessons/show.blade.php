@@ -3,64 +3,101 @@
 @section('title', $lesson->title)
 
 @section('content')
-<div class="container">
-    <div class="lesson-header">
-        <a href="{{ route('lessons.index') }}" class="back-link">&larr; Back to Lessons</a>
-        <h1 class="page-title">{{ $lesson->title }}</h1>
-        
-        @if($lesson->grade_level || $lesson->session_number || $lesson->session_title)
-            <div class="lesson-metadata">
-                @if($lesson->grade_level)
-                    <span class="grade-level">Grade {{ $lesson->grade_level }}</span>
-                @endif
-                @if($lesson->session_number)
-                    <span class="session-number">Session {{ $lesson->session_number }}</span>
-                @endif
-                @if($lesson->session_title)
-                    <span class="session-title">{{ $lesson->session_title }}</span>
-                @endif
-            </div>
-        @endif
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
+    <div class="container mx-auto px-4 max-w-5xl">
+        <!-- Back Link -->
+        <a href="{{ route('lessons.index') }}" 
+           class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-6 transition-colors duration-200 group">
+            <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
+            <span>Back to Lessons</span>
+        </a>
+
+        <!-- Lesson Header -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 mb-8">
+            @if($lesson->cover_image_path)
+                <div class="mb-6 text-center">
+                    <img src="{{ $lesson->cover_image_url }}" 
+                         alt="{{ $lesson->title }}" 
+                         class="max-w-full max-h-64 md:max-h-80 mx-auto rounded-xl shadow-md object-cover">
+                </div>
+            @endif
+            
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center tracking-tight">
+                {{ $lesson->title }}
+            </h1>
+            
+            @if($lesson->grade_level || $lesson->session_number || $lesson->session_title)
+                <div class="flex flex-wrap justify-center gap-3 mb-4">
+                    @if($lesson->grade_level)
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                            Grade {{ $lesson->grade_level }}
+                        </span>
+                    @endif
+                    @if($lesson->session_number)
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-purple-100 text-purple-700 border border-purple-200">
+                            Session {{ $lesson->session_number }}
+                        </span>
+                    @endif
+                    @if($lesson->session_title)
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                            {{ $lesson->session_title }}
+                        </span>
+                    @endif
+                </div>
+            @endif
+        </div>
 
         @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
-            <div class="vocabulary-section">
-                <div class="vocab-header">
-                    <h3>Vocabulary for this lesson</h3>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <h3 class="text-2xl font-bold text-gray-800">Vocabulary for this lesson</h3>
                     @php
                         $hasHebrew = $lesson->vocabulary->contains(fn($v) => !empty($v->hebrew_translation));
                         $hasArabic = $lesson->vocabulary->contains(fn($v) => !empty($v->arabic_translation));
                     @endphp
-                    <div class="vocab-translation-buttons">
-                        @if($hasHebrew)
-                            <button class="vocab-lang-toggle-btn" data-lang="hebrew" onclick="toggleVocabLanguage('hebrew')">
-                                עברית
-                            </button>
-                        @endif
-                        @if($hasArabic)
-                            <button class="vocab-lang-toggle-btn" data-lang="arabic" onclick="toggleVocabLanguage('arabic')">
-                                عربي
-                            </button>
-                        @endif
-                    </div>
-                </div>
-                <div class="vocabulary-grid">
-                    @foreach($lesson->vocabulary as $vocab)
-                        <div class="vocabulary-item">
-                            @if($vocab->image_path)
-                                <img src="{{ asset('storage/' . $vocab->image_path) }}" alt="{{ $vocab->english_word }}" class="vocab-image">
+                    @if($hasHebrew || $hasArabic)
+                        <div class="flex gap-3">
+                            @if($hasHebrew)
+                                <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 active:scale-95" 
+                                        data-lang="hebrew" onclick="toggleVocabLanguage('hebrew')">
+                                    עברית
+                                </button>
                             @endif
-                            <div class="vocab-content">
+                            @if($hasArabic)
+                                <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-green-400 hover:bg-green-50 transition-all duration-200 active:scale-95" 
+                                        data-lang="arabic" onclick="toggleVocabLanguage('arabic')">
+                                    عربي
+                                </button>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    @foreach($lesson->vocabulary as $vocab)
+                        <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 text-center hover:shadow-md hover:border-blue-300 transition-all duration-200">
+                            @if($vocab->image_path)
+                                <img src="{{ asset('storage/' . $vocab->image_path) }}" 
+                                     alt="{{ $vocab->english_word }}" 
+                                     class="w-full h-24 md:h-32 object-cover rounded-lg mb-3">
+                            @endif
+                            <div class="flex flex-col items-center gap-2">
                                 @if($vocab->word_audio_path)
-                                    <button class="vocab-audio-btn" onclick="playVocabAudio('{{ $vocab->word_audio_url }}')" title="Listen to word">
-                                        <i class="fas fa-volume-up"></i>
+                                    <button class="w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
+                                            onclick="playVocabAudio('{{ $vocab->word_audio_url }}')" 
+                                            title="Listen to word">
+                                        <i class="fas fa-volume-up text-sm"></i>
                                     </button>
                                 @endif
-                                <div class="vocab-word">{{ $vocab->english_word }}</div>
+                                <div class="text-lg font-bold text-gray-800">{{ $vocab->english_word }}</div>
                                 @if($vocab->hebrew_translation)
-                                    <div class="translation hebrew vocab-translation-hidden">{{ $vocab->hebrew_translation }}</div>
+                                    <div class="translation hebrew vocab-translation-hidden text-sm font-semibold px-3 py-1 rounded-lg bg-blue-100 text-blue-800 border border-blue-200">
+                                        {{ $vocab->hebrew_translation }}
+                                    </div>
                                 @endif
                                 @if($vocab->arabic_translation)
-                                    <div class="translation arabic vocab-translation-hidden">{{ $vocab->arabic_translation }}</div>
+                                    <div class="translation arabic vocab-translation-hidden text-sm font-semibold px-3 py-1 rounded-lg bg-green-100 text-green-800 border border-green-200">
+                                        {{ $vocab->arabic_translation }}
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -178,48 +215,55 @@
         @endphp
 
         @if($allActivities->count() > 0)
-            <div class="activities-section">
-                <h3>Activities</h3>
-                <p class="activities-description">Choose an activity to practice:</p>
-                <div class="activities-menu">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-2 text-center">Activities</h3>
+                <p class="text-gray-600 text-center mb-8">Choose an activity to practice:</p>
+                <div class="space-y-4">
                     @foreach($allActivities as $index => $activity)
-                        <div class="activity-menu-item" onclick="startActivity('{{ $activity->type }}', '{{ $activity->id }}')">
-                            <div class="activity-menu-icon">
-                                @if($activity->type === 'prompts')
-                                    📝
-                                @elseif($activity->type === 'matching')
-                                    🔗
-                                @elseif($activity->type === 'flashcard')
-                                    🎴
-                                @elseif($activity->type === 'spelling')
-                                    ✍️
-                                @elseif($activity->type === 'clause_exercise')
-                                    📄
-                                {{-- @elseif($activity->type === 'sentence_builder')
-                                    🏗️ --}}
-                                @elseif($activity->type === 'true_false')
-                                    ✓✗
-                                @endif
-                            </div>
-                            <div class="activity-menu-content">
-                                <div class="activity-menu-type">{{ ucfirst($activity->type) }} Activity</div>
-                                <div class="activity-menu-title">{{ $activity->title }}</div>
-                                @if($activity->type === 'prompts')
-                                    <div class="activity-menu-details">Complete sentences with the correct words</div>
-                                @elseif($activity->type === 'matching')
-                                    <div class="activity-menu-details">{{ $activity->model->grid_size }}x{{ $activity->model->grid_size }} matching grid</div>
-                                @elseif($activity->type === 'flashcard')
-                                    <div class="activity-menu-details">{{ $activity->model->cards_per_game }} flashcards</div>
-                                @elseif($activity->type === 'spelling')
-                                    <div class="activity-menu-details">{{ count($activity->model->vocabulary_ids ?? []) }} words</div>
-                                @elseif($activity->type === 'clause_exercise')
-                                    <div class="activity-menu-details">Fill in the blanks with vocabulary words</div>
-                                @elseif($activity->type === 'true_false')
-                                    <div class="activity-menu-details">Vocabulary True/False questions</div>
-                                @endif
-                            </div>
-                            <div class="activity-menu-arrow">
-                                <i class="fas fa-chevron-right"></i>
+                        <div class="group bg-gray-50 rounded-xl border-2 border-gray-200 p-5 md:p-6 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer" 
+                             onclick="startActivity('{{ $activity->type }}', '{{ $activity->id }}')">
+                            <div class="flex items-center gap-4 md:gap-6">
+                                <div class="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-2xl md:text-3xl group-hover:border-blue-300 transition-colors duration-200">
+                                    @if($activity->type === 'prompts')
+                                        📝
+                                    @elseif($activity->type === 'matching')
+                                        🔗
+                                    @elseif($activity->type === 'flashcard')
+                                        🎴
+                                    @elseif($activity->type === 'spelling')
+                                        ✍️
+                                    @elseif($activity->type === 'clause_exercise')
+                                        📄
+                                    @elseif($activity->type === 'true_false')
+                                        ✓✗
+                                    @endif
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-xs md:text-sm font-semibold text-blue-600 uppercase tracking-wide mb-1">
+                                        {{ ucfirst(str_replace('_', ' ', $activity->type)) }} Activity
+                                    </div>
+                                    <div class="text-lg md:text-xl font-bold text-gray-800 mb-1 group-hover:text-blue-700 transition-colors duration-200">
+                                        {{ $activity->title }}
+                                    </div>
+                                    <div class="text-sm md:text-base text-gray-600">
+                                        @if($activity->type === 'prompts')
+                                            Complete sentences with the correct words
+                                        @elseif($activity->type === 'matching')
+                                            {{ count($activity->model->vocabulary_ids ?? []) }} word pairs
+                                        @elseif($activity->type === 'flashcard')
+                                            {{ $activity->model->cards_per_game }} flashcards
+                                        @elseif($activity->type === 'spelling')
+                                            {{ count($activity->model->vocabulary_ids ?? []) }} words
+                                        @elseif($activity->type === 'clause_exercise')
+                                            Fill in the blanks with vocabulary words
+                                        @elseif($activity->type === 'true_false')
+                                            Vocabulary True/False questions
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="flex-shrink-0 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200">
+                                    <i class="fas fa-chevron-right text-xl"></i>
+                                </div>
                             </div>
                         </div>
                     @endforeach
@@ -227,8 +271,6 @@
             </div>
         @endif
     </div>
-
-
 </div>
 
 <audio id="prompt-audio" preload="auto"></audio>
@@ -253,6 +295,16 @@ function toggleVocabLanguage(lang) {
     const translations = document.querySelectorAll(`.translation.${lang}`);
     
     btn.classList.toggle('active');
+    if (btn.classList.contains('active')) {
+        btn.classList.add('border-2', 'scale-105');
+        if (lang === 'hebrew') {
+            btn.classList.add('border-blue-400', 'bg-blue-100');
+        } else if (lang === 'arabic') {
+            btn.classList.add('border-green-400', 'bg-green-100');
+        }
+    } else {
+        btn.classList.remove('border-2', 'scale-105', 'border-blue-400', 'bg-blue-100', 'border-green-400', 'bg-green-100');
+    }
     
     translations.forEach(translation => {
         translation.classList.toggle('vocab-translation-hidden');

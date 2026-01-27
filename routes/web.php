@@ -186,6 +186,12 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::delete('lessons/{lesson}/grammar-sets/{grammarSet}/detach', [AdminLessonController::class, 'detachGrammarSet'])
         ->name('lessons.grammar-sets.detach');
     
+    // Cover image routes
+    Route::put('lessons/{lesson}/cover-image', [AdminLessonController::class, 'updateCoverImage'])
+        ->name('lessons.update-cover-image');
+    Route::put('lessons/{lesson}/cover-image/remove', [AdminLessonController::class, 'removeCoverImage'])
+        ->name('lessons.remove-cover-image');
+    
     // Clause Exercises
     Route::get('lessons/{lesson}/clause-exercises/create', [\App\Http\Controllers\Admin\ClauseExerciseController::class, 'create'])
         ->name('lessons.clause-exercises.create');

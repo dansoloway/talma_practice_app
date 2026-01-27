@@ -32,23 +32,11 @@ class MatchingGameController extends Controller
             'title' => 'nullable|string|max:255',
             'vocabulary_ids' => 'required|array|min:2',
             'vocabulary_ids.*' => 'exists:vocabulary,id',
-            'grid_size' => 'required|integer|min:2|max:8',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ]);
 
-        // Ensure we have enough vocabulary for the grid
-        $vocabCount = count($validated['vocabulary_ids']);
-        $requiredPairs = ($validated['grid_size'] * $validated['grid_size']) / 2;
-        
-        if ($vocabCount < $requiredPairs) {
-            return back()->withErrors([
-                'vocabulary_ids' => "You need at least {$requiredPairs} vocabulary items for a {$validated['grid_size']}x{$validated['grid_size']} grid."
-            ])->withInput();
-        }
-
         $validated['lesson_id'] = $lesson->id;
-        $validated['vocabulary_ids'] = array_slice($validated['vocabulary_ids'], 0, $requiredPairs);
         $validated['title'] = $validated['title'] ?: $this->generateDefaultTitle($lesson);
         $validated['is_active'] = true; // Always active
         
@@ -82,22 +70,9 @@ class MatchingGameController extends Controller
             'title' => 'required|string|max:255',
             'vocabulary_ids' => 'required|array|min:2',
             'vocabulary_ids.*' => 'exists:vocabulary,id',
-            'grid_size' => 'required|integer|min:2|max:8',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ]);
-
-        // Ensure we have enough vocabulary for the grid
-        $vocabCount = count($validated['vocabulary_ids']);
-        $requiredPairs = ($validated['grid_size'] * $validated['grid_size']) / 2;
-        
-        if ($vocabCount < $requiredPairs) {
-            return back()->withErrors([
-                'vocabulary_ids' => "You need at least {$requiredPairs} vocabulary items for a {$validated['grid_size']}x{$validated['grid_size']} grid."
-            ])->withInput();
-        }
-
-        $validated['vocabulary_ids'] = array_slice($validated['vocabulary_ids'], 0, $requiredPairs);
 
         $validated['title'] = $validated['title'] ?? $matchingGame->title;
         $validated['is_active'] = true; // Always active
@@ -152,19 +127,15 @@ class MatchingGameController extends Controller
     }
 
     /**
-     * Generate the game grid with shuffled cards
+     * Generate the game data with shuffled cards
      */
     private function generateGameData(MatchingGame $matchingGame, $vocabulary, $mode = 'image')
     {
-        $gridSize = $matchingGame->grid_size;
-        $totalCards = $gridSize * $gridSize;
-        $pairs = $totalCards / 2;
-
         // Filter vocabulary based on what's available for the selected mode
         $availableVocab = $this->filterVocabularyForMode($vocabulary, $mode);
         
-        // Take only the number of pairs we need
-        $selectedVocab = $availableVocab->take($pairs);
+        // Use all available vocabulary
+        $selectedVocab = $availableVocab;
         
         $cards = [];
         
@@ -192,8 +163,7 @@ class MatchingGameController extends Controller
 
         return [
             'cards' => $cards,
-            'grid_size' => $gridSize,
-            'total_cards' => $totalCards,
+            'total_cards' => count($cards),
             'mode' => $mode,
             'available_modes' => $this->getAvailableModes($vocabulary),
         ];

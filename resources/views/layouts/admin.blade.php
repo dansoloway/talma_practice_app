@@ -18,185 +18,97 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     @stack('styles')
 </head>
-<body class="admin-body">
-    <header class="admin-header">
-        <nav class="nav">
-            <div class="nav-brand">
-                <a href="{{ route('admin.analytics') }}" class="nav-logo-link" aria-label="TALMA Practice Pal admin home">
-                    <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="nav-logo">
-                    <span class="nav-logo-text">Admin</span>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen">
+    <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200/60 shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="{{ route('admin.analytics') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="TALMA Practice Pal admin home">
+                    <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="h-9 w-auto">
+                    <span class="text-gray-700 font-semibold text-lg">Admin</span>
                 </a>
             </div>
-            <div class="nav-links">
+            <div class="flex items-center gap-4 flex-wrap">
                 <!-- Analytics Dropdown -->
-                <div class="nav-dropdown">
-                    <a href="#" class="nav-dropdown-toggle">
-                        Analytics <i class="fas fa-chevron-down"></i>
+                <div class="relative group">
+                    <a href="#" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
+                        Analytics <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
                     </a>
-                    <div class="nav-dropdown-menu">
-                        <a href="{{ route('admin.analytics') }}">Dashboard</a>
-                        <a href="{{ route('admin.session-length') }}">Session Length</a>
-                        <a href="{{ route('admin.openai-usage') }}">OpenAI Usage & Cost</a>
+                    <div class="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <a href="{{ route('admin.analytics') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">Dashboard</a>
+                        <a href="{{ route('admin.session-length') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Session Length</a>
+                        <a href="{{ route('admin.openai-usage') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition-colors duration-200">OpenAI Usage & Cost</a>
                     </div>
                 </div>
                 
                 <!-- Lessons Dropdown -->
-                <div class="nav-dropdown">
-                    <a href="#" class="nav-dropdown-toggle">
-                        Lessons <i class="fas fa-chevron-down"></i>
+                <div class="relative group">
+                    <a href="#" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
+                        Lessons <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
                     </a>
-                    <div class="nav-dropdown-menu">
-                        <a href="{{ route('admin.lessons.index') }}">All Lessons</a>
-                        <a href="{{ route('admin.lesson-tracker') }}">Lesson Tracker</a>
-                        <a href="{{ route('admin.lessons.archived') }}">Archived</a>
-                        <a href="{{ route('admin.grammar-concepts.index') }}">Grammar Sets</a>
+                    <div class="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <a href="{{ route('admin.lessons.index') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">All Lessons</a>
+                        <a href="{{ route('admin.lesson-tracker') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Lesson Tracker</a>
+                        <a href="{{ route('admin.lessons.archived') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Archived</a>
+                        <a href="{{ route('admin.grammar-concepts.index') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition-colors duration-200">Grammar Sets</a>
                     </div>
                 </div>
                 
                 @if(session('admin_user_role') === 'admin')
-                    <a href="{{ route('admin.users.index') }}">Users</a>
+                    <a href="{{ route('admin.users.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Users</a>
                 @endif
                 
-                <a href="{{ route('admin.openai-usage') }}" title="View AI Cost Dashboard">
+                <a href="{{ route('admin.openai-usage') }}" title="View AI Cost Dashboard" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
                     <i class="fas fa-dollar-sign"></i> AI Costs
                 </a>
                 
-                <a href="{{ route('lessons.index') }}">Student View</a>
-                <span class="nav-user">{{ session('admin_user_name') }} ({{ ucfirst(session('admin_user_role')) }})</span>
-                <a href="#" onclick="logout()" class="logout-link">Logout</a>
+                <a href="{{ route('lessons.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Student View</a>
+                <span class="px-3 py-2 text-gray-600 text-sm border-l border-gray-200/60 ml-2 pl-4">{{ session('admin_user_name') }} ({{ ucfirst(session('admin_user_role')) }})</span>
+                <a href="#" onclick="logout()" class="px-3 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
             </div>
         </nav>
     </header>
 
-    <main class="admin-content">
-        @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
+    <main class="min-h-screen py-6">
+        <div class="container mx-auto px-4">
+            @if(session('success'))
+                <div class="bg-green-50/90 backdrop-blur-sm border border-green-200 text-green-800 p-4 rounded-xl shadow-sm mb-6">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                        <p class="font-medium">{{ session('success') }}</p>
+                    </div>
+                </div>
+            @endif
 
-        @if(session('error'))
-            <div class="alert alert-error">
-                {{ session('error') }}
-            </div>
-        @endif
+            @if(session('error'))
+                <div class="bg-red-50/90 backdrop-blur-sm border border-red-200 text-red-800 p-4 rounded-xl shadow-sm mb-6">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-exclamation-circle text-red-600"></i>
+                        <p class="font-medium">{{ session('error') }}</p>
+                    </div>
+                </div>
+            @endif
 
-        @if($errors->any())
-            <div class="alert alert-error">
-                <ul>
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+            @if($errors->any())
+                <div class="bg-red-50/90 backdrop-blur-sm border border-red-200 text-red-800 p-4 rounded-xl shadow-sm mb-6">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-exclamation-circle text-red-600 mt-0.5"></i>
+                        <div>
+                            <p class="font-semibold mb-2">Please fix the following errors:</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
 
         @yield('content')
     </main>
 
     @stack('scripts')
-    
-    <style>
-    /* Navigation Dropdown Styles */
-    .nav-dropdown {
-        position: relative;
-        display: inline-block;
-    }
-    
-    .nav-dropdown-toggle {
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-        color: var(--color-white);
-        text-decoration: none;
-        font-weight: 500;
-        transition: var(--transition-fast);
-        padding: 0.5rem 0;
-    }
-    
-    .nav-dropdown-toggle:hover {
-        text-decoration: underline;
-    }
-    
-    .nav-dropdown-toggle i {
-        font-size: 0.7rem;
-        transition: transform 0.2s;
-        margin-left: 0.25rem;
-    }
-    
-    .nav-dropdown:hover .nav-dropdown-toggle i {
-        transform: rotate(180deg);
-    }
-    
-    .nav-dropdown-menu {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        margin-top: 0.25rem;
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        min-width: 180px;
-        z-index: 1000;
-        padding: 0.25rem 0;
-    }
-    
-    /* Show menu when hovering over dropdown container OR the menu itself */
-    .nav-dropdown:hover .nav-dropdown-menu,
-    .nav-dropdown-menu:hover {
-        display: block;
-    }
-    
-    /* Add invisible bridge to prevent gap issues */
-    .nav-dropdown::before {
-        content: '';
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        height: 0.5rem;
-        z-index: 999;
-    }
-    
-    .nav-dropdown-menu a {
-        display: block;
-        padding: 0.75rem 1rem;
-        color: var(--color-text);
-        text-decoration: none;
-        transition: var(--transition-fast);
-        font-weight: 500;
-    }
-    
-    .nav-dropdown-menu a:hover {
-        background-color: var(--color-primary-bg);
-        color: var(--color-primary);
-    }
-    
-    .nav-dropdown-menu a.active {
-        background-color: var(--color-primary);
-        color: white;
-    }
-    
-    /* Better spacing for nav items */
-    .admin-header .nav-links {
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-    
-    /* Separate user info and logout */
-    .nav-user {
-        margin-left: 0.5rem;
-        padding-left: 1rem;
-        border-left: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    .logout-link {
-        margin-left: 0.5rem;
-    }
-    </style>
     
     <script>
     function logout() {

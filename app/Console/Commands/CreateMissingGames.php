@@ -48,28 +48,15 @@ class CreateMissingGames extends Command
             // Check for matching games
             $hasMatchingGame = $lesson->matchingGames()->exists();
             if (!$hasMatchingGame) {
-                // For matching games, need at least 8 vocabulary items for a 4x4 grid (minimum)
-                // But we'll allow 2+ for a smaller grid
+                // For matching games, need at least 2 vocabulary items
                 if ($vocabCount >= 2) {
-                    // Determine grid size based on vocabulary count
-                    // 4x4 grid needs 8 pairs, 6x6 needs 18 pairs, 8x8 needs 32 pairs
-                    $pairs = floor($vocabCount / 2);
-                    $gridSize = 4; // Default to 4x4
-                    
-                    if ($pairs >= 18) {
-                        $gridSize = 6;
-                    } elseif ($pairs >= 32) {
-                        $gridSize = 8;
-                    }
-                    
-                    // Use up to the required pairs
-                    $vocabIds = $vocabulary->take($pairs * 2)->pluck('id')->toArray();
+                    // Use all available vocabulary
+                    $vocabIds = $vocabulary->pluck('id')->toArray();
                     
                     MatchingGame::create([
                         'lesson_id' => $lesson->id,
                         'title' => $this->generateMatchingTitle($lesson),
                         'vocabulary_ids' => $vocabIds,
-                        'grid_size' => $gridSize,
                         'is_active' => true,
                         'sort_order' => 1,
                     ]);

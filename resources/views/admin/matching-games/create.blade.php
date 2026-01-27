@@ -27,17 +27,6 @@
         <input type="hidden" name="title" value="{{ old('title', $lesson->generateActivityName('matching', $lesson->matchingGames()->count() + 1)) }}">
 
         <div class="form-group">
-            <label for="grid_size">Grid Size</label>
-            <select id="grid_size" name="grid_size" class="form-control" onchange="updateVocabularyRequirement()">
-                <option value="2" {{ old('grid_size', 2) == 2 ? 'selected' : '' }}>2x2 (2 pairs)</option>
-                <option value="4" {{ old('grid_size', 4) == 4 ? 'selected' : '' }}>4x4 (8 pairs)</option>
-                <option value="6" {{ old('grid_size') == 6 ? 'selected' : '' }}>6x6 (18 pairs)</option>
-                <option value="8" {{ old('grid_size') == 8 ? 'selected' : '' }}>8x8 (32 pairs)</option>
-            </select>
-            <small id="grid-info">You need 2 vocabulary items for a 2x2 grid</small>
-        </div>
-
-        <div class="form-group">
             <label>Select Vocabulary Words</label>
             <div class="vocabulary-selection">
                 @if($vocabulary->count() > 0)
@@ -61,7 +50,7 @@
                         @endforeach
                     </div>
                     <div class="selection-info">
-                        <span id="selection-count">0</span> words selected (need <span id="required-count">8</span>)
+                        <span id="selection-count">0</span> words selected (minimum 2 required)
                     </div>
                 @else
                     <div class="empty-state">
@@ -181,22 +170,14 @@
 </style>
 
 <script>
-function updateVocabularyRequirement() {
-    const gridSize = parseInt(document.getElementById('grid_size').value);
-    const requiredPairs = (gridSize * gridSize) / 2;
-    document.getElementById('required-count').textContent = requiredPairs;
-    document.getElementById('grid-info').textContent = `You need ${requiredPairs} vocabulary item${requiredPairs === 1 ? '' : 's'} for a ${gridSize}x${gridSize} grid`;
-    updateSelectionCount();
-}
-
 function updateSelectionCount() {
     const checkboxes = document.querySelectorAll('input[name="vocabulary_ids[]"]:checked');
     const count = checkboxes.length;
-    const required = parseInt(document.getElementById('required-count').textContent);
+    const minimum = 2;
     
     document.getElementById('selection-count').textContent = count;
     
-    if (count < required) {
+    if (count < minimum) {
         document.getElementById('selection-count').style.color = 'var(--color-danger)';
     } else {
         document.getElementById('selection-count').style.color = 'var(--color-success)';
@@ -206,6 +187,11 @@ function updateSelectionCount() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateSelectionCount();
+    
+    // Update count when checkboxes change
+    document.querySelectorAll('input[name="vocabulary_ids[]"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectionCount);
+    });
 });
 </script>
 @endsection

@@ -117,6 +117,83 @@
         </div>
     </div>
 
+    <!-- Cover Image Section -->
+    <div class="management-section">
+        <div class="section-header">
+            <h2>Cover Image</h2>
+        </div>
+        
+        <div class="cover-image-section">
+            @if($lesson->cover_image_path)
+                <div class="current-cover-image">
+                    <label>Current Cover Image:</label>
+                    <div class="cover-image-preview">
+                        <img src="{{ $lesson->cover_image_url }}" alt="Cover image" style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid var(--color-border);">
+                    </div>
+                </div>
+            @else
+                <div class="no-cover-image">
+                    <p style="color: var(--color-text-muted);">No cover image set.</p>
+                </div>
+            @endif
+
+            <div class="cover-image-options" style="margin-top: 1.5rem;">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem;">Set Cover Image</h3>
+                
+                <!-- Option 1: Select from Vocabulary Images -->
+                @if($lesson->vocabulary->whereNotNull('image_path')->count() > 0)
+                    <div class="vocab-images-selector" style="margin-bottom: 2rem;">
+                        <label style="display: block; margin-bottom: 0.75rem; font-weight: 500;">Choose from Vocabulary Images:</label>
+                        <div class="vocab-images-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            @foreach($lesson->vocabulary->whereNotNull('image_path') as $vocab)
+                                <div class="vocab-image-option" 
+                                     data-image-path="{{ $vocab->image_path }}"
+                                     onclick="selectVocabImage('{{ $vocab->image_path }}', this)"
+                                     style="cursor: pointer; border: 2px solid var(--color-border); border-radius: 8px; padding: 0.5rem; transition: all 0.2s; {{ $lesson->cover_image_path === $vocab->image_path ? 'border-color: var(--color-primary); background: var(--color-primary-bg);' : '' }}">
+                                    <img src="{{ $vocab->image_url }}" 
+                                         alt="{{ $vocab->english_word }}" 
+                                         style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 0.5rem;">
+                                    <div style="font-size: 0.75rem; text-align: center; color: var(--color-text-muted);">{{ $vocab->english_word }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Option 2: Upload New Image -->
+                <div class="upload-cover-image">
+                    <label style="display: block; margin-bottom: 0.75rem; font-weight: 500;">Upload New Image:</label>
+                    <form id="cover-image-form" action="{{ route('admin.lessons.update-cover-image', $lesson) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 1rem; align-items: flex-end;" onsubmit="return handleCoverImageSubmit(event);">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="cover_image_source" id="cover_image_source" value="">
+                        <div style="flex: 1;">
+                            <input type="file" 
+                                   id="cover_image_file" 
+                                   name="cover_image" 
+                                   accept="image/jpeg,image/png,image/jpg,image/gif,image/svg"
+                                   class="form-control"
+                                   style="padding: 0.5rem;">
+                            <small style="color: var(--color-text-muted); display: block; margin-top: 0.25rem;">JPEG, PNG, GIF, or SVG (max 2MB)</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </form>
+                </div>
+
+                <!-- Remove Cover Image -->
+                @if($lesson->cover_image_path)
+                    <div style="margin-top: 1rem;">
+                        <form action="{{ route('admin.lessons.remove-cover-image', $lesson) }}" method="POST" onsubmit="return confirm('Remove cover image?');">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit" class="btn btn-danger btn-sm">Remove Cover Image</button>
+                        </form>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
     <!-- Vocabulary Section -->
     <div class="management-section">
         <div class="section-header">
@@ -652,6 +729,76 @@ function deleteAllPrompts(title) {
         console.error('Error:', error);
         alert('Error deleting prompts');
     });
+}
+
+// Cover image selection
+function selectVocabImage(imagePath, element) {
+    // Update visual selection
+    document.querySelectorAll('.vocab-image-option').forEach(option => {
+        option.style.borderColor = 'var(--color-border)';
+        option.style.background = '';
+    });
+    if (element) {
+        element.style.borderColor = 'var(--color-primary)';
+        element.style.background = 'var(--color-primary-bg)';
+    }
+    
+    // Set hidden input and submit form
+    document.getElementById('cover_image_source').value = imagePath;
+    document.getElementById('cover_image_file').value = ''; // Clear file input
+    
+    // Submit form via AJAX
+    const form = document.getElementById('cover-image-form');
+    const formData = new FormData(form);
+    formData.append('cover_image_source', imagePath);
+    
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Refresh to show updated cover image
+        } else {
+            alert('Error setting cover image: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error setting cover image');
+    });
+}
+
+// Handle cover image form submission
+function handleCoverImageSubmit(event) {
+    const fileInput = document.getElementById('cover_image_file');
+    const sourceInput = document.getElementById('cover_image_source');
+    
+    // If no file selected and no source selected, prevent submission
+    if (!fileInput.files.length && !sourceInput.value) {
+        event.preventDefault();
+        alert('Please select an image from vocabulary or upload a new image.');
+        return false;
+    }
+    
+    // If file is selected, allow normal form submission
+    if (fileInput.files.length) {
+        return true; // Allow normal form submission
+    }
+    
+    // If source is selected but no file, prevent normal submission (already handled by AJAX)
+    if (sourceInput.value && !fileInput.files.length) {
+        event.preventDefault();
+        return false;
+    }
+    
+    return true;
 }
 </script>
 

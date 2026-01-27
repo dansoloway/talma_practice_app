@@ -3,117 +3,136 @@
 @section('title', 'Vocabulary Matching Game')
 
 @section('content')
-<style>
-/* Hide footer on game pages for mobile */
-@media (max-width: 768px) {
-    .footer {
-        display: none;
-    }
-    
-    .game-header {
-        padding: 0.5rem 0;
-    }
-    
-    .game-title {
-        font-size: 1.2rem;
-        margin: 0.5rem 0;
-    }
-    
-    .game-header .back-link {
-        font-size: 0.9rem;
-    }
-}
-</style>
-<div class="matching-game-container">
-    <div class="game-header">
-        <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
-        <h1 class="game-title">{{ $matching_game->title }}</h1>
-    </div>
-    
-    @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
-        <div class="mode-selector-container">
-            <div class="mode-selector">
-                <label for="mode-select">Match English with:</label>
-                <select id="mode-select" onchange="changeMode(this.value)">
-                    @foreach($gameData['available_modes'] as $modeKey => $modeLabel)
-                        <option value="{{ $modeKey }}" {{ $mode === $modeKey ? 'selected' : '' }}>
-                            {{ $modeLabel }}
-                        </option>
-                    @endforeach
-                </select>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-6 md:py-8">
+    <div class="container mx-auto px-4 max-w-6xl">
+        <!-- Game Header -->
+        <div class="mb-6">
+            <a href="{{ route('lessons.show', $lesson->slug) }}" 
+               class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4 transition-colors duration-200 group">
+                <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
+                <span>Back to Lesson</span>
+            </a>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center mb-6">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{{ $matching_game->title }}</h1>
             </div>
         </div>
-    @endif
-
-    <div class="game-stats">
-        <div class="stat">
-            <span class="stat-label">Matches Found:</span>
-            <span class="stat-value" id="matches-found">0</span>
-        </div>
-        <div class="stat">
-            <span class="stat-label">Total Pairs:</span>
-            <span class="stat-value" id="total-pairs">{{ count($gameData['cards']) / 2 }}</span>
-        </div>
-        <div class="stat">
-            <span class="stat-label">Time:</span>
-            <span class="stat-value" id="game-time">0:00</span>
-        </div>
-    </div>
-
-    <div class="game-grid" id="game-grid" style="grid-template-columns: repeat({{ $gameData['grid_size'] }}, 1fr);">
-        @if(isset($gameData['cards']) && count($gameData['cards']) > 0)
-            @foreach($gameData['cards'] as $index => $card)
-                <div class="game-card" data-card-id="{{ $card['id'] }}" data-vocab-id="{{ $card['vocab_id'] }}" data-type="{{ $card['type'] }}">
-                    <div class="card-content">
-                        @if($card['type'] === 'audio')
-                            @if(!empty($card['audio_path']))
-                                <button class="play-audio-strip" data-audio="{{ $card['audio_path'] }}" title="Play audio">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                            @else
-                                <div class="card-word" style="color: red;">No audio</div>
-                            @endif
-                        @elseif($card['type'] === 'image' && $card['content'])
-                            <img src="{{ $card['content'] }}" alt="{{ $card['word'] }}" class="card-image">
-                        @elseif($card['type'] === 'hebrew')
-                            <div class="card-translation hebrew">{{ $card['content'] }}</div>
-                        @elseif($card['type'] === 'arabic')
-                            <div class="card-translation arabic">{{ $card['content'] }}</div>
-                        @else
-                            <div class="card-word">{{ $card['content'] }}</div>
-                            @if($card['audio_path'] && $mode !== 'image' && $mode !== 'audio')
-                                <button class="play-audio-btn" data-audio="{{ $card['audio_path'] }}" title="Play audio">
-                                    <i class="fas fa-volume-up"></i>
-                                </button>
-                            @endif
-                        @endif
-                    </div>
+        
+        @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
+            <div class="flex justify-center mb-6">
+                <div class="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-4">
+                    <label for="mode-select" class="font-semibold text-gray-700">Match English with:</label>
+                    <select id="mode-select" 
+                            onchange="changeMode(this.value)"
+                            class="px-4 py-2 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
+                        @foreach($gameData['available_modes'] as $modeKey => $modeLabel)
+                            <option value="{{ $modeKey }}" {{ $mode === $modeKey ? 'selected' : '' }}>
+                                {{ $modeLabel }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-            @endforeach
-        @else
-            <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
-                <p>No game cards found. Please check that vocabulary items have images.</p>
             </div>
         @endif
-    </div>
 
-    <div class="game-completion" id="game-completion" style="display: none;">
-        <div class="completion-content">
-            <h2>🎉 Congratulations!</h2>
-            <p>You completed the matching game!</p>
-            <div class="completion-stats">
-                <div class="completion-stat">
-                    <span class="stat-label">Final Time:</span>
-                    <span class="stat-value" id="final-time">0:00</span>
+        <!-- Game Stats -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
+            <div class="flex justify-center gap-6 md:gap-12 flex-wrap">
+                <div class="text-center">
+                    <div class="text-sm font-semibold text-gray-600 mb-1">Matches Found</div>
+                    <div class="text-2xl font-bold text-blue-600" id="matches-found">0</div>
                 </div>
-                <div class="completion-stat">
-                    <span class="stat-label">Total Matches:</span>
-                    <span class="stat-value" id="final-matches">{{ count($gameData['cards']) / 2 }}</span>
+                <div class="text-center">
+                    <div class="text-sm font-semibold text-gray-600 mb-1">Total Pairs</div>
+                    <div class="text-2xl font-bold text-purple-600" id="total-pairs">{{ count($gameData['cards']) / 2 }}</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-sm font-semibold text-gray-600 mb-1">Time</div>
+                    <div class="text-2xl font-bold text-green-600" id="game-time">0:00</div>
                 </div>
             </div>
-            <div class="completion-actions">
-                <button onclick="location.reload()" class="btn btn-primary">Play Again</button>
-                <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-secondary">Continue Lesson</a>
+        </div>
+
+        <!-- Game Area - Randomly positioned cards -->
+        <div class="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-8 min-h-[500px] md:min-h-[600px]" id="game-area">
+            @if(isset($gameData['cards']) && count($gameData['cards']) > 0)
+                @foreach($gameData['cards'] as $index => $card)
+                    <div class="game-card absolute cursor-pointer bg-white rounded-xl border-2 border-blue-500 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200" 
+                         data-card-id="{{ $card['id'] }}" 
+                         data-vocab-id="{{ $card['vocab_id'] }}" 
+                         data-type="{{ $card['type'] }}"
+                         data-index="{{ $index }}">
+                        <div class="card-content w-full h-full flex items-center justify-center p-3 md:p-4">
+                            @if($card['type'] === 'audio')
+                                @if(!empty($card['audio_path']))
+                                    <button class="play-audio-strip w-full h-full bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center" 
+                                            data-audio="{{ $card['audio_path'] }}" 
+                                            title="Play audio">
+                                        <i class="fas fa-play text-3xl md:text-4xl"></i>
+                                    </button>
+                                @else
+                                    <div class="text-red-600 font-semibold">No audio</div>
+                                @endif
+                            @elseif($card['type'] === 'image' && $card['content'])
+                                <img src="{{ $card['content'] }}" alt="{{ $card['word'] }}" class="w-full h-full object-cover rounded-lg">
+                            @elseif($card['type'] === 'hebrew')
+                                <div class="card-translation hebrew w-full h-full bg-blue-100 text-blue-800 border-2 border-blue-300 rounded-lg flex items-center justify-center font-semibold text-base md:text-lg px-3 py-2">
+                                    {{ $card['content'] }}
+                                </div>
+                            @elseif($card['type'] === 'arabic')
+                                <div class="card-translation arabic w-full h-full bg-green-100 text-green-800 border-2 border-green-300 rounded-lg flex items-center justify-center font-semibold text-base md:text-lg px-3 py-2">
+                                    {{ $card['content'] }}
+                                </div>
+                            @else
+                                <div class="card-word w-full h-full flex items-center justify-center font-bold text-gray-800 text-base md:text-lg px-3 py-2 text-center">
+                                    {{ $card['content'] }}
+                                </div>
+                                @if($card['audio_path'] && $mode !== 'image' && $mode !== 'audio')
+                                    <button class="play-audio-btn absolute top-2 right-2 w-8 h-8 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
+                                            data-audio="{{ $card['audio_path'] }}" 
+                                            title="Play audio">
+                                        <i class="fas fa-volume-up text-xs"></i>
+                                    </button>
+                                @endif
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            @else
+                <div class="text-center py-12">
+                    <div class="text-6xl mb-4">🔍</div>
+                    <p class="text-gray-600 text-lg">No game cards found. Please check that vocabulary items have images.</p>
+                </div>
+            @endif
+        </div>
+
+        <!-- Game Completion Modal -->
+        <div id="game-completion" class="hidden fixed inset-0 z-50 p-4" style="display: none; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+            <div class="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center max-w-md w-full">
+                <div class="text-6xl mb-4">🎉</div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-3">Congratulations!</h2>
+                <p class="text-lg text-gray-600 mb-6">You completed the matching game!</p>
+                <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200 mb-6">
+                    <div class="flex justify-around gap-4">
+                        <div>
+                            <div class="text-sm font-semibold text-gray-600 mb-1">Final Time</div>
+                            <div class="text-2xl font-bold text-blue-600" id="final-time">0:00</div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-gray-600 mb-1">Total Matches</div>
+                            <div class="text-2xl font-bold text-purple-600" id="final-matches">{{ count($gameData['cards']) / 2 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button onclick="location.reload()" 
+                            class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                        Play Again
+                    </button>
+                    <a href="{{ route('lessons.show', $lesson->slug) }}" 
+                       class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 active:scale-95 transition-all duration-200 shadow-sm">
+                        Continue Lesson
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -141,82 +160,25 @@
     font-size: 1.1rem;
 }
 
-.game-stats {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-bottom: 2rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-}
+/* Stats styling moved to Tailwind classes in HTML */
 
-.stat {
-    text-align: center;
-}
-
-.stat-label {
-    display: block;
-    font-size: 0.875rem;
-    color: var(--color-text-light);
-    margin-bottom: 0.25rem;
-}
-
-.stat-value {
-    display: block;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--color-primary);
-}
-
-.game-grid {
-    display: grid;
-    gap: 0.75rem;
-    margin-bottom: 2rem;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
+#game-area {
+    position: relative;
+    overflow: visible;
 }
 
 .game-card {
-    aspect-ratio: 1;
     cursor: pointer;
-    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
-    border: 2px solid var(--color-primary);
-    background: white;
 }
 
 .game-card:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-}
-
-.game-card.selected {
-    border: 5px solid var(--color-success, #28a745);
-    background: var(--color-success-light, #d4edda);
-    transform: scale(1.05);
-    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
-}
-
-.game-card.correct {
-    border-color: var(--color-success);
-    background: var(--color-success-light, #d4edda);
-    transform: scale(1.05);
-}
-
-.game-card.incorrect {
-    border-color: var(--color-danger);
-    background: var(--color-danger-light, #f8d7da);
-    animation: shake 0.3s ease-in-out;
+    z-index: 20 !important;
 }
 
 .game-card.matched {
-    opacity: 0;
-    transform: scale(0.8);
-    transition: all 0.3s ease;
+    transition: all 0.6s ease;
 }
 
 @keyframes shake {
@@ -232,165 +194,30 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem;
     overflow: hidden;
 }
 
-/* For audio cards, use column layout with no padding */
-.game-card[data-type="audio"] .card-content {
-    flex-direction: column;
-    padding: 0;
-}
-
-.card-image {
-    width: 80%;
-    height: 80%;
-    object-fit: cover;
-    border-radius: 4px;
-}
+/* Card content styling handled by Tailwind classes */
 
 .card-word {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #1f2937;
-    padding: 1rem;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 60px;
     white-space: nowrap;
-    word-wrap: normal;
-    overflow-wrap: normal;
-    hyphens: none;
-    -webkit-hyphens: none;
-    -moz-hyphens: none;
-    -ms-hyphens: none;
-    max-width: 100%;
-    width: 100%;
-    box-sizing: border-box;
-    line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
 }
 
-.play-audio-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    background: var(--color-primary);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    z-index: 10;
-}
+/* Audio button styling handled by Tailwind classes */
 
-.play-audio-btn:hover {
-    background: var(--color-primary-dark);
-    transform: scale(1.1);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-.play-audio-btn i {
-    font-size: 1.2rem;
-}
-
-.play-audio-btn:active {
-    transform: scale(0.95);
-}
-
-.game-completion {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.completion-content {
-    background: white;
-    padding: 3rem;
-    border-radius: 12px;
-    text-align: center;
-    max-width: 400px;
-    width: 90%;
-}
-
-.completion-content h2 {
-    color: var(--color-success);
-    margin-bottom: 1rem;
-}
-
-.completion-stats {
-    display: flex;
-    justify-content: space-around;
-    margin: 1.5rem 0;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-}
-
-.completion-stat {
-    text-align: center;
-}
-
-.completion-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-top: 1.5rem;
-}
+/* Completion modal styling moved to Tailwind classes in HTML */
 
 @media (max-width: 768px) {
-    .game-grid {
-        gap: 0.5rem;
-    }
-    
-    .game-stats {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .completion-actions {
-        flex-direction: column;
-    }
-    
-    .card-word {
-        font-size: 0.9rem;
-        padding: 0.4rem;
-        min-height: 50px;
-        max-height: 100%;
-        white-space: nowrap;
-    }
-    
-    .card-translation {
-        font-size: 0.85rem;
-        padding: 0.4rem;
-        min-height: 50px;
-        max-height: 100%;
-        white-space: nowrap;
-    }
-    
-    .card-content {
-        padding: 0.25rem;
-        overflow: hidden;
-    }
-    
     .game-card {
-        overflow: hidden;
+        width: 100px !important;
+        height: 90px !important;
+    }
+    
+    #game-area {
+        min-height: 400px;
     }
 }
 </style>
@@ -427,13 +254,76 @@ class MatchingGame {
         this.startTime = Date.now();
         this.gameInterval = null;
         this.mode = config.mode;
-        this.gridSize = config.gridSize;
         
         this.init();
+        this.positionCardsRandomly();
 
         logActivityEvent('started', {
             mode: this.mode,
-            grid_size: this.gridSize,
+        });
+    }
+    
+    positionCardsRandomly() {
+        const gameArea = document.getElementById('game-area');
+        if (!gameArea) return;
+        
+        // Wait for layout to be ready
+        requestAnimationFrame(() => {
+            const areaRect = gameArea.getBoundingClientRect();
+            const areaWidth = areaRect.width - 40; // Padding
+            const areaHeight = areaRect.height - 40; // Padding
+            
+            // Responsive card size
+            const isMobile = window.innerWidth <= 768;
+            const cardWidth = isMobile ? 100 : 120;
+            const cardHeight = isMobile ? 90 : 100;
+            
+            const cards = Array.from(this.cards);
+            const positions = [];
+            
+            // Generate random positions with collision detection
+            cards.forEach((card, index) => {
+                let attempts = 0;
+                let x, y;
+                let validPosition = false;
+                
+                while (!validPosition && attempts < 50) {
+                    x = Math.random() * (areaWidth - cardWidth);
+                    y = Math.random() * (areaHeight - cardHeight);
+                    
+                    // Check for collisions with existing positions
+                    validPosition = true;
+                    for (const pos of positions) {
+                        const distance = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
+                        if (distance < Math.max(cardWidth, cardHeight) * 1.2) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                    
+                    attempts++;
+                }
+                
+                // If we couldn't find a good position, use a grid-like distribution with randomness
+                if (!validPosition) {
+                    const cols = Math.ceil(Math.sqrt(cards.length));
+                    const col = index % cols;
+                    const row = Math.floor(index / cols);
+                    const cellWidth = areaWidth / cols;
+                    const cellHeight = areaHeight / cols;
+                    x = col * cellWidth + Math.random() * (cellWidth * 0.3);
+                    y = row * cellHeight + Math.random() * (cellHeight * 0.3);
+                }
+                
+                positions.push({ x, y });
+                
+                // Set card size and position
+                card.style.width = cardWidth + 'px';
+                card.style.height = cardHeight + 'px';
+                card.style.left = x + 'px';
+                card.style.top = y + 'px';
+                card.style.zIndex = '10';
+            });
         });
     }
     
@@ -468,8 +358,9 @@ class MatchingGame {
             return;
         }
         
-        // Add selection highlight (blue for first selection)
-        card.classList.add('selected');
+        // Add selection highlight with Tailwind classes
+        card.classList.add('border-green-500', 'ring-4', 'ring-green-200', 'selected');
+        card.classList.remove('border-blue-500');
         this.flippedCards.push(card);
         
         // Check for match when 2 cards are selected
@@ -485,17 +376,17 @@ class MatchingGame {
         
         if (vocabId1 === vocabId2) {
             // Match found! Show green highlight first
-            card1.classList.remove('selected');
-            card2.classList.remove('selected');
-            card1.classList.add('correct');
-            card2.classList.add('correct');
+            card1.classList.remove('selected', 'border-green-500', 'ring-4', 'ring-green-200');
+            card2.classList.remove('selected', 'border-green-500', 'ring-4', 'ring-green-200');
+            card1.classList.add('border-green-600', 'bg-green-100', 'ring-4', 'ring-green-300');
+            card2.classList.add('border-green-600', 'bg-green-100', 'ring-4', 'ring-green-300');
             
-            // After showing green, mark as matched and hide
+            // After showing green, mark as matched and fade out
             setTimeout(() => {
-                card1.classList.remove('correct');
-                card2.classList.remove('correct');
-                card1.classList.add('matched');
-                card2.classList.add('matched');
+                card1.classList.remove('border-green-600', 'bg-green-100', 'ring-4', 'ring-green-300');
+                card2.classList.remove('border-green-600', 'bg-green-100', 'ring-4', 'ring-green-300');
+                card1.classList.add('opacity-0', 'scale-75', 'pointer-events-none', 'matched');
+                card2.classList.add('opacity-0', 'scale-75', 'pointer-events-none', 'matched');
                 this.matches++;
                 this.updateStats();
                 
@@ -503,17 +394,19 @@ class MatchingGame {
                 if (this.matches === this.cards.length / 2) {
                     this.completeGame();
                 }
-            }, 400);
+            }, 600);
         } else {
             // No match - show red highlight and shake
-            card1.classList.add('incorrect');
-            card2.classList.add('incorrect');
+            card1.classList.add('border-red-500', 'bg-red-50', 'animate-pulse');
+            card2.classList.add('border-red-500', 'bg-red-50', 'animate-pulse');
             
             // After animation, remove incorrect styling and selection
             setTimeout(() => {
-                card1.classList.remove('incorrect', 'selected');
-                card2.classList.remove('incorrect', 'selected');
-            }, 300);
+                card1.classList.remove('incorrect', 'selected', 'border-green-500', 'ring-4', 'ring-green-200', 'border-red-500', 'bg-red-50', 'animate-pulse');
+                card2.classList.remove('incorrect', 'selected', 'border-green-500', 'ring-4', 'ring-green-200', 'border-red-500', 'bg-red-50', 'animate-pulse');
+                card1.classList.add('border-blue-500');
+                card2.classList.add('border-blue-500');
+            }, 500);
         }
         
         this.flippedCards = [];
@@ -542,11 +435,12 @@ class MatchingGame {
         const finalTime = document.getElementById('game-time').textContent;
         document.getElementById('final-time').textContent = finalTime;
         document.getElementById('final-matches').textContent = this.matches;
-        document.getElementById('game-completion').style.display = 'flex';
+        const completionModal = document.getElementById('game-completion');
+        completionModal.classList.remove('hidden');
+        completionModal.style.display = 'flex';
 
         logActivityEvent('completed', {
             mode: this.mode,
-            grid_size: this.gridSize,
             matches: this.matches,
             duration_seconds: durationSeconds,
         });
@@ -645,36 +539,23 @@ function adjustCardTextSizes() {
 }
 
 // Start the game when page loads
+let matchingGameInstance = null;
+
 document.addEventListener('DOMContentLoaded', function() {
-    new MatchingGame({
+    matchingGameInstance = new MatchingGame({
         mode: '{{ $mode }}',
-        gridSize: {{ $gameData['grid_size'] }},
     });
     
-    // Adjust text sizes after a brief delay to ensure layout is complete
-    setTimeout(adjustCardTextSizes, 200);
-    
-    // Also adjust after images load (if any)
-    window.addEventListener('load', function() {
-        setTimeout(adjustCardTextSizes, 100);
-    });
-    
-    // Adjust on window resize
+    // Reposition cards on window resize
     let resizeTimeout;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(adjustCardTextSizes, 150);
+        resizeTimeout = setTimeout(() => {
+            if (matchingGameInstance) {
+                matchingGameInstance.positionCardsRandomly();
+            }
+        }, 300);
     });
-    
-    // Adjust when cards become visible (for lazy loading scenarios)
-    const observer = new MutationObserver(function() {
-        setTimeout(adjustCardTextSizes, 100);
-    });
-    
-    const gameGrid = document.getElementById('game-grid');
-    if (gameGrid) {
-        observer.observe(gameGrid, { childList: true, subtree: true, attributes: true });
-    }
     
     // Handle audio playback
     document.addEventListener('click', function(e) {
@@ -747,128 +628,6 @@ function changeMode(mode) {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.card-translation {
-    font-size: 1.2rem;
-    font-weight: 600;
-    text-align: center;
-    padding: 1rem;
-    border-radius: 8px;
-    min-height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-    word-wrap: normal;
-    overflow-wrap: normal;
-    hyphens: none;
-    -webkit-hyphens: none;
-    -moz-hyphens: none;
-    -ms-hyphens: none;
-    max-width: 100%;
-    width: 100%;
-    box-sizing: border-box;
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.card-translation.hebrew {
-    background-color: #e8f4fd;
-    color: #1e40af;
-    border: 2px solid #bfdbfe;
-}
-
-.card-translation.arabic {
-    background-color: #f0fdf4;
-    color: #166534;
-    border: 2px solid #bbf7d0;
-}
-
-.game-card[data-type="hebrew"] .card-content {
-    background: linear-gradient(135deg, #e8f4fd 0%, #dbeafe 100%);
-}
-
-.game-card[data-type="arabic"] .card-content {
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-}
-
-.game-card[data-type="word"] .card-content {
-    background: white;
-    border: 2px solid #e5e7eb;
-    color: #374151;
-}
-
-/* Audio card styles - button fills entire card */
-.game-card[data-type="audio"] .card-content {
-    justify-content: center;
-    padding: 0;
-}
-
-.game-card[data-type="audio"] .play-audio-strip {
-    width: 100%;
-    height: 100%;
-    background: var(--color-primary);
-    color: white;
-    border: none;
-    padding: 0.75rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 3.5rem;
-    font-weight: 600;
-    z-index: 10;
-}
-
-.game-card[data-type="audio"] .play-audio-strip i {
-    font-size: 3.5rem;
-}
-
-.play-audio-strip {
-    width: 100%;
-    background: var(--color-primary);
-    color: white;
-    border: none;
-    padding: 0.75rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 1rem;
-    font-weight: 600;
-    z-index: 10;
-    border-top: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.play-audio-strip:hover {
-    background: var(--color-primary-dark, #2563eb);
-    transform: none;
-}
-
-.play-audio-strip:active {
-    background: var(--color-primary-dark, #1e40af);
-    transform: scale(0.98);
-}
-
-.play-audio-strip i {
-    font-size: 1rem;
-}
-
-/* Ensure other card types still work with flex column */
-.game-card[data-type="image"] .card-content,
-.game-card[data-type="hebrew"] .card-content,
-.game-card[data-type="arabic"] .card-content,
-.game-card[data-type="word"] .card-content {
-    flex-direction: row;
-    padding: 0.5rem;
-}
-
-.game-card[data-type="image"] .card-image {
-    width: 80%;
-    height: 80%;
-}
+/* Card translation and content styling handled by Tailwind classes in HTML */
 </style>
 @endsection

@@ -30,19 +30,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="grid_size">Grid Size</label>
-                    <select id="grid_size" name="grid_size" required class="form-control">
-                        <option value="">Select Grid Size</option>
-                        <option value="4" {{ old('grid_size', $matchingGame->grid_size) == 4 ? 'selected' : '' }}>4x4 (8 pairs)</option>
-                        <option value="6" {{ old('grid_size', $matchingGame->grid_size) == 6 ? 'selected' : '' }}>6x6 (18 pairs)</option>
-                        <option value="8" {{ old('grid_size', $matchingGame->grid_size) == 8 ? 'selected' : '' }}>8x8 (32 pairs)</option>
-                    </select>
-                    @error('grid_size')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="form-group">
                     <div class="form-check">
                         <input type="checkbox" id="is_active" name="is_active" value="1" 
                                {{ old('is_active', $matchingGame->is_active) ? 'checked' : '' }} class="form-check-input">

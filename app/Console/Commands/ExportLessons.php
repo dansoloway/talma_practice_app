@@ -168,7 +168,6 @@ class ExportLessons extends Command
                         return [
                             'title' => $game->title,
                             'vocabulary_ids' => $game->vocabulary_ids,
-                            'grid_size' => $game->grid_size,
                             'is_active' => $game->is_active,
                             'sort_order' => $game->sort_order,
                         ];

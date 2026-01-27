@@ -15,6 +15,7 @@ class Lesson extends Model
         'title',
         'slug',
         'instructions',
+        'cover_image_path',
         'grade_level',
         'session_number',
         'part_number',
@@ -262,6 +263,24 @@ class Lesson extends Model
         }
         
         return "{$baseName} - {$typeLabel}";
+    }
+
+    /**
+     * Get the full URL for the cover image.
+     */
+    public function getCoverImageUrlAttribute(): ?string
+    {
+        if (!$this->cover_image_path) {
+            return null;
+        }
+
+        // If path already starts with /storage/, use it directly
+        if (strpos($this->cover_image_path, '/storage/') === 0) {
+            return asset($this->cover_image_path);
+        }
+
+        // Otherwise, prepend storage/ to the relative path
+        return asset('storage/' . $this->cover_image_path);
     }
 }
 

@@ -3,73 +3,81 @@
 @section('title', 'Admin Login - TALMA Practice Pal')
 
 @section('content')
-<div class="container">
-    <div class="admin-login">
-        <div class="login-card">
-            <div class="login-header">
-                <h1>Admin Login</h1>
-                <p>Enter the admin password to access the admin dashboard</p>
+<div class="min-h-screen flex items-center justify-center py-12 px-4">
+    <div class="w-full max-w-md">
+        <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-xl p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Admin Login</h1>
+                <p class="text-gray-600">Enter your credentials to access the admin dashboard</p>
             </div>
 
             @if(session('error'))
-                <div class="error-message" style="background: #fee; color: #c33; padding: 1rem; border-radius: 8px; border: 2px solid #c33; margin-bottom: 1.5rem; font-weight: 600;">
-                    <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+                <div class="bg-red-50/90 backdrop-blur-sm border border-red-200 text-red-800 p-4 rounded-xl shadow-sm mb-6">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-exclamation-circle text-red-600"></i>
+                        <p class="font-medium">{{ session('error') }}</p>
+                    </div>
                 </div>
             @endif
 
             @if($errors->any())
-                <div class="error-message" style="background: #fee; color: #c33; padding: 1rem; border-radius: 8px; border: 2px solid #c33; margin-bottom: 1.5rem;">
-                    <strong><i class="fas fa-exclamation-circle"></i> Please fix the following errors:</strong>
-                    <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+                <div class="bg-red-50/90 backdrop-blur-sm border border-red-200 text-red-800 p-4 rounded-xl shadow-sm mb-6">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-exclamation-circle text-red-600 mt-0.5"></i>
+                        <div>
+                            <p class="font-semibold mb-2">Please fix the following errors:</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('admin.login') }}" class="login-form" id="login-form">
+            <form method="POST" action="{{ route('admin.login') }}" class="space-y-6" id="login-form">
                 @csrf
-                <div class="form-group">
-                    <label for="email">Email</label>
+                <div>
+                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                     <input type="email" id="email" name="email" 
-                           class="form-control @error('email') is-invalid @enderror" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 @error('email') border-red-300 focus:ring-red-400 focus:border-red-400 @enderror" 
                            value="{{ old('email') }}" required autofocus>
                     @error('email')
-                        <div class="error-text">{{ $message }}</div>
+                        <div class="mt-2 text-sm text-red-600">{{ $message }}</div>
                     @enderror
                 </div>
                 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <div class="password-input-wrapper">
+                <div>
+                    <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                    <div class="relative">
                         <input type="password" id="password" name="password" 
-                               class="form-control @error('password') is-invalid @enderror" required>
-                        <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Show password">
+                               class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 @error('password') border-red-300 focus:ring-red-400 focus:border-red-400 @enderror" required>
+                        <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-all duration-200" onclick="togglePassword()" aria-label="Show password">
                             <i class="fas fa-eye" id="password-toggle-icon"></i>
                         </button>
                     </div>
                     @error('password')
-                        <div class="error-text">{{ $message }}</div>
+                        <div class="mt-2 text-sm text-red-600">{{ $message }}</div>
                     @enderror
                 </div>
                 
-                <div class="form-group">
-                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: normal;">
-                        <input type="checkbox" name="remember" value="1" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                        <span>Remember me</span>
+                <div>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="remember" value="1" id="remember" {{ old('remember') ? 'checked' : '' }} class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400">
+                        <span class="text-gray-700 font-medium">Remember me</span>
                     </label>
-                    <small style="display: block; margin-top: 0.25rem; color: #666; font-size: 0.875rem;">Stay logged in for 30 days</small>
+                    <p class="mt-2 text-sm text-gray-600">Stay logged in for 30 days</p>
                 </div>
                 
-                <button type="submit" class="btn btn-primary btn-large" id="login-submit-btn">
+                <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md" id="login-submit-btn">
                     Access Admin Dashboard
                 </button>
             </form>
 
-            <div class="login-footer">
-                <a href="{{ route('admin.password.forgot') }}" class="forgot-password-link">Forgot Password?</a>
-                <a href="{{ route('student.index') }}" class="back-link">← Back to Student View</a>
+            <div class="mt-6 text-center space-y-3">
+                <a href="{{ route('admin.password.forgot') }}" class="block text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200">Forgot Password?</a>
+                <a href="{{ route('student.index') }}" class="block text-gray-600 hover:text-gray-800 font-medium text-sm transition-colors duration-200">← Back to Student View</a>
             </div>
         </div>
     </div>
@@ -194,95 +202,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
-.password-input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.password-input-wrapper .form-control {
-    padding-right: 45px;
-}
-
-.password-toggle {
-    position: absolute;
-    right: 10px;
-    background: none;
-    border: none;
-    color: var(--color-text-light);
-    cursor: pointer;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.2s;
-}
-
-.password-toggle:hover {
-    color: var(--color-primary);
-}
-
-.password-toggle:focus {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-}
-
-.forgot-password-link {
-    color: var(--color-primary);
-    text-decoration: none;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-    display: inline-block;
-}
-
-.forgot-password-link:hover {
-    text-decoration: underline;
-}
-
-.login-footer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
-}
-
-.checkbox-label {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
-
-.checkbox-label input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: var(--color-primary, #007bff);
-    flex-shrink: 0;
-}
-
-.checkbox-label input[type="checkbox"]:focus {
-    outline: 2px solid var(--color-primary, #007bff);
-    outline-offset: 2px;
-    border-radius: 3px;
-}
-
-.checkbox-label span {
-    font-size: 0.95rem;
-}
-
-@media (max-width: 768px) {
-    .checkbox-label {
-        font-size: 0.9rem;
-    }
-    
-    .checkbox-label input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-    }
-}
-</style>
 @endsection

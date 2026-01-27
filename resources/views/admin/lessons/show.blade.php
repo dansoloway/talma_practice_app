@@ -19,6 +19,14 @@
     <!-- Student View Preview -->
     <div class="student-preview">
         <div class="lesson-header">
+            @if($lesson->cover_image_path)
+                <div class="lesson-cover-image" style="margin-bottom: 1.5rem; text-align: center;">
+                    <img src="{{ $lesson->cover_image_url }}" 
+                         alt="{{ $lesson->title }}" 
+                         style="max-width: 100%; max-height: 300px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); object-fit: cover;">
+                </div>
+            @endif
+            
             <h1 class="lesson-title">{{ $lesson->title }}</h1>
             @if($lesson->session_title)
                 <p class="session-info">{{ $lesson->session_title }}</p>
@@ -147,7 +155,6 @@
                                     </div>
                                 @elseif($activity->type === 'matching')
                                     <div class="activity-details">
-                                        <p><strong>Grid Size:</strong> {{ $activity->model->grid_size }}x{{ $activity->model->grid_size }}</p>
                                         <p><strong>Vocabulary Words:</strong> {{ count($activity->model->vocabulary_ids) }}</p>
                                     </div>
                                 @elseif($activity->type === 'flashcard')

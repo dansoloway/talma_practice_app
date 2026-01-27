@@ -16,7 +16,6 @@ class MatchingGame extends Model
         'part_id',
         'title',
         'vocabulary_ids',
-        'grid_size',
         'is_active',
         'sort_order',
     ];

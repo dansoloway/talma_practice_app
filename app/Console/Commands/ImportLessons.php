@@ -188,7 +188,6 @@ class ImportLessons extends Command
                         'lesson_id' => $lesson->id,
                         'title' => $gameData['title'],
                         'vocabulary_ids' => $gameData['vocabulary_ids'] ?? [],
-                        'grid_size' => $gameData['grid_size'] ?? 4,
                         'is_active' => $gameData['is_active'] ?? true,
                         'sort_order' => $gameData['sort_order'] ?? 0,
                     ]);

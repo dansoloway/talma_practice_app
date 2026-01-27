@@ -23,7 +23,6 @@
                     <tr>
                         <th>Title</th>
                         <th>Part</th>
-                        <th>Grid Size</th>
                         <th>Vocabulary Count</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -40,7 +39,6 @@
                                     <span class="text-muted">No specific part</span>
                                 @endif
                             </td>
-                            <td>{{ $game->grid_size }}x{{ $game->grid_size }}</td>
                             <td>{{ count($game->vocabulary_ids) }} words</td>
                             <td>
                                 <span class="status {{ $game->is_active ? 'active' : 'inactive' }}">

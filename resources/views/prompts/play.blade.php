@@ -3,67 +3,80 @@
 @section('title', 'Sentence Completion - ' . $lesson->title)
 
 @section('content')
-<style>
-/* Hide footer on game pages for mobile */
-@media (max-width: 768px) {
-    .footer {
-        display: none;
-    }
-    
-    .game-header {
-        padding: 0.5rem 0;
-    }
-    
-    .game-title, .game-subtitle {
-        font-size: 1.2rem;
-        margin: 0.5rem 0;
-    }
-    
-    .game-header .back-link {
-        font-size: 0.9rem;
-    }
-}
-</style>
-<div class="prompts-game-container">
-    <div class="game-header">
-        <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
-        <h1 class="game-title">Sentence Completion</h1>
-        <p class="game-subtitle">{{ $lesson->title }}</p>
-    </div>
-
-
-    @if($lesson->prompts->count() > 0)
-        <div class="prompt-container" id="prompt-container">
-            <!-- Prompt content will be loaded here by JavaScript -->
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-6 md:py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+        <!-- Game Header -->
+        <div class="mb-6">
+            <a href="{{ route('lessons.show', $lesson->slug) }}" 
+               class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4 transition-colors duration-200 group">
+                <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
+                <span>Back to Lesson</span>
+            </a>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Sentence Completion</h1>
+                <p class="text-gray-600 font-medium">{{ $lesson->title }}</p>
+            </div>
         </div>
 
-        <div class="game-controls">
-            <button id="prev-btn" class="btn btn-secondary" disabled>Previous</button>
-            <button id="next-btn" class="btn btn-primary" disabled>Next</button>
-            <button id="finish-btn" class="btn btn-success" style="display: none;">Finish</button>
-        </div>
+        @if($lesson->prompts->count() > 0)
+            <!-- Prompt Container -->
+            <div id="prompt-container" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 mb-6">
+                <!-- Prompt content will be loaded here by JavaScript -->
+            </div>
 
-        <div class="game-results" id="game-results" style="display: none;">
-            <div class="results-header">
-                <h2>Great Job!</h2>
-                <p>You completed all the sentence completion questions!</p>
-                <div class="final-score" id="final-score">
-                    <h3>Final Score: <span id="score-display">0/0</span></h3>
-                    <p id="score-percentage">0%</p>
+            <!-- Game Controls -->
+            <div class="flex justify-center gap-4 mb-6">
+                <button id="prev-btn" 
+                        class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                        disabled>
+                    Previous
+                </button>
+                <button id="next-btn" 
+                        class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed" 
+                        disabled>
+                    Next
+                </button>
+                <button id="finish-btn" 
+                        class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md hidden">
+                    Finish
+                </button>
+            </div>
+
+            <!-- Game Results -->
+            <div id="game-results" class="hidden bg-white rounded-2xl shadow-lg border border-gray-200 p-8 md:p-12 text-center">
+                <div class="mb-8">
+                    <div class="text-6xl mb-4">🎉</div>
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">Great Job!</h2>
+                    <p class="text-lg text-gray-600 mb-8">You completed all the sentence completion questions!</p>
+                    <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200 inline-block">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Final Score</h3>
+                        <div class="text-4xl font-bold text-blue-600 mb-2" id="score-display">0/0</div>
+                        <p class="text-lg text-gray-600" id="score-percentage">0%</p>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button id="restart-btn" 
+                            class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                        Try Again
+                    </button>
+                    <a href="{{ route('lessons.show', $lesson->slug) }}" 
+                       class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 active:scale-95 transition-all duration-200 shadow-sm">
+                        Back to Lesson
+                    </a>
                 </div>
             </div>
-            <div class="results-actions">
-                <button id="restart-btn" class="btn btn-primary">Try Again</button>
-                <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-secondary">Back to Lesson</a>
+        @else
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+                <div class="text-6xl mb-4">📝</div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-3">No Questions Available</h3>
+                <p class="text-gray-600 mb-6">This lesson doesn't have any sentence completion questions yet.</p>
+                <a href="{{ route('lessons.show', $lesson->slug) }}" 
+                   class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                    Back to Lesson
+                </a>
             </div>
-        </div>
-    @else
-        <div class="empty-state">
-            <h3>No Questions Available</h3>
-            <p>This lesson doesn't have any sentence completion questions yet.</p>
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-primary">Back to Lesson</a>
-        </div>
-    @endif
+        @endif
+    </div>
 </div>
 
 <audio id="prompt-audio" preload="auto"></audio>
@@ -116,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Create sentence with drop zone
 function createSentenceWithDropZone(template) {
-    return template.replace('{}', '<span class="drop-zone" id="drop-zone">_____</span>');
+    return template.replace('{}', '<span class="inline-block min-w-[100px] px-4 py-2 border-2 border-dashed border-blue-500 rounded-lg bg-blue-50 text-blue-600 font-semibold text-center transition-all duration-300 cursor-pointer" id="drop-zone">_____</span>');
 }
 
 // Setup drag and drop functionality
@@ -138,7 +151,8 @@ function setupDragAndDrop() {
                 const optionIndex = parseInt(this.dataset.optionIndex);
                 if (!dropZone || dropZone.classList.contains('filled')) return;
                 dropZone.textContent = optionLabel;
-                dropZone.classList.add('filled');
+                dropZone.classList.add('filled', 'border-green-500', 'bg-green-50', 'text-green-700', 'border-solid');
+                dropZone.classList.remove('border-dashed', 'border-blue-500', 'bg-blue-50', 'text-blue-600');
                 this.style.opacity = '0.3';
                 this.draggable = false;
                 handleWordSelection(optionIndex, optionLabel);
@@ -175,11 +189,15 @@ function handleDragOver(e) {
 
 function handleDragEnter(e) {
     e.preventDefault();
-    this.classList.add('drag-over');
+    this.classList.add('border-green-500', 'bg-green-50', 'text-green-600', 'scale-105');
+    this.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600');
 }
 
 function handleDragLeave(e) {
-    this.classList.remove('drag-over');
+    this.classList.remove('border-green-500', 'bg-green-50', 'text-green-600', 'scale-105');
+    if (!this.classList.contains('filled')) {
+        this.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-600');
+    }
 }
 
 function handleDrop(e) {
@@ -192,7 +210,8 @@ function handleDrop(e) {
         
         // Place the word in the drop zone
         this.textContent = optionLabel;
-        this.classList.add('filled');
+        this.classList.add('filled', 'border-green-500', 'bg-green-50', 'text-green-700', 'border-solid');
+        this.classList.remove('border-dashed', 'border-blue-500', 'bg-blue-50', 'text-blue-600', 'border-green-500', 'bg-green-50', 'text-green-600', 'scale-105');
         
         // Hide the dragged option
         draggedElement.style.opacity = '0.3';
@@ -213,34 +232,38 @@ function loadPrompt(index) {
     
     // Create the prompt HTML
     const promptHtml = `
-        <div class="prompt-question">
-            <div class="prompt-header">
-                <h3>${prompt.prompt_text}</h3>
+        <div class="mb-8">
+            <div class="flex items-center gap-4 mb-6">
+                <h3 class="text-xl md:text-2xl font-bold text-gray-800 flex-1">${prompt.prompt_text}</h3>
                 ${prompt.prompt_audio_path ? `
-                    <button class="audio-btn" onclick="playPromptAudio('${prompt.prompt_audio_path}')" title="Listen to question">
+                    <button class="w-12 h-12 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
+                            onclick="playPromptAudio('${prompt.prompt_audio_path}')" 
+                            title="Listen to question">
                         <i class="fas fa-volume-up"></i>
                     </button>
                 ` : ''}
             </div>
-            <div class="prompt-sentence">
-                <p id="sentence-display">${createSentenceWithDropZone(prompt.template)}</p>
+            <div class="bg-gray-50 rounded-xl p-6 border-l-4 border-blue-500 mb-6">
+                <p id="sentence-display" class="text-lg md:text-xl text-gray-800 leading-relaxed m-0">${createSentenceWithDropZone(prompt.template)}</p>
             </div>
         </div>
         
-        <div class="prompt-options">
-            <h4>Choose the correct word:</h4>
-            <div class="options-grid">
+        <div class="mb-6">
+            <h4 class="text-lg font-semibold text-gray-800 mb-4">Choose the correct word:</h4>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 ${prompt.options.map((option, optionIndex) => `
-                    <div class="option-card draggable" 
+                    <div class="option-card bg-white rounded-xl border-2 border-gray-200 p-4 cursor-pointer hover:border-blue-400 hover:shadow-md hover:-translate-y-1 transition-all duration-200 draggable" 
                          data-option-id="${option.id}" 
                          data-option-index="${optionIndex}"
                          data-option-label="${option.label}"
                          draggable="true">
-                        <div class="option-content">
-                            <span class="option-text">${option.label}</span>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="option-text text-lg font-semibold text-gray-800">${option.label}</span>
                             ${option.word_audio_path ? `
-                                <button class="option-audio-btn" onclick="playOptionAudio(event, '${option.word_audio_path}')" title="Listen to word">
-                                    <i class="fas fa-volume-up"></i>
+                                <button class="w-10 h-10 rounded-full bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm flex-shrink-0" 
+                                        onclick="playOptionAudio(event, '${option.word_audio_path}')" 
+                                        title="Listen to word">
+                                    <i class="fas fa-volume-up text-sm"></i>
                                 </button>
                             ` : ''}
                         </div>
@@ -249,33 +272,40 @@ function loadPrompt(index) {
             </div>
         </div>
         
-        <div class="sentence-result" id="sentence-result">
-            <div class="completed-sentence" id="completed-sentence"></div>
+        <div id="sentence-result" class="mb-6">
+            <div id="completed-sentence" class="text-lg md:text-xl font-semibold text-gray-800"></div>
         </div>
         
-        <div class="audio-controls" id="audio-controls" style="display: none;">
-            <div class="audio-section">
-                <h4>Listen & Practice</h4>
-                <div class="audio-split">
-                    <div class="audio-panel model-audio">
-                        <h5>Example</h5>
-                            <button class="audio-play-btn" id="play-model-btn" onclick="playModelAudio()">
-                                <i class="fas fa-play"></i> Play Example
-                            </button>
-                        <div class="audio-status" id="model-status"></div>
+        <div id="audio-controls" class="hidden bg-gray-50 rounded-xl p-6 border border-gray-200">
+            <div>
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">Listen & Practice</h4>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl p-6 border border-gray-200">
+                        <h5 class="font-semibold text-gray-700 mb-3">Example</h5>
+                        <button class="w-full px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm" 
+                                id="play-model-btn" 
+                                onclick="playModelAudio()">
+                            <i class="fas fa-play mr-2"></i> Play Example
+                        </button>
+                        <div id="model-status" class="mt-3 text-sm text-gray-600"></div>
                     </div>
                     
-                    <div class="audio-panel recording-audio">
-                        <h5>You</h5>
-                        <div class="recording-controls">
-                            <button class="audio-record-btn" id="record-btn" onclick="toggleRecording()">
-                                <i class="fas fa-microphone"></i> Record
+                    <div class="bg-white rounded-xl p-6 border border-gray-200">
+                        <h5 class="font-semibold text-gray-700 mb-3">You</h5>
+                        <div class="flex gap-3">
+                            <button class="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:scale-95 transition-all duration-200 shadow-sm" 
+                                    id="record-btn" 
+                                    onclick="toggleRecording()">
+                                <i class="fas fa-microphone mr-2"></i> Record
                             </button>
-                            <button class="audio-play-btn" id="play-recording-btn" onclick="playRecording()" disabled>
-                                <i class="fas fa-play"></i> Play
+                            <button class="flex-1 px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    id="play-recording-btn" 
+                                    onclick="playRecording()" 
+                                    disabled>
+                                <i class="fas fa-play mr-2"></i> Play
                             </button>
                         </div>
-                        <div class="audio-status" id="recording-status"></div>
+                        <div id="recording-status" class="mt-3 text-sm text-gray-600"></div>
                     </div>
                 </div>
             </div>
@@ -296,12 +326,12 @@ function loadPrompt(index) {
     
     // Show finish button on last question
     if (index === prompts.length - 1) {
-        document.getElementById('next-btn').style.display = 'none';
-        document.getElementById('finish-btn').style.display = 'inline-block';
+        document.getElementById('next-btn').classList.add('hidden');
+        document.getElementById('finish-btn').classList.remove('hidden');
         document.getElementById('finish-btn').disabled = true;
     } else {
-        document.getElementById('next-btn').style.display = 'inline-block';
-        document.getElementById('finish-btn').style.display = 'none';
+        document.getElementById('next-btn').classList.remove('hidden');
+        document.getElementById('finish-btn').classList.add('hidden');
     }
 }
 
@@ -314,7 +344,7 @@ function handleWordSelection(optionIndex, selectedWord) {
     
     // Mark the selected option
     const selectedOption = options[optionIndex];
-    selectedOption.classList.add('selected');
+    selectedOption.classList.add('border-blue-500', 'bg-blue-50');
     
     // Check if the answer is correct using 1-based index
     const isCorrect = checkAnswer(optionIndex + 1, prompt.correct_answer);
@@ -353,11 +383,14 @@ function handleWordSelection(optionIndex, selectedWord) {
     if (isCorrect === false && typeof prompt.correct_answer === 'number') {
         const correctIdx = prompt.correct_answer - 1;
         if (options[correctIdx]) {
-            options[correctIdx].classList.add('correct');
+            options[correctIdx].classList.add('border-green-500', 'bg-green-50');
+            options[correctIdx].classList.remove('border-gray-200', 'border-blue-500', 'bg-blue-50');
         }
-        selectedOption.classList.add('incorrect');
+        selectedOption.classList.add('border-red-500', 'bg-red-50');
+        selectedOption.classList.remove('border-gray-200', 'border-blue-500', 'bg-blue-50');
     } else if (isCorrect === true) {
-        selectedOption.classList.add('correct');
+        selectedOption.classList.add('border-green-500', 'bg-green-50');
+        selectedOption.classList.remove('border-gray-200', 'border-blue-500', 'bg-blue-50');
     }
     
     // Update progress display
@@ -371,9 +404,9 @@ function handleWordSelection(optionIndex, selectedWord) {
     // Reset recording state when new word is selected
     resetRecordingState();
     
-    // Show audio controls
+        // Show audio controls
     if (audioControls) {
-        audioControls.style.display = 'block';
+        audioControls.classList.remove('hidden');
     }
     
     // Enable next/finish button
@@ -396,15 +429,12 @@ function checkAnswer(selectedOptionNumber, correctAnswer) {
 
 // Show feedback for the answer
 function showAnswerFeedback(isCorrect, selectedOption) {
-    // Remove any existing feedback classes
-    selectedOption.classList.remove('correct', 'incorrect');
+    // Remove any existing feedback classes (already handled in handleWordSelection)
     
-    // Add appropriate feedback class
+    // Add appropriate feedback message
     if (isCorrect === true) {
-        selectedOption.classList.add('correct');
         showFeedbackMessage('Correct! 🎉', 'success');
     } else if (isCorrect === false) {
-        selectedOption.classList.add('incorrect');
         showFeedbackMessage('Try again! 💪', 'error');
     }
     // If isCorrect is null, no feedback is shown
@@ -418,10 +448,14 @@ function showFeedbackMessage(message, type) {
         existingFeedback.remove();
     }
     
-    // Create new feedback message
+    // Create new feedback message with Tailwind classes
     const feedback = document.createElement('div');
     feedback.id = 'answer-feedback';
-    feedback.className = `feedback-message ${type}`;
+    if (type === 'success') {
+        feedback.className = 'mt-4 p-4 rounded-xl bg-green-50 border-l-4 border-green-500 text-green-700 font-semibold text-center';
+    } else {
+        feedback.className = 'mt-4 p-4 rounded-xl bg-red-50 border-l-4 border-red-500 text-red-700 font-semibold text-center';
+    }
     feedback.textContent = message;
     
     // Insert after the completed sentence
@@ -659,9 +693,9 @@ function finishGame() {
     document.getElementById('score-percentage').textContent = `${percentage}%`;
     
     // Show results
-    document.getElementById('prompt-container').style.display = 'none';
-    document.querySelector('.game-controls').style.display = 'none';
-    document.getElementById('game-results').style.display = 'block';
+    document.getElementById('prompt-container').classList.add('hidden');
+    document.querySelector('.game-controls')?.classList.add('hidden');
+    document.getElementById('game-results').classList.remove('hidden');
 }
 
 // Restart the game
@@ -683,9 +717,9 @@ function restartGame() {
     });
     
     // Reset display
-    document.getElementById('prompt-container').style.display = 'block';
-    document.querySelector('.game-controls').style.display = 'block';
-    document.getElementById('game-results').style.display = 'none';
+    document.getElementById('prompt-container').classList.remove('hidden');
+    document.querySelector('.game-controls')?.classList.remove('hidden');
+    document.getElementById('game-results').classList.add('hidden');
     
     // Reset progress display
     updateProgressDisplay();

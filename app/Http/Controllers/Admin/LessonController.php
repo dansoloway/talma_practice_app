@@ -7,6 +7,7 @@ use App\Models\Lesson;
 use App\Models\GrammarSet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class LessonController extends Controller
 {
@@ -389,6 +390,111 @@ class LessonController extends Controller
         return redirect()
             ->route('admin.lessons.manage', $lesson)
             ->with('success', "Grammar set '{$grammarSet->title}' has been removed from this lesson.");
+    }
+
+    /**
+     * Update the cover image for a lesson.
+     */
+    public function updateCoverImage(Request $request, Lesson $lesson)
+    {
+        $validated = $request->validate([
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'cover_image_source' => 'nullable|string',
+        ]);
+
+        // Option 1: Use vocabulary image (copy path)
+        if ($request->filled('cover_image_source')) {
+            $sourcePath = $request->input('cover_image_source');
+            
+            // Verify the path exists and is from vocabulary
+            if (Storage::disk('public')->exists($sourcePath)) {
+                // Delete old cover image if it exists and is different
+                if ($lesson->cover_image_path && $lesson->cover_image_path !== $sourcePath) {
+                    // Only delete if it's not a vocabulary image (to avoid deleting vocab images)
+                    if (strpos($lesson->cover_image_path, 'images/vocabulary/') === false) {
+                        Storage::disk('public')->delete($lesson->cover_image_path);
+                    }
+                }
+                
+                $lesson->update(['cover_image_path' => $sourcePath]);
+                
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Cover image updated successfully',
+                        'cover_image_url' => $lesson->cover_image_url,
+                    ]);
+                }
+                
+                return redirect()
+                    ->route('admin.lessons.manage', $lesson)
+                    ->with('success', 'Cover image updated successfully!');
+            }
+        }
+
+        // Option 2: Upload new image
+        if ($request->hasFile('cover_image')) {
+            $image = $request->file('cover_image');
+            
+            // Delete old cover image if it exists
+            if ($lesson->cover_image_path) {
+                // Only delete if it's not a vocabulary image (to avoid deleting vocab images)
+                if (strpos($lesson->cover_image_path, 'images/vocabulary/') === false) {
+                    Storage::disk('public')->delete($lesson->cover_image_path);
+                }
+            }
+            
+            // Use secure filename generation
+            $filename = \App\Services\FileUploadSecurity::generateSecureFilename($image, 'lesson_cover');
+            $path = $image->storeAs('images/lessons', $filename, 'public');
+            $validated['cover_image_path'] = 'images/lessons/' . $filename;
+            
+            $lesson->update(['cover_image_path' => $validated['cover_image_path']]);
+            
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Cover image uploaded successfully',
+                    'cover_image_url' => $lesson->cover_image_url,
+                ]);
+            }
+            
+            return redirect()
+                ->route('admin.lessons.manage', $lesson)
+                ->with('success', 'Cover image uploaded successfully!');
+        }
+
+        // No valid input provided
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid cover image provided',
+            ], 400);
+        }
+        
+        return redirect()
+            ->route('admin.lessons.manage', $lesson)
+            ->with('error', 'No valid cover image provided.');
+    }
+
+    /**
+     * Remove the cover image from a lesson.
+     */
+    public function removeCoverImage(Request $request, Lesson $lesson)
+    {
+        // Delete the file if it exists and is not a vocabulary image
+        if ($lesson->cover_image_path) {
+            // Only delete if it's not a vocabulary image (to avoid deleting vocab images)
+            if (strpos($lesson->cover_image_path, 'images/vocabulary/') === false) {
+                Storage::disk('public')->delete($lesson->cover_image_path);
+            }
+        }
+        
+        $lesson->update(['cover_image_path' => null]);
+        
+        return redirect()
+            ->route('admin.lessons.manage', $lesson)
+            ->with('success', 'Cover image removed successfully!');
     }
 }
 

@@ -23,10 +23,6 @@
         <div class="card-body">
             <div class="info-grid">
                 <div class="info-item">
-                    <label>Grid Size:</label>
-                    <span>{{ $matchingGame->grid_size }}x{{ $matchingGame->grid_size }}</span>
-                </div>
-                <div class="info-item">
                     <label>Status:</label>
                     <span class="status {{ $matchingGame->is_active ? 'active' : 'inactive' }}">
                         {{ $matchingGame->is_active ? 'Active' : 'Inactive' }}
