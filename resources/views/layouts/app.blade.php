@@ -35,7 +35,16 @@
             <div class="hidden md:flex items-center gap-6" id="nav-links">
                 <a href="{{ route('lessons.index') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-blue-50">Lessons</a>
                 
-                @if(request()->routeIs('lessons.index') || request()->routeIs('student.index'))
+                @php
+                    // Always show admin menu on home page (/lessons or /)
+                    $currentRoute = \Route::currentRouteName();
+                    $currentPath = trim(request()->path(), '/');
+                    $isHomePage = ($currentRoute === 'lessons.index' || $currentRoute === 'student.index') || 
+                                  ($currentPath === '' || $currentPath === 'lessons') ||
+                                  request()->url() === url('/') ||
+                                  request()->url() === url('/lessons');
+                @endphp
+                @if($isHomePage)
                     <!-- Analytics Dropdown -->
                     <div class="relative group">
                         <a href="#" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
@@ -83,7 +92,16 @@
             <div class="container mx-auto px-4 py-4 flex flex-col gap-2">
                 <a href="{{ route('lessons.index') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Lessons</a>
                 
-                @if(request()->routeIs('lessons.index') || request()->routeIs('student.index'))
+                @php
+                    // Always show admin menu on home page (/lessons or /)
+                    $currentRoute = \Route::currentRouteName();
+                    $currentPath = trim(request()->path(), '/');
+                    $isHomePage = ($currentRoute === 'lessons.index' || $currentRoute === 'student.index') || 
+                                  ($currentPath === '' || $currentPath === 'lessons') ||
+                                  request()->url() === url('/') ||
+                                  request()->url() === url('/lessons');
+                @endphp
+                @if($isHomePage)
                     <a href="{{ session('admin_authenticated') ? route('admin.analytics') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Analytics Dashboard</a>
                     <a href="{{ session('admin_authenticated') ? route('admin.session-length') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Session Length</a>
                     <a href="{{ session('admin_authenticated') ? route('admin.openai-usage') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">OpenAI Usage</a>
