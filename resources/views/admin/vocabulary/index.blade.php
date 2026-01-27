@@ -15,8 +15,29 @@
                 <span id="tts-btn-text">Generate/Recreate TTS</span>
                 <span id="tts-btn-spinner" style="display: none;">⏳ Processing...</span>
             </button>
-            <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="btn btn-primary">Add Vocabulary</a>
-            <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="btn btn-secondary">Upload CSV</a>
+            
+            <!-- Add Words Dropdown Menu -->
+            <div class="dropdown" style="position: relative; display: inline-block;">
+                <button type="button" class="btn btn-primary" id="add-words-toggle" onclick="toggleAddWordsMenu()" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span>➕ Add Words</span>
+                    <span id="dropdown-arrow" style="transition: transform 0.2s;">▼</span>
+                </button>
+                <div id="add-words-menu" class="dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; margin-top: 0.5rem; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); min-width: 200px; z-index: 1000; overflow: hidden;">
+                    <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="dropdown-item" style="display: block; padding: 0.75rem 1rem; color: #1e293b; text-decoration: none; transition: background-color 0.2s; border-bottom: 1px solid #f1f5f9;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">➕ Add Single Word</div>
+                        <div style="font-size: 0.875rem; color: #64748b;">Create one vocabulary word</div>
+                    </a>
+                    <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="dropdown-item" style="display: block; padding: 0.75rem 1rem; color: #1e293b; text-decoration: none; transition: background-color 0.2s; border-bottom: 1px solid #f1f5f9;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">📤 Upload CSV</div>
+                        <div style="font-size: 0.875rem; color: #64748b;">Import words from CSV file</div>
+                    </a>
+                    <button type="button" class="dropdown-item" onclick="scrollToBulkPaste()" style="display: block; width: 100%; padding: 0.75rem 1rem; text-align: left; background: none; border: none; color: #1e293b; cursor: pointer; transition: background-color 0.2s;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">📋 Paste Words</div>
+                        <div style="font-size: 0.875rem; color: #64748b;">Paste multiple words (one per line)</div>
+                    </button>
+                </div>
+            </div>
+            
             <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn">Back to Lesson</a>
         </div>
     </div>
@@ -950,5 +971,71 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Add Words Dropdown Menu Functions
+function toggleAddWordsMenu() {
+    const menu = document.getElementById('add-words-menu');
+    const arrow = document.getElementById('dropdown-arrow');
+    const isVisible = menu.style.display === 'block';
+    
+    if (isVisible) {
+        menu.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+    } else {
+        menu.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+    }
+}
+
+function scrollToBulkPaste() {
+    // Close the menu
+    toggleAddWordsMenu();
+    
+    // Scroll to bulk paste section
+    const bulkPasteSection = document.querySelector('.bulk-paste-section');
+    if (bulkPasteSection) {
+        bulkPasteSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Highlight it briefly
+        bulkPasteSection.style.transition = 'background-color 0.3s';
+        bulkPasteSection.style.backgroundColor = '#fef3c7';
+        setTimeout(() => {
+            bulkPasteSection.style.backgroundColor = 'white';
+        }, 2000);
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.querySelector('.dropdown');
+    const menu = document.getElementById('add-words-menu');
+    const toggle = document.getElementById('add-words-toggle');
+    
+    if (dropdown && menu && toggle) {
+        if (!dropdown.contains(event.target) && menu.style.display === 'block') {
+            menu.style.display = 'none';
+            document.getElementById('dropdown-arrow').style.transform = 'rotate(0deg)';
+        }
+    }
+});
 </script>
+@endpush
+
+@push('styles')
+<style>
+.dropdown-item:hover {
+    background-color: #f8fafc !important;
+}
+
+.dropdown-item:active {
+    background-color: #f1f5f9 !important;
+}
+
+.dropdown-item button:hover {
+    background-color: #f8fafc !important;
+}
+
+.dropdown-item button:active {
+    background-color: #f1f5f9 !important;
+}
+</style>
 @endpush
