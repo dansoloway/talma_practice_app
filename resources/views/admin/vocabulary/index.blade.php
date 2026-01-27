@@ -21,6 +21,33 @@
         </div>
     </div>
 
+    <!-- Bulk Paste Section -->
+    <div class="bulk-paste-section" style="background: white; border: 1px solid var(--color-border, #ddd); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+        <h2 style="margin: 0 0 1rem 0; font-size: 1.25rem; color: var(--color-primary, #0024a7);">📋 Paste Words (One Per Line)</h2>
+        <form id="bulk-paste-form" action="{{ route('admin.lessons.vocabulary.bulk-store', $lesson) }}" method="POST">
+            @csrf
+            <div style="margin-bottom: 1rem;">
+                <label for="bulk-words" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Paste words here (one word per line):</label>
+                <textarea 
+                    id="bulk-words" 
+                    name="words" 
+                    rows="8" 
+                    class="form-control" 
+                    placeholder="cat&#10;dog&#10;bird&#10;fish"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.95rem; resize: vertical;"
+                ></textarea>
+                <small style="display: block; margin-top: 0.5rem; color: #666;">Each line will be created as a separate vocabulary word. Empty lines will be ignored.</small>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <button type="submit" class="btn btn-primary" id="bulk-paste-btn">
+                    <span id="bulk-paste-text">Add Words</span>
+                    <span id="bulk-paste-spinner" style="display: none;">⏳ Processing...</span>
+                </button>
+                <span id="bulk-paste-status" style="display: none; color: #10b981; font-weight: 600;"></span>
+            </div>
+        </form>
+    </div>
+
     @if($vocabulary->count() > 0)
         <div id="images-status" style="display: none; margin-bottom: 1rem; padding: 1rem; background: #fef3c7; border-radius: 4px; border-left: 4px solid #f59e0b;">
             <div id="images-progress-text">Initializing image generation...</div>
@@ -843,6 +870,85 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+});
+
+// Bulk paste form handling
+document.addEventListener('DOMContentLoaded', function() {
+    const bulkForm = document.getElementById('bulk-paste-form');
+    const bulkBtn = document.getElementById('bulk-paste-btn');
+    const bulkText = document.getElementById('bulk-paste-text');
+    const bulkSpinner = document.getElementById('bulk-paste-spinner');
+    const bulkStatus = document.getElementById('bulk-paste-status');
+    const bulkTextarea = document.getElementById('bulk-words');
+
+    if (bulkForm) {
+        bulkForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const words = bulkTextarea.value.trim();
+            if (!words) {
+                alert('Please enter at least one word.');
+                return;
+            }
+
+            // Count words
+            const wordCount = words.split('\n').filter(w => w.trim().length > 0).length;
+            
+            if (!confirm(`This will create ${wordCount} vocabulary word(s). Continue?`)) {
+                return;
+            }
+
+            // Disable button and show loading
+            bulkBtn.disabled = true;
+            bulkText.style.display = 'none';
+            bulkSpinner.style.display = 'inline';
+            bulkStatus.style.display = 'none';
+
+            // Submit form
+            fetch(bulkForm.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: new URLSearchParams({
+                    words: words
+                })
+            })
+            .then(response => {
+                if (response.redirected) {
+                    // Follow redirect to see success message
+                    window.location.href = response.url;
+                } else {
+                    return response.json();
+                }
+            })
+            .then(data => {
+                if (data) {
+                    if (data.success) {
+                        bulkStatus.textContent = '✓ ' + data.message;
+                        bulkStatus.style.display = 'inline';
+                        bulkTextarea.value = '';
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to create vocabulary words'));
+                        bulkBtn.disabled = false;
+                        bulkText.style.display = 'inline';
+                        bulkSpinner.style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                bulkBtn.disabled = false;
+                bulkText.style.display = 'inline';
+                bulkSpinner.style.display = 'none';
+            });
+        });
+    }
 });
 </script>
 @endpush

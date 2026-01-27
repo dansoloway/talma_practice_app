@@ -54,6 +54,14 @@
                     @enderror
                 </div>
                 
+                <div class="form-group">
+                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: normal;">
+                        <input type="checkbox" name="remember" value="1" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                        <span>Remember me</span>
+                    </label>
+                    <small style="display: block; margin-top: 0.25rem; color: #666; font-size: 0.875rem;">Stay logged in for 30 days</small>
+                </div>
+                
                 <button type="submit" class="btn btn-primary btn-large" id="login-submit-btn">
                     Access Admin Dashboard
                 </button>
@@ -239,6 +247,42 @@ document.addEventListener('DOMContentLoaded', function() {
     align-items: center;
     gap: 0.5rem;
     margin-top: 1.5rem;
+}
+
+.checkbox-label {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--color-primary, #007bff);
+    flex-shrink: 0;
+}
+
+.checkbox-label input[type="checkbox"]:focus {
+    outline: 2px solid var(--color-primary, #007bff);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+.checkbox-label span {
+    font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+    .checkbox-label {
+        font-size: 0.9rem;
+    }
+    
+    .checkbox-label input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
 }
 </style>
 @endsection

@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AdminLoginController extends Controller
@@ -16,11 +18,38 @@ class AdminLoginController extends Controller
      * Show the admin login form.
      * If already authenticated, redirect to dashboard.
      */
-    public function show()
+    public function show(Request $request)
     {
         // If already authenticated, redirect to dashboard
         if (session('admin_authenticated', false)) {
             return redirect()->route('admin.analytics');
+        }
+        
+        // Check for remember token cookie
+        $rememberToken = $request->cookie('admin_remember_token');
+        if ($rememberToken) {
+            $user = User::where('remember_token', hash('sha256', $rememberToken))
+                ->where('is_active', true)
+                ->first();
+            
+            if ($user && $user->canAccessAdmin()) {
+                // Auto-login with remember token
+                $request->session()->regenerate();
+                session([
+                    'admin_authenticated' => true,
+                    'admin_user_id' => $user->id,
+                    'admin_user_name' => $user->name,
+                    'admin_user_role' => $user->role,
+                ]);
+                
+                Log::info('Auto-login via remember token', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                ]);
+                
+                return redirect()->route('admin.analytics');
+            }
+            // Invalid token - cookie will be cleared by middleware if needed
         }
         
         return view('admin.login');
@@ -54,6 +83,7 @@ class AdminLoginController extends Controller
             $credentials = $request->validate([
                 'email' => 'required|email',
                 'password' => 'required|string',
+                'remember' => 'nullable|boolean',
             ]);
         } catch (ValidationException $e) {
             Log::warning('Login validation failed', [
@@ -154,9 +184,47 @@ class AdminLoginController extends Controller
             'admin_user_role' => $user->role,
         ]);
         
+        // Handle "Remember Me" functionality
+        $remember = $request->boolean('remember', false);
+        $response = redirect()->route('admin.analytics');
+        
+        if ($remember) {
+            // Generate a secure remember token
+            $rememberToken = Str::random(60);
+            $user->remember_token = hash('sha256', $rememberToken);
+            $user->save();
+            
+            // Set cookie for 30 days (works on mobile too)
+            // HttpOnly and Secure flags for security, SameSite=Lax for mobile compatibility
+            $response->withCookie(cookie(
+                'admin_remember_token',
+                $rememberToken,
+                60 * 24 * 30, // 30 days
+                '/',
+                null,
+                config('session.secure', false), // Use secure flag from config
+                true, // HttpOnly
+                false, // raw
+                'lax' // SameSite for mobile compatibility
+            ));
+            
+            Log::info('Remember me token set', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+        } else {
+            // Clear any existing remember token
+            if ($user->remember_token) {
+                $user->remember_token = null;
+                $user->save();
+            }
+            // Clear cookie if it exists
+            $response->withCookie(Cookie::forget('admin_remember_token'));
+        }
+        
         RateLimiter::clear($key);
         
-        return redirect()->route('admin.analytics');
+        return $response;
     }
 
     /**
@@ -164,10 +232,25 @@ class AdminLoginController extends Controller
      */
     public function logout(Request $request)
     {
+        // Clear remember token from database
+        $userId = session('admin_user_id');
+        if ($userId) {
+            $user = User::find($userId);
+            if ($user) {
+                $user->remember_token = null;
+                $user->save();
+            }
+        }
+        
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        return response()->json(['success' => true]);
+        $response = response()->json(['success' => true]);
+        
+        // Clear remember token cookie
+        $response->withCookie(Cookie::forget('admin_remember_token'));
+        
+        return $response;
     }
 }
 

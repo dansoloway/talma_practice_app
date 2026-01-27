@@ -118,6 +118,83 @@ class VocabularyController extends Controller
     }
 
     /**
+     * Store multiple vocabulary items from bulk paste (one word per line).
+     */
+    public function bulkStore(Request $request, Lesson $lesson)
+    {
+        $request->validate([
+            'words' => 'required|string',
+        ]);
+
+        // Split by newlines and clean up
+        $words = array_filter(
+            array_map('trim', explode("\n", $request->input('words'))),
+            function($word) {
+                return !empty($word);
+            }
+        );
+
+        if (empty($words)) {
+            return redirect()
+                ->route('admin.lessons.vocabulary.index', $lesson)
+                ->with('error', 'No valid words found. Please enter at least one word.');
+        }
+
+        // Get the highest sort_order for this lesson
+        $maxSortOrder = $lesson->vocabulary()->max('sort_order') ?? -1;
+        $createdCount = 0;
+        $skippedCount = 0;
+
+        foreach ($words as $word) {
+            // Skip if word already exists for this lesson
+            $exists = $lesson->vocabulary()
+                ->where('english_word', $word)
+                ->exists();
+
+            if ($exists) {
+                $skippedCount++;
+                continue;
+            }
+
+            $maxSortOrder++;
+
+            $vocabularyData = [
+                'lesson_id' => $lesson->id,
+                'english_word' => $word,
+                'sort_order' => $maxSortOrder,
+                'is_active' => true,
+            ];
+
+            // Auto-translate if translator is enabled
+            if ($this->translator->enabled()) {
+                $translations = $this->translator->translate($word, true, true);
+                if (!empty($translations['hebrew'])) {
+                    $vocabularyData['hebrew_translation'] = $translations['hebrew'];
+                }
+                if (!empty($translations['arabic'])) {
+                    $vocabularyData['arabic_translation'] = $translations['arabic'];
+                }
+            }
+
+            $vocabulary = Vocabulary::create($vocabularyData);
+
+            // Generate audio for the new vocabulary word
+            $this->generateVocabularyAudio($vocabulary);
+
+            $createdCount++;
+        }
+
+        $message = "Successfully created {$createdCount} vocabulary word(s).";
+        if ($skippedCount > 0) {
+            $message .= " {$skippedCount} word(s) were skipped because they already exist.";
+        }
+
+        return redirect()
+            ->route('admin.lessons.vocabulary.index', $lesson)
+            ->with('success', $message);
+    }
+
+    /**
      * Display the specified vocabulary item.
      */
     public function show(Lesson $lesson, Vocabulary $vocabulary)

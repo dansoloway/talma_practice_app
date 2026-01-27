@@ -155,6 +155,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         ->name('lessons.vocabulary.create');
     Route::post('lessons/{lesson}/vocabulary', [AdminVocabularyController::class, 'store'])
         ->name('lessons.vocabulary.store');
+    Route::post('lessons/{lesson}/vocabulary/bulk', [AdminVocabularyController::class, 'bulkStore'])
+        ->name('lessons.vocabulary.bulk-store');
     Route::get('lessons/{lesson}/vocabulary/{vocabulary}', [AdminVocabularyController::class, 'show'])
         ->name('lessons.vocabulary.show');
     Route::get('lessons/{lesson}/vocabulary/{vocabulary}/edit', [AdminVocabularyController::class, 'edit'])

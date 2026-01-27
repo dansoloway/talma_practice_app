@@ -14,9 +14,6 @@
                 @if($lesson->session_number)
                     <span class="metadata-item">Session {{ $lesson->session_number }}</span>
                 @endif
-                @if($lesson->part_number)
-                    <span class="metadata-item">Part {{ $lesson->part_number }}</span>
-                @endif
             </div>
         </div>
         <div class="page-actions">
@@ -50,10 +47,6 @@
                 <div class="info-item">
                     <label>Session Number:</label>
                     <span id="lesson-session">{{ $lesson->session_number ?: 'Not set' }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Part Number:</label>
-                    <span id="lesson-part">{{ $lesson->part_number ? 'Part ' . $lesson->part_number : 'Not set' }}</span>
                 </div>
                 <div class="info-item">
                     <label>Status:</label>
@@ -105,22 +98,9 @@
                         <label for="session_number">Session Number</label>
                         <input type="number" id="session_number" name="session_number" value="{{ $lesson->session_number }}" min="1" class="form-control">
                     </div>
-                    <div class="form-group">
-                        <label for="part_number">Part Number</label>
-                        <select id="part_number" name="part_number" class="form-control">
-                            <option value="">Not set</option>
-                            @for($i = 1; $i <= 8; $i++)
-                                <option value="{{ $i }}" {{ $lesson->part_number == $i ? 'selected' : '' }}>Part {{ $i }}</option>
-                            @endfor
-                        </select>
-                    </div>
                 </div>
 
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="sort_order">Sort Order</label>
-                        <input type="number" id="sort_order" name="sort_order" value="{{ $lesson->sort_order }}" class="form-control">
-                    </div>
                     <div class="form-group">
                         <label class="checkbox-label">
                             <input type="checkbox" name="is_active" value="1" {{ $lesson->is_active ? 'checked' : '' }}>
