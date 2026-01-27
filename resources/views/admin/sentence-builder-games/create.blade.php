@@ -31,12 +31,6 @@
             <small class="form-text">Leave blank to auto-generate</small>
         </div>
 
-        <div class="form-group">
-            <label for="sort_order">Sort Order</label>
-            <input type="number" id="sort_order" name="sort_order" class="form-control" 
-                   value="{{ old('sort_order', $lesson->sentenceBuilderGames()->max('sort_order') + 1 ?? 0) }}">
-        </div>
-
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Game</button>
             <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn">Cancel</a>

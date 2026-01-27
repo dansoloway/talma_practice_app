@@ -7,25 +7,33 @@
 @endphp
 
 @section('content')
-<div class="container">
-    <div class="student-grade-page">
-        <div class="grade-header">
-            <a href="{{ route('student.index') }}" class="back-link">← Back to Grades</a>
-            <div class="header-content">
-                <div>
-                    <h1 class="grade-title">Grade {{ $gradeLevel }} Lessons</h1>
-                    <p class="grade-subtitle">Choose a lesson to start practicing</p>
-                </div>
+<!-- Warm background with subtle gradient -->
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
+    <div class="container mx-auto px-4 max-w-5xl">
+        <!-- Header Section - Stronger visual hierarchy -->
+        <div class="mb-8">
+            <a href="{{ route('student.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-6 transition-colors duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>
+                <span>Back to Grades</span>
+            </a>
+            
+            <div class="text-center mb-2">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-3 tracking-tight">
+                    Grade {{ $gradeLevel }} Lessons
+                </h1>
+                <p class="text-lg text-gray-600 font-medium">
+                    Choose a lesson to start practicing
+                </p>
             </div>
         </div>
 
-        <!-- Filters -->
-        <div class="filters-section" style="background: var(--color-white); padding: 1.5rem; border-radius: var(--radius-lg); border: 2px solid var(--color-border); margin-bottom: 2rem;">
-            <form method="GET" action="{{ route('student.grade', $gradeLevel) }}" class="filters-form" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+        <!-- Filters Section - Reduced visual weight, secondary feel -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-5 mb-8">
+            <form method="GET" action="{{ route('student.grade', $gradeLevel) }}" class="flex flex-wrap gap-4 items-end">
                 @if($sessionNumbers->count() > 0)
-                    <div class="filter-group" style="flex: 1; min-width: 150px;">
-                        <label for="session_number" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--color-text-dark);">Session:</label>
-                        <select name="session_number" id="session_number" class="form-control" style="width: 100%;">
+                    <div class="flex-1 min-w-[150px]">
+                        <label for="session_number" class="block text-sm font-semibold text-gray-700 mb-2">Session:</label>
+                        <select name="session_number" id="session_number" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                             <option value="">All Sessions</option>
                             @foreach($sessionNumbers as $session)
                                 <option value="{{ $session }}" {{ request('session_number') == $session ? 'selected' : '' }}>
@@ -37,9 +45,9 @@
                 @endif
                 
                 @if($partNumbers->count() > 0)
-                    <div class="filter-group" style="flex: 1; min-width: 150px;">
-                        <label for="part_number" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--color-text-dark);">Part:</label>
-                        <select name="part_number" id="part_number" class="form-control" style="width: 100%;">
+                    <div class="flex-1 min-w-[150px]">
+                        <label for="part_number" class="block text-sm font-semibold text-gray-700 mb-2">Part:</label>
+                        <select name="part_number" id="part_number" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                             <option value="">All Parts</option>
                             @foreach($partNumbers as $part)
                                 <option value="{{ $part }}" {{ request('part_number') == $part ? 'selected' : '' }}>
@@ -50,83 +58,116 @@
                     </div>
                 @endif
                 
-                <div class="filter-group" style="flex: 2; min-width: 200px;">
-                    <label for="search" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--color-text-dark);">Search:</label>
-                    <input type="text" name="search" id="search" class="form-control" 
-                           placeholder="Search by title..." value="{{ request('search') }}" style="width: 100%;">
+                <div class="flex-[2] min-w-[200px]">
+                    <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">Search:</label>
+                    <input type="text" name="search" id="search" 
+                           placeholder="Search by title..." 
+                           value="{{ request('search') }}" 
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                 </div>
                 
-                <div class="filter-actions" style="display: flex; gap: 0.5rem;">
-                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                <div class="flex gap-2">
+                    <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                        Filter
+                    </button>
                     @if(request()->hasAny(['session_number', 'part_number', 'search']))
-                        <a href="{{ route('student.grade', $gradeLevel) }}" class="btn btn-secondary btn-sm">Clear</a>
+                        <a href="{{ route('student.grade', $gradeLevel) }}" class="px-5 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200">
+                            Clear
+                        </a>
                     @endif
                 </div>
             </form>
         </div>
 
         @if(request()->hasAny(['session_number', 'part_number', 'search']))
-            <div class="results-info" style="margin-bottom: 1rem; color: var(--color-text-light);">
-                <p>Showing {{ $lessons->count() }} lesson{{ $lessons->count() !== 1 ? 's' : '' }} matching your filters</p>
+            <div class="mb-6 text-center">
+                <p class="text-gray-600 font-medium">
+                    Showing {{ $lessons->count() }} lesson{{ $lessons->count() !== 1 ? 's' : '' }} matching your filters
+                </p>
             </div>
         @endif
 
-        <div class="lessons-list" id="lessons-list">
+        <!-- Lessons Grid - Interactive tiles with warmth -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="lessons-list">
             @forelse($lessons as $lesson)
-                <div class="lesson-card-wrapper" data-lesson-id="{{ $lesson->id }}">
-                    <div class="lesson-card">
-                        <a href="{{ route('lessons.show', $lesson->slug) }}" class="lesson-card-link">
-                            <div class="lesson-content">
-                                <div class="lesson-header-row">
-                                    @if($lesson->session_number || $lesson->part_number)
-                                        <div class="lesson-badge">
-                                            @if($lesson->session_number)
-                                                <span class="badge-session">Session {{ $lesson->session_number }}</span>
-                                            @endif
-                                            @if($lesson->part_number)
-                                                <span class="badge-part">Part {{ $lesson->part_number }}</span>
-                                            @endif
-                                        </div>
-                                    @endif
-                                    <div class="lesson-arrow">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </div>
-                                </div>
-                                <h3 class="lesson-title">{{ $lesson->title }}</h3>
-                                
-                                <div class="lesson-stats">
-                                    @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
-                                        <span class="stat">
-                                            <i class="fas fa-book"></i>
-                                            {{ $lesson->vocabulary->count() }} words
+                <a href="{{ route('lessons.show', $lesson->slug) }}" 
+                   class="group relative bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
+                    
+                    <!-- Card Content -->
+                    <div class="flex flex-col h-full">
+                        <!-- Header Row: Badges + Arrow -->
+                        <div class="flex justify-between items-start mb-4">
+                            @if($lesson->session_number || $lesson->part_number)
+                                <div class="flex flex-wrap gap-2">
+                                    @if($lesson->session_number)
+                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                                            Session {{ $lesson->session_number }}
                                         </span>
                                     @endif
-                                    
-                                    @php
-                                        $activityCount = $lesson->prompts->count() + $lesson->matchingGames->count() + $lesson->flashcardGames->count();
-                                    @endphp
-                                    
-                                    @if($activityCount > 0)
-                                        <span class="stat">
-                                            <i class="fas fa-gamepad"></i>
-                                            {{ $activityCount }} activities
+                                    @if($lesson->part_number)
+                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200">
+                                            Part {{ $lesson->part_number }}
                                         </span>
                                     @endif
                                 </div>
+                            @else
+                                <div></div>
+                            @endif
+                            
+                            <!-- Chevron Arrow - More intentional -->
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center transition-all duration-300 group-hover:translate-x-1">
+                                <i class="fas fa-chevron-right text-blue-600 text-sm"></i>
                             </div>
-                        </a>
+                        </div>
+                        
+                        <!-- Lesson Title - Clear focal point -->
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-700 transition-colors duration-200 leading-tight">
+                            {{ $lesson->title }}
+                        </h3>
+                        
+                        <!-- Lesson Stats - Subtle and informative -->
+                        <div class="flex flex-wrap gap-4 mt-auto pt-4 border-t border-gray-100">
+                            @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
+                                <span class="inline-flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-book mr-2 text-blue-500"></i>
+                                    <span class="font-medium">{{ $lesson->vocabulary->count() }}</span>
+                                    <span class="ml-1">words</span>
+                                </span>
+                            @endif
+                            
+                            @php
+                                $activityCount = $lesson->prompts->count() + $lesson->matchingGames->count() + $lesson->flashcardGames->count();
+                            @endphp
+                            
+                            @if($activityCount > 0)
+                                <span class="inline-flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-gamepad mr-2 text-purple-500"></i>
+                                    <span class="font-medium">{{ $activityCount }}</span>
+                                    <span class="ml-1">activities</span>
+                                </span>
+                            @endif
+                        </div>
                     </div>
-                </div>
+                </a>
             @empty
-                <div class="empty-state">
-                    @if(request()->hasAny(['session_number', 'part_number', 'search']))
-                        <h3>No lessons found</h3>
-                        <p>No lessons match your current filters. Try adjusting your search criteria or <a href="{{ route('student.grade', $gradeLevel) }}">clear all filters</a>.</p>
-                    @else
-                        <h3>No lessons available for Grade {{ $gradeLevel }}</h3>
-                        <p>Please check back later for new lessons!</p>
-                        <a href="{{ route('student.index') }}" class="btn btn-primary">Choose Different Grade</a>
-                    @endif
+                <div class="col-span-full">
+                    <div class="bg-white rounded-2xl border-2 border-gray-200 p-12 text-center">
+                        @if(request()->hasAny(['session_number', 'part_number', 'search']))
+                            <div class="text-6xl mb-4">🔍</div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-3">No lessons found</h3>
+                            <p class="text-gray-600 mb-6">No lessons match your current filters. Try adjusting your search criteria.</p>
+                            <a href="{{ route('student.grade', $gradeLevel) }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
+                                Clear All Filters
+                            </a>
+                        @else
+                            <div class="text-6xl mb-4">📚</div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-3">No lessons available for Grade {{ $gradeLevel }}</h3>
+                            <p class="text-gray-600 mb-6">Please check back later for new lessons!</p>
+                            <a href="{{ route('student.index') }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
+                                Choose Different Grade
+                            </a>
+                        @endif
+                    </div>
                 </div>
             @endforelse
         </div>
@@ -135,56 +176,27 @@
 
 @push('styles')
 <style>
-    .header-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 1rem;
-        flex-wrap: wrap;
+    /* Ensure smooth transitions and maintain accessibility */
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            transition: none !important;
+            animation: none !important;
+        }
     }
-
-    .lesson-card-wrapper {
-        margin-bottom: 1rem;
+    
+    /* Focus states for accessibility */
+    a:focus-visible {
+        outline: 3px solid #3b82f6;
+        outline-offset: 2px;
+        border-radius: 1rem;
     }
-
-    /* Override the base .lesson-card styles since we changed the structure */
-    .lessons-list .lesson-card {
-        display: block;
-        padding: 0;
-        background: transparent;
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
-        position: relative;
+    
+    button:focus-visible,
+    select:focus-visible,
+    input:focus-visible {
+        outline: 3px solid #3b82f6;
+        outline-offset: 2px;
     }
-
-    .lessons-list .lesson-card:hover {
-        transform: none;
-        box-shadow: none;
-        border-color: transparent;
-    }
-
-    .lesson-card-link {
-        display: flex;
-        align-items: center;
-        padding: 1.5rem;
-        background: var(--color-white);
-        border: 2px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        text-decoration: none;
-        color: inherit;
-        transition: var(--transition-fast);
-        box-shadow: var(--shadow-sm);
-        width: 100%;
-    }
-
-    .lesson-card-link:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--color-primary-light);
-        text-decoration: none;
-    }
-
 </style>
 @endpush
 

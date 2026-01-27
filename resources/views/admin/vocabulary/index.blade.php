@@ -146,8 +146,8 @@
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Model</label>
                     <select id="tts-model" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
-                        <option value="eleven_multilingual_v2" selected>Multilingual v2 (Recommended)</option>
-                        <option value="eleven_monolingual_v1">Monolingual v1 (Faster, English only)</option>
+                        <option value="eleven_monolingual_v1" selected>Monolingual v1 (Recommended - Faster, English only)</option>
+                        <option value="eleven_multilingual_v2">Multilingual v2 (Supports multiple languages)</option>
                         <option value="eleven_turbo_v2_5">Turbo v2.5 (Fastest)</option>
                     </select>
                 </div>
@@ -489,10 +489,77 @@ function generateAllImages() {
     processNext();
 }
 
+// TTS Settings localStorage functions
+function loadTtsSettings() {
+    const saved = localStorage.getItem('tts_settings');
+    if (saved) {
+        try {
+            return JSON.parse(saved);
+        } catch (e) {
+            console.error('Error parsing saved TTS settings:', e);
+        }
+    }
+    // Return default settings
+    return {
+        stability: 0.8,
+        similarity_boost: 0.85,
+        style: 0.0,
+        speed: 1.0,
+        use_speaker_boost: true,
+        model: 'eleven_monolingual_v1'
+    };
+}
+
+function saveTtsSettings(settings) {
+    try {
+        localStorage.setItem('tts_settings', JSON.stringify(settings));
+    } catch (e) {
+        console.error('Error saving TTS settings:', e);
+    }
+}
+
+function applyTtsSettings(settings) {
+    // Apply settings to form inputs
+    const stabilityInput = document.getElementById('tts-stability');
+    const similarityInput = document.getElementById('tts-similarity');
+    const styleInput = document.getElementById('tts-style');
+    const speedInput = document.getElementById('tts-speed');
+    const speakerBoostInput = document.getElementById('tts-speaker-boost');
+    const modelInput = document.getElementById('tts-model');
+    
+    if (stabilityInput) {
+        stabilityInput.value = settings.stability;
+        document.getElementById('tts-stability-value').textContent = parseFloat(settings.stability).toFixed(2);
+    }
+    if (similarityInput) {
+        similarityInput.value = settings.similarity_boost;
+        document.getElementById('tts-similarity-value').textContent = parseFloat(settings.similarity_boost).toFixed(2);
+    }
+    if (styleInput) {
+        styleInput.value = settings.style;
+        document.getElementById('tts-style-value').textContent = parseFloat(settings.style).toFixed(2);
+    }
+    if (speedInput) {
+        speedInput.value = settings.speed;
+        document.getElementById('tts-speed-value').textContent = parseFloat(settings.speed).toFixed(2);
+    }
+    if (speakerBoostInput) {
+        speakerBoostInput.checked = settings.use_speaker_boost;
+    }
+    if (modelInput) {
+        modelInput.value = settings.model;
+    }
+}
+
 function showTtsSettingsModal() {
     if (ttsGenerationInProgress) {
         return;
     }
+    
+    // Load saved settings and apply them
+    const savedSettings = loadTtsSettings();
+    applyTtsSettings(savedSettings);
+    
     document.getElementById('tts-settings-modal').style.display = 'flex';
 }
 
@@ -502,32 +569,56 @@ function closeTtsSettingsModal() {
     // This allows the generation function to access the vocab data after modal closes
 }
 
-// Update slider value displays
+// Update slider value displays and save settings on change
 document.addEventListener('DOMContentLoaded', function() {
     const stabilitySlider = document.getElementById('tts-stability');
     const similaritySlider = document.getElementById('tts-similarity');
     const styleSlider = document.getElementById('tts-style');
     const speedSlider = document.getElementById('tts-speed');
+    const speakerBoostInput = document.getElementById('tts-speaker-boost');
+    const modelInput = document.getElementById('tts-model');
+
+    function saveCurrentSettings() {
+        const settings = {
+            stability: parseFloat(stabilitySlider.value),
+            similarity_boost: parseFloat(similaritySlider.value),
+            style: parseFloat(styleSlider.value),
+            speed: parseFloat(speedSlider.value),
+            use_speaker_boost: speakerBoostInput.checked,
+            model: modelInput.value
+        };
+        saveTtsSettings(settings);
+    }
 
     if (stabilitySlider) {
         stabilitySlider.addEventListener('input', function() {
             document.getElementById('tts-stability-value').textContent = parseFloat(this.value).toFixed(2);
+            saveCurrentSettings();
         });
     }
     if (similaritySlider) {
         similaritySlider.addEventListener('input', function() {
             document.getElementById('tts-similarity-value').textContent = parseFloat(this.value).toFixed(2);
+            saveCurrentSettings();
         });
     }
     if (styleSlider) {
         styleSlider.addEventListener('input', function() {
             document.getElementById('tts-style-value').textContent = parseFloat(this.value).toFixed(2);
+            saveCurrentSettings();
         });
     }
     if (speedSlider) {
         speedSlider.addEventListener('input', function() {
             document.getElementById('tts-speed-value').textContent = parseFloat(this.value).toFixed(2);
+            saveCurrentSettings();
         });
+    }
+    if (speakerBoostInput) {
+        speakerBoostInput.addEventListener('change', saveCurrentSettings);
+    }
+    if (modelInput) {
+        modelInput.addEventListener('change', saveCurrentSettings);
     }
 });
 
@@ -545,6 +636,9 @@ function startTtsGeneration() {
         use_speaker_boost: document.getElementById('tts-speaker-boost').checked,
         model: document.getElementById('tts-model').value
     };
+    
+    // Save settings to localStorage for next time
+    saveTtsSettings(settings);
 
     // Check if this is for a single vocabulary item or bulk
     if (currentSingleVocab) {

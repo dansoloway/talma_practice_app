@@ -43,15 +43,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="sort_order">Sort Order</label>
-                    <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $matchingGame->sort_order) }}" min="0" class="form-control">
-                    <small class="form-text">Lower numbers appear first in the lesson</small>
-                    @error('sort_order')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="form-group">
                     <div class="form-check">
                         <input type="checkbox" id="is_active" name="is_active" value="1" 
                                {{ old('is_active', $matchingGame->is_active) ? 'checked' : '' }} class="form-check-input">

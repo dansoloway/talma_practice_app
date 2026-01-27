@@ -53,11 +53,6 @@
             <small>ElevenLabs voice ID to use for this prompt</small>
         </div>
 
-        <div class="form-group">
-            <label for="sort_order">Sort Order</label>
-            <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', 0) }}" class="form-control">
-        </div>
-
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Create Prompt</button>
                 <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn">Cancel</a>

@@ -152,12 +152,6 @@
                         Active
                     </label>
                 </div>
-
-                <div class="form-group">
-                    <label for="sort_order">Sort Order</label>
-                    <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $trueFalseGame->questions()->max('sort_order') + 1) }}" min="0" class="form-control">
-                    <small class="form-text">Lower numbers appear first in the game.</small>
-                </div>
             </div>
         </div>
 

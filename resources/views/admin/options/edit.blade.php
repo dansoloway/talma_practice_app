@@ -54,11 +54,6 @@
         </div>
 
         <div class="form-group">
-            <label for="sort_order">Sort Order</label>
-            <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $option->sort_order) }}" class="form-control">
-        </div>
-
-        <div class="form-group">
             <label class="checkbox-label">
                 <input type="checkbox" name="is_active" value="1" {{ old('is_active', $option->is_active) ? 'checked' : '' }}>
                 Active

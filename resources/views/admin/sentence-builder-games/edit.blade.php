@@ -31,12 +31,6 @@
                    value="{{ old('title', $game->title) }}" required>
         </div>
 
-        <div class="form-group">
-            <label for="sort_order">Sort Order</label>
-            <input type="number" id="sort_order" name="sort_order" class="form-control" 
-                   value="{{ old('sort_order', $game->sort_order) }}">
-        </div>
-
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Update Game</button>
             <a href="{{ route('admin.lessons.sentence-builder-games.show', [$lesson, $game]) }}" class="btn">Cancel</a>
