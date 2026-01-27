@@ -101,7 +101,7 @@
                             @foreach($vocabulary as $vocab)
                                 <label class="checkbox-label" style="display: block; padding: 0.5rem; margin-bottom: 0.25rem;">
                                     <input type="checkbox" name="vocabulary_ids[]" value="{{ $vocab->id }}" 
-                                           {{ in_array($vocab->id, old('vocabulary_ids', [])) ? 'checked' : '' }}>
+                                           {{ in_array($vocab->id, old('vocabulary_ids', $vocabulary->pluck('id')->toArray())) ? 'checked' : '' }}>
                                     <span class="checkmark"></span>
                                     <strong>{{ $vocab->english_word }}</strong>
                                     @if($vocab->hebrew_translation)

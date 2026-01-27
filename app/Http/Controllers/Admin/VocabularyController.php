@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\FlashcardGame;
 use App\Models\Lesson;
+use App\Models\MatchingGame;
+use App\Models\SpellingGame;
 use App\Models\Vocabulary;
 use App\Services\ImageGeneration\FlaticonImageGenerator;
 use App\Services\ImageGeneration\FreepikImageGenerator;
@@ -178,10 +181,28 @@ class VocabularyController extends Controller
 
             $vocabulary = Vocabulary::create($vocabularyData);
 
+            // Generate image automatically if image generator is enabled
+            if (empty($vocabulary->image_path) && $this->imageGenerator->enabled()) {
+                \Log::info("Auto-generating image for vocabulary word: {$vocabulary->english_word} (ID: {$vocabulary->id})");
+                try {
+                    $imagePath = $this->imageGenerator->generateVocabularyImage($vocabulary->english_word);
+                    if ($imagePath) {
+                        $vocabulary->update(['image_path' => $imagePath]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Failed to auto-generate image for '{$vocabulary->english_word}': " . $e->getMessage());
+                }
+            }
+
             // Generate audio for the new vocabulary word
             $this->generateVocabularyAudio($vocabulary);
 
             $createdCount++;
+        }
+
+        // Create games automatically if new vocabulary was created
+        if ($createdCount > 0) {
+            $this->createGamesForLesson($lesson);
         }
 
         $message = "Successfully created {$createdCount} vocabulary word(s).";
@@ -398,15 +419,18 @@ class VocabularyController extends Controller
                     'is_active' => true,
                 ]);
                 
-                // Automatic image generation is currently disabled
-                // Users can upload images manually or use the "Generate Image" button
-                // if ($this->imageGenerator->enabled()) {
-                //     \Log::info("Generating image for vocabulary word: {$englishWord} (ID: {$vocabulary->id})");
-                //     $imagePath = $this->imageGenerator->generateVocabularyImage($englishWord);
-                //     if ($imagePath) {
-                //         $vocabulary->update(['image_path' => $imagePath]);
-                //     }
-                // }
+                // Generate image automatically if image generator is enabled
+                if ($this->imageGenerator->enabled()) {
+                    \Log::info("Auto-generating image for vocabulary word: {$englishWord} (ID: {$vocabulary->id})");
+                    try {
+                        $imagePath = $this->imageGenerator->generateVocabularyImage($englishWord);
+                        if ($imagePath) {
+                            $vocabulary->update(['image_path' => $imagePath]);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error("Failed to auto-generate image for '{$englishWord}': " . $e->getMessage());
+                    }
+                }
                 
                 // Generate TTS audio for the vocabulary word
                 \Log::info("Generating TTS for vocabulary word: {$englishWord} (ID: {$vocabulary->id})");
@@ -418,6 +442,11 @@ class VocabularyController extends Controller
                 $errors[] = "Row " . ($index + 1) . ": " . $e->getMessage();
                 \Log::error("Failed to create vocabulary from CSV row " . ($index + 1) . ": " . $e->getMessage());
             }
+        }
+
+        // Create games automatically if vocabulary was imported
+        if ($imported > 0) {
+            $this->createGamesForLesson($lesson);
         }
 
         $action = $importMode === 'replace' ? 'replaced with' : 'added';
@@ -1095,5 +1124,88 @@ class VocabularyController extends Controller
         }
         
         return view('admin.vocabulary.logs', compact('logContent', 'lines'));
+    }
+
+    /**
+     * Create matching, flashcard, and spelling games automatically for a lesson
+     * using all available vocabulary.
+     */
+    private function createGamesForLesson(Lesson $lesson)
+    {
+        // Get all active vocabulary IDs for this lesson
+        $vocabularyIds = $lesson->vocabulary()->active()->pluck('id')->toArray();
+        
+        if (empty($vocabularyIds) || count($vocabularyIds) < 2) {
+            \Log::info("Skipping game creation for lesson {$lesson->id}: insufficient vocabulary (need at least 2 words)");
+            return;
+        }
+
+        try {
+            // Create Matching Game if none exists
+            if ($lesson->matchingGames()->count() === 0) {
+                $matchingGameTitle = trim(sprintf('%s Matching Game 1', $lesson->title));
+                
+                MatchingGame::create([
+                    'lesson_id' => $lesson->id,
+                    'title' => $matchingGameTitle,
+                    'vocabulary_ids' => $vocabularyIds,
+                    'is_active' => true,
+                ]);
+                \Log::info("Created matching game for lesson {$lesson->id}");
+            }
+
+            // Create Flashcard Game if none exists
+            if ($lesson->flashcardGames()->count() === 0) {
+                $flashcardGameTitle = trim(sprintf('%s Flashcards 1', $lesson->title));
+                
+                // Determine game types based on vocabulary assets
+                $missingImages = Vocabulary::whereIn('id', $vocabularyIds)
+                    ->where(function($q){ $q->whereNull('image_path')->orWhere('image_path', ''); })
+                    ->count();
+                $missingAudio = Vocabulary::whereIn('id', $vocabularyIds)
+                    ->whereNull('word_audio_path')
+                    ->count();
+                
+                $gameTypes = [];
+                if ($missingImages > 0 && $missingAudio > 0) {
+                    $gameTypes = [];
+                } elseif ($missingImages > 0) {
+                    $gameTypes = ['audio_to_word'];
+                } elseif ($missingAudio > 0) {
+                    $gameTypes = ['image_to_word'];
+                } else {
+                    $gameTypes = ['image_to_word', 'audio_to_word'];
+                }
+                
+                FlashcardGame::create([
+                    'lesson_id' => $lesson->id,
+                    'title' => $flashcardGameTitle,
+                    'vocabulary_ids' => $vocabularyIds,
+                    'game_types' => $gameTypes,
+                    'cards_per_game' => min(10, count($vocabularyIds)),
+                    'is_active' => true,
+                ]);
+                \Log::info("Created flashcard game for lesson {$lesson->id}");
+            }
+
+            // Create Spelling Game if none exists
+            if ($lesson->spellingGames()->count() === 0) {
+                $spellingGameTitle = trim($lesson->title . ' Spelling Practice 1');
+                
+                SpellingGame::create([
+                    'lesson_id' => $lesson->id,
+                    'title' => $spellingGameTitle,
+                    'vocabulary_ids' => $vocabularyIds,
+                    'difficulty' => 'medium',
+                    'is_active' => true,
+                    'sort_order' => 1,
+                ]);
+                \Log::info("Created spelling game for lesson {$lesson->id}");
+            }
+
+        } catch (\Exception $e) {
+            \Log::error("Failed to create games for lesson {$lesson->id}: " . $e->getMessage());
+            // Don't throw - allow vocabulary upload to succeed even if game creation fails
+        }
     }
 }

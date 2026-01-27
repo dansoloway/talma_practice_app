@@ -218,52 +218,54 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
                 <h3 class="text-2xl font-bold text-gray-800 mb-2 text-center">Activities</h3>
                 <p class="text-gray-600 text-center mb-8">Choose an activity to practice:</p>
-                <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach($allActivities as $index => $activity)
-                        <div class="group bg-gray-50 rounded-xl border-2 border-gray-200 p-5 md:p-6 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer" 
+                        @php
+                            // Determine display title: use default game name if title matches pattern, otherwise use customized title
+                            $displayTitle = $activity->title;
+                            
+                            // Check if title matches default pattern (starts with lesson title + default game name pattern)
+                            $lessonTitleEscaped = preg_quote(trim($lesson->title), '/');
+                            
+                            if ($activity->type === 'matching') {
+                                // Pattern: "{Lesson Title} Matching Game {number}"
+                                $pattern = '/^' . $lessonTitleEscaped . '\s+Matching\s+Game\s+\d+$/i';
+                                if (preg_match($pattern, trim($activity->title))) {
+                                    $displayTitle = 'Matching Game';
+                                }
+                            } elseif ($activity->type === 'flashcard') {
+                                // Pattern: "{Lesson Title} Flashcards {number}"
+                                $pattern = '/^' . $lessonTitleEscaped . '\s+Flashcards\s+\d+$/i';
+                                if (preg_match($pattern, trim($activity->title))) {
+                                    $displayTitle = 'Flashcards';
+                                }
+                            } elseif ($activity->type === 'spelling') {
+                                // Pattern: "{Lesson Title} Spelling Practice {number}"
+                                $pattern = '/^' . $lessonTitleEscaped . '\s+Spelling\s+Practice\s+\d+$/i';
+                                if (preg_match($pattern, trim($activity->title))) {
+                                    $displayTitle = 'Spelling Practice';
+                                }
+                            }
+                        @endphp
+                        <div class="group bg-gray-50 rounded-xl border-2 border-gray-200 p-5 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center" 
                              onclick="startActivity('{{ $activity->type }}', '{{ $activity->id }}')">
-                            <div class="flex items-center gap-4 md:gap-6">
-                                <div class="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-2xl md:text-3xl group-hover:border-blue-300 transition-colors duration-200">
-                                    @if($activity->type === 'prompts')
-                                        📝
-                                    @elseif($activity->type === 'matching')
-                                        🔗
-                                    @elseif($activity->type === 'flashcard')
-                                        🎴
-                                    @elseif($activity->type === 'spelling')
-                                        ✍️
-                                    @elseif($activity->type === 'clause_exercise')
-                                        📄
-                                    @elseif($activity->type === 'true_false')
-                                        ✓✗
-                                    @endif
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-xs md:text-sm font-semibold text-blue-600 uppercase tracking-wide mb-1">
-                                        {{ ucfirst(str_replace('_', ' ', $activity->type)) }} Activity
-                                    </div>
-                                    <div class="text-lg md:text-xl font-bold text-gray-800 mb-1 group-hover:text-blue-700 transition-colors duration-200">
-                                        {{ $activity->title }}
-                                    </div>
-                                    <div class="text-sm md:text-base text-gray-600">
-                                        @if($activity->type === 'prompts')
-                                            Complete sentences with the correct words
-                                        @elseif($activity->type === 'matching')
-                                            {{ count($activity->model->vocabulary_ids ?? []) }} word pairs
-                                        @elseif($activity->type === 'flashcard')
-                                            {{ $activity->model->cards_per_game }} flashcards
-                                        @elseif($activity->type === 'spelling')
-                                            {{ count($activity->model->vocabulary_ids ?? []) }} words
-                                        @elseif($activity->type === 'clause_exercise')
-                                            Fill in the blanks with vocabulary words
-                                        @elseif($activity->type === 'true_false')
-                                            Vocabulary True/False questions
-                                        @endif
-                                    </div>
-                                </div>
-                                <div class="flex-shrink-0 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200">
-                                    <i class="fas fa-chevron-right text-xl"></i>
-                                </div>
+                            <div class="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-3xl md:text-4xl group-hover:border-blue-300 transition-colors duration-200 mb-4">
+                                @if($activity->type === 'prompts')
+                                    📝
+                                @elseif($activity->type === 'matching')
+                                    🔗
+                                @elseif($activity->type === 'flashcard')
+                                    🎴
+                                @elseif($activity->type === 'spelling')
+                                    ✍️
+                                @elseif($activity->type === 'clause_exercise')
+                                    📄
+                                @elseif($activity->type === 'true_false')
+                                    ✓✗
+                                @endif
+                            </div>
+                            <div class="text-base md:text-lg font-bold text-gray-800 group-hover:text-blue-700 transition-colors duration-200">
+                                {{ $displayTitle }}
                             </div>
                         </div>
                     @endforeach

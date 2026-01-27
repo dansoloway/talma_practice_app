@@ -399,39 +399,20 @@ function generateOptions(correctCard) {
     // Combine correct and wrong options
     const allOptions = [correctCard, ...shuffledWrong].sort(() => Math.random() - 0.5);
     
-    // Get container dimensions for random positioning
-    const container = document.querySelector('.flashcard-container') || document.body;
-    const containerRect = container.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // Reserve space for the card content at the top (about 40% of screen)
-    const reservedTopHeight = viewportHeight * 0.4;
-    const availableWidth = viewportWidth - 40; // 20px padding on each side
-    const availableHeight = viewportHeight - reservedTopHeight - 100; // Reserve bottom space too
-    
     switch(currentGameType) {
         case 'image_to_audio':
             optionsContainer = document.getElementById('audio-options');
             optionsContainer.innerHTML = '';
-            optionsContainer.style.position = 'relative';
-            optionsContainer.style.minHeight = availableHeight + 'px';
-            optionsContainer.style.width = '100%';
             
-            allOptions.forEach((option, index) => {
+            allOptions.forEach((option) => {
                 const audioItem = document.createElement('div');
-                audioItem.className = 'audio-option-item absolute';
+                audioItem.className = 'audio-option-item';
                 audioItem.dataset.optionId = option.id;
                 audioItem.dataset.correct = option.id === correctOptionId;
                 
-                // Random position
-                const position = getRandomPosition(index, allOptions.length, availableWidth, availableHeight);
-                audioItem.style.left = position.x + 'px';
-                audioItem.style.top = position.y + 'px';
-                
                 // Play button
                 const playBtn = document.createElement('button');
-                playBtn.className = 'w-12 h-12 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm flex-shrink-0';
+                playBtn.className = 'audio-play-preview-btn';
                 playBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
                 playBtn.title = 'Play Audio';
                 playBtn.addEventListener('click', function(e) {
@@ -441,7 +422,7 @@ function generateOptions(correctCard) {
                 
                 // Select button
                 const selectBtn = document.createElement('button');
-                selectBtn.className = 'flex-1 px-4 py-2 border-2 border-blue-600 rounded-lg bg-white text-blue-600 font-semibold hover:bg-blue-600 hover:text-white transition-all duration-200';
+                selectBtn.className = 'audio-select-btn';
                 selectBtn.innerHTML = 'Select';
                 selectBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -457,56 +438,38 @@ function generateOptions(correctCard) {
         case 'image_to_word':
             optionsContainer = document.getElementById('word-options');
             optionsContainer.innerHTML = '';
-            optionsContainer.style.position = 'relative';
-            optionsContainer.style.minHeight = availableHeight + 'px';
-            optionsContainer.style.width = '100%';
             
-            allOptions.forEach((option, index) => {
+            allOptions.forEach((option) => {
                 const optionBtn = document.createElement('button');
-                optionBtn.className = 'word-option absolute px-6 py-4 bg-white rounded-xl border-2 border-gray-200 text-lg font-semibold text-gray-800 hover:border-blue-400 hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer';
+                optionBtn.className = 'word-option';
                 optionBtn.dataset.optionId = option.id;
                 optionBtn.dataset.correct = option.id === correctOptionId;
                 optionBtn.textContent = getAnswerText(option);
-                
-                // Random position
-                const position = getRandomPosition(index, allOptions.length, availableWidth, availableHeight);
-                optionBtn.style.left = position.x + 'px';
-                optionBtn.style.top = position.y + 'px';
                 
                 optionBtn.addEventListener('click', function() {
                     selectOption(this);
                 });
                 optionsContainer.appendChild(optionBtn);
-                // Auto-resize text if needed
-                autoResizeText(optionBtn);
             });
             break;
             
         case 'audio_to_image':
             optionsContainer = document.getElementById('image-options');
             optionsContainer.innerHTML = '';
-            optionsContainer.style.position = 'relative';
-            optionsContainer.style.minHeight = availableHeight + 'px';
-            optionsContainer.style.width = '100%';
             
-            allOptions.forEach((option, index) => {
+            allOptions.forEach((option) => {
                 const optionBtn = document.createElement('button');
-                optionBtn.className = 'image-option absolute bg-white rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer overflow-hidden';
+                optionBtn.className = 'image-option';
                 optionBtn.dataset.optionId = option.id;
                 optionBtn.dataset.correct = option.id === correctOptionId;
                 
                 if (option.image_path) {
-                    optionBtn.innerHTML = `<img src="${option.image_path}" alt="${option.english_word}" class="w-24 h-24 md:w-32 md:h-32 object-cover" />`;
+                    optionBtn.innerHTML = `<img src="${option.image_path}" alt="${option.english_word}" />`;
                 } else {
-                    optionBtn.innerHTML = '<span class="px-4 py-2 text-gray-500">No Image</span>';
+                    optionBtn.innerHTML = '<span>No Image</span>';
                     optionBtn.disabled = true;
                     optionBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 }
-                
-                // Random position
-                const position = getRandomPosition(index, allOptions.length, availableWidth, availableHeight);
-                optionBtn.style.left = position.x + 'px';
-                optionBtn.style.top = position.y + 'px';
                 
                 optionBtn.addEventListener('click', function() {
                     selectOption(this);
@@ -518,61 +481,21 @@ function generateOptions(correctCard) {
         case 'audio_to_word':
             optionsContainer = document.getElementById('word-options');
             optionsContainer.innerHTML = '';
-            optionsContainer.style.position = 'relative';
-            optionsContainer.style.minHeight = availableHeight + 'px';
-            optionsContainer.style.width = '100%';
             
-            allOptions.forEach((option, index) => {
+            allOptions.forEach((option) => {
                 const optionBtn = document.createElement('button');
-                optionBtn.className = 'word-option absolute px-6 py-4 bg-white rounded-xl border-2 border-gray-200 text-lg font-semibold text-gray-800 hover:border-blue-400 hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer';
+                optionBtn.className = 'word-option';
                 optionBtn.dataset.optionId = option.id;
                 optionBtn.dataset.correct = option.id === correctOptionId;
                 optionBtn.textContent = getAnswerText(option);
-                
-                // Random position
-                const position = getRandomPosition(index, allOptions.length, availableWidth, availableHeight);
-                optionBtn.style.left = position.x + 'px';
-                optionBtn.style.top = position.y + 'px';
                 
                 optionBtn.addEventListener('click', function() {
                     selectOption(this);
                 });
                 optionsContainer.appendChild(optionBtn);
-                // Auto-resize text if needed
-                autoResizeText(optionBtn);
             });
             break;
     }
-}
-
-// Generate random positions that don't overlap too much
-function getRandomPosition(index, total, maxWidth, maxHeight) {
-    // Estimate element size (will be adjusted after rendering)
-    const estimatedWidth = 150;
-    const estimatedHeight = 60;
-    
-    // Create a grid-like distribution but with randomness
-    const cols = Math.ceil(Math.sqrt(total));
-    const rows = Math.ceil(total / cols);
-    const cellWidth = maxWidth / cols;
-    const cellHeight = maxHeight / rows;
-    
-    const col = index % cols;
-    const row = Math.floor(index / cols);
-    
-    // Base position in grid cell
-    const baseX = col * cellWidth;
-    const baseY = row * cellHeight;
-    
-    // Add randomness within the cell (but keep some padding from edges)
-    const padding = 20;
-    const randomX = Math.random() * (cellWidth - estimatedWidth - padding * 2) + padding;
-    const randomY = Math.random() * (cellHeight - estimatedHeight - padding * 2) + padding;
-    
-    return {
-        x: Math.max(0, Math.min(maxWidth - estimatedWidth, baseX + randomX)),
-        y: Math.max(0, Math.min(maxHeight - estimatedHeight, baseY + randomY))
-    };
 }
 
 function selectOption(optionElement, audioPath = null) {
