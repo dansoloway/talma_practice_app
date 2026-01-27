@@ -113,11 +113,19 @@ class MatchingGameController extends Controller
         $vocabularyIds = $matching_game->vocabulary_ids ?? [];
         $vocabulary = Vocabulary::whereIn('id', $vocabularyIds)->get();
         
-        // Get the matching mode (default to first available mode)
+        // Get the matching mode (default to image, fallback to audio)
         $mode = $request->get('mode');
         if (!$mode) {
             $availableModes = $this->getAvailableModes($vocabulary);
-            $mode = array_key_first($availableModes) ?: 'image';
+            // Prefer image mode, fallback to audio if images not available
+            if (isset($availableModes['image'])) {
+                $mode = 'image';
+            } elseif (isset($availableModes['audio'])) {
+                $mode = 'audio';
+            } else {
+                // Fallback to first available mode
+                $mode = array_key_first($availableModes) ?: 'image';
+            }
         }
         
         // Generate game data based on the selected mode

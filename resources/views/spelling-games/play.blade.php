@@ -191,7 +191,12 @@ function loadWord(index) {
             </div>
             
             ${word.image_path ? `
-            <div class="word-image-section">
+            <div class="hint-control-section">
+                <button class="show-image-btn" id="show-image-btn">
+                    <i class="fas fa-image"></i> Show Image
+                </button>
+            </div>
+            <div class="word-image-section hidden" id="word-image-section">
                 <img src="${word.image_path}" alt="${word.english_word}" class="word-image">
             </div>
             ` : ''}
@@ -247,6 +252,20 @@ function setupWordEvents(word, hint) {
         playBtn.disabled = true;
         playBtn.classList.add('disabled');
         playBtn.title = 'No audio available';
+    }
+
+    // Show/Hide image button
+    const showImageBtn = document.getElementById('show-image-btn');
+    const imageSection = document.getElementById('word-image-section');
+    if (showImageBtn && imageSection) {
+        showImageBtn.addEventListener('click', function() {
+            imageSection.classList.toggle('hidden');
+            if (imageSection.classList.contains('hidden')) {
+                showImageBtn.innerHTML = '<i class="fas fa-image"></i> Show Image';
+            } else {
+                showImageBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Image';
+            }
+        });
     }
 
     // Show/Hide hint button
@@ -583,7 +602,7 @@ function playAudio(audioPath) {
     margin: 1.5rem 0;
 }
 
-.show-hint-btn {
+.show-hint-btn, .show-image-btn {
     background: transparent;
     color: var(--color-primary);
     border: 2px solid var(--color-primary);
@@ -597,7 +616,7 @@ function playAudio(audioPath) {
     gap: 0.5rem;
 }
 
-.show-hint-btn:hover {
+.show-hint-btn:hover, .show-image-btn:hover {
     background: var(--color-primary);
     color: white;
 }
