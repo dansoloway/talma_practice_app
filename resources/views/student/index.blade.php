@@ -22,7 +22,7 @@
             </h2>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 @forelse($gradeLevels as $grade)
-                    <a href="{{ route('student.grade', $grade)" 
+                    <a href="{{ route('student.grade', $grade) }}" 
                        class="group relative bg-white rounded-2xl border-2 border-gray-200 p-6 md:p-8 shadow-sm hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer block text-center">
                         <div class="text-5xl md:text-6xl font-bold text-blue-600 mb-3 group-hover:text-blue-700 transition-colors duration-200">
                             {{ $grade }}
