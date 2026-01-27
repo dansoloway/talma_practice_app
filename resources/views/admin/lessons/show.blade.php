@@ -3,36 +3,39 @@
 @section('title', 'Student Preview: ' . $lesson->title)
 
 @section('content')
-<div class="container">
-    <div class="page-header">
+<div class="container mx-auto px-4 py-6 max-w-7xl">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-8">
         <div>
-            <a href="{{ route('admin.lessons.index') }}" class="back-link">&larr; Back to Lessons</a>
-            <h1 class="page-title">Student Preview</h1>
-            <p class="page-subtitle">{{ $lesson->title }}</p>
+            <a href="{{ route('admin.lessons.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4 transition-colors duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>
+                <span>Back to Lessons</span>
+            </a>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Student Preview</h1>
+            <p class="text-lg text-gray-600">{{ $lesson->title }}</p>
         </div>
-        <div>
-            <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn btn-primary">Manage Lesson</a>
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-success" target="_blank">Play as Student</a>
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ route('admin.lessons.manage', $lesson) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">Manage Lesson</a>
+            <a href="{{ route('lessons.show', $lesson->slug) }}" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md" target="_blank">Play as Student</a>
         </div>
     </div>
 
     <!-- Student View Preview -->
-    <div class="student-preview">
-        <div class="lesson-header">
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-8">
+        <div class="text-center mb-8">
             @if($lesson->cover_image_path)
-                <div class="lesson-cover-image" style="margin-bottom: 1.5rem; text-align: center;">
+                <div class="mb-6">
                     <img src="{{ $lesson->cover_image_url }}" 
                          alt="{{ $lesson->title }}" 
-                         style="max-width: 100%; max-height: 300px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); object-fit: cover;">
+                         class="max-w-full max-h-80 mx-auto rounded-2xl shadow-lg object-cover">
                 </div>
             @endif
             
-            <h1 class="lesson-title">{{ $lesson->title }}</h1>
+            <h1 class="text-4xl font-bold text-gray-800 mb-3">{{ $lesson->title }}</h1>
             @if($lesson->session_title)
-                <p class="session-info">{{ $lesson->session_title }}</p>
+                <p class="text-xl text-gray-600 mb-2">{{ $lesson->session_title }}</p>
             @endif
             @if($lesson->grade_level)
-                <p class="grade-level">Grade {{ $lesson->grade_level }}</p>
+                <p class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">Grade {{ $lesson->grade_level }}</p>
             @endif
         </div>
 
