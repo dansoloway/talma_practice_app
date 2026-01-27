@@ -35,16 +35,16 @@
             <div class="hidden md:flex items-center gap-6" id="nav-links">
                 <a href="{{ route('lessons.index') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-blue-50">Lessons</a>
                 
-                @if(session('admin_authenticated'))
+                @if(request()->routeIs('lessons.index') || request()->routeIs('student.index'))
                     <!-- Analytics Dropdown -->
                     <div class="relative group">
                         <a href="#" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
                             Analytics <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
                         </a>
                         <div class="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                            <a href="{{ route('admin.analytics') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">Dashboard</a>
-                            <a href="{{ route('admin.session-length') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Session Length</a>
-                            <a href="{{ route('admin.openai-usage') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition-colors duration-200">OpenAI Usage & Cost</a>
+                            <a href="{{ session('admin_authenticated') ? route('admin.analytics') : route('admin.dashboard') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">Dashboard</a>
+                            <a href="{{ session('admin_authenticated') ? route('admin.session-length') : route('admin.dashboard') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Session Length</a>
+                            <a href="{{ session('admin_authenticated') ? route('admin.openai-usage') : route('admin.dashboard') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition-colors duration-200">OpenAI Usage & Cost</a>
                         </div>
                     </div>
                     
@@ -54,25 +54,27 @@
                             Lessons <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
                         </a>
                         <div class="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                            <a href="{{ route('admin.lessons.index') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">All Lessons</a>
-                            <a href="{{ route('admin.lesson-tracker') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Lesson Tracker</a>
-                            <a href="{{ route('admin.lessons.archived') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Archived</a>
-                            <a href="{{ route('admin.grammar-concepts.index') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition-colors duration-200">Grammar Sets</a>
+                            <a href="{{ session('admin_authenticated') ? route('admin.lessons.index') : route('admin.dashboard') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">All Lessons</a>
+                            <a href="{{ session('admin_authenticated') ? route('admin.lesson-tracker') : route('admin.dashboard') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Lesson Tracker</a>
+                            <a href="{{ session('admin_authenticated') ? route('admin.lessons.archived') : route('admin.dashboard') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Archived</a>
+                            <a href="{{ session('admin_authenticated') ? route('admin.grammar-concepts.index') : route('admin.dashboard') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition-colors duration-200">Grammar Sets</a>
                         </div>
                     </div>
                     
-                    @if(session('admin_user_role') === 'admin')
+                    @if(session('admin_authenticated') && session('admin_user_role') === 'admin')
                         <a href="{{ route('admin.users.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Users</a>
                     @endif
                     
-                    <a href="{{ route('admin.openai-usage') }}" title="View AI Cost Dashboard" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
+                    <a href="{{ session('admin_authenticated') ? route('admin.openai-usage') : route('admin.dashboard') }}" title="View AI Cost Dashboard" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
                         <i class="fas fa-dollar-sign"></i> AI Costs
                     </a>
                     
-                    <span class="px-3 py-2 text-gray-600 text-sm border-l border-gray-200/60 ml-2 pl-4">{{ session('admin_user_name') }} ({{ ucfirst(session('admin_user_role')) }})</span>
-                    <a href="#" onclick="logout()" class="px-3 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
-                @else
-                    <a href="{{ route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-blue-50">Admin</a>
+                    @if(session('admin_authenticated'))
+                        <span class="px-3 py-2 text-gray-600 text-sm border-l border-gray-200/60 ml-2 pl-4">{{ session('admin_user_name') }} ({{ ucfirst(session('admin_user_role')) }})</span>
+                        <a href="#" onclick="logout()" class="px-3 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
+                    @else
+                        <a href="{{ route('admin.dashboard') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Login</a>
+                    @endif
                 @endif
             </div>
         </nav>
@@ -81,23 +83,26 @@
             <div class="container mx-auto px-4 py-4 flex flex-col gap-2">
                 <a href="{{ route('lessons.index') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Lessons</a>
                 
-                @if(session('admin_authenticated'))
-                    <a href="{{ route('admin.analytics') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Analytics Dashboard</a>
-                    <a href="{{ route('admin.session-length') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Session Length</a>
-                    <a href="{{ route('admin.openai-usage') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">OpenAI Usage</a>
-                    <a href="{{ route('admin.lessons.index') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">All Lessons</a>
-                    <a href="{{ route('admin.lesson-tracker') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Lesson Tracker</a>
-                    <a href="{{ route('admin.lessons.archived') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Archived</a>
-                    <a href="{{ route('admin.grammar-concepts.index') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Grammar Sets</a>
-                    @if(session('admin_user_role') === 'admin')
+                @if(request()->routeIs('lessons.index') || request()->routeIs('student.index'))
+                    <a href="{{ session('admin_authenticated') ? route('admin.analytics') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Analytics Dashboard</a>
+                    <a href="{{ session('admin_authenticated') ? route('admin.session-length') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Session Length</a>
+                    <a href="{{ session('admin_authenticated') ? route('admin.openai-usage') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">OpenAI Usage</a>
+                    <a href="{{ session('admin_authenticated') ? route('admin.lessons.index') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">All Lessons</a>
+                    <a href="{{ session('admin_authenticated') ? route('admin.lesson-tracker') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Lesson Tracker</a>
+                    <a href="{{ session('admin_authenticated') ? route('admin.lessons.archived') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Archived</a>
+                    <a href="{{ session('admin_authenticated') ? route('admin.grammar-concepts.index') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Grammar Sets</a>
+                    @if(session('admin_authenticated') && session('admin_user_role') === 'admin')
                         <a href="{{ route('admin.users.index') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Users</a>
                     @endif
-                    <div class="border-t border-gray-200/60 my-2 pt-2">
-                        <span class="text-gray-600 text-sm px-3">{{ session('admin_user_name') }} ({{ ucfirst(session('admin_user_role')) }})</span>
-                    </div>
-                    <a href="#" onclick="logout()" class="text-gray-700 hover:text-red-600 font-medium py-2 px-3 rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
-                @else
-                    <a href="{{ route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Admin</a>
+                    
+                    @if(session('admin_authenticated'))
+                        <div class="border-t border-gray-200/60 my-2 pt-2">
+                            <span class="text-gray-600 text-sm px-3">{{ session('admin_user_name') }} ({{ ucfirst(session('admin_user_role')) }})</span>
+                        </div>
+                        <a href="#" onclick="logout()" class="text-gray-700 hover:text-red-600 font-medium py-2 px-3 rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
+                    @else
+                        <a href="{{ route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Login</a>
+                    @endif
                 @endif
             </div>
         </div>
