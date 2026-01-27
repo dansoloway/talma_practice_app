@@ -27,7 +27,10 @@
     <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6 mb-6">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold text-gray-800">Lesson Details</h2>
-            <button id="edit-lesson-btn" class="px-4 py-2 bg-blue-100 text-blue-700 font-semibold rounded-xl hover:bg-blue-200 transition-all duration-200">Edit Details</button>
+            <div class="flex gap-3">
+                <button id="edit-lesson-btn" class="px-4 py-2 bg-blue-100 text-blue-700 font-semibold rounded-xl hover:bg-blue-200 transition-all duration-200">Edit Details</button>
+                <button id="edit-cover-image-btn" class="px-4 py-2 bg-purple-100 text-purple-700 font-semibold rounded-xl hover:bg-purple-200 transition-all duration-200">Edit Cover Image</button>
+            </div>
         </div>
         
         <div class="lesson-info" id="lesson-info">
@@ -123,8 +126,11 @@
     </div>
 
     <!-- Cover Image Section -->
-    <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6 mb-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Cover Image</h2>
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6 mb-6 hidden" id="cover-image-section">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Cover Image</h2>
+            <button id="close-cover-image-btn" class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200">Close</button>
+        </div>
         
         <div class="space-y-6">
             @if($lesson->cover_image_path)
@@ -479,6 +485,25 @@ document.addEventListener('DOMContentLoaded', function() {
         lessonInfo.classList.remove('hidden');
         editForm.classList.add('hidden');
     });
+    
+    // Cover image section toggle
+    const editCoverImageBtn = document.getElementById('edit-cover-image-btn');
+    const closeCoverImageBtn = document.getElementById('close-cover-image-btn');
+    const coverImageSection = document.getElementById('cover-image-section');
+    
+    if (editCoverImageBtn && coverImageSection) {
+        editCoverImageBtn.addEventListener('click', function() {
+            coverImageSection.classList.remove('hidden');
+            coverImageSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+    
+    if (closeCoverImageBtn && coverImageSection) {
+        closeCoverImageBtn.addEventListener('click', function() {
+            coverImageSection.classList.add('hidden');
+        });
+    }
+    
     // Bind delete activity buttons
     document.querySelectorAll('.delete-activity-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
