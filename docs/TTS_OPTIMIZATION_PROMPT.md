@@ -54,29 +54,44 @@ I'm using **ElevenLabs API** with the following available parameters:
 
 #### Model Selection
 
-Available models:
+Available Text-to-Speech models (note: `eleven_english_sts_v2` is Speech-to-Speech, not TTS):
 - **eleven_monolingual_v1** (Current default)
   - English only
   - Faster generation
   - Good quality
   
-- **eleven_multilingual_v2**
+- **eleven_multilingual_v2** (Currently set as fallback)
   - Supports 29 languages
   - More natural and consistent
   - Better quality overall
   - Same pricing
 
+- **eleven_flash_v2**
+  - English only
+  - Ultra-fast (~75ms latency)
+  - Lower cost (50% cheaper)
+  - Good for batch processing
+
 - **eleven_turbo_v2_5**
-  - Ultra-low latency (~75ms)
+  - Ultra-low latency (~250-300ms)
+  - High quality with low latency
+  - Supports 32 languages
   - Good for real-time applications
-  - Slightly lower quality than v2
 
 - **eleven_flash_v2_5**
-  - Fastest generation
+  - Fastest generation (~75ms latency)
+  - Supports 32 languages
+  - Lower cost (50% cheaper)
   - Good for batch processing
-  - Lower quality than v2
+  - Slightly lower quality than v2
 
-**Question**: Which model provides the best balance of quality and consistency for single English words?
+- **eleven_v3** (Alpha)
+  - Most emotionally expressive
+  - 70+ languages
+  - Higher character limits
+  - May be overkill for single words
+
+**Question**: Which model provides the best balance of quality and consistency for single English words? Should I use `eleven_flash_v2` (English-only, fast, cheaper) or `eleven_multilingual_v2` (better quality)?
 
 #### Voice ID
 
