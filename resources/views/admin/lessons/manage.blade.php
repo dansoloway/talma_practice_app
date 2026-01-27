@@ -3,81 +3,86 @@
 @section('title', 'Manage Lesson: ' . $lesson->title)
 
 @section('content')
-<div class="container">
-    <div class="page-header">
+<div class="container mx-auto px-4 py-6 max-w-7xl">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-8">
         <div>
-            <h1 class="page-title">Manage Lesson: {{ $lesson->title }}</h1>
-            <div class="lesson-metadata">
+            <h1 class="text-3xl font-bold text-gray-800 mb-3">Manage Lesson: {{ $lesson->title }}</h1>
+            <div class="flex flex-wrap gap-3">
                 @if($lesson->grade_level)
-                    <span class="metadata-item">Grade {{ $lesson->grade_level }}</span>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">Grade {{ $lesson->grade_level }}</span>
                 @endif
                 @if($lesson->session_number)
-                    <span class="metadata-item">Session {{ $lesson->session_number }}</span>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-700">Session {{ $lesson->session_number }}</span>
                 @endif
             </div>
         </div>
-        <div class="page-actions">
-            <a href="{{ route('admin.lessons.index') }}" class="btn">Back to Lessons</a>
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-success" target="_blank">Play as Student</a>
-            <button onclick="archiveLesson()" class="btn btn-warning">Archive Lesson</button>
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ route('admin.lessons.index') }}" class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200">Back to Lessons</a>
+            <a href="{{ route('lessons.show', $lesson->slug) }}" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md" target="_blank">Play as Student</a>
+            <button onclick="archiveLesson()" class="px-4 py-2 bg-yellow-100 text-yellow-700 font-semibold rounded-xl hover:bg-yellow-200 transition-all duration-200">Archive Lesson</button>
         </div>
     </div>
 
     <!-- Lesson Details Section -->
-    <div class="management-section">
-        <div class="section-header">
-            <h2>Lesson Details</h2>
-            <button id="edit-lesson-btn" class="btn btn-sm">Edit Details</button>
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Lesson Details</h2>
+            <button id="edit-lesson-btn" class="px-4 py-2 bg-blue-100 text-blue-700 font-semibold rounded-xl hover:bg-blue-200 transition-all duration-200">Edit Details</button>
         </div>
         
         <div class="lesson-info" id="lesson-info">
-            <div class="info-grid">
-                <div class="info-item">
-                    <label>Title:</label>
-                    <span id="lesson-title">{{ $lesson->title }}</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Title</label>
+                    <span id="lesson-title" class="text-gray-800 font-medium">{{ $lesson->title }}</span>
                 </div>
-                <div class="info-item">
-                    <label>Slug:</label>
-                    <span id="lesson-slug">{{ $lesson->slug }}</span>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Slug</label>
+                    <span id="lesson-slug" class="text-gray-800 font-medium font-mono text-sm">{{ $lesson->slug }}</span>
                 </div>
-                <div class="info-item">
-                    <label>Grade Level:</label>
-                    <span id="lesson-grade">{{ $lesson->grade_level ?: 'Not set' }}</span>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Grade Level</label>
+                    <span id="lesson-grade" class="text-gray-800 font-medium">{{ $lesson->grade_level ?: 'Not set' }}</span>
                 </div>
-                <div class="info-item">
-                    <label>Session Number:</label>
-                    <span id="lesson-session">{{ $lesson->session_number ?: 'Not set' }}</span>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Session Number</label>
+                    <span id="lesson-session" class="text-gray-800 font-medium">{{ $lesson->session_number ?: 'Not set' }}</span>
                 </div>
-                <div class="info-item">
-                    <label>Status:</label>
-                    <span class="status {{ $lesson->is_active ? 'active' : 'inactive' }}">
-                        {{ $lesson->is_active ? 'Active' : 'Inactive' }}
-                    </span>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Status</label>
+                    @if($lesson->is_active)
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Active</span>
+                    @else
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">Inactive</span>
+                    @endif
                 </div>
             </div>
         </div>
 
         <!-- Edit Form (Hidden by default) -->
         <div class="edit-form hidden" id="lesson-edit-form">
-            <form action="{{ route('admin.lessons.update', $lesson) }}" method="POST" class="form">
+            <form action="{{ route('admin.lessons.update', $lesson) }}" method="POST" class="space-y-6">
                 @csrf
                 @method('PUT')
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="title">Title *</label>
-                        <input type="text" id="title" name="title" value="{{ $lesson->title }}" required class="form-control">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">Title <span class="text-red-500">*</span></label>
+                        <input type="text" id="title" name="title" value="{{ $lesson->title }}" required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                     </div>
-                    <div class="form-group">
-                        <label for="slug">Slug *</label>
-                        <input type="text" id="slug" name="slug" value="{{ $lesson->slug }}" required class="form-control">
+                    <div>
+                        <label for="slug" class="block text-sm font-semibold text-gray-700 mb-2">Slug <span class="text-red-500">*</span></label>
+                        <input type="text" id="slug" name="slug" value="{{ $lesson->slug }}" required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="grade_level">Grade Level</label>
-                        <select id="grade_level" name="grade_level" class="form-control">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="grade_level" class="block text-sm font-semibold text-gray-700 mb-2">Grade Level</label>
+                        <select id="grade_level" name="grade_level" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                             <option value="">Select Grade Level</option>
                             <option value="K" {{ $lesson->grade_level == 'K' ? 'selected' : '' }}>Kindergarten (K)</option>
                             <option value="1" {{ $lesson->grade_level == '1' ? 'selected' : '' }}>1st Grade</option>
@@ -94,66 +99,63 @@
                             <option value="12" {{ $lesson->grade_level == '12' ? 'selected' : '' }}>12th Grade</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="session_number">Session Number</label>
-                        <input type="number" id="session_number" name="session_number" value="{{ $lesson->session_number }}" min="1" class="form-control">
+                    <div>
+                        <label for="session_number" class="block text-sm font-semibold text-gray-700 mb-2">Session Number</label>
+                        <input type="number" id="session_number" name="session_number" value="{{ $lesson->session_number }}" min="1" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="is_active" value="1" {{ $lesson->is_active ? 'checked' : '' }}>
-                            Active
-                        </label>
-                    </div>
+                <div>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="is_active" value="1" {{ $lesson->is_active ? 'checked' : '' }} 
+                               class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400">
+                        <span class="text-gray-700 font-medium">Active</span>
+                    </label>
                 </div>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <button type="button" id="cancel-edit-btn" class="btn">Cancel</button>
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">Save Changes</button>
+                    <button type="button" id="cancel-edit-btn" class="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Cover Image Section -->
-    <div class="management-section">
-        <div class="section-header">
-            <h2>Cover Image</h2>
-        </div>
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Cover Image</h2>
         
-        <div class="cover-image-section">
+        <div class="space-y-6">
             @if($lesson->cover_image_path)
-                <div class="current-cover-image">
-                    <label>Current Cover Image:</label>
-                    <div class="cover-image-preview">
-                        <img src="{{ $lesson->cover_image_url }}" alt="Cover image" style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid var(--color-border);">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Current Cover Image</label>
+                    <div class="inline-block">
+                        <img src="{{ $lesson->cover_image_url }}" alt="Cover image" class="max-w-xs max-h-48 rounded-xl border border-gray-200 shadow-sm">
                     </div>
                 </div>
             @else
-                <div class="no-cover-image">
-                    <p style="color: var(--color-text-muted);">No cover image set.</p>
+                <div>
+                    <p class="text-gray-600">No cover image set.</p>
                 </div>
             @endif
 
-            <div class="cover-image-options" style="margin-top: 1.5rem;">
-                <h3 style="font-size: 1rem; margin-bottom: 1rem;">Set Cover Image</h3>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Set Cover Image</h3>
                 
                 <!-- Option 1: Select from Vocabulary Images -->
                 @if($lesson->vocabulary->whereNotNull('image_path')->count() > 0)
-                    <div class="vocab-images-selector" style="margin-bottom: 2rem;">
-                        <label style="display: block; margin-bottom: 0.75rem; font-weight: 500;">Choose from Vocabulary Images:</label>
-                        <div class="vocab-images-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">Choose from Vocabulary Images</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                             @foreach($lesson->vocabulary->whereNotNull('image_path') as $vocab)
-                                <div class="vocab-image-option" 
+                                <div class="vocab-image-option cursor-pointer border-2 rounded-xl p-2 transition-all duration-200 {{ $lesson->cover_image_path === $vocab->image_path ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:shadow-md' }}" 
                                      data-image-path="{{ $vocab->image_path }}"
-                                     onclick="selectVocabImage('{{ $vocab->image_path }}', this)"
-                                     style="cursor: pointer; border: 2px solid var(--color-border); border-radius: 8px; padding: 0.5rem; transition: all 0.2s; {{ $lesson->cover_image_path === $vocab->image_path ? 'border-color: var(--color-primary); background: var(--color-primary-bg);' : '' }}">
+                                     onclick="selectVocabImage('{{ $vocab->image_path }}', this)">
                                     <img src="{{ $vocab->image_url }}" 
                                          alt="{{ $vocab->english_word }}" 
-                                         style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 0.5rem;">
-                                    <div style="font-size: 0.75rem; text-align: center; color: var(--color-text-muted);">{{ $vocab->english_word }}</div>
+                                         class="w-full h-24 object-cover rounded-lg mb-2">
+                                    <div class="text-xs text-center text-gray-600 font-medium">{{ $vocab->english_word }}</div>
                                 </div>
                             @endforeach
                         </div>
@@ -161,32 +163,31 @@
                 @endif
 
                 <!-- Option 2: Upload New Image -->
-                <div class="upload-cover-image">
-                    <label style="display: block; margin-bottom: 0.75rem; font-weight: 500;">Upload New Image:</label>
-                    <form id="cover-image-form" action="{{ route('admin.lessons.update-cover-image', $lesson) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 1rem; align-items: flex-end;" onsubmit="return handleCoverImageSubmit(event);">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Upload New Image</label>
+                    <form id="cover-image-form" action="{{ route('admin.lessons.update-cover-image', $lesson) }}" method="POST" enctype="multipart/form-data" class="flex flex-col md:flex-row gap-4 items-end" onsubmit="return handleCoverImageSubmit(event);">
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="cover_image_source" id="cover_image_source" value="">
-                        <div style="flex: 1;">
+                        <div class="flex-1 w-full">
                             <input type="file" 
                                    id="cover_image_file" 
                                    name="cover_image" 
                                    accept="image/jpeg,image/png,image/jpg,image/gif,image/svg"
-                                   class="form-control"
-                                   style="padding: 0.5rem;">
-                            <small style="color: var(--color-text-muted); display: block; margin-top: 0.25rem;">JPEG, PNG, GIF, or SVG (max 2MB)</small>
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
+                            <p class="mt-2 text-sm text-gray-600">JPEG, PNG, GIF, or SVG (max 2MB)</p>
                         </div>
-                        <button type="submit" class="btn btn-primary">Upload</button>
+                        <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">Upload</button>
                     </form>
                 </div>
 
                 <!-- Remove Cover Image -->
                 @if($lesson->cover_image_path)
-                    <div style="margin-top: 1rem;">
+                    <div class="pt-4 border-t border-gray-200">
                         <form action="{{ route('admin.lessons.remove-cover-image', $lesson) }}" method="POST" onsubmit="return confirm('Remove cover image?');">
                             @csrf
                             @method('PUT')
-                            <button type="submit" class="btn btn-danger btn-sm">Remove Cover Image</button>
+                            <button type="submit" class="px-4 py-2 bg-red-100 text-red-700 font-semibold rounded-xl hover:bg-red-200 transition-all duration-200">Remove Cover Image</button>
                         </form>
                     </div>
                 @endif
@@ -195,90 +196,89 @@
     </div>
 
     <!-- Vocabulary Section -->
-    <div class="management-section">
-        <div class="section-header">
-            <h2>Vocabulary ({{ $lesson->vocabulary->count() }})</h2>
-            <div class="section-actions">
-                <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="btn btn-primary btn-sm">Edit Vocabulary</a>
-                <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="btn btn-secondary btn-sm">Upload CSV</a>
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Vocabulary ({{ $lesson->vocabulary->count() }})</h2>
+            <div class="flex gap-3">
+                <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">Edit Vocabulary</a>
+                <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200">Upload CSV</a>
             </div>
         </div>
 
         @if($lesson->vocabulary->count() > 0)
-            <div class="vocabulary-grid">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 @foreach($lesson->vocabulary as $vocab)
-                    <div class="vocabulary-card">
+                    <div class="bg-gray-50 rounded-xl border border-gray-200 p-3 hover:shadow-md transition-all duration-200">
                         @if($vocab->image_path)
-                            <img src="{{ $vocab->image_url }}" alt="{{ $vocab->english_word }}" class="vocab-image">
+                            <img src="{{ $vocab->image_url }}" alt="{{ $vocab->english_word }}" class="w-full h-24 object-cover rounded-lg mb-2">
                         @endif
-                        <div class="vocab-content">
-                            <h4>{{ $vocab->english_word }}</h4>
+                        <div class="text-center">
+                            <h4 class="font-semibold text-gray-800 text-sm">{{ $vocab->english_word }}</h4>
                         </div>
                     </div>
                 @endforeach
             </div>
         @else
-            <div class="empty-state">
-                <p>No vocabulary items yet. <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}">Add the first vocabulary item</a>.</p>
+            <div class="text-center py-12">
+                <p class="text-gray-600 mb-4">No vocabulary items yet.</p>
+                <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">Add the first vocabulary item</a>
             </div>
         @endif
     </div>
 
     <!-- Clause Exercises Section -->
-    <div class="management-section">
-        <div class="section-header">
-            <h2>Clause Exercises ({{ $lesson->clauseExercises->count() }})</h2>
-            <div class="section-actions">
-                <a href="{{ route('admin.lessons.clause-exercises.create', $lesson) }}" class="btn btn-primary btn-sm">+ Create Clause Exercise</a>
-            </div>
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Clause Exercises ({{ $lesson->clauseExercises->count() }})</h2>
+            <a href="{{ route('admin.lessons.clause-exercises.create', $lesson) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">+ Create Clause Exercise</a>
         </div>
 
         @if($lesson->clauseExercises->count() > 0)
-            <div class="clause-exercises-list" style="margin-top: 1rem;">
+            <div class="space-y-4">
                 @foreach($lesson->clauseExercises as $exercise)
-                    <div class="clause-exercise-card" style="background: white; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <div class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all duration-200">
+                        <div class="flex justify-between items-start mb-4">
                             <div>
-                                <h3 style="margin: 0 0 0.5rem 0; color: var(--color-primary);">{{ $exercise->title }}</h3>
-                                <div style="font-size: 0.875rem; color: var(--color-text-muted);">
+                                <h3 class="text-lg font-bold text-blue-600 mb-2">{{ $exercise->title }}</h3>
+                                <div class="text-sm text-gray-600">
                                     Blanks: {{ count($exercise->correct_answers ?? []) }}
                                     @if($exercise->grammarSet)
                                         | Grammar Set: {{ $exercise->grammarSet->title }}
                                     @endif
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <a href="{{ route('clause-exercises.play', [$lesson, $exercise]) }}" class="btn btn-xs btn-success" target="_blank">Play</a>
-                                <a href="{{ route('admin.lessons.clause-exercises.edit', [$lesson, $exercise]) }}" class="btn btn-secondary btn-sm">Edit</a>
-                                <form action="{{ route('admin.lessons.clause-exercises.destroy', [$lesson, $exercise]) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete this clause exercise?');">
+                            <div class="flex gap-2">
+                                <a href="{{ route('clause-exercises.play', [$lesson, $exercise]) }}" class="px-3 py-1.5 text-sm bg-green-100 text-green-700 font-medium rounded-lg hover:bg-green-200 transition-all duration-200" target="_blank">Play</a>
+                                <a href="{{ route('admin.lessons.clause-exercises.edit', [$lesson, $exercise]) }}" class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-all duration-200">Edit</a>
+                                <form action="{{ route('admin.lessons.clause-exercises.destroy', [$lesson, $exercise]) }}" method="POST" class="inline" onsubmit="return confirm('Delete this clause exercise?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    <button type="submit" class="px-3 py-1.5 text-sm bg-red-100 text-red-700 font-medium rounded-lg hover:bg-red-200 transition-all duration-200">Delete</button>
                                 </form>
                             </div>
                         </div>
-                        <div style="background: var(--color-gray-50); padding: 1rem; border-radius: var(--radius-sm); font-family: monospace; white-space: pre-wrap;">{{ \Illuminate\Support\Str::limit($exercise->paragraph_text, 200) }}</div>
+                        <div class="bg-gray-50 p-4 rounded-lg font-mono text-sm whitespace-pre-wrap">{{ \Illuminate\Support\Str::limit($exercise->paragraph_text, 200) }}</div>
                     </div>
                 @endforeach
             </div>
         @else
-            <div class="empty-state">
-                <p>No clause exercises yet. <a href="{{ route('admin.lessons.clause-exercises.create', $lesson) }}">Create your first clause exercise</a> using AI.</p>
+            <div class="text-center py-12">
+                <p class="text-gray-600 mb-4">No clause exercises yet.</p>
+                <a href="{{ route('admin.lessons.clause-exercises.create', $lesson) }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">Create your first clause exercise</a>
             </div>
         @endif
     </div>
 
     <!-- Activities Section -->
-    <div class="management-section">
-        <div class="section-header">
-            <h2>Activities</h2>
-            <div class="section-actions">
-                <a href="{{ route('admin.lessons.prompts.create', $lesson) }}" class="btn btn-primary btn-sm">+ Prompts</a>
-                <a href="{{ route('admin.lessons.matching-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Matching</a>
-                <a href="{{ route('admin.lessons.flashcard-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Flashcard</a>
-                <a href="{{ route('admin.lessons.spelling-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Spelling</a>
-                {{-- <a href="{{ route('admin.lessons.sentence-builder-games.create', $lesson) }}" class="btn btn-primary btn-sm">+ Sentence Builder</a> --}}
-                <a href="{{ route('admin.lessons.true-false-games.index', $lesson) }}" class="btn btn-primary btn-sm">True/False</a>
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Activities</h2>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('admin.lessons.prompts.create', $lesson) }}" class="px-3 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-sm">+ Prompts</a>
+                <a href="{{ route('admin.lessons.matching-games.create', $lesson) }}" class="px-3 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-sm">+ Matching</a>
+                <a href="{{ route('admin.lessons.flashcard-games.create', $lesson) }}" class="px-3 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-sm">+ Flashcard</a>
+                <a href="{{ route('admin.lessons.spelling-games.create', $lesson) }}" class="px-3 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-sm">+ Spelling</a>
+                <a href="{{ route('admin.lessons.true-false-games.index', $lesson) }}" class="px-3 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md text-sm">True/False</a>
             </div>
         </div>
 
