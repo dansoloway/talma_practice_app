@@ -54,6 +54,9 @@
                     </div>
                 </div>
                 
+                <!-- Courses -->
+                <a href="{{ route('admin.courses.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Courses</a>
+                
                 <!-- Lessons Dropdown -->
                 <div class="relative group">
                     <a href="#" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">

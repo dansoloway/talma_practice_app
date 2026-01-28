@@ -44,6 +44,10 @@
                     <span id="lesson-slug" class="text-gray-800 font-medium font-mono text-sm">{{ $lesson->slug }}</span>
                 </div>
                 <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Course</label>
+                    <span id="lesson-course" class="text-gray-800 font-medium">{{ $lesson->course ? $lesson->course->title : 'Not set' }}</span>
+                </div>
+                <div>
                     <label class="block text-sm font-semibold text-gray-600 mb-1">Grade Level</label>
                     <span id="lesson-grade" class="text-gray-800 font-medium">{{ $lesson->grade_level ?: 'Not set' }}</span>
                 </div>
@@ -82,6 +86,18 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="course_id" class="block text-sm font-semibold text-gray-700 mb-2">Course</label>
+                        <select id="course_id" name="course_id" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
+                            <option value="">Select Course</option>
+                            @foreach($courses as $course)
+                                <option value="{{ $course->id }}" {{ $lesson->course_id == $course->id ? 'selected' : '' }}>
+                                    {{ $course->title }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div>
                         <label for="grade_level" class="block text-sm font-semibold text-gray-700 mb-2">Grade Level</label>
                         <select id="grade_level" name="grade_level" 

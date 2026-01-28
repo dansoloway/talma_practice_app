@@ -47,6 +47,9 @@
                     </div>
                 </div>
                 
+                <!-- Courses -->
+                <a href="{{ session('admin_authenticated') ? route('admin.courses.index') : route('admin.dashboard') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Courses</a>
+                
                 <!-- Lessons Dropdown -->
                 <div class="relative group">
                     <a href="#" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
@@ -84,6 +87,7 @@
                 <a href="{{ session('admin_authenticated') ? route('admin.analytics') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Analytics Dashboard</a>
                 <a href="{{ session('admin_authenticated') ? route('admin.session-length') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Session Length</a>
                 <a href="{{ session('admin_authenticated') ? route('admin.openai-usage') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">OpenAI Usage</a>
+                <a href="{{ session('admin_authenticated') ? route('admin.courses.index') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Courses</a>
                 <a href="{{ session('admin_authenticated') ? route('admin.lessons.index') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">All Lessons</a>
                 <a href="{{ session('admin_authenticated') ? route('admin.lesson-tracker') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Lesson Tracker</a>
                 <a href="{{ session('admin_authenticated') ? route('admin.lessons.archived') : route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Archived</a>

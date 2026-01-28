@@ -7,6 +7,7 @@ use App\Http\Controllers\PromptModelController;
 use App\Http\Controllers\ResponseController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\Admin\AdminLoginController;
+use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\Admin\LessonTrackerController;
@@ -29,7 +30,8 @@ use Illuminate\Support\Facades\Route;
 // Student Homepage
 Route::get('/', [StudentController::class, 'index'])->name('student.index');
 Route::get('/lessons', [StudentController::class, 'index'])->name('lessons.index');
-Route::get('/grade/{gradeLevel}', [StudentController::class, 'grade'])->name('student.grade');
+Route::get('/courses/{course:slug}', [StudentController::class, 'course'])->name('student.course');
+Route::get('/grade/{gradeLevel}', [StudentController::class, 'grade'])->name('student.grade'); // Kept for backward compatibility
 Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'updateLessonOrder'])
     ->middleware('admin.auth')
     ->name('student.grade.update-order');
@@ -114,6 +116,9 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     
     // Logout
     Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
+    
+    // Courses
+    Route::resource('courses', CourseController::class);
     
     // Lessons
     Route::resource('lessons', AdminLessonController::class);

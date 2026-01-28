@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\GrammarSet;
 use Illuminate\Http\Request;
@@ -99,9 +100,11 @@ class LessonController extends Controller
     /**
      * Show the form for creating a new lesson.
      */
-    public function create()
+    public function create(Request $request)
     {
-        return view('admin.lessons.create');
+        $courses = Course::active()->ordered()->get();
+        $selectedCourseId = $request->get('course_id');
+        return view('admin.lessons.create', compact('courses', 'selectedCourseId'));
     }
 
     /**
@@ -112,6 +115,7 @@ class LessonController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:lessons,slug',
+            'course_id' => 'nullable|exists:courses,id',
             'grade_level' => 'nullable|string|max:20',
             'session_number' => 'nullable|integer|min:1',
             'part_number' => 'nullable|integer|min:1|max:8',
@@ -174,9 +178,10 @@ class LessonController extends Controller
      */
     public function manage(Lesson $lesson)
     {
-        $lesson->load(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'spellingGames', 'sentenceBuilderGames', 'trueFalseQuestions', 'grammarSets.grammarConcepts', 'clauseExercises']);
+        $lesson->load(['course', 'prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'spellingGames', 'sentenceBuilderGames', 'trueFalseQuestions', 'grammarSets.grammarConcepts', 'clauseExercises']);
+        $courses = Course::active()->ordered()->get();
         
-        return view('admin.lessons.manage', compact('lesson'));
+        return view('admin.lessons.manage', compact('lesson', 'courses'));
     }
 
     /**
@@ -196,6 +201,7 @@ class LessonController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:lessons,slug,' . $lesson->id,
+            'course_id' => 'nullable|exists:courses,id',
             'grade_level' => 'nullable|string|max:20',
             'session_number' => 'nullable|integer|min:1',
             'part_number' => 'nullable|integer|min:1|max:8',

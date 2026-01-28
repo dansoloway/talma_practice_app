@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -16,6 +17,7 @@ class Lesson extends Model
         'slug',
         'instructions',
         'cover_image_path',
+        'course_id',
         'grade_level',
         'session_number',
         'part_number',
@@ -31,6 +33,14 @@ class Lesson extends Model
         'is_active' => 'boolean',
         'archived_at' => 'datetime',
     ];
+
+    /**
+     * Get the course that owns this lesson.
+     */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
 
     /**
      * Get all parts for this lesson, ordered by sort_order.

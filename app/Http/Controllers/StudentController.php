@@ -2,29 +2,83 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Course;
 use App\Models\Lesson;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
 {
     /**
-     * Show the student homepage with grade level selection
+     * Show the student homepage with course selection
      */
     public function index()
     {
-        // Get all available grade levels from active, non-archived lessons
-        $gradeLevels = Lesson::active()
-            ->where('is_active', true)
-            ->whereNotNull('grade_level')
-            ->distinct()
-            ->orderBy('grade_level')
-            ->pluck('grade_level');
+        // Get all active courses with their lesson counts
+        $courses = Course::active()
+            ->ordered()
+            ->withCount(['lessons' => function ($query) {
+                $query->where('is_active', true)->whereNull('archived_at');
+            }])
+            ->get();
 
-        return view('student.index', compact('gradeLevels'));
+        return view('student.index', compact('courses'));
     }
 
     /**
-     * Show lessons for a specific grade level
+     * Show lessons for a specific course
+     */
+    public function course(Request $request, Course $course)
+    {
+        $query = $course->activeLessons();
+        
+        // Filter by session number (which is now the order within course)
+        if ($request->filled('session_number')) {
+            $query->where('session_number', $request->session_number);
+        }
+        
+        // Filter by part number
+        if ($request->filled('part_number')) {
+            $query->where('part_number', $request->part_number);
+        }
+        
+        // Filter by search text (title, slug)
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('slug', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+        
+        $lessons = $query->orderBy('session_number', 'asc')
+            ->orderBy('part_number', 'asc')
+            ->orderBy('created_at', 'asc')
+            ->get();
+        
+        // Get available session numbers for filter dropdown
+        $sessionNumbers = $course->activeLessons()
+            ->whereNotNull('session_number')
+            ->select('session_number')
+            ->distinct()
+            ->reorder()
+            ->orderBy('session_number')
+            ->pluck('session_number');
+        
+        // Get available part numbers for filter dropdown
+        $partNumbers = $course->activeLessons()
+            ->whereNotNull('part_number')
+            ->select('part_number')
+            ->distinct()
+            ->reorder()
+            ->orderBy('part_number')
+            ->pluck('part_number');
+
+        return view('student.course', compact('course', 'lessons', 'sessionNumbers', 'partNumbers'));
+    }
+
+    /**
+     * Show lessons for a specific grade level (kept for backward compatibility)
+     * @deprecated Use course() instead
      */
     public function grade(Request $request, $gradeLevel)
     {
