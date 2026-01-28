@@ -15,7 +15,7 @@
 
             <div>
                 <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">Title <span class="text-red-500">*</span></label>
-                <input type="text" id="title" name="title" value="{{ old('title') }}" required 
+                <input type="text" id="title" name="title" value="{{ old('title', request('title')) }}" required 
                        class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
             </div>
 
@@ -45,20 +45,23 @@
                 <select id="grade_level" name="grade_level" 
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                     <option value="">Select Grade Level</option>
-                    <option value="K" {{ old('grade_level') == 'K' ? 'selected' : '' }}>Kindergarten (K)</option>
-                    <option value="1" {{ old('grade_level') == '1' ? 'selected' : '' }}>1st Grade</option>
-                    <option value="2" {{ old('grade_level') == '2' ? 'selected' : '' }}>2nd Grade</option>
-                    <option value="3" {{ old('grade_level') == '3' ? 'selected' : '' }}>3rd Grade</option>
-                    <option value="4" {{ old('grade_level') == '4' ? 'selected' : '' }}>4th Grade</option>
-                    <option value="5" {{ old('grade_level') == '5' ? 'selected' : '' }}>5th Grade</option>
-                    <option value="6" {{ old('grade_level') == '6' ? 'selected' : '' }}>6th Grade</option>
-                    <option value="7" {{ old('grade_level') == '7' ? 'selected' : '' }}>7th Grade</option>
-                    <option value="8" {{ old('grade_level') == '8' ? 'selected' : '' }}>8th Grade</option>
-                    <option value="9" {{ old('grade_level') == '9' ? 'selected' : '' }}>9th Grade</option>
-                    <option value="10" {{ old('grade_level') == '10' ? 'selected' : '' }}>10th Grade</option>
-                    <option value="11" {{ old('grade_level') == '11' ? 'selected' : '' }}>11th Grade</option>
-                    <option value="12" {{ old('grade_level') == '12' ? 'selected' : '' }}>12th Grade</option>
+                    <option value="K" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == 'K' ? 'selected' : '' }}>Kindergarten (K)</option>
+                    <option value="1" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '1' ? 'selected' : '' }}>1st Grade</option>
+                    <option value="2" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '2' ? 'selected' : '' }}>2nd Grade</option>
+                    <option value="3" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '3' ? 'selected' : '' }}>3rd Grade</option>
+                    <option value="4" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '4' ? 'selected' : '' }}>4th Grade</option>
+                    <option value="5" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '5' ? 'selected' : '' }}>5th Grade</option>
+                    <option value="6" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '6' ? 'selected' : '' }}>6th Grade</option>
+                    <option value="7" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '7' ? 'selected' : '' }}>7th Grade</option>
+                    <option value="8" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '8' ? 'selected' : '' }}>8th Grade</option>
+                    <option value="9" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '9' ? 'selected' : '' }}>9th Grade</option>
+                    <option value="10" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '10' ? 'selected' : '' }}>10th Grade</option>
+                    <option value="11" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '11' ? 'selected' : '' }}>11th Grade</option>
+                    <option value="12" {{ old('grade_level', $prefilledData['grade_level'] ?? '') == '12' ? 'selected' : '' }}>12th Grade</option>
                 </select>
+                @if(isset($prefilledData['grade_level']))
+                    <p class="mt-2 text-sm text-blue-600">Pre-filled from source lessons</p>
+                @endif
             </div>
 
             <div>
@@ -66,7 +69,7 @@
                 <input type="number" id="session_number" name="session_number" value="{{ old('session_number') }}" min="1" 
                        class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200" 
                        placeholder="e.g., 1, 2, 3...">
-                <p class="mt-2 text-sm text-gray-600">Optional session number for this lesson</p>
+                <p class="mt-2 text-sm text-gray-600">Optional session number for this lesson. For review lessons, this will be auto-calculated after the last source lesson.</p>
             </div>
 
             <div>
@@ -88,7 +91,7 @@
 
             <div>
                 <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" name="is_review" value="1" {{ old('is_review') ? 'checked' : '' }} 
+                    <input type="checkbox" name="is_review" value="1" {{ old('is_review', request('is_review')) ? 'checked' : '' }} 
                            id="is_review_checkbox"
                            class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400">
                     <span class="text-gray-700 font-medium">Review Lesson</span>
@@ -96,13 +99,13 @@
                 <p class="mt-2 text-sm text-gray-600">Review lessons combine vocabulary from other lessons</p>
             </div>
 
-            <div id="review_sources_section" style="display: {{ old('is_review') ? 'block' : 'none' }};">
+            <div id="review_sources_section" style="display: {{ old('is_review', request('is_review')) ? 'block' : 'none' }};">
                 <label for="review_source_lessons" class="block text-sm font-semibold text-gray-700 mb-2">Source Lessons <span class="text-red-500">*</span></label>
                 <select id="review_source_lessons" name="review_source_lessons[]" multiple
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
                         style="min-height: 150px;">
                     @foreach($allLessons as $sourceLesson)
-                        <option value="{{ $sourceLesson->id }}" {{ in_array($sourceLesson->id, old('review_source_lessons', [])) ? 'selected' : '' }}>
+                        <option value="{{ $sourceLesson->id }}" {{ in_array($sourceLesson->id, old('review_source_lessons', $sourceLessonIds ?? [])) ? 'selected' : '' }}>
                             {{ $sourceLesson->title }} @if($sourceLesson->session_number)(Session {{ $sourceLesson->session_number }})@endif
                         </option>
                     @endforeach
@@ -129,13 +132,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const reviewSourceSelect = document.getElementById('review_source_lessons');
     
     if (isReviewCheckbox && reviewSourcesSection) {
+        // Set initial state
+        if (isReviewCheckbox.checked) {
+            reviewSourcesSection.style.display = 'block';
+            if (reviewSourceSelect) {
+                reviewSourceSelect.setAttribute('required', 'required');
+            }
+        }
+        
         isReviewCheckbox.addEventListener('change', function() {
             if (this.checked) {
                 reviewSourcesSection.style.display = 'block';
-                reviewSourceSelect.setAttribute('required', 'required');
+                if (reviewSourceSelect) {
+                    reviewSourceSelect.setAttribute('required', 'required');
+                }
             } else {
                 reviewSourcesSection.style.display = 'none';
-                reviewSourceSelect.removeAttribute('required');
+                if (reviewSourceSelect) {
+                    reviewSourceSelect.removeAttribute('required');
+                }
             }
         });
     }

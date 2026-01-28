@@ -104,8 +104,41 @@ class LessonController extends Controller
     {
         $courses = Course::active()->ordered()->get();
         $selectedCourseId = $request->get('course_id');
-        $allLessons = Lesson::active()->orderBy('session_number')->orderBy('part_number')->orderBy('title')->get();
-        return view('admin.lessons.create', compact('courses', 'selectedCourseId', 'allLessons'));
+        
+        // Get source lesson IDs if creating a review lesson
+        $sourceLessonIds = $request->input('review_source_lessons', []);
+        $sourceLessons = [];
+        $prefilledData = [];
+        
+        if (!empty($sourceLessonIds)) {
+            $sourceLessons = Lesson::whereIn('id', $sourceLessonIds)->get();
+            
+            // Pre-fill data from source lessons
+            if ($sourceLessons->isNotEmpty()) {
+                // Get common grade level (if all source lessons have the same grade)
+                $gradeLevels = $sourceLessons->pluck('grade_level')->filter()->unique();
+                if ($gradeLevels->count() === 1) {
+                    $prefilledData['grade_level'] = $gradeLevels->first();
+                }
+                
+                // Get course_id from source lessons if not already provided
+                if (!$selectedCourseId) {
+                    $courseIds = $sourceLessons->pluck('course_id')->filter()->unique();
+                    if ($courseIds->count() === 1) {
+                        $selectedCourseId = $courseIds->first();
+                    }
+                }
+            }
+        }
+        
+        // Filter lessons for the source dropdown - if course_id is set, only show lessons from that course
+        $allLessonsQuery = Lesson::active()->whereNull('archived_at');
+        if ($selectedCourseId) {
+            $allLessonsQuery->where('course_id', $selectedCourseId);
+        }
+        $allLessons = $allLessonsQuery->orderBy('session_number')->orderBy('part_number')->orderBy('title')->get();
+        
+        return view('admin.lessons.create', compact('courses', 'selectedCourseId', 'allLessons', 'sourceLessonIds', 'prefilledData'));
     }
 
     /**
