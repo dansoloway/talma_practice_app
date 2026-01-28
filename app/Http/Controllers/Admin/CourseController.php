@@ -88,9 +88,9 @@ class CourseController extends Controller
         // Handle cover image upload
         if ($request->hasFile('cover_image')) {
             $image = $request->file('cover_image');
-            $filename = 'courses/' . time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-            $path = $image->storeAs('public', $filename);
-            $validated['cover_image_path'] = str_replace('public/', '', $filename);
+            $filename = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+            $path = $image->storeAs('courses', $filename, 'public');
+            $validated['cover_image_path'] = 'courses/' . $filename;
         }
 
         $validated['is_active'] = $request->has('is_active');
@@ -152,9 +152,9 @@ class CourseController extends Controller
             }
             
             $image = $request->file('cover_image');
-            $filename = 'courses/' . time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-            $path = $image->storeAs('public', $filename);
-            $validated['cover_image_path'] = str_replace('public/', '', $filename);
+            $filename = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+            $path = $image->storeAs('courses', $filename, 'public');
+            $validated['cover_image_path'] = 'courses/' . $filename;
         }
 
         $validated['is_active'] = $request->has('is_active');
