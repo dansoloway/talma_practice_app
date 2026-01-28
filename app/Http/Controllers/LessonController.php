@@ -92,6 +92,12 @@ class LessonController extends Controller
                 }
             });
         });
+        
+        // For review lessons, load vocabulary from source lessons
+        if ($lesson->is_review) {
+            $lesson->load('reviewSources');
+            $lesson->setRelation('vocabulary', $lesson->getVocabularyForGames());
+        }
 
         return view('lessons.show', compact('lesson'));
     }

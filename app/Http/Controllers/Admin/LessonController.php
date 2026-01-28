@@ -284,7 +284,14 @@ class LessonController extends Controller
      */
     public function show(Lesson $lesson)
     {
-        $lesson->load(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames']);
+        $lesson->load(['prompts', 'matchingGames', 'flashcardGames', 'reviewSources']);
+        
+        // For review lessons, load vocabulary from source lessons
+        if ($lesson->is_review) {
+            $lesson->setRelation('vocabulary', $lesson->getVocabularyForGames());
+        } else {
+            $lesson->load('vocabulary');
+        }
         
         return view('admin.lessons.show', compact('lesson'));
     }
@@ -294,7 +301,15 @@ class LessonController extends Controller
      */
     public function manage(Lesson $lesson)
     {
-        $lesson->load(['course', 'prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'spellingGames', 'sentenceBuilderGames', 'trueFalseQuestions', 'grammarSets.grammarConcepts', 'clauseExercises', 'reviewSources']);
+        $lesson->load(['course', 'prompts', 'matchingGames', 'flashcardGames', 'spellingGames', 'sentenceBuilderGames', 'trueFalseQuestions', 'grammarSets.grammarConcepts', 'clauseExercises', 'reviewSources']);
+        
+        // For review lessons, load vocabulary from source lessons
+        if ($lesson->is_review) {
+            $lesson->setRelation('vocabulary', $lesson->getVocabularyForGames());
+        } else {
+            $lesson->load('vocabulary');
+        }
+        
         $courses = Course::active()->ordered()->get();
         $allLessons = Lesson::where('id', '!=', $lesson->id)->active()->orderBy('session_number')->orderBy('part_number')->orderBy('title')->get();
         

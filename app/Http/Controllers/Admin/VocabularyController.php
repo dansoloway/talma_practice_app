@@ -49,7 +49,12 @@ class VocabularyController extends Controller
      */
     public function index(Lesson $lesson)
     {
-        $vocabulary = $lesson->vocabulary()->ordered()->get();
+        // For review lessons, get vocabulary from source lessons
+        if ($lesson->is_review) {
+            $vocabulary = $lesson->getVocabularyForGames();
+        } else {
+            $vocabulary = $lesson->vocabulary()->ordered()->get();
+        }
         
         return view('admin.vocabulary.index', compact('lesson', 'vocabulary'));
     }

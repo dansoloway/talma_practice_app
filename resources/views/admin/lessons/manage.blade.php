@@ -246,11 +246,25 @@
     <!-- Vocabulary Section -->
     <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6 mb-6">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">Vocabulary ({{ $lesson->vocabulary->count() }})</h2>
-            <div class="flex gap-3">
-                <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">Edit Vocabulary</a>
-                <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200">Upload CSV</a>
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Vocabulary ({{ $lesson->vocabulary->count() }})</h2>
+                @if($lesson->is_review && $lesson->reviewSources->count() > 0)
+                    <p class="text-sm text-purple-600 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Vocabulary from: {{ $lesson->reviewSources->pluck('title')->join(', ') }}
+                    </p>
+                @endif
             </div>
+            @if(!$lesson->is_review)
+                <div class="flex gap-3">
+                    <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">Edit Vocabulary</a>
+                    <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200">Upload CSV</a>
+                </div>
+            @else
+                <div class="flex gap-3">
+                    <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">View Vocabulary</a>
+                </div>
+            @endif
         </div>
 
         @if($lesson->vocabulary->count() > 0)
