@@ -116,7 +116,10 @@ class CourseController extends Controller
      */
     public function show(Course $course)
     {
-        $course->load('lessons');
+        // Load only active, non-archived lessons
+        $course->load(['lessons' => function ($query) {
+            $query->where('is_active', true)->whereNull('archived_at');
+        }]);
         return view('admin.courses.show', compact('course'));
     }
 

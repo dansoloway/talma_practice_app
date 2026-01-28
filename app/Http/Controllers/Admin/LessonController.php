@@ -486,6 +486,34 @@ class LessonController extends Controller
      */
     public function archive(Lesson $lesson)
     {
+        // Check if this lesson is used as a source in any review lessons
+        $reviewLessons = $lesson->reviewLessons()->whereNull('archived_at')->get();
+        
+        if ($reviewLessons->isNotEmpty()) {
+            $reviewLessonTitles = $reviewLessons->pluck('title')->toArray();
+            $reviewCount = $reviewLessons->count();
+            
+            // Get unique courses that use this lesson in review lessons
+            $courses = $reviewLessons->pluck('course_id')->filter()->unique();
+            $courseCount = $courses->count();
+            
+            $message = "Cannot archive lesson \"{$lesson->title}\". ";
+            
+            if ($courseCount > 1) {
+                $message .= "This lesson is used as a source in {$reviewCount} review lesson(s) across {$courseCount} different course(s). ";
+            } else {
+                $message .= "This lesson is used as a source in {$reviewCount} review lesson(s). ";
+            }
+            
+            $message .= "Please remove it from the review lessons first: " . implode(', ', array_slice($reviewLessonTitles, 0, 3));
+            if (count($reviewLessonTitles) > 3) {
+                $message .= ' and ' . (count($reviewLessonTitles) - 3) . ' more';
+            }
+            
+            return redirect()->back()
+                ->with('error', $message);
+        }
+        
         $lesson->archive();
         
         return redirect()->route('admin.lessons.index')

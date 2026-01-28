@@ -78,7 +78,7 @@
                     
                     <div>
                         <h3 class="text-sm font-semibold text-gray-500 mb-1">Lessons</h3>
-                        <p class="text-gray-800 font-bold text-lg">{{ $course->lessons->count() }}</p>
+                        <p class="text-gray-800 font-bold text-lg">{{ $course->lessons->where('is_active', true)->whereNull('archived_at')->count() }}</p>
                     </div>
                 </div>
             </div>
@@ -99,18 +99,22 @@
                     </div>
                 </div>
 
-                @if($course->lessons->isEmpty())
+                @php
+                    $activeLessons = $course->lessons->where('is_active', true)->whereNull('archived_at');
+                @endphp
+                
+                @if($activeLessons->isEmpty())
                     <div class="text-center py-12">
                         <div class="text-6xl mb-4">📚</div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">No lessons yet</h3>
-                        <p class="text-gray-600 mb-6">This course doesn't have any lessons yet.</p>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">No active lessons yet</h3>
+                        <p class="text-gray-600 mb-6">This course doesn't have any active lessons yet.</p>
                         <a href="{{ route('admin.lessons.create', ['course_id' => $course->id]) }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200">
                             Add First Lesson
                         </a>
                     </div>
                 @else
                     <div class="space-y-4">
-                        @foreach($course->lessons->sortBy('session_number') as $lesson)
+                        @foreach($activeLessons->sortBy('session_number') as $lesson)
                             <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors duration-200">
                                 <div class="flex-1">
                                     <h3 class="font-semibold text-gray-800">{{ $lesson->title }}</h3>
