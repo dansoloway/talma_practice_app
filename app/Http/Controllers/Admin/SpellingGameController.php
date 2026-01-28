@@ -24,7 +24,7 @@ class SpellingGameController extends Controller
      */
     public function create(Lesson $lesson)
     {
-        $vocabulary = $lesson->vocabulary()->active()->ordered()->get();
+        $vocabulary = $lesson->getVocabularyForGames();
         
         return view('admin.spelling-games.create', compact('lesson', 'vocabulary'));
     }
@@ -71,7 +71,7 @@ class SpellingGameController extends Controller
      */
     public function edit(Lesson $lesson, SpellingGame $spellingGame)
     {
-        $vocabulary = $lesson->vocabulary()->active()->ordered()->get();
+        $vocabulary = $lesson->getVocabularyForGames();
         
         return view('admin.spelling-games.edit', compact('lesson', 'spellingGame', 'vocabulary'));
     }

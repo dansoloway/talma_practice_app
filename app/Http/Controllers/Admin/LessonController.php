@@ -104,7 +104,8 @@ class LessonController extends Controller
     {
         $courses = Course::active()->ordered()->get();
         $selectedCourseId = $request->get('course_id');
-        return view('admin.lessons.create', compact('courses', 'selectedCourseId'));
+        $allLessons = Lesson::active()->orderBy('session_number')->orderBy('part_number')->orderBy('title')->get();
+        return view('admin.lessons.create', compact('courses', 'selectedCourseId', 'allLessons'));
     }
 
     /**
@@ -121,6 +122,9 @@ class LessonController extends Controller
             'part_number' => 'nullable|integer|min:1|max:8',
             'session_title' => 'nullable|string|max:255',
             'is_active' => 'boolean',
+            'is_review' => 'boolean',
+            'review_source_lessons' => 'required_if:is_review,1|array',
+            'review_source_lessons.*' => 'exists:lessons,id',
             'sort_order' => 'nullable|integer',
         ]);
         
@@ -156,7 +160,65 @@ class LessonController extends Controller
             $validated['sort_order'] = $maxSortOrder + 1;
         }
 
+        // Handle review source lessons
+        $reviewSourceLessonIds = $request->input('review_source_lessons', []);
+        unset($validated['review_source_lessons']);
+
+        // If this is a review lesson, automatically set session_number after the last source lesson
+        if (!empty($validated['is_review']) && !empty($reviewSourceLessonIds)) {
+            $sourceLessons = Lesson::whereIn('id', $reviewSourceLessonIds)
+                ->where('course_id', $validated['course_id'] ?? null)
+                ->orderBy('session_number', 'desc')
+                ->orderBy('part_number', 'desc')
+                ->get();
+            
+            if ($sourceLessons->isNotEmpty()) {
+                $lastSourceLesson = $sourceLessons->first();
+                // Set session_number to be after the last source lesson
+                // If last source has session_number, use that + 0.1 (or next integer if no decimals)
+                if ($lastSourceLesson->session_number) {
+                    // Check if there are any lessons with session_number between last source and next integer
+                    $nextSession = (int)ceil($lastSourceLesson->session_number) + 1;
+                    $validated['session_number'] = $nextSession;
+                } else {
+                    // If source lessons don't have session numbers, find the max session_number in the course
+                    $maxSession = Lesson::where('course_id', $validated['course_id'] ?? null)
+                        ->whereNotNull('session_number')
+                        ->max('session_number') ?? 0;
+                    $validated['session_number'] = $maxSession + 1;
+                }
+                
+                // Auto-generate title if not provided and we have source lessons
+                if (empty($validated['title']) || $validated['title'] === 'Review: Lessons 1-2') {
+                    $sourceTitles = $sourceLessons->pluck('title')->take(2);
+                    if ($sourceLessons->count() === 2) {
+                        $validated['title'] = 'Review: ' . $sourceTitles->first() . ' & ' . $sourceTitles->last();
+                    } else {
+                        $sessionNumbers = $sourceLessons->pluck('session_number')->filter()->sort()->values();
+                        if ($sessionNumbers->isNotEmpty()) {
+                            $validated['title'] = 'Review: Lessons ' . $sessionNumbers->first() . '-' . $sessionNumbers->last();
+                        } else {
+                            $validated['title'] = 'Review: ' . $sourceLessons->count() . ' Lessons';
+                        }
+                    }
+                }
+            }
+        }
+
         $lesson = Lesson::create($validated);
+
+        // Attach source lessons if this is a review lesson
+        if ($lesson->is_review && !empty($reviewSourceLessonIds)) {
+            // Order source lessons by their session_number and part_number
+            $orderedSourceLessons = Lesson::whereIn('id', $reviewSourceLessonIds)
+                ->orderBy('session_number', 'asc')
+                ->orderBy('part_number', 'asc')
+                ->get();
+            
+            foreach ($orderedSourceLessons as $index => $sourceLesson) {
+                $lesson->reviewSources()->attach($sourceLesson->id, ['order' => $index]);
+            }
+        }
 
         return redirect()
             ->route('admin.lessons.show', $lesson)
@@ -178,10 +240,11 @@ class LessonController extends Controller
      */
     public function manage(Lesson $lesson)
     {
-        $lesson->load(['course', 'prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'spellingGames', 'sentenceBuilderGames', 'trueFalseQuestions', 'grammarSets.grammarConcepts', 'clauseExercises']);
+        $lesson->load(['course', 'prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'spellingGames', 'sentenceBuilderGames', 'trueFalseQuestions', 'grammarSets.grammarConcepts', 'clauseExercises', 'reviewSources']);
         $courses = Course::active()->ordered()->get();
+        $allLessons = Lesson::where('id', '!=', $lesson->id)->active()->orderBy('session_number')->orderBy('part_number')->orderBy('title')->get();
         
-        return view('admin.lessons.manage', compact('lesson', 'courses'));
+        return view('admin.lessons.manage', compact('lesson', 'courses', 'allLessons'));
     }
 
     /**
@@ -207,6 +270,9 @@ class LessonController extends Controller
             'part_number' => 'nullable|integer|min:1|max:8',
             'session_title' => 'nullable|string|max:255',
             'is_active' => 'boolean',
+            'is_review' => 'boolean',
+            'review_source_lessons' => 'required_if:is_review,1|array',
+            'review_source_lessons.*' => 'exists:lessons,id',
             'sort_order' => 'integer',
         ]);
         
@@ -224,7 +290,52 @@ class LessonController extends Controller
             $counter++;
         }
 
+        // Handle review source lessons
+        $reviewSourceLessonIds = $request->input('review_source_lessons', []);
+        unset($validated['review_source_lessons']);
+
+        // If this is a review lesson and session_number wasn't manually set, auto-calculate it
+        if (!empty($validated['is_review']) && !empty($reviewSourceLessonIds) && empty($request->input('session_number'))) {
+            $sourceLessons = Lesson::whereIn('id', $reviewSourceLessonIds)
+                ->where('course_id', $validated['course_id'] ?? $lesson->course_id)
+                ->orderBy('session_number', 'desc')
+                ->orderBy('part_number', 'desc')
+                ->get();
+            
+            if ($sourceLessons->isNotEmpty()) {
+                $lastSourceLesson = $sourceLessons->first();
+                if ($lastSourceLesson->session_number) {
+                    $nextSession = (int)ceil($lastSourceLesson->session_number) + 1;
+                    $validated['session_number'] = $nextSession;
+                } else {
+                    $maxSession = Lesson::where('course_id', $validated['course_id'] ?? $lesson->course_id)
+                        ->whereNotNull('session_number')
+                        ->where('id', '!=', $lesson->id)
+                        ->max('session_number') ?? 0;
+                    $validated['session_number'] = $maxSession + 1;
+                }
+            }
+        }
+
         $lesson->update($validated);
+
+        // Sync review source lessons if this is a review lesson
+        if ($lesson->is_review && !empty($reviewSourceLessonIds)) {
+            // Order source lessons by their session_number and part_number
+            $orderedSourceLessons = Lesson::whereIn('id', $reviewSourceLessonIds)
+                ->orderBy('session_number', 'asc')
+                ->orderBy('part_number', 'asc')
+                ->get();
+            
+            $syncData = [];
+            foreach ($orderedSourceLessons as $index => $sourceLesson) {
+                $syncData[$sourceLesson->id] = ['order' => $index];
+            }
+            $lesson->reviewSources()->sync($syncData);
+        } else {
+            // Remove all review sources if not a review lesson
+            $lesson->reviewSources()->detach();
+        }
 
         return redirect()
             ->route('admin.lessons.manage', $lesson)

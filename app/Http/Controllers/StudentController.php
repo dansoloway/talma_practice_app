@@ -53,7 +53,15 @@ class StudentController extends Controller
         $lessons = $query->orderBy('session_number', 'asc')
             ->orderBy('part_number', 'asc')
             ->orderBy('created_at', 'asc')
+            ->with(['vocabulary', 'prompts', 'matchingGames', 'flashcardGames', 'reviewSources'])
             ->get();
+        
+        // For review lessons, load vocabulary from source lessons for display
+        foreach ($lessons as $lesson) {
+            if ($lesson->is_review) {
+                $lesson->setRelation('vocabulary', $lesson->getVocabularyForGames());
+            }
+        }
         
         // Get available session numbers for filter dropdown
         $sessionNumbers = $course->activeLessons()

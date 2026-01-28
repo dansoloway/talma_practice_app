@@ -86,6 +86,30 @@
                 <p class="mt-2 text-sm text-gray-600">Active lessons are visible to students</p>
             </div>
 
+            <div>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="is_review" value="1" {{ old('is_review') ? 'checked' : '' }} 
+                           id="is_review_checkbox"
+                           class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400">
+                    <span class="text-gray-700 font-medium">Review Lesson</span>
+                </label>
+                <p class="mt-2 text-sm text-gray-600">Review lessons combine vocabulary from other lessons</p>
+            </div>
+
+            <div id="review_sources_section" style="display: {{ old('is_review') ? 'block' : 'none' }};">
+                <label for="review_source_lessons" class="block text-sm font-semibold text-gray-700 mb-2">Source Lessons <span class="text-red-500">*</span></label>
+                <select id="review_source_lessons" name="review_source_lessons[]" multiple
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200"
+                        style="min-height: 150px;">
+                    @foreach($allLessons as $sourceLesson)
+                        <option value="{{ $sourceLesson->id }}" {{ in_array($sourceLesson->id, old('review_source_lessons', [])) ? 'selected' : '' }}>
+                            {{ $sourceLesson->title }} @if($sourceLesson->session_number)(Session {{ $sourceLesson->session_number }})@endif
+                        </option>
+                    @endforeach
+                </select>
+                <p class="mt-2 text-sm text-gray-600">Select the lessons this review lesson will combine vocabulary from</p>
+            </div>
+
             <div class="flex gap-4 pt-4">
                 <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
                     Create Lesson
@@ -97,5 +121,25 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isReviewCheckbox = document.getElementById('is_review_checkbox');
+    const reviewSourcesSection = document.getElementById('review_sources_section');
+    const reviewSourceSelect = document.getElementById('review_source_lessons');
+    
+    if (isReviewCheckbox && reviewSourcesSection) {
+        isReviewCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                reviewSourcesSection.style.display = 'block';
+                reviewSourceSelect.setAttribute('required', 'required');
+            } else {
+                reviewSourcesSection.style.display = 'none';
+                reviewSourceSelect.removeAttribute('required');
+            }
+        });
+    }
+});
+</script>
 @endsection
 

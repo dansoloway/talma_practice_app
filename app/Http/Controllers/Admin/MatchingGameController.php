@@ -20,7 +20,7 @@ class MatchingGameController extends Controller
     public function create(Lesson $lesson)
     {
         $parts = $lesson->parts()->active()->ordered()->get();
-        $vocabulary = $lesson->vocabulary()->active()->ordered()->get();
+        $vocabulary = $lesson->getVocabularyForGames();
         
         return view('admin.matching-games.create', compact('lesson', 'parts', 'vocabulary'));
     }
@@ -58,7 +58,7 @@ class MatchingGameController extends Controller
     public function edit(Lesson $lesson, MatchingGame $matchingGame)
     {
         $parts = $lesson->parts()->active()->ordered()->get();
-        $vocabulary = $lesson->vocabulary()->active()->ordered()->get();
+        $vocabulary = $lesson->getVocabularyForGames();
         
         return view('admin.matching-games.edit', compact('lesson', 'matchingGame', 'parts', 'vocabulary'));
     }

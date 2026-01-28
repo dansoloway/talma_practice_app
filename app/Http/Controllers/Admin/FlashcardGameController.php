@@ -25,7 +25,7 @@ class FlashcardGameController extends Controller
      */
     public function create(Lesson $lesson)
     {
-        $vocabulary = $lesson->vocabulary()->where('is_active', true)->orderBy('sort_order')->get();
+        $vocabulary = $lesson->getVocabularyForGames();
         
         return view('admin.flashcard-games.create', compact('lesson', 'vocabulary'));
     }
@@ -73,7 +73,7 @@ class FlashcardGameController extends Controller
         
         // Default to all vocabulary words if none are selected
         if (empty($validated['vocabulary_ids'])) {
-            $validated['vocabulary_ids'] = $lesson->vocabulary()->pluck('id')->toArray();
+            $validated['vocabulary_ids'] = $lesson->getVocabularyForGames()->pluck('id')->toArray();
         }
         
         // Always active
@@ -100,7 +100,7 @@ class FlashcardGameController extends Controller
      */
     public function edit(Lesson $lesson, FlashcardGame $flashcardGame)
     {
-        $vocabulary = $lesson->vocabulary()->where('is_active', true)->orderBy('sort_order')->get();
+        $vocabulary = $lesson->getVocabularyForGames();
         
         return view('admin.flashcard-games.edit', compact('lesson', 'flashcardGame', 'vocabulary'));
     }

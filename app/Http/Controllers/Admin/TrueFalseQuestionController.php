@@ -36,7 +36,7 @@ class TrueFalseQuestionController extends Controller
      */
     public function create(Lesson $lesson, TrueFalseGame $trueFalseGame)
     {
-        $vocabulary = $lesson->vocabulary()->active()->ordered()->get();
+        $vocabulary = $lesson->getVocabularyForGames();
         
         return view('admin.true-false-questions.create', compact('lesson', 'trueFalseGame', 'vocabulary'));
     }
@@ -90,7 +90,7 @@ class TrueFalseQuestionController extends Controller
     public function edit(Lesson $lesson, TrueFalseGame $trueFalseGame, TrueFalseQuestion $trueFalseQuestion)
     {
         $trueFalseQuestion->load('vocabulary');
-        $vocabulary = $lesson->vocabulary()->active()->ordered()->get();
+        $vocabulary = $lesson->getVocabularyForGames();
         $selectedVocabIds = $trueFalseQuestion->vocabulary->pluck('id')->toArray();
         
         return view('admin.true-false-questions.edit', compact('lesson', 'trueFalseGame', 'trueFalseQuestion', 'vocabulary', 'selectedVocabIds'));

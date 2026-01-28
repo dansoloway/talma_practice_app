@@ -23,6 +23,7 @@ class Lesson extends Model
         'part_number',
         'session_title',
         'is_active',
+        'is_review',
         'sort_order',
         'archived_at',
         'assigned_to',
@@ -31,6 +32,7 @@ class Lesson extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_review' => 'boolean',
         'archived_at' => 'datetime',
     ];
 
@@ -125,6 +127,48 @@ class Lesson extends Model
     public function clauseExercises(): HasMany
     {
         return $this->hasMany(ClauseExercise::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Get all source lessons that this review lesson reviews.
+     */
+    public function reviewSources(): BelongsToMany
+    {
+        return $this->belongsToMany(Lesson::class, 'lesson_review_sources', 'review_lesson_id', 'source_lesson_id')
+            ->withPivot('order')
+            ->withTimestamps()
+            ->orderBy('lesson_review_sources.order');
+    }
+
+    /**
+     * Get all review lessons that review this lesson.
+     */
+    public function reviewLessons(): BelongsToMany
+    {
+        return $this->belongsToMany(Lesson::class, 'lesson_review_sources', 'source_lesson_id', 'review_lesson_id')
+            ->withPivot('order')
+            ->withTimestamps()
+            ->orderBy('lesson_review_sources.order');
+    }
+
+    /**
+     * Get vocabulary for this lesson, or aggregated vocabulary from source lessons if this is a review lesson.
+     * Returns a Collection of Vocabulary models, filtered for active items and ordered.
+     */
+    public function getVocabularyForGames()
+    {
+        if ($this->is_review && $this->reviewSources->count() > 0) {
+            // Get vocabulary from all source lessons
+            $sourceLessonIds = $this->reviewSources->pluck('id');
+            return Vocabulary::whereIn('lesson_id', $sourceLessonIds)
+                ->where('is_active', true)
+                ->orderBy('lesson_id')
+                ->orderBy('sort_order')
+                ->get();
+        }
+        
+        // Regular lesson - return its own vocabulary
+        return $this->vocabulary()->where('is_active', true)->orderBy('sort_order')->get();
     }
 
     /**

@@ -96,7 +96,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="lessons-list">
             @forelse($lessons as $lesson)
                 <a href="{{ route('lessons.show', $lesson->slug) }}" 
-                   class="group relative bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
+                   class="group relative {{ $lesson->is_review ? 'bg-purple-50 border-purple-300 hover:border-purple-400' : 'bg-white border-gray-200 hover:border-blue-300' }} rounded-2xl border-2 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
                     
                     <!-- Card Content -->
                     <div class="flex flex-col h-full">
@@ -111,26 +111,27 @@
                         
                         <!-- Header Row: Badges + Arrow -->
                         <div class="flex justify-between items-start mb-4">
-                            @if($lesson->session_number || $lesson->part_number)
-                                <div class="flex flex-wrap gap-2">
-                                    @if($lesson->session_number)
-                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
-                                            Session {{ $lesson->session_number }}
-                                        </span>
-                                    @endif
-                                    @if($lesson->part_number)
-                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200">
-                                            Part {{ $lesson->part_number }}
-                                        </span>
-                                    @endif
-                                </div>
-                            @else
-                                <div></div>
-                            @endif
+                            <div class="flex flex-wrap gap-2">
+                                @if($lesson->is_review)
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-200 text-purple-800 border border-purple-300">
+                                        <i class="fas fa-redo mr-1"></i> Review
+                                    </span>
+                                @endif
+                                @if($lesson->session_number)
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold {{ $lesson->is_review ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-blue-100 text-blue-700 border-blue-200' }} border">
+                                        Session {{ $lesson->session_number }}
+                                    </span>
+                                @endif
+                                @if($lesson->part_number)
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200">
+                                        Part {{ $lesson->part_number }}
+                                    </span>
+                                @endif
+                            </div>
                             
                             <!-- Chevron Arrow - More intentional -->
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center transition-all duration-300 group-hover:translate-x-1">
-                                <i class="fas fa-chevron-right text-blue-600 text-sm"></i>
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full {{ $lesson->is_review ? 'bg-purple-50 group-hover:bg-purple-100' : 'bg-blue-50 group-hover:bg-blue-100' }} flex items-center justify-center transition-all duration-300 group-hover:translate-x-1">
+                                <i class="fas fa-chevron-right {{ $lesson->is_review ? 'text-purple-600' : 'text-blue-600' }} text-sm"></i>
                             </div>
                         </div>
                         

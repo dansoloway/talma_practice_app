@@ -1132,8 +1132,8 @@ class VocabularyController extends Controller
      */
     private function createGamesForLesson(Lesson $lesson)
     {
-        // Get all active vocabulary IDs for this lesson
-        $vocabularyIds = $lesson->vocabulary()->active()->pluck('id')->toArray();
+        // Get all active vocabulary IDs for this lesson (or from source lessons if review)
+        $vocabularyIds = $lesson->getVocabularyForGames()->pluck('id')->toArray();
         
         if (empty($vocabularyIds) || count($vocabularyIds) < 2) {
             \Log::info("Skipping game creation for lesson {$lesson->id}: insufficient vocabulary (need at least 2 words)");
