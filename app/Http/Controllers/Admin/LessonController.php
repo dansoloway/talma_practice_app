@@ -6,9 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\GrammarSet;
+use App\Models\MatchingGame;
+use App\Models\FlashcardGame;
+use App\Models\SpellingGame;
+use App\Models\Vocabulary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class LessonController extends Controller
 {
@@ -251,6 +256,9 @@ class LessonController extends Controller
             foreach ($orderedSourceLessons as $index => $sourceLesson) {
                 $lesson->reviewSources()->attach($sourceLesson->id, ['order' => $index]);
             }
+            
+            // Automatically create games for review lessons
+            $this->createGamesForReviewLesson($lesson);
         }
 
         return redirect()
@@ -645,6 +653,83 @@ class LessonController extends Controller
         return redirect()
             ->route('admin.lessons.manage', $lesson)
             ->with('success', 'Cover image removed successfully!');
+    }
+
+    /**
+     * Create matching, flashcard, and spelling games automatically for a review lesson
+     * using vocabulary from source lessons.
+     */
+    private function createGamesForReviewLesson(Lesson $lesson)
+    {
+        // Get vocabulary from source lessons
+        $vocabulary = $lesson->getVocabularyForGames();
+        $vocabularyIds = $vocabulary->pluck('id')->toArray();
+        
+        if (empty($vocabularyIds) || count($vocabularyIds) < 2) {
+            Log::info("Skipping game creation for review lesson {$lesson->id}: insufficient vocabulary (need at least 2 words)");
+            return;
+        }
+
+        try {
+            // Create Matching Game
+            $matchingGameTitle = trim($lesson->title . ' Matching Game 1');
+            
+            MatchingGame::create([
+                'lesson_id' => $lesson->id,
+                'title' => $matchingGameTitle,
+                'vocabulary_ids' => $vocabularyIds,
+                'is_active' => true,
+            ]);
+            Log::info("Created matching game for review lesson {$lesson->id}");
+
+            // Create Flashcard Game
+            $flashcardGameTitle = trim($lesson->title . ' Flashcards 1');
+            
+            // Determine game types based on vocabulary assets
+            $missingImages = Vocabulary::whereIn('id', $vocabularyIds)
+                ->where(function($q){ $q->whereNull('image_path')->orWhere('image_path', ''); })
+                ->count();
+            $missingAudio = Vocabulary::whereIn('id', $vocabularyIds)
+                ->whereNull('word_audio_path')
+                ->count();
+            
+            $gameTypes = [];
+            if ($missingImages > 0 && $missingAudio > 0) {
+                $gameTypes = [];
+            } elseif ($missingImages > 0) {
+                $gameTypes = ['audio_to_word'];
+            } elseif ($missingAudio > 0) {
+                $gameTypes = ['image_to_word'];
+            } else {
+                $gameTypes = ['image_to_word', 'audio_to_word'];
+            }
+            
+            FlashcardGame::create([
+                'lesson_id' => $lesson->id,
+                'title' => $flashcardGameTitle,
+                'vocabulary_ids' => $vocabularyIds,
+                'game_types' => $gameTypes,
+                'cards_per_game' => min(10, count($vocabularyIds)),
+                'is_active' => true,
+            ]);
+            Log::info("Created flashcard game for review lesson {$lesson->id}");
+
+            // Create Spelling Game
+            $spellingGameTitle = trim($lesson->title . ' Spelling Practice 1');
+            
+            SpellingGame::create([
+                'lesson_id' => $lesson->id,
+                'title' => $spellingGameTitle,
+                'vocabulary_ids' => $vocabularyIds,
+                'difficulty' => 'medium',
+                'is_active' => true,
+            ]);
+            Log::info("Created spelling game for review lesson {$lesson->id}");
+
+        } catch (\Exception $e) {
+            Log::error("Failed to create games for review lesson {$lesson->id}: " . $e->getMessage());
+            // Don't throw - allow lesson creation to succeed even if game creation fails
+        }
     }
 }
 
