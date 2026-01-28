@@ -259,6 +259,11 @@ class LessonController extends Controller
             
             // Automatically create games for review lessons
             $this->createGamesForReviewLesson($lesson);
+            
+            // Redirect review lessons directly to manage page since games are already created
+            return redirect()
+                ->route('admin.lessons.manage', $lesson)
+                ->with('success', 'Review lesson created successfully! Games have been automatically created.');
         }
 
         return redirect()
