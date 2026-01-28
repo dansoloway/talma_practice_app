@@ -40,13 +40,6 @@
             </div>
 
             <div>
-                <label for="sort_order" class="block text-sm font-semibold text-gray-700 mb-2">Sort Order</label>
-                <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', 0) }}" min="0" 
-                       class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
-                <p class="mt-2 text-sm text-gray-600">Lower numbers appear first</p>
-            </div>
-
-            <div>
                 <label class="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} 
                            class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400">

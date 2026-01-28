@@ -21,6 +21,12 @@
             </div>
             
             <div class="flex flex-col gap-3">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="view_archived" value="1" id="view_archived" 
+                           {{ $showArchived ?? false ? 'checked' : '' }} class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400">
+                    <span class="text-sm font-medium text-gray-700">View Archived Courses</span>
+                </label>
+                
                 <!-- Preserve sort parameters -->
                 @if(request('sort_by'))
                     <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
@@ -74,11 +80,18 @@
                             <span class="text-sm text-gray-500">
                                 {{ $course->lessons_count }} {{ $course->lessons_count === 1 ? 'lesson' : 'lessons' }}
                             </span>
-                            @if($course->is_active)
-                                <span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Active</span>
-                            @else
-                                <span class="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-700 rounded-full">Inactive</span>
-                            @endif
+                            <div class="flex flex-wrap gap-2 justify-end">
+                                @if($course->isArchived())
+                                    <span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">
+                                        <i class="fas fa-archive mr-1"></i> Archived
+                                    </span>
+                                @endif
+                                @if($course->is_active)
+                                    <span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Active</span>
+                                @else
+                                    <span class="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-700 rounded-full">Inactive</span>
+                                @endif
+                            </div>
                         </div>
                         <div class="flex gap-2">
                             <a href="{{ route('admin.courses.show', $course) }}" class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-200 text-center">

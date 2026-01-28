@@ -78,7 +78,7 @@ class LessonController extends Controller
                 break;
         }
         
-        $lessons = $query->with(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'parts'])->get();
+        $lessons = $query->with(['prompts', 'vocabulary', 'matchingGames', 'flashcardGames', 'parts', 'course'])->get();
         
         // Get available grade levels for filter dropdown (from active lessons)
         $gradeLevels = Lesson::whereNull('archived_at')

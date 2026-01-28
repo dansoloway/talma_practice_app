@@ -5,8 +5,31 @@
 @section('content')
 <div class="container mx-auto px-4 py-6 max-w-7xl">
     <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">{{ $course->title }}</h1>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">{{ $course->title }}</h1>
+            @if($course->isArchived())
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-700 mt-2">
+                    <i class="fas fa-archive mr-1"></i> Archived
+                </span>
+            @endif
+        </div>
         <div class="flex gap-3">
+            @if($course->isArchived())
+                <form action="{{ route('admin.courses.unarchive', $course) }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all duration-200">
+                        Unarchive Course
+                    </button>
+                </form>
+            @else
+                <form action="{{ route('admin.courses.archive', $course) }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-xl hover:bg-yellow-700 transition-all duration-200" 
+                            onclick="return confirm('Are you sure you want to archive this course? Students will no longer be able to access it, but it can be restored later.')">
+                        Archive Course
+                    </button>
+                </form>
+            @endif
             <a href="{{ route('admin.courses.edit', $course) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200">
                 Edit Course
             </a>
@@ -39,16 +62,18 @@
                     
                     <div>
                         <h3 class="text-sm font-semibold text-gray-500 mb-1">Status</h3>
-                        @if($course->is_active)
-                            <span class="px-3 py-1 text-sm font-semibold bg-green-100 text-green-700 rounded-full">Active</span>
-                        @else
-                            <span class="px-3 py-1 text-sm font-semibold bg-gray-100 text-gray-700 rounded-full">Inactive</span>
-                        @endif
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-500 mb-1">Sort Order</h3>
-                        <p class="text-gray-800">{{ $course->sort_order }}</p>
+                        <div class="flex flex-wrap gap-2">
+                            @if($course->is_active)
+                                <span class="px-3 py-1 text-sm font-semibold bg-green-100 text-green-700 rounded-full">Active</span>
+                            @else
+                                <span class="px-3 py-1 text-sm font-semibold bg-gray-100 text-gray-700 rounded-full">Inactive</span>
+                            @endif
+                            @if($course->isArchived())
+                                <span class="px-3 py-1 text-sm font-semibold bg-yellow-100 text-yellow-700 rounded-full">
+                                    <i class="fas fa-archive mr-1"></i> Archived
+                                </span>
+                            @endif
+                        </div>
                     </div>
                     
                     <div>
@@ -64,9 +89,14 @@
             <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">Lessons</h2>
-                    <a href="{{ route('admin.lessons.create', ['course_id' => $course->id]) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200">
-                        Add Lesson
-                    </a>
+                    <div class="flex gap-3">
+                        <button onclick="openCreateReviewModal()" class="px-4 py-2 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-all duration-200">
+                            Create Review Lesson
+                        </button>
+                        <a href="{{ route('admin.lessons.create', ['course_id' => $course->id]) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200">
+                            Add Lesson
+                        </a>
+                    </div>
                 </div>
 
                 @if($course->lessons->isEmpty())
@@ -109,4 +139,101 @@
         </div>
     </div>
 </div>
+
+<!-- Create Review Lesson Modal -->
+<div id="createReviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800">Create Review Lesson</h2>
+                <button onclick="closeCreateReviewModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <form action="{{ route('admin.lessons.create') }}" method="GET" id="createReviewForm" class="p-6">
+            <div class="space-y-6">
+                <div>
+                    <label for="review_title" class="block text-sm font-semibold text-gray-700 mb-2">Review Title <span class="text-red-500">*</span></label>
+                    <input type="text" id="review_title" name="title" required 
+                           placeholder="e.g., Review: Lessons 1-2"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
+                </div>
+                
+                <div>
+                    <label for="review_course_id" class="block text-sm font-semibold text-gray-700 mb-2">Course <span class="text-red-500">*</span></label>
+                    <select id="review_course_id" name="course_id" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
+                        <option value="{{ $course->id }}" selected>{{ $course->title }}</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Select Lessons to Review <span class="text-red-500">*</span></label>
+                    <div class="border border-gray-300 rounded-xl p-4 max-h-64 overflow-y-auto bg-gray-50">
+                        @forelse($course->lessons->where('is_active', true)->whereNull('archived_at') as $lesson)
+                            <label class="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer transition-colors">
+                                <input type="checkbox" name="review_source_lessons[]" value="{{ $lesson->id }}" 
+                                       class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400 review-source-checkbox">
+                                <div class="flex-1">
+                                    <span class="font-medium text-gray-800">{{ $lesson->title }}</span>
+                                    @if($lesson->session_number)
+                                        <span class="text-sm text-gray-500 ml-2">(Session {{ $lesson->session_number }})</span>
+                                    @endif
+                                </div>
+                            </label>
+                        @empty
+                            <p class="text-gray-500 text-center py-4">No active lessons available in this course</p>
+                        @endforelse
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600">Select at least one lesson to review</p>
+                </div>
+                
+                <input type="hidden" name="is_review" value="1">
+                
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                        Create Review Lesson
+                    </button>
+                    <button type="button" onclick="closeCreateReviewModal()" class="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openCreateReviewModal() {
+    document.getElementById('createReviewModal').classList.remove('hidden');
+}
+
+function closeCreateReviewModal() {
+    document.getElementById('createReviewModal').classList.add('hidden');
+    // Reset form
+    document.getElementById('createReviewForm').reset();
+    document.querySelectorAll('.review-source-checkbox').forEach(cb => cb.checked = false);
+    // Reset course selection
+    document.getElementById('review_course_id').value = '{{ $course->id }}';
+}
+
+// Close modal when clicking outside
+document.getElementById('createReviewModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCreateReviewModal();
+    }
+});
+
+// Validate form before submit
+document.getElementById('createReviewForm').addEventListener('submit', function(e) {
+    const checkedBoxes = document.querySelectorAll('.review-source-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one lesson to review.');
+        return false;
+    }
+});
+</script>
 @endsection

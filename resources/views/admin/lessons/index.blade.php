@@ -112,6 +112,7 @@
                                     @endif
                                 </a>
                             </th>
+                            <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Course</th>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Grade</th>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Session</th>
                             <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Part</th>
@@ -153,7 +154,23 @@
                     <tbody class="divide-y divide-gray-200/60">
                         @foreach($lessons as $lesson)
                             <tr class="hover:bg-gray-50/50 transition-colors duration-150">
-                                <td class="px-6 py-4"><strong class="text-gray-800">{{ $lesson->title }}</strong></td>
+                                <td class="px-6 py-4">
+                                    <strong class="text-gray-800">{{ $lesson->title }}</strong>
+                                    @if($lesson->is_review)
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-700">
+                                            <i class="fas fa-redo mr-1"></i> Review
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if($lesson->course)
+                                        <a href="{{ route('admin.courses.show', $lesson->course) }}" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors">
+                                            <i class="fas fa-book mr-1"></i> {{ $lesson->course->title }}
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 text-sm">-</span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 text-gray-600">{{ $lesson->grade_level ? 'Grade ' . $lesson->grade_level : '-' }}</td>
                                 <td class="px-6 py-4 text-gray-600">{{ $lesson->session_number ? 'Session ' . $lesson->session_number : '-' }}</td>
                                 <td class="px-6 py-4 text-gray-600">{{ $lesson->part_number ? 'Part ' . $lesson->part_number : '-' }}</td>

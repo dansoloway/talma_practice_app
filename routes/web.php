@@ -119,6 +119,10 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     
     // Courses
     Route::resource('courses', CourseController::class);
+    Route::post('courses/{course}/archive', [CourseController::class, 'archive'])
+        ->name('courses.archive');
+    Route::post('courses/{course}/unarchive', [CourseController::class, 'unarchive'])
+        ->name('courses.unarchive');
     
     // Lessons
     Route::resource('lessons', AdminLessonController::class);

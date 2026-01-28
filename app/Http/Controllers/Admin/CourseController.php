@@ -15,7 +15,18 @@ class CourseController extends Controller
      */
     public function index(Request $request)
     {
+        // Determine if we should show archived courses
+        $showArchived = $request->boolean('view_archived');
+        
         $query = Course::query();
+        
+        if ($showArchived) {
+            // Show only archived courses
+            $query->whereNotNull('archived_at');
+        } else {
+            // Show only non-archived courses
+            $query->whereNull('archived_at');
+        }
         
         // Filter by search text (title, slug)
         if ($request->filled('search')) {
@@ -48,7 +59,7 @@ class CourseController extends Controller
         
         $courses = $query->withCount('lessons')->get();
         
-        return view('admin.courses.index', compact('courses', 'sortBy', 'sortDir'));
+        return view('admin.courses.index', compact('courses', 'sortBy', 'sortDir', 'showArchived'));
     }
 
     /**
@@ -69,7 +80,6 @@ class CourseController extends Controller
             'slug' => 'nullable|string|max:255|unique:courses,slug',
             'description' => 'nullable|string',
             'cover_image' => 'nullable|image|max:2048',
-            'sort_order' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);
 
@@ -128,7 +138,6 @@ class CourseController extends Controller
             'slug' => 'nullable|string|max:255|unique:courses,slug,' . $course->id,
             'description' => 'nullable|string',
             'cover_image' => 'nullable|image|max:2048',
-            'sort_order' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);
 
@@ -185,5 +194,27 @@ class CourseController extends Controller
 
         return redirect()->route('admin.courses.index')
             ->with('success', 'Course deleted successfully.');
+    }
+
+    /**
+     * Archive the specified course.
+     */
+    public function archive(Course $course)
+    {
+        $course->archive();
+
+        return redirect()->back()
+            ->with('success', 'Course archived successfully.');
+    }
+
+    /**
+     * Unarchive the specified course.
+     */
+    public function unarchive(Course $course)
+    {
+        $course->unarchive();
+
+        return redirect()->back()
+            ->with('success', 'Course unarchived successfully.');
     }
 }

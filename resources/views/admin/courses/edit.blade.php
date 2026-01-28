@@ -5,8 +5,33 @@
 @section('content')
 <div class="container mx-auto px-4 py-6 max-w-3xl">
     <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Edit Course</h1>
-        <a href="{{ route('admin.courses.index') }}" class="px-4 py-2 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-all duration-200">Cancel</a>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Edit Course</h1>
+            @if($course->isArchived())
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-700 mt-2">
+                    <i class="fas fa-archive mr-1"></i> Archived
+                </span>
+            @endif
+        </div>
+        <div class="flex gap-3">
+            @if($course->isArchived())
+                <form action="{{ route('admin.courses.unarchive', $course) }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 transition-all duration-200">
+                        Unarchive Course
+                    </button>
+                </form>
+            @else
+                <form action="{{ route('admin.courses.archive', $course) }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 bg-yellow-600 text-white font-medium rounded-xl hover:bg-yellow-700 transition-all duration-200" 
+                            onclick="return confirm('Are you sure you want to archive this course? Students will no longer be able to access it, but it can be restored later.')">
+                        Archive Course
+                    </button>
+                </form>
+            @endif
+            <a href="{{ route('admin.courses.index') }}" class="px-4 py-2 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-all duration-200">Cancel</a>
+        </div>
     </div>
 
     <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-8">
@@ -44,13 +69,6 @@
                 <input type="file" id="cover_image" name="cover_image" accept="image/*" 
                        class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                 <p class="mt-2 text-sm text-gray-600">Upload a new image to replace the current one</p>
-            </div>
-
-            <div>
-                <label for="sort_order" class="block text-sm font-semibold text-gray-700 mb-2">Sort Order</label>
-                <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $course->sort_order) }}" min="0" 
-                       class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
-                <p class="mt-2 text-sm text-gray-600">Lower numbers appear first</p>
             </div>
 
             <div>
