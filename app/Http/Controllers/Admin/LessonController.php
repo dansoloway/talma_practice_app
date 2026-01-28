@@ -202,7 +202,7 @@ class LessonController extends Controller
         $reviewSourceLessonIds = $request->input('review_source_lessons', []);
         unset($validated['review_source_lessons']);
 
-        // If this is a review lesson, automatically set session_number after the last source lesson
+        // If this is a review lesson, automatically set session_number and grade_level from source lessons
         if (!empty($validated['is_review']) && !empty($reviewSourceLessonIds)) {
             $sourceLessons = Lesson::whereIn('id', $reviewSourceLessonIds)
                 ->where('course_id', $validated['course_id'] ?? null)
@@ -211,6 +211,14 @@ class LessonController extends Controller
                 ->get();
             
             if ($sourceLessons->isNotEmpty()) {
+                // Auto-fill grade_level if all source lessons have the same grade
+                if (empty($validated['grade_level'])) {
+                    $gradeLevels = $sourceLessons->pluck('grade_level')->filter()->unique();
+                    if ($gradeLevels->count() === 1) {
+                        $validated['grade_level'] = $gradeLevels->first();
+                    }
+                }
+                
                 $lastSourceLesson = $sourceLessons->first();
                 // Set session_number to be after the last source lesson
                 // If last source has session_number, use that + 0.1 (or next integer if no decimals)

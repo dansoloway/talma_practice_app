@@ -156,13 +156,15 @@
             </div>
         </div>
         
-        <form action="{{ route('admin.lessons.create') }}" method="GET" id="createReviewForm" class="p-6">
+        <form action="{{ route('admin.lessons.store') }}" method="POST" id="createReviewForm" class="p-6">
+            @csrf
             <div class="space-y-6">
                 <div>
                     <label for="review_title" class="block text-sm font-semibold text-gray-700 mb-2">Review Title <span class="text-red-500">*</span></label>
                     <input type="text" id="review_title" name="title" required 
                            placeholder="e.g., Review: Lessons 1-2"
                            class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
+                    <p class="mt-2 text-sm text-gray-600">Slug will be auto-generated from the title</p>
                 </div>
                 
                 <div>
@@ -195,6 +197,7 @@
                 </div>
                 
                 <input type="hidden" name="is_review" value="1">
+                <input type="hidden" name="is_active" value="1">
                 
                 <div class="flex gap-4 pt-4">
                     <button type="submit" class="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
