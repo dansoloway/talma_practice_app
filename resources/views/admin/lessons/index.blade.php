@@ -446,15 +446,34 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Combining...';
         
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (!csrfToken) {
+            alert('CSRF token not found. Please refresh the page and try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Combine Lessons';
+            return;
+        }
+
         fetch('{{ route("admin.lessons.combine") }}', {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': csrfToken.content,
+                'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('Response error:', text);
+                    throw new Error('Server error: ' + response.status);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
             if (data.success) {
                 alert('Lessons combined successfully!');
                 window.location.reload();
@@ -466,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while combining lessons.');
+            alert('An error occurred while combining lessons: ' + error.message);
             submitBtn.disabled = false;
             submitBtn.textContent = 'Combine Lessons';
         });
