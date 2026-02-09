@@ -107,9 +107,11 @@
                     <tr data-lesson-id="{{ $lesson->id }}">
                         <td>
                             <div class="lesson-info">
-                                <strong>{{ $lesson->display_name }}</strong>
-                                @if($lesson->session_title)
-                                    <div class="lesson-subtitle">{{ $lesson->session_title }}</div>
+                                <strong class="text-gray-800">{{ $lesson->title }}</strong>
+                                @if($lesson->is_review)
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-700">
+                                        <i class="fas fa-redo mr-1"></i> Review
+                                    </span>
                                 @endif
                             </div>
                         </td>
