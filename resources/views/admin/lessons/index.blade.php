@@ -417,21 +417,28 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Form submit triggered');
         
         const formData = new FormData(this);
-        const sourceIds = Array.from(document.querySelectorAll('.source-lesson-checkbox:checked')).map(cb => cb.value);
+        const sourceIds = Array.from(document.querySelectorAll('.source-lesson-checkbox:checked')).map(cb => {
+            const val = cb.value;
+            console.log('Checkbox value:', val, 'Type:', typeof val);
+            return val;
+        });
         console.log('Source IDs:', sourceIds);
-        console.log('Target ID:', formData.get('target_lesson_id'));
+        console.log('Source IDs (as strings):', sourceIds.map(id => String(id)));
+        
+        const targetId = formData.get('target_lesson_id');
+        console.log('Target ID:', targetId, 'Type:', typeof targetId);
         
         if (sourceIds.length === 0) {
             alert('Please select at least one source lesson.');
             return;
         }
         
-        if (!formData.get('target_lesson_id')) {
+        if (!targetId) {
             alert('Please select a target lesson.');
             return;
         }
         
-        if (sourceIds.includes(formData.get('target_lesson_id'))) {
+        if (sourceIds.includes(targetId)) {
             alert('Target lesson cannot be one of the source lessons.');
             return;
         }
@@ -440,10 +447,21 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Add source IDs to form data
+        // Clear any existing source_lesson_ids from formData
+        formData.delete('source_lesson_ids[]');
+        
+        // Add source IDs to form data (ensure they're integers)
         sourceIds.forEach(id => {
-            formData.append('source_lesson_ids[]', id);
+            const intId = parseInt(id, 10);
+            console.log('Adding source ID:', intId, 'from:', id);
+            formData.append('source_lesson_ids[]', intId);
         });
+        
+        // Log what we're sending
+        console.log('FormData entries:');
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
         
         const submitBtn = document.getElementById('combine-submit-btn');
         submitBtn.disabled = true;

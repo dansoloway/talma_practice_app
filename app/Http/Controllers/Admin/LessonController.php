@@ -908,22 +908,37 @@ class LessonController extends Controller
      */
     public function combine(Request $request)
     {
+        Log::info('Combine lessons request', [
+            'source_lesson_ids' => $request->input('source_lesson_ids'),
+            'target_lesson_id' => $request->input('target_lesson_id'),
+            'all_input' => $request->all(),
+        ]);
+        
         try {
             $validated = $request->validate([
                 'source_lesson_ids' => 'required|array|min:1',
-                'source_lesson_ids.*' => 'exists:lessons,id',
-                'target_lesson_id' => 'required|exists:lessons,id',
+                'source_lesson_ids.*' => 'required|integer|exists:lessons,id',
+                'target_lesson_id' => 'required|integer|exists:lessons,id',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Combine lessons validation failed', [
+                'errors' => $e->errors(),
+                'input' => $request->all(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed: ' . implode(', ', $e->errors()),
+                'message' => 'Validation failed: ' . json_encode($e->errors()),
                 'errors' => $e->errors(),
             ], 400);
         }
 
-        $sourceLessonIds = $validated['source_lesson_ids'];
-        $targetLessonId = $validated['target_lesson_id'];
+        $sourceLessonIds = array_map('intval', $validated['source_lesson_ids']);
+        $targetLessonId = intval($validated['target_lesson_id']);
+        
+        Log::info('Combine lessons validated', [
+            'source_lesson_ids' => $sourceLessonIds,
+            'target_lesson_id' => $targetLessonId,
+        ]);
 
         // Validate target is not in source list
         if (in_array($targetLessonId, $sourceLessonIds)) {
