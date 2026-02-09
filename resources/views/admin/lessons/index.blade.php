@@ -414,9 +414,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('combineForm').addEventListener('submit', function(e) {
         e.preventDefault();
+        console.log('Form submit triggered');
         
         const formData = new FormData(this);
         const sourceIds = Array.from(document.querySelectorAll('.source-lesson-checkbox:checked')).map(cb => cb.value);
+        console.log('Source IDs:', sourceIds);
+        console.log('Target ID:', formData.get('target_lesson_id'));
         
         if (sourceIds.length === 0) {
             alert('Please select at least one source lesson.');
