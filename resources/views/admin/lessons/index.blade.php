@@ -255,9 +255,9 @@
                             <div class="flex-1">
                                 <div class="font-medium text-gray-800">{{ $lesson->title }}</div>
                                 <div class="text-sm text-gray-500">
-                                    @if($lesson->session_number) Session {{ $lesson->session_number }} @endif
-                                    @if($lesson->part_number) - Part {{ $lesson->part_number }} @endif
-                                    @if($lesson->course) | {{ $lesson->course->title }} @endif
+                                    @if($lesson->course) {{ $lesson->course->title }} @endif
+                                    @if($lesson->session_number) | Session {{ $lesson->session_number }} @endif
+                                    @if($lesson->part_number) | Part {{ $lesson->part_number }} @endif
                                 </div>
                             </div>
                         </label>
@@ -277,7 +277,15 @@
                     @foreach($lessons as $lesson)
                         <option value="{{ $lesson->id }}">
                             {{ $lesson->title }}
-                            @if($lesson->session_number) (Session {{ $lesson->session_number }}@if($lesson->part_number), Part {{ $lesson->part_number }}@endif) @endif
+                            @if($lesson->course)
+                                | {{ $lesson->course->title }}
+                            @endif
+                            @if($lesson->session_number)
+                                | Session {{ $lesson->session_number }}
+                            @endif
+                            @if($lesson->part_number)
+                                | Part {{ $lesson->part_number }}
+                            @endif
                         </option>
                     @endforeach
                 </select>
