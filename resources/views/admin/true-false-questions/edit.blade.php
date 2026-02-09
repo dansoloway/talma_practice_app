@@ -153,7 +153,7 @@
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Update Question</button>
             <a href="{{ route('admin.lessons.true-false-games.show', [$lesson, $trueFalseGame]) }}" class="btn">Cancel</a>
-            <form action="{{ route('admin.lessons.true-false-questions.destroy', [$lesson, $trueFalseQuestion]) }}" method="POST" class="inline-form">
+            <form action="{{ route('admin.lessons.true-false-games.questions.destroy', [$lesson, $trueFalseGame, $trueFalseQuestion]) }}" method="POST" class="inline-form">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this question?')">Delete</button>

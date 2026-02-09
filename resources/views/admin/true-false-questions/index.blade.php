@@ -11,7 +11,7 @@
             <p class="page-subtitle">{{ $lesson->title }}</p>
         </div>
         <div class="page-actions">
-            <a href="{{ route('admin.lessons.true-false-questions.create', $lesson) }}" class="btn btn-primary">+ Create Question</a>
+            <a href="{{ route('admin.lessons.true-false-games.questions.create', [$lesson, $trueFalseGame]) }}" class="btn btn-primary">+ Create Question</a>
             <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn">Back to Lesson</a>
         </div>
     </div>
@@ -45,7 +45,7 @@
         <h3>Generate Questions with AI</h3>
         <p>Use AI to automatically generate 5-8 vocabulary-focused True/False questions.</p>
         
-        <form action="{{ route('admin.lessons.true-false-questions.generate', $lesson) }}" method="POST" id="generate-form">
+        <form action="{{ route('admin.lessons.true-false-games.questions.generate', [$lesson, $trueFalseGame]) }}" method="POST" id="generate-form">
             @csrf
             <div class="generate-form-fields">
                 <div class="form-group-inline">
@@ -98,7 +98,7 @@
 
     <!-- Filter Questions -->
     <div class="filter-section" style="margin-bottom: 1.5rem;">
-        <form method="GET" action="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" id="filter-form">
+        <form method="GET" action="{{ route('admin.lessons.true-false-games.questions.index', [$lesson, $trueFalseGame]) }}" id="filter-form">
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <label for="filter_version" style="margin: 0; font-weight: 500;">Filter by Difficulty:</label>
                 <select id="filter_version" name="filter_version" class="form-control-sm" onchange="document.getElementById('filter-form').submit();" style="min-width: 150px;">
@@ -116,7 +116,7 @@
         @if($pendingCount > 0)
             <div class="section-header">
                 <h2>Pending Approval ({{ $pendingCount }})</h2>
-                <form action="{{ route('admin.lessons.true-false-questions.bulk-approve', $lesson) }}" method="POST" id="bulk-approve-form" style="display: none;">
+                <form action="{{ route('admin.lessons.true-false-games.questions.bulk-approve', [$lesson, $trueFalseGame]) }}" method="POST" id="bulk-approve-form" style="display: none;">
                     @csrf
                     <button type="submit" class="btn btn-sm btn-success">Approve Selected</button>
                 </form>
@@ -183,12 +183,12 @@
                                     <span class="status pending">Pending</span>
                                 </td>
                                 <td class="actions">
-                                    <a href="{{ route('admin.lessons.true-false-questions.edit', [$lesson, $question]) }}" class="btn btn-sm">Edit</a>
-                                    <form action="{{ route('admin.lessons.true-false-questions.approve', [$lesson, $question]) }}" method="POST" class="inline-form">
+                                    <a href="{{ route('admin.lessons.true-false-games.questions.edit', [$lesson, $trueFalseGame, $question]) }}" class="btn btn-sm">Edit</a>
+                                    <form action="{{ route('admin.lessons.true-false-games.questions.approve', [$lesson, $trueFalseGame, $question]) }}" method="POST" class="inline-form">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-success">Approve</button>
                                     </form>
-                                    <form action="{{ route('admin.lessons.true-false-questions.destroy', [$lesson, $question]) }}" method="POST" class="inline-form">
+                                    <form action="{{ route('admin.lessons.true-false-games.questions.destroy', [$lesson, $trueFalseGame, $question]) }}" method="POST" class="inline-form">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this question?')">Delete</button>
@@ -265,9 +265,9 @@
                             </td>
                             <td>{{ $question->sort_order }}</td>
                             <td class="actions">
-                                <a href="{{ route('admin.lessons.true-false-questions.show', [$lesson, $question]) }}" class="btn btn-sm">View</a>
-                                <a href="{{ route('admin.lessons.true-false-questions.edit', [$lesson, $question]) }}" class="btn btn-sm">Edit</a>
-                                <form action="{{ route('admin.lessons.true-false-questions.destroy', [$lesson, $question]) }}" method="POST" class="inline-form">
+                                <a href="{{ route('admin.lessons.true-false-games.questions.show', [$lesson, $trueFalseGame, $question]) }}" class="btn btn-sm">View</a>
+                                <a href="{{ route('admin.lessons.true-false-games.questions.edit', [$lesson, $trueFalseGame, $question]) }}" class="btn btn-sm">Edit</a>
+                                <form action="{{ route('admin.lessons.true-false-games.questions.destroy', [$lesson, $trueFalseGame, $question]) }}" method="POST" class="inline-form">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this question?')">Delete</button>
@@ -283,7 +283,7 @@
             <h3>No True/False Questions Yet</h3>
             <p>Create questions manually or generate them using AI.</p>
             <div class="empty-state-actions">
-                <a href="{{ route('admin.lessons.true-false-questions.create', $lesson) }}" class="btn btn-primary">Create Question</a>
+                <a href="{{ route('admin.lessons.true-false-games.questions.create', [$lesson, $trueFalseGame]) }}" class="btn btn-primary">Create Question</a>
             </div>
         </div>
     @endif

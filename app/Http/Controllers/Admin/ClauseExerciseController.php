@@ -54,7 +54,11 @@ class ClauseExerciseController extends Controller
         }
 
         try {
-            $grammarSet = GrammarSet::findOrFail($validated['grammar_set_id']);
+            // Get grammar set if provided, otherwise null (generateExercise handles null)
+            $grammarSet = null;
+            if (!empty($validated['grammar_set_id'])) {
+                $grammarSet = GrammarSet::findOrFail($validated['grammar_set_id']);
+            }
 
             // Generate exercise using AI
             try {

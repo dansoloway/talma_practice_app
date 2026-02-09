@@ -24,6 +24,7 @@ class Lesson extends Model
         'session_title',
         'is_active',
         'is_review',
+        'review_vocabulary_ids',
         'sort_order',
         'archived_at',
         'assigned_to',
@@ -33,6 +34,7 @@ class Lesson extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'is_review' => 'boolean',
+        'review_vocabulary_ids' => 'array',
         'archived_at' => 'datetime',
     ];
 
@@ -160,9 +162,15 @@ class Lesson extends Model
         if ($this->is_review && $this->reviewSources->count() > 0) {
             // Get vocabulary from all source lessons
             $sourceLessonIds = $this->reviewSources->pluck('id');
-            return Vocabulary::whereIn('lesson_id', $sourceLessonIds)
-                ->where('is_active', true)
-                ->orderBy('lesson_id')
+            $query = Vocabulary::whereIn('lesson_id', $sourceLessonIds)
+                ->where('is_active', true);
+            
+            // If specific vocabulary IDs are selected for this review lesson, filter by them
+            if (!empty($this->review_vocabulary_ids) && is_array($this->review_vocabulary_ids)) {
+                $query->whereIn('id', $this->review_vocabulary_ids);
+            }
+            
+            return $query->orderBy('lesson_id')
                 ->orderBy('sort_order')
                 ->get();
         }

@@ -128,6 +128,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::resource('lessons', AdminLessonController::class);
     Route::get('lessons/{lesson}/manage', [AdminLessonController::class, 'manage'])
         ->name('lessons.manage');
+    Route::post('lessons/get-vocabulary-for-review', [AdminLessonController::class, 'getVocabularyForReview'])
+        ->name('lessons.get-vocabulary-for-review');
     Route::post('lessons/{lesson}/update-activity-order', [AdminLessonController::class, 'updateActivityOrder'])
         ->name('lessons.update-activity-order');
     Route::post('lessons/{lesson}/delete-activity', [AdminLessonController::class, 'deleteActivity'])

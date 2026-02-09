@@ -19,16 +19,39 @@ class TrueFalseQuestionController extends Controller
      */
     public function index(Lesson $lesson, TrueFalseGame $trueFalseGame, Request $request)
     {
-        $questions = $trueFalseGame->questions()
-            ->with('vocabulary')
-            ->orderBy('is_approved')
+        $filterVersion = $request->get('filter_version');
+        
+        $query = $trueFalseGame->questions()->with('vocabulary');
+        
+        if ($filterVersion) {
+            $query->where('game_version', $filterVersion);
+        }
+        
+        $questions = $query->orderBy('is_approved')
             ->orderBy('sort_order')
             ->get();
         
         $pendingCount = $questions->where('is_approved', false)->count();
         $approvedCount = $questions->where('is_approved', true)->where('is_active', true)->count();
         
-        return view('admin.true-false-questions.index', compact('lesson', 'trueFalseGame', 'questions', 'pendingCount', 'approvedCount'));
+        // Calculate version counts for filter dropdown
+        $allQuestions = $trueFalseGame->questions()->get();
+        $versionCounts = [
+            'easy' => [
+                'total' => $allQuestions->where('game_version', 'easy')->count(),
+                'approved' => $allQuestions->where('game_version', 'easy')->where('is_approved', true)->count(),
+            ],
+            'medium' => [
+                'total' => $allQuestions->where('game_version', 'medium')->count(),
+                'approved' => $allQuestions->where('game_version', 'medium')->where('is_approved', true)->count(),
+            ],
+            'hard' => [
+                'total' => $allQuestions->where('game_version', 'hard')->count(),
+                'approved' => $allQuestions->where('game_version', 'hard')->where('is_approved', true)->count(),
+            ],
+        ];
+        
+        return view('admin.true-false-questions.index', compact('lesson', 'trueFalseGame', 'questions', 'pendingCount', 'approvedCount', 'filterVersion', 'versionCounts'));
     }
 
     /**

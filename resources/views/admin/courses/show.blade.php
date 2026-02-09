@@ -181,7 +181,8 @@
                         @forelse($course->lessons->where('is_active', true)->whereNull('archived_at') as $lesson)
                             <label class="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer transition-colors">
                                 <input type="checkbox" name="review_source_lessons[]" value="{{ $lesson->id }}" 
-                                       class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400 review-source-checkbox">
+                                       class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400 review-source-checkbox"
+                                       onchange="loadVocabularyForReview()">
                                 <div class="flex-1">
                                     <span class="font-medium text-gray-800">{{ $lesson->title }}</span>
                                     @if($lesson->session_number)
@@ -196,8 +197,32 @@
                     <p class="mt-2 text-sm text-gray-600">Select at least one lesson to review</p>
                 </div>
                 
+                <!-- Vocabulary Selection Section -->
+                <div id="vocabulary-selection-section" class="hidden">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Select Vocabulary Words <span class="text-red-500">*</span>
+                        <span class="text-sm font-normal text-gray-500">(Maximum 30 words)</span>
+                    </label>
+                    <div id="vocabulary-loading" class="hidden text-center py-4 text-gray-500">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading vocabulary...
+                    </div>
+                    <div id="vocabulary-list" class="border border-gray-300 rounded-xl p-4 max-h-96 overflow-y-auto bg-gray-50 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        <!-- Vocabulary items will be loaded here -->
+                    </div>
+                    <div class="mt-2 flex items-center justify-between">
+                        <p class="text-sm text-gray-600">
+                            <span id="vocab-selection-count">0</span> words selected (minimum 2, maximum 30)
+                        </p>
+                        <button type="button" onclick="selectAllVocabulary()" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                            Select All
+                        </button>
+                    </div>
+                    <p id="vocab-error" class="mt-2 text-sm text-red-600 hidden"></p>
+                </div>
+                
                 <input type="hidden" name="is_review" value="1">
                 <input type="hidden" name="is_active" value="1">
+                <input type="hidden" name="review_vocabulary_ids" id="review_vocabulary_ids" value="">
                 
                 <div class="flex gap-4 pt-4">
                     <button type="submit" class="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
@@ -213,6 +238,9 @@
 </div>
 
 <script>
+let allVocabulary = [];
+let selectedVocabIds = new Set();
+
 function openCreateReviewModal() {
     document.getElementById('createReviewModal').classList.remove('hidden');
 }
@@ -224,6 +252,12 @@ function closeCreateReviewModal() {
     document.querySelectorAll('.review-source-checkbox').forEach(cb => cb.checked = false);
     // Reset course selection
     document.getElementById('review_course_id').value = '{{ $course->id }}';
+    // Reset vocabulary section
+    document.getElementById('vocabulary-selection-section').classList.add('hidden');
+    document.getElementById('vocabulary-list').innerHTML = '';
+    allVocabulary = [];
+    selectedVocabIds.clear();
+    updateVocabSelectionCount();
 }
 
 // Close modal when clicking outside
@@ -233,12 +267,165 @@ document.getElementById('createReviewModal').addEventListener('click', function(
     }
 });
 
+// Load vocabulary when lessons are selected
+async function loadVocabularyForReview() {
+    const checkedBoxes = document.querySelectorAll('.review-source-checkbox:checked');
+    const lessonIds = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    if (lessonIds.length === 0) {
+        document.getElementById('vocabulary-selection-section').classList.add('hidden');
+        return;
+    }
+    
+    document.getElementById('vocabulary-selection-section').classList.remove('hidden');
+    document.getElementById('vocabulary-loading').classList.remove('hidden');
+    document.getElementById('vocabulary-list').innerHTML = '';
+    selectedVocabIds.clear();
+    
+    try {
+        const response = await fetch('{{ route("admin.lessons.get-vocabulary-for-review") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ lesson_ids: lessonIds })
+        });
+        
+        const data = await response.json();
+        allVocabulary = data.vocabulary;
+        
+        renderVocabularyList();
+        document.getElementById('vocabulary-loading').classList.add('hidden');
+    } catch (error) {
+        console.error('Error loading vocabulary:', error);
+        document.getElementById('vocabulary-loading').classList.add('hidden');
+        document.getElementById('vocab-error').textContent = 'Failed to load vocabulary. Please try again.';
+        document.getElementById('vocab-error').classList.remove('hidden');
+    }
+}
+
+function renderVocabularyList() {
+    const container = document.getElementById('vocabulary-list');
+    container.innerHTML = '';
+    
+    allVocabulary.forEach(vocab => {
+        const isSelected = selectedVocabIds.has(vocab.id);
+        const vocabCard = document.createElement('label');
+        vocabCard.className = `flex flex-col items-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
+            isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-white hover:border-gray-400'
+        }`;
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'vocab-checkbox hidden';
+        checkbox.value = vocab.id;
+        checkbox.checked = isSelected;
+        checkbox.addEventListener('change', function() {
+            toggleVocabulary(vocab.id, this.checked);
+        });
+        
+        vocabCard.appendChild(checkbox);
+        
+        if (vocab.image_url) {
+            const img = document.createElement('img');
+            img.src = vocab.image_url;
+            img.alt = vocab.english_word;
+            img.className = 'w-full h-20 object-cover rounded';
+            vocabCard.appendChild(img);
+        } else {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'w-full h-20 bg-gray-200 rounded flex items-center justify-center text-gray-400';
+            placeholder.innerHTML = '<i class="fas fa-image text-2xl"></i>';
+            vocabCard.appendChild(placeholder);
+        }
+        
+        const wordDiv = document.createElement('div');
+        wordDiv.className = 'text-sm font-medium text-gray-800 text-center';
+        wordDiv.textContent = vocab.english_word;
+        vocabCard.appendChild(wordDiv);
+        
+        if (vocab.has_audio) {
+            const audioIcon = document.createElement('i');
+            audioIcon.className = 'fas fa-volume-up text-blue-500 text-xs';
+            vocabCard.appendChild(audioIcon);
+        }
+        
+        container.appendChild(vocabCard);
+    });
+    
+    updateVocabSelectionCount();
+}
+
+function toggleVocabulary(vocabId, checked) {
+    if (checked) {
+        if (selectedVocabIds.size >= 30) {
+            alert('Maximum 30 words allowed. Please deselect some words first.');
+            // Find and uncheck the checkbox
+            const checkbox = document.querySelector(`input[value="${vocabId}"].vocab-checkbox`);
+            if (checkbox) checkbox.checked = false;
+            return;
+        }
+        selectedVocabIds.add(vocabId);
+    } else {
+        selectedVocabIds.delete(vocabId);
+    }
+    
+    renderVocabularyList();
+    updateVocabSelectionCount();
+}
+
+function selectAllVocabulary() {
+    const maxSelect = Math.min(30, allVocabulary.length);
+    selectedVocabIds.clear();
+    
+    allVocabulary.slice(0, maxSelect).forEach(vocab => {
+        selectedVocabIds.add(vocab.id);
+    });
+    
+    if (allVocabulary.length > 30) {
+        alert(`Only the first 30 words have been selected (maximum limit).`);
+    }
+    
+    renderVocabularyList();
+    updateVocabSelectionCount();
+}
+
+function updateVocabSelectionCount() {
+    const count = selectedVocabIds.size;
+    document.getElementById('vocab-selection-count').textContent = count;
+    document.getElementById('review_vocabulary_ids').value = Array.from(selectedVocabIds).join(',');
+    
+    const errorEl = document.getElementById('vocab-error');
+    if (count > 30) {
+        errorEl.textContent = 'Maximum 30 words allowed.';
+        errorEl.classList.remove('hidden');
+    } else if (count < 2 && count > 0) {
+        errorEl.textContent = 'Please select at least 2 words.';
+        errorEl.classList.remove('hidden');
+    } else {
+        errorEl.classList.add('hidden');
+    }
+}
+
 // Validate form before submit
 document.getElementById('createReviewForm').addEventListener('submit', function(e) {
     const checkedBoxes = document.querySelectorAll('.review-source-checkbox:checked');
     if (checkedBoxes.length === 0) {
         e.preventDefault();
         alert('Please select at least one lesson to review.');
+        return false;
+    }
+    
+    if (selectedVocabIds.size < 2) {
+        e.preventDefault();
+        alert('Please select at least 2 vocabulary words for the review lesson.');
+        return false;
+    }
+    
+    if (selectedVocabIds.size > 30) {
+        e.preventDefault();
+        alert('Maximum 30 words allowed. Please select fewer words.');
         return false;
     }
 });

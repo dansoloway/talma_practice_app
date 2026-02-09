@@ -6,12 +6,12 @@
 <div class="container">
     <div class="page-header">
         <div>
-            <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="back-link">&larr; Back to Questions</a>
+            <a href="{{ route('admin.lessons.true-false-games.questions.index', [$lesson, $trueFalseGame]) }}" class="back-link">&larr; Back to Questions</a>
             <h1 class="page-title">True/False Question</h1>
             <p class="page-subtitle">{{ $lesson->title }}</p>
         </div>
         <div class="page-actions">
-            <a href="{{ route('admin.lessons.true-false-questions.edit', [$lesson, $trueFalseQuestion]) }}" class="btn btn-primary">Edit</a>
+            <a href="{{ route('admin.lessons.true-false-games.questions.edit', [$lesson, $trueFalseGame, $trueFalseQuestion]) }}" class="btn btn-primary">Edit</a>
         </div>
     </div>
 
@@ -93,19 +93,19 @@
     </div>
 
     <div class="form-actions">
-        <a href="{{ route('admin.lessons.true-false-questions.edit', [$lesson, $trueFalseQuestion]) }}" class="btn btn-primary">Edit Question</a>
+        <a href="{{ route('admin.lessons.true-false-games.questions.edit', [$lesson, $trueFalseGame, $trueFalseQuestion]) }}" class="btn btn-primary">Edit Question</a>
         @if(!$trueFalseQuestion->is_approved)
-            <form action="{{ route('admin.lessons.true-false-questions.approve', [$lesson, $trueFalseQuestion]) }}" method="POST" class="inline-form">
+            <form action="{{ route('admin.lessons.true-false-games.questions.approve', [$lesson, $trueFalseGame, $trueFalseQuestion]) }}" method="POST" class="inline-form">
                 @csrf
                 <button type="submit" class="btn btn-success">Approve</button>
             </form>
         @endif
-        <form action="{{ route('admin.lessons.true-false-questions.destroy', [$lesson, $trueFalseQuestion]) }}" method="POST" class="inline-form">
+        <form action="{{ route('admin.lessons.true-false-games.questions.destroy', [$lesson, $trueFalseGame, $trueFalseQuestion]) }}" method="POST" class="inline-form">
             @csrf
             @method('DELETE')
             <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this question?')">Delete</button>
         </form>
-        <a href="{{ route('admin.lessons.true-false-questions.index', $lesson) }}" class="btn">Back to Questions</a>
+        <a href="{{ route('admin.lessons.true-false-games.questions.index', [$lesson, $trueFalseGame]) }}" class="btn">Back to Questions</a>
     </div>
 </div>
 

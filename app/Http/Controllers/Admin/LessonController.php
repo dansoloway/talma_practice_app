@@ -163,6 +163,7 @@ class LessonController extends Controller
             'is_review' => 'boolean',
             'review_source_lessons' => 'required_if:is_review,1|array',
             'review_source_lessons.*' => 'exists:lessons,id',
+            'review_vocabulary_ids' => 'nullable|string',
             'sort_order' => 'nullable|integer',
         ]);
         
@@ -201,6 +202,36 @@ class LessonController extends Controller
         // Handle review source lessons
         $reviewSourceLessonIds = $request->input('review_source_lessons', []);
         unset($validated['review_source_lessons']);
+        
+        // Handle review vocabulary IDs (comma-separated string -> array)
+        if (!empty($validated['review_vocabulary_ids'])) {
+            $vocabIdsString = $validated['review_vocabulary_ids'];
+            $vocabIdsArray = array_filter(array_map('intval', explode(',', $vocabIdsString)));
+            
+            // Validate vocabulary selection for review lessons
+            if (!empty($validated['is_review'])) {
+                if (count($vocabIdsArray) < 2) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['review_vocabulary_ids' => 'Please select at least 2 vocabulary words for the review lesson.']);
+                }
+                if (count($vocabIdsArray) > 30) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['review_vocabulary_ids' => 'Maximum 30 words allowed for review lessons.']);
+                }
+            }
+            
+            $validated['review_vocabulary_ids'] = !empty($vocabIdsArray) ? $vocabIdsArray : null;
+        } else {
+            // For review lessons, vocabulary selection is required
+            if (!empty($validated['is_review'])) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['review_vocabulary_ids' => 'Please select vocabulary words for the review lesson.']);
+            }
+            $validated['review_vocabulary_ids'] = null;
+        }
 
         // If this is a review lesson, automatically set session_number and grade_level from source lessons
         if (!empty($validated['is_review']) && !empty($reviewSourceLessonIds)) {
@@ -342,6 +373,7 @@ class LessonController extends Controller
             'is_review' => 'boolean',
             'review_source_lessons' => 'required_if:is_review,1|array',
             'review_source_lessons.*' => 'exists:lessons,id',
+            'review_vocabulary_ids' => 'nullable|string',
             'sort_order' => 'integer',
         ]);
         
@@ -362,6 +394,36 @@ class LessonController extends Controller
         // Handle review source lessons
         $reviewSourceLessonIds = $request->input('review_source_lessons', []);
         unset($validated['review_source_lessons']);
+        
+        // Handle review vocabulary IDs (comma-separated string -> array)
+        if (!empty($validated['review_vocabulary_ids'])) {
+            $vocabIdsString = $validated['review_vocabulary_ids'];
+            $vocabIdsArray = array_filter(array_map('intval', explode(',', $vocabIdsString)));
+            
+            // Validate vocabulary selection for review lessons
+            if (!empty($validated['is_review'])) {
+                if (count($vocabIdsArray) < 2) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['review_vocabulary_ids' => 'Please select at least 2 vocabulary words for the review lesson.']);
+                }
+                if (count($vocabIdsArray) > 30) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['review_vocabulary_ids' => 'Maximum 30 words allowed for review lessons.']);
+                }
+            }
+            
+            $validated['review_vocabulary_ids'] = !empty($vocabIdsArray) ? $vocabIdsArray : null;
+        } else {
+            // For review lessons, vocabulary selection is required
+            if (!empty($validated['is_review']) && $lesson->is_review) {
+                // If updating an existing review lesson, keep existing vocabulary if none provided
+                $validated['review_vocabulary_ids'] = $lesson->review_vocabulary_ids;
+            } else {
+                $validated['review_vocabulary_ids'] = null;
+            }
+        }
 
         // If this is a review lesson and session_number wasn't manually set, auto-calculate it
         if (!empty($validated['is_review']) && !empty($reviewSourceLessonIds) && empty($request->input('session_number'))) {
@@ -717,13 +779,19 @@ class LessonController extends Controller
      */
     private function createGamesForReviewLesson(Lesson $lesson)
     {
-        // Get vocabulary from source lessons
+        // Get vocabulary from source lessons (filtered by review_vocabulary_ids if set)
         $vocabulary = $lesson->getVocabularyForGames();
         $vocabularyIds = $vocabulary->pluck('id')->toArray();
         
         if (empty($vocabularyIds) || count($vocabularyIds) < 2) {
             Log::info("Skipping game creation for review lesson {$lesson->id}: insufficient vocabulary (need at least 2 words)");
             return;
+        }
+        
+        // Limit matching game to 30 words maximum (matching games don't work well with too many words)
+        $matchingGameVocabIds = array_slice($vocabularyIds, 0, 30);
+        if (count($vocabularyIds) > 30) {
+            Log::info("Limiting matching game vocabulary to 30 words for review lesson {$lesson->id} (had " . count($vocabularyIds) . " words)");
         }
 
         try {
@@ -733,7 +801,7 @@ class LessonController extends Controller
             MatchingGame::create([
                 'lesson_id' => $lesson->id,
                 'title' => $matchingGameTitle,
-                'vocabulary_ids' => $vocabularyIds,
+                'vocabulary_ids' => $matchingGameVocabIds,
                 'is_active' => true,
             ]);
             Log::info("Created matching game for review lesson {$lesson->id}");
@@ -786,6 +854,36 @@ class LessonController extends Controller
             Log::error("Failed to create games for review lesson {$lesson->id}: " . $e->getMessage());
             // Don't throw - allow lesson creation to succeed even if game creation fails
         }
+    }
+
+    /**
+     * Get vocabulary from multiple lessons for review lesson creation.
+     */
+    public function getVocabularyForReview(Request $request)
+    {
+        $request->validate([
+            'lesson_ids' => 'required|array',
+            'lesson_ids.*' => 'exists:lessons,id',
+        ]);
+
+        $lessonIds = $request->input('lesson_ids');
+        $vocabulary = Vocabulary::whereIn('lesson_id', $lessonIds)
+            ->where('is_active', true)
+            ->orderBy('lesson_id')
+            ->orderBy('sort_order')
+            ->get(['id', 'lesson_id', 'english_word', 'image_path', 'word_audio_path']);
+
+        return response()->json([
+            'vocabulary' => $vocabulary->map(function ($vocab) {
+                return [
+                    'id' => $vocab->id,
+                    'lesson_id' => $vocab->lesson_id,
+                    'english_word' => $vocab->english_word,
+                    'image_url' => $vocab->image_path ? asset('storage/' . $vocab->image_path) : null,
+                    'has_audio' => !empty($vocab->word_audio_path),
+                ];
+            }),
+        ]);
     }
 }
 
