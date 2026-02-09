@@ -915,9 +915,27 @@ class LessonController extends Controller
             ], 400);
         }
 
-        // Load lessons
-        $targetLesson = Lesson::findOrFail($targetLessonId);
-        $sourceLessons = Lesson::whereIn('id', $sourceLessonIds)->get();
+        // Load lessons with necessary relationships
+        $targetLesson = Lesson::with([
+            'vocabulary',
+            'matchingGames',
+            'flashcardGames',
+            'spellingGames',
+            'prompts',
+            'clauseExercises',
+            'grammarSets',
+            'trueFalseGames',
+            'sentenceBuilderGames',
+        ])->findOrFail($targetLessonId);
+        
+        $sourceLessons = Lesson::with([
+            'vocabulary',
+            'prompts.options',
+            'clauseExercises',
+            'grammarSets',
+            'trueFalseGames.questions',
+            'sentenceBuilderGames',
+        ])->whereIn('id', $sourceLessonIds)->get();
 
         if ($sourceLessons->count() !== count($sourceLessonIds)) {
             return response()->json([
@@ -1015,6 +1033,7 @@ class LessonController extends Controller
                     'lesson_id' => $targetLesson->id,
                     'title' => trim($targetLesson->title . ' Flashcards 1'),
                     'vocabulary_ids' => $allVocabIds,
+                    'game_types' => ['image_to_text'], // Default game type
                     'is_active' => true,
                     'sort_order' => 1,
                 ]);
