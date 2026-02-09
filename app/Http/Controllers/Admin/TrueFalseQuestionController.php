@@ -244,17 +244,33 @@ class TrueFalseQuestionController extends Controller
             foreach ($questions as $index => $questionData) {
                 $audioPath = null;
 
-                // Generate audio if requested
+                // Generate audio if requested (using vocabulary preset for consistent, clear pronunciation)
                 if ($generateAudio && $ttsService->enabled()) {
                     try {
-                        $result = $ttsService->generateAndSaveSentence(
+                        $relativePath = "tts/true-false/question_{$lesson->id}_{$trueFalseGame->id}_" . ($index + 1) . ".mp3";
+                        $fullPath = storage_path("app/public/{$relativePath}");
+                        
+                        // Create directory if needed
+                        $dir = dirname($fullPath);
+                        if (!file_exists($dir)) {
+                            mkdir($dir, 0755, true);
+                        }
+                        
+                        // Generate audio using vocabulary preset (optimized for clarity)
+                        $audioData = $ttsService->generate(
                             $questionData['statement'],
-                            "tts/true-false/question_{$lesson->id}_{$trueFalseGame->id}_" . ($index + 1) . ".mp3",
-                            null,
+                            'vocabulary', // Use vocabulary preset instead of sentence preset
                             'EXAVITQu4vr4xnSDxMaL' // Rachel voice
                         );
-                        if ($result && isset($result['path'])) {
-                            $audioPath = $result['path'];
+                        
+                        if ($audioData !== null) {
+                            // Save file
+                            file_put_contents($fullPath, $audioData);
+                            
+                            // Verify file
+                            if (file_exists($fullPath) && is_readable($fullPath)) {
+                                $audioPath = "/storage/{$relativePath}";
+                            }
                         }
                     } catch (\Exception $e) {
                         Log::warning("Failed to generate audio for question: " . $e->getMessage());

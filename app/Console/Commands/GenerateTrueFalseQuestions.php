@@ -102,16 +102,33 @@ class GenerateTrueFalseQuestions extends Command
         foreach ($questions as $index => $questionData) {
             $audioPath = null;
 
-            // Generate audio if requested
+            // Generate audio if requested (using vocabulary preset for consistent, clear pronunciation)
             if ($generateAudio && $this->ttsService->enabled()) {
                 try {
-                    $result = $this->ttsService->generateAndSaveVocabulary(
+                    $relativePath = "tts/true-false/question_{$lesson->id}_" . ($index + 1) . ".mp3";
+                    $fullPath = storage_path("app/public/{$relativePath}");
+                    
+                    // Create directory if needed
+                    $dir = dirname($fullPath);
+                    if (!file_exists($dir)) {
+                        mkdir($dir, 0755, true);
+                    }
+                    
+                    // Generate audio using vocabulary preset (optimized for clarity)
+                    $audioData = $this->ttsService->generate(
                         $questionData['statement'],
-                        null, // No old path
+                        'vocabulary', // Use vocabulary preset instead of sentence preset
                         'EXAVITQu4vr4xnSDxMaL' // Rachel voice
                     );
-                    if ($result) {
-                        $audioPath = $result['path'];
+                    
+                    if ($audioData !== null) {
+                        // Save file
+                        file_put_contents($fullPath, $audioData);
+                        
+                        // Verify file
+                        if (file_exists($fullPath) && is_readable($fullPath)) {
+                            $audioPath = "/storage/{$relativePath}";
+                        }
                     }
                 } catch (\Exception $e) {
                     $this->warn("Failed to generate audio for question " . ($index + 1) . ": " . $e->getMessage());
