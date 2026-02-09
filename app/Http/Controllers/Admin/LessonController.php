@@ -953,12 +953,21 @@ class LessonController extends Controller
             'grammarSets',
             'trueFalseGames.questions',
             'sentenceBuilderGames',
-        ])->whereIn('id', $sourceLessonIds)->get();
+        ])->whereIn('id', $sourceLessonIds)
+        ->withoutGlobalScopes() // Include archived lessons
+        ->get();
 
         if ($sourceLessons->count() !== count($sourceLessonIds)) {
+            $foundIds = $sourceLessons->pluck('id')->toArray();
+            $missingIds = array_diff($sourceLessonIds, $foundIds);
+            Log::warning('Some source lessons not found', [
+                'requested_ids' => $sourceLessonIds,
+                'found_ids' => $foundIds,
+                'missing_ids' => $missingIds,
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'One or more source lessons not found.',
+                'message' => 'One or more source lessons not found. Missing IDs: ' . implode(', ', $missingIds),
             ], 400);
         }
 
