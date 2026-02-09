@@ -9,11 +9,18 @@ use App\Models\GrammarSet;
 use App\Models\MatchingGame;
 use App\Models\FlashcardGame;
 use App\Models\SpellingGame;
+use App\Models\SentenceBuilderGame;
+use App\Models\ClauseExercise;
+use App\Models\TrueFalseGame;
+use App\Models\TrueFalseQuestion;
+use App\Models\Prompt;
+use App\Models\Option;
 use App\Models\Vocabulary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class LessonController extends Controller
 {
@@ -884,6 +891,299 @@ class LessonController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * Combine multiple lessons into a target lesson.
+     */
+    public function combine(Request $request)
+    {
+        $validated = $request->validate([
+            'source_lesson_ids' => 'required|array|min:1',
+            'source_lesson_ids.*' => 'exists:lessons,id',
+            'target_lesson_id' => 'required|exists:lessons,id',
+        ]);
+
+        $sourceLessonIds = $validated['source_lesson_ids'];
+        $targetLessonId = $validated['target_lesson_id'];
+
+        // Validate target is not in source list
+        if (in_array($targetLessonId, $sourceLessonIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Target lesson cannot be one of the source lessons.',
+            ], 400);
+        }
+
+        // Load lessons
+        $targetLesson = Lesson::findOrFail($targetLessonId);
+        $sourceLessons = Lesson::whereIn('id', $sourceLessonIds)->get();
+
+        if ($sourceLessons->count() !== count($sourceLessonIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'One or more source lessons not found.',
+            ], 400);
+        }
+
+        // Start transaction for rollback capability
+        DB::beginTransaction();
+
+        try {
+            // Step 1: Merge Vocabulary (skip duplicates, preserve order)
+            $existingVocabWords = $targetLesson->vocabulary()
+                ->where('is_active', true)
+                ->pluck('english_word')
+                ->map(fn($word) => strtolower(trim($word)))
+                ->toArray();
+
+            $vocabToMerge = [];
+            $sortOrderOffset = $targetLesson->vocabulary()->max('sort_order') ?? 0;
+
+            foreach ($sourceLessons as $sourceLesson) {
+                $sourceVocab = $sourceLesson->vocabulary()
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->get();
+
+                foreach ($sourceVocab as $vocab) {
+                    $wordKey = strtolower(trim($vocab->english_word));
+                    
+                    // Skip duplicates
+                    if (!in_array($wordKey, $existingVocabWords)) {
+                        $vocabToMerge[] = [
+                            'vocab' => $vocab,
+                            'new_sort_order' => ++$sortOrderOffset,
+                        ];
+                        $existingVocabWords[] = $wordKey;
+                    }
+                }
+            }
+
+            // Update vocabulary lesson_id
+            foreach ($vocabToMerge as $item) {
+                $item['vocab']->update([
+                    'lesson_id' => $targetLesson->id,
+                    'sort_order' => $item['new_sort_order'],
+                ]);
+            }
+
+            // Step 2: Get all vocabulary IDs for games (including existing target vocab)
+            $allVocabIds = $targetLesson->vocabulary()
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->pluck('id')
+                ->toArray();
+
+            // Step 3: Create Matching Games with even splitting (12 word limit)
+            $matchingGameLimit = 12;
+            if (count($allVocabIds) > $matchingGameLimit) {
+                $numGames = ceil(count($allVocabIds) / $matchingGameLimit);
+                $wordsPerGame = ceil(count($allVocabIds) / $numGames);
+                
+                $existingMatchingCount = $targetLesson->matchingGames()->count();
+                
+                for ($i = 0; $i < $numGames; $i++) {
+                    $chunk = array_slice($allVocabIds, $i * $wordsPerGame, $wordsPerGame);
+                    
+                    if (!empty($chunk) && count($chunk) >= 2) {
+                        MatchingGame::create([
+                            'lesson_id' => $targetLesson->id,
+                            'title' => trim($targetLesson->title . ' Matching Game ' . ($existingMatchingCount + $i + 1)),
+                            'vocabulary_ids' => $chunk,
+                            'is_active' => true,
+                            'sort_order' => $targetLesson->matchingGames()->max('sort_order') + $i + 1,
+                        ]);
+                    }
+                }
+            } elseif (count($allVocabIds) >= 2) {
+                // Single matching game if under limit
+                if ($targetLesson->matchingGames()->count() === 0) {
+                    MatchingGame::create([
+                        'lesson_id' => $targetLesson->id,
+                        'title' => trim($targetLesson->title . ' Matching Game 1'),
+                        'vocabulary_ids' => $allVocabIds,
+                        'is_active' => true,
+                        'sort_order' => 1,
+                    ]);
+                }
+            }
+
+            // Step 4: Create other games (no limits) - only if they don't exist
+            if ($targetLesson->flashcardGames()->count() === 0 && count($allVocabIds) >= 1) {
+                FlashcardGame::create([
+                    'lesson_id' => $targetLesson->id,
+                    'title' => trim($targetLesson->title . ' Flashcards 1'),
+                    'vocabulary_ids' => $allVocabIds,
+                    'is_active' => true,
+                    'sort_order' => 1,
+                ]);
+            }
+
+            if ($targetLesson->spellingGames()->count() === 0 && count($allVocabIds) >= 1) {
+                SpellingGame::create([
+                    'lesson_id' => $targetLesson->id,
+                    'title' => trim($targetLesson->title . ' Spelling Game 1'),
+                    'vocabulary_ids' => $allVocabIds,
+                    'is_active' => true,
+                    'sort_order' => 1,
+                ]);
+            }
+
+            // Step 5: Import Prompts (as separate games) with their options
+            foreach ($sourceLessons as $sourceLesson) {
+                $sourcePrompts = $sourceLesson->prompts()->with('options')->orderBy('sort_order')->get();
+                $targetPromptSortOrder = $targetLesson->prompts()->max('sort_order') ?? 0;
+
+                foreach ($sourcePrompts as $prompt) {
+                    $newPrompt = Prompt::create([
+                        'lesson_id' => $targetLesson->id,
+                        'part_id' => $targetLesson->getOrCreateDefaultPart()->id,
+                        'prompt_text' => $prompt->prompt_text,
+                        'template' => $prompt->template,
+                        'tts_voice' => $prompt->tts_voice,
+                        'prompt_audio_path' => $prompt->prompt_audio_path,
+                        'correct_answer' => $prompt->correct_answer,
+                        'is_active' => $prompt->is_active,
+                        'sort_order' => ++$targetPromptSortOrder,
+                    ]);
+
+                    // Import options for this prompt
+                    $optionSortOrder = 0;
+                    foreach ($prompt->options as $option) {
+                        $newPrompt->options()->create([
+                            'label' => $option->label,
+                            'image_path' => $option->image_path,
+                            'word_audio_path' => $option->word_audio_path,
+                            'sentence_audio_path' => $option->sentence_audio_path,
+                            'is_active' => $option->is_active,
+                            'sort_order' => ++$optionSortOrder,
+                        ]);
+                    }
+                }
+            }
+
+            // Step 6: Import Clause Exercises
+            foreach ($sourceLessons as $sourceLesson) {
+                $sourceExercises = $sourceLesson->clauseExercises()->orderBy('sort_order')->get();
+                $targetExerciseSortOrder = $targetLesson->clauseExercises()->max('sort_order') ?? 0;
+
+                foreach ($sourceExercises as $exercise) {
+                    ClauseExercise::create([
+                        'lesson_id' => $targetLesson->id,
+                        'grammar_set_id' => $exercise->grammar_set_id,
+                        'title' => $exercise->title,
+                        'topic' => $exercise->topic,
+                        'paragraph_text' => $exercise->paragraph_text,
+                        'blanks' => $exercise->blanks,
+                        'correct_answers' => $exercise->correct_answers,
+                        'blank_positions' => $exercise->blank_positions,
+                        'blank_metadata' => $exercise->blank_metadata,
+                        'difficulty_level' => $exercise->difficulty_level,
+                        'is_active' => $exercise->is_active,
+                        'sort_order' => ++$targetExerciseSortOrder,
+                    ]);
+                }
+            }
+
+            // Step 7: Import Grammar Sets (many-to-many relationship)
+            foreach ($sourceLessons as $sourceLesson) {
+                $grammarSetIds = $sourceLesson->grammarSets()->pluck('grammar_sets.id')->toArray();
+                foreach ($grammarSetIds as $grammarSetId) {
+                    if (!$targetLesson->grammarSets()->where('grammar_sets.id', $grammarSetId)->exists()) {
+                        $targetLesson->grammarSets()->attach($grammarSetId);
+                    }
+                }
+            }
+
+            // Step 8: Import True/False Games and Questions
+            foreach ($sourceLessons as $sourceLesson) {
+                $sourceGames = $sourceLesson->trueFalseGames()->orderBy('sort_order')->get();
+                $targetGameSortOrder = $targetLesson->trueFalseGames()->max('sort_order') ?? 0;
+
+                foreach ($sourceGames as $game) {
+                    $newGame = TrueFalseGame::create([
+                        'lesson_id' => $targetLesson->id,
+                        'title' => $game->title,
+                        'game_version' => $game->game_version,
+                        'is_active' => $game->is_active,
+                        'sort_order' => ++$targetGameSortOrder,
+                    ]);
+
+                    // Import questions for this game
+                    $sourceQuestions = $game->questions()->orderBy('sort_order')->get();
+                    $questionSortOrder = 0;
+
+                    foreach ($sourceQuestions as $question) {
+                        TrueFalseQuestion::create([
+                            'lesson_id' => $targetLesson->id,
+                            'true_false_game_id' => $newGame->id,
+                            'statement' => $question->statement,
+                            'is_true' => $question->is_true,
+                            'explanation' => $question->explanation,
+                            'category' => $question->category,
+                            'audio_path' => $question->audio_path,
+                            'is_approved' => $question->is_approved,
+                            'is_active' => $question->is_active,
+                            'sort_order' => ++$questionSortOrder,
+                        ]);
+                    }
+                }
+            }
+
+            // Step 9: Import Sentence Builder Games
+            foreach ($sourceLessons as $sourceLesson) {
+                $sourceGames = $sourceLesson->sentenceBuilderGames()->orderBy('sort_order')->get();
+                $targetGameSortOrder = $targetLesson->sentenceBuilderGames()->max('sort_order') ?? 0;
+
+                foreach ($sourceGames as $game) {
+                    SentenceBuilderGame::create([
+                        'lesson_id' => $targetLesson->id,
+                        'title' => $game->title,
+                        'vocabulary_ids' => $game->vocabulary_ids,
+                        'game_types' => $game->game_types,
+                        'cards_per_game' => $game->cards_per_game,
+                        'is_active' => $game->is_active,
+                        'sort_order' => ++$targetGameSortOrder,
+                    ]);
+                }
+            }
+
+            // Step 10: Archive source lessons
+            foreach ($sourceLessons as $sourceLesson) {
+                $sourceLesson->archive();
+            }
+
+            // Commit transaction
+            DB::commit();
+
+            Log::info("Successfully combined lessons", [
+                'source_lesson_ids' => $sourceLessonIds,
+                'target_lesson_id' => $targetLessonId,
+                'vocab_merged' => count($vocabToMerge),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lessons combined successfully. ' . count($vocabToMerge) . ' vocabulary items merged, ' . count($sourceLessons) . ' source lesson(s) archived.',
+            ]);
+
+        } catch (\Exception $e) {
+            // Rollback transaction on error
+            DB::rollBack();
+            
+            Log::error("Error combining lessons", [
+                'source_lesson_ids' => $sourceLessonIds,
+                'target_lesson_id' => $targetLessonId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error combining lessons: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }
 

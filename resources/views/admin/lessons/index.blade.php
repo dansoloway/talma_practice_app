@@ -6,9 +6,14 @@
 <div class="container mx-auto px-4 py-6 max-w-7xl">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800">Lessons</h1>
-        <a href="{{ route('admin.lessons.create') }}" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
-            Create Lesson
-        </a>
+        <div class="flex gap-3">
+            <button onclick="openCombineModal()" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                Combine Lessons
+            </button>
+            <a href="{{ route('admin.lessons.create') }}" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                Create Lesson
+            </a>
+        </div>
     </div>
 
     <!-- Filters -->
@@ -209,5 +214,195 @@
         </div>
     @endif
 </div>
+
+<!-- Combine Lessons Modal -->
+<div id="combineModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800">Combine Lessons</h2>
+                <button onclick="closeCombineModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+        </div>
+        <form id="combineForm" class="p-6">
+            @csrf
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Select Source Lessons (to combine from)</label>
+                <p class="text-sm text-gray-500 mb-3">Select multiple lessons that will be merged into the target lesson</p>
+                <div class="border border-gray-300 rounded-xl p-4 max-h-64 overflow-y-auto">
+                    @foreach($lessons as $lesson)
+                        <label class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                            <input type="checkbox" name="source_lesson_ids[]" value="{{ $lesson->id }}" 
+                                   class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400 source-lesson-checkbox"
+                                   data-title="{{ $lesson->title }}"
+                                   data-session="{{ $lesson->session_number }}"
+                                   data-part="{{ $lesson->part_number }}">
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-800">{{ $lesson->title }}</div>
+                                <div class="text-sm text-gray-500">
+                                    @if($lesson->session_number) Session {{ $lesson->session_number }} @endif
+                                    @if($lesson->part_number) - Part {{ $lesson->part_number }} @endif
+                                    @if($lesson->course) | {{ $lesson->course->title }} @endif
+                                </div>
+                            </div>
+                        </label>
+                    @endforeach
+                </div>
+                <div class="mt-2 text-sm text-gray-600">
+                    <span id="selected-count">0</span> lesson(s) selected
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label for="target_lesson_id" class="block text-sm font-semibold text-gray-700 mb-2">Select Target Lesson (to combine into)</label>
+                <p class="text-sm text-gray-500 mb-3">All content from source lessons will be merged into this lesson</p>
+                <select name="target_lesson_id" id="target_lesson_id" required
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
+                    <option value="">-- Select Target Lesson --</option>
+                    @foreach($lessons as $lesson)
+                        <option value="{{ $lesson->id }}">
+                            {{ $lesson->title }}
+                            @if($lesson->session_number) (Session {{ $lesson->session_number }}@if($lesson->part_number), Part {{ $lesson->part_number }}@endif) @endif
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div id="preview-section" class="mb-6 p-4 bg-blue-50 rounded-xl hidden">
+                <h3 class="font-semibold text-gray-800 mb-2">Preview:</h3>
+                <div id="preview-content" class="text-sm text-gray-600"></div>
+            </div>
+            
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="closeCombineModal()" 
+                        class="px-6 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="px-6 py-2.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        id="combine-submit-btn">
+                    Combine Lessons
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+function openCombineModal() {
+    document.getElementById('combineModal').classList.remove('hidden');
+    updatePreview();
+}
+
+function closeCombineModal() {
+    document.getElementById('combineModal').classList.add('hidden');
+    document.getElementById('combineForm').reset();
+    document.getElementById('preview-section').classList.add('hidden');
+    document.getElementById('selected-count').textContent = '0';
+}
+
+function updatePreview() {
+    const checkboxes = document.querySelectorAll('.source-lesson-checkbox:checked');
+    const targetSelect = document.getElementById('target_lesson_id');
+    const previewSection = document.getElementById('preview-section');
+    const previewContent = document.getElementById('preview-content');
+    const submitBtn = document.getElementById('combine-submit-btn');
+    
+    const selectedCount = checkboxes.length;
+    document.getElementById('selected-count').textContent = selectedCount;
+    
+    if (selectedCount > 0 && targetSelect.value) {
+        const targetOption = targetSelect.options[targetSelect.selectedIndex];
+        const targetTitle = targetOption.text;
+        
+        const sourceTitles = Array.from(checkboxes).map(cb => {
+            return cb.dataset.title + 
+                   (cb.dataset.session ? ' (Session ' + cb.dataset.session + (cb.dataset.part ? ', Part ' + cb.dataset.part : '') + ')' : '');
+        }).join('<br>');
+        
+        previewContent.innerHTML = `
+            <strong>Target:</strong> ${targetTitle}<br>
+            <strong>Sources (${selectedCount}):</strong><br>
+            ${sourceTitles}<br><br>
+            <em>Source lessons will be archived after combination.</em>
+        `;
+        previewSection.classList.remove('hidden');
+        submitBtn.disabled = false;
+    } else {
+        previewSection.classList.add('hidden');
+        submitBtn.disabled = true;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.source-lesson-checkbox').forEach(cb => {
+        cb.addEventListener('change', updatePreview);
+    });
+    
+    document.getElementById('target_lesson_id').addEventListener('change', updatePreview);
+    
+    document.getElementById('combineForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const sourceIds = Array.from(document.querySelectorAll('.source-lesson-checkbox:checked')).map(cb => cb.value);
+        
+        if (sourceIds.length === 0) {
+            alert('Please select at least one source lesson.');
+            return;
+        }
+        
+        if (!formData.get('target_lesson_id')) {
+            alert('Please select a target lesson.');
+            return;
+        }
+        
+        if (sourceIds.includes(formData.get('target_lesson_id'))) {
+            alert('Target lesson cannot be one of the source lessons.');
+            return;
+        }
+        
+        if (!confirm('Are you sure you want to combine these lessons? Source lessons will be archived. This action can be undone.')) {
+            return;
+        }
+        
+        // Add source IDs to form data
+        sourceIds.forEach(id => {
+            formData.append('source_lesson_ids[]', id);
+        });
+        
+        const submitBtn = document.getElementById('combine-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Combining...';
+        
+        fetch('{{ route("admin.lessons.combine") }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Lessons combined successfully!');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Failed to combine lessons'));
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Combine Lessons';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while combining lessons.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Combine Lessons';
+        });
+    });
+});
+</script>
+@endpush
 @endsection
 

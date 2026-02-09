@@ -134,6 +134,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         ->name('lessons.update-activity-order');
     Route::post('lessons/{lesson}/delete-activity', [AdminLessonController::class, 'deleteActivity'])
         ->name('lessons.delete-activity');
+    Route::post('lessons/combine', [AdminLessonController::class, 'combine'])
+        ->name('lessons.combine');
     
     // Archive functionality
     Route::post('lessons/{lesson}/archive', [AdminLessonController::class, 'archive'])
