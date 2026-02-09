@@ -167,15 +167,18 @@
     overflow: visible;
 }
 
-/* Mobile: Grid layout */
+/* Mobile: Grid layout - flexible columns that adapt to card count */
 @media (max-width: 768px) {
     #game-area {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        /* Use auto-fit to create as many columns as fit, minimum 90px each */
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
         gap: 0.75rem;
         padding: 1rem;
         min-height: auto;
         overflow: visible;
+        align-content: start;
+        justify-items: stretch;
     }
     
     .game-card {
@@ -185,7 +188,17 @@
         left: auto !important;
         top: auto !important;
         margin: 0;
+        min-width: 0; /* Allow cards to shrink if needed */
     }
+    
+    /* Ensure cards maintain aspect ratio */
+    .game-card .card-content {
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* If we have an odd number of cards, the last row will have fewer cards - that's fine */
+    /* The grid will automatically center or left-align based on available space */
 }
 
 /* Desktop: Random positioning */
