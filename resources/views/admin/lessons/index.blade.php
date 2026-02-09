@@ -291,12 +291,12 @@
 @push('scripts')
 <script>
 function openCombineModal() {
-    document.getElementById('combineModal').classList.remove('hidden');
+    document.getElementById('combineModal').style.display = 'flex';
     updatePreview();
 }
 
 function closeCombineModal() {
-    document.getElementById('combineModal').classList.add('hidden');
+    document.getElementById('combineModal').style.display = 'none';
     document.getElementById('combineForm').reset();
     document.getElementById('preview-section').classList.add('hidden');
     document.getElementById('selected-count').textContent = '0';
