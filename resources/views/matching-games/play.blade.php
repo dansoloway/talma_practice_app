@@ -52,11 +52,11 @@
             </div>
         </div>
 
-        <!-- Game Area - Randomly positioned cards -->
-        <div class="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-8 min-h-[500px] md:min-h-[600px]" id="game-area">
+        <!-- Game Area - Randomly positioned cards on desktop, grid on mobile -->
+        <div class="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-8 min-h-[500px] md:min-h-[600px] game-area-container" id="game-area">
             @if(isset($gameData['cards']) && count($gameData['cards']) > 0)
                 @foreach($gameData['cards'] as $index => $card)
-                    <div class="game-card absolute cursor-pointer bg-white rounded-xl border-2 border-blue-500 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200" 
+                    <div class="game-card absolute md:absolute cursor-pointer bg-white rounded-xl border-2 border-blue-500 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200" 
                          data-card-id="{{ $card['id'] }}" 
                          data-vocab-id="{{ $card['vocab_id'] }}" 
                          data-type="{{ $card['type'] }}"
@@ -167,6 +167,38 @@
     overflow: visible;
 }
 
+/* Mobile: Grid layout */
+@media (max-width: 768px) {
+    #game-area {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        padding: 1rem;
+        min-height: auto;
+        overflow: visible;
+    }
+    
+    .game-card {
+        position: relative !important;
+        width: 100% !important;
+        height: 90px !important;
+        left: auto !important;
+        top: auto !important;
+        margin: 0;
+    }
+}
+
+/* Desktop: Random positioning */
+@media (min-width: 769px) {
+    #game-area {
+        display: block;
+    }
+    
+    .game-card {
+        position: absolute;
+    }
+}
+
 .game-card {
     cursor: pointer;
     overflow: hidden;
@@ -210,16 +242,7 @@
 
 /* Completion modal styling moved to Tailwind classes in HTML */
 
-@media (max-width: 768px) {
-    .game-card {
-        width: 100px !important;
-        height: 90px !important;
-    }
-    
-    #game-area {
-        min-height: 400px;
-    }
-}
+/* Mobile grid styles handled above */
 </style>
 
 <script>
@@ -267,16 +290,31 @@ class MatchingGame {
         const gameArea = document.getElementById('game-area');
         if (!gameArea) return;
         
+        // Check if mobile - if so, let CSS grid handle positioning
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+            // On mobile, just set card sizes and let CSS grid handle layout
+            const cards = Array.from(this.cards);
+            cards.forEach((card) => {
+                // Remove any absolute positioning styles
+                card.style.left = 'auto';
+                card.style.top = 'auto';
+                card.style.width = '100%';
+                card.style.height = '90px';
+                card.style.zIndex = '10';
+            });
+            return;
+        }
+        
+        // Desktop: Random positioning
         // Wait for layout to be ready
         requestAnimationFrame(() => {
             const areaRect = gameArea.getBoundingClientRect();
             const areaWidth = areaRect.width - 40; // Padding
             const areaHeight = areaRect.height - 40; // Padding
             
-            // Responsive card size
-            const isMobile = window.innerWidth <= 768;
-            const cardWidth = isMobile ? 100 : 120;
-            const cardHeight = isMobile ? 90 : 100;
+            const cardWidth = 120;
+            const cardHeight = 100;
             
             const cards = Array.from(this.cards);
             const positions = [];
