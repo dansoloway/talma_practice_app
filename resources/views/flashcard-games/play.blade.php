@@ -12,6 +12,7 @@
     
     .game-header {
         padding: 0.5rem 0;
+        margin-bottom: 1rem;
     }
     
     .game-header .page-title {
@@ -25,6 +26,124 @@
     
     .game-header .back-link {
         font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .container {
+        padding: 0.5rem;
+        max-width: 100%;
+    }
+    
+    .flashcard-container {
+        padding: 0.5rem;
+        max-width: 100%;
+    }
+    
+    .flashcard {
+        padding: 1rem !important;
+        min-height: 250px !important;
+        margin-bottom: 0.75rem;
+    }
+    
+    .card-image img {
+        max-width: 180px !important;
+        max-height: 180px !important;
+    }
+    
+    .card-prompt {
+        font-size: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .audio-options, .image-options, .word-options {
+        gap: 0.5rem !important;
+    }
+    
+    .word-option, .audio-option {
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
+        min-width: 100px !important;
+    }
+    
+    .image-option {
+        padding: 0.5rem !important;
+    }
+    
+    .image-option img {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    
+    .big-play-btn, .big-audio-btn {
+        width: 70px !important;
+        height: 70px !important;
+    }
+    
+    .big-play-btn i, .big-audio-btn i {
+        font-size: 1.75rem !important;
+    }
+    
+    .card-type-selector-container {
+        padding: 0.5rem !important;
+        gap: 0.5rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .card-type-btn {
+        padding: 0.5rem 0.75rem !important;
+        min-width: 50px !important;
+        height: 45px !important;
+        font-size: 0.875rem !important;
+    }
+    
+    .card-type-btn i {
+        font-size: 0.875rem !important;
+    }
+    
+    .game-progress {
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .progress-text {
+        font-size: 0.9rem !important;
+    }
+    
+    .game-controls .btn {
+        font-size: 1rem !important;
+        padding: 0.75rem 1.5rem !important;
+        min-width: 120px !important;
+    }
+    
+    .audio-option-item {
+        min-width: 150px !important;
+        padding: 0.5rem 0.75rem !important;
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+    
+    .audio-play-preview-btn {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 1rem !important;
+    }
+    
+    .audio-select-btn {
+        padding: 0.5rem 1rem !important;
+        font-size: 1rem !important;
+        width: 100%;
+    }
+    
+    .mode-selector {
+        padding: 0.5rem !important;
+    }
+    
+    .mode-selector select {
+        padding: 0.4rem 0.75rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .mode-selector label {
+        font-size: 0.9rem !important;
     }
 }
 </style>
@@ -955,6 +1074,9 @@ function autoResizeText(element) {
     border-radius: 12px;
     display: block;
     margin: 0 auto;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
 }
 
 .card-prompt {

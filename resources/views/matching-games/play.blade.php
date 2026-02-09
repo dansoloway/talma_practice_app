@@ -169,12 +169,38 @@
 
 /* Mobile: Grid layout - flexible columns that adapt to card count */
 @media (max-width: 768px) {
+    .min-h-screen {
+        min-height: 100vh;
+        padding: 0.5rem 0 !important;
+    }
+    
+    .container {
+        padding: 0.5rem !important;
+        max-width: 100% !important;
+    }
+    
+    .mb-6 {
+        margin-bottom: 1rem !important;
+    }
+    
+    .mb-4 {
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .text-2xl {
+        font-size: 1.25rem !important;
+    }
+    
+    .text-3xl {
+        font-size: 1.5rem !important;
+    }
+    
     #game-area {
         display: grid;
         /* Use auto-fit to create as many columns as fit, minimum 90px each */
         grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-        gap: 0.75rem;
-        padding: 1rem;
+        gap: 0.5rem;
+        padding: 0.75rem;
         min-height: auto;
         overflow: visible;
         align-content: start;
@@ -184,17 +210,64 @@
     .game-card {
         position: relative !important;
         width: 100% !important;
-        height: 90px !important;
+        height: 85px !important;
         left: auto !important;
         top: auto !important;
         margin: 0;
         min-width: 0; /* Allow cards to shrink if needed */
     }
     
+    .game-card .card-content {
+        padding: 0.5rem !important;
+    }
+    
     /* Ensure cards maintain aspect ratio */
     .game-card .card-content {
         width: 100%;
         height: 100%;
+    }
+    
+    .game-card img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+    }
+    
+    .card-word, .card-translation {
+        font-size: 0.75rem !important;
+        padding: 0.25rem !important;
+    }
+    
+    .play-audio-strip {
+        padding: 0.5rem !important;
+    }
+    
+    .play-audio-strip i {
+        font-size: 1.5rem !important;
+    }
+    
+    .play-audio-btn {
+        width: 24px !important;
+        height: 24px !important;
+        top: 2px !important;
+        right: 2px !important;
+    }
+    
+    .play-audio-btn i {
+        font-size: 0.625rem !important;
+    }
+    
+    /* Stats section */
+    .bg-white\/80 {
+        padding: 0.75rem !important;
+    }
+    
+    .text-2xl {
+        font-size: 1.25rem !important;
+    }
+    
+    .text-sm {
+        font-size: 0.75rem !important;
     }
     
     /* If we have an odd number of cards, the last row will have fewer cards - that's fine */
