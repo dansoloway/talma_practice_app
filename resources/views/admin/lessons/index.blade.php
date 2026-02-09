@@ -233,7 +233,7 @@
                         class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200">
                     <option value="">-- Select Target Lesson --</option>
                     @foreach($lessons as $lesson)
-                        <option value="{{ $lesson->id }}">
+                        <option value="{{ $lesson->id }}" data-course-id="{{ $lesson->course_id ?? '' }}">
                             {{ $lesson->title }}
                             @if($lesson->course)
                                 | {{ $lesson->course->title }}
@@ -368,8 +368,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Course filter functionality
     document.getElementById('course-filter').addEventListener('change', function() {
         const selectedCourseId = this.value;
-        const lessonItems = document.querySelectorAll('.lesson-item');
         
+        // Filter source lessons list
+        const lessonItems = document.querySelectorAll('.lesson-item');
         lessonItems.forEach(item => {
             const courseId = item.dataset.courseId || '';
             if (selectedCourseId === '' || courseId === selectedCourseId) {
@@ -380,6 +381,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 const checkbox = item.querySelector('.source-lesson-checkbox');
                 if (checkbox) {
                     checkbox.checked = false;
+                }
+            }
+        });
+        
+        // Filter target lesson dropdown
+        const targetSelect = document.getElementById('target_lesson_id');
+        const targetOptions = targetSelect.querySelectorAll('option');
+        const currentValue = targetSelect.value;
+        
+        targetOptions.forEach(option => {
+            if (option.value === '') {
+                // Always show the placeholder option
+                option.style.display = '';
+                return;
+            }
+            
+            const courseId = option.dataset.courseId || '';
+            if (selectedCourseId === '' || courseId === selectedCourseId) {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+                // Clear selection if current selection is hidden
+                if (option.value === currentValue) {
+                    targetSelect.value = '';
                 }
             }
         });
