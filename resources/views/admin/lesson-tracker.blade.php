@@ -18,6 +18,7 @@
                         <option value="Unassigned" {{ $assignedTo === 'Unassigned' ? 'selected' : '' }}>Unassigned</option>
                         <option value="Leila" {{ $assignedTo === 'Leila' ? 'selected' : '' }}>Leila</option>
                         <option value="Jen" {{ $assignedTo === 'Jen' ? 'selected' : '' }}>Jen</option>
+                        <option value="Daniel" {{ $assignedTo === 'Daniel' ? 'selected' : '' }}>Daniel</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -32,6 +33,17 @@
                     </select>
                 </div>
                 <div class="filter-group">
+                    <label for="session_number">Session Number</label>
+                    <select name="session_number" id="session_number" class="form-control">
+                        <option value="">All Sessions</option>
+                        @foreach($sessionNumbers as $session)
+                            <option value="{{ $session }}" {{ $sessionNumber == $session ? 'selected' : '' }}>
+                                Session {{ $session }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="filter-group">
                     <label for="status">Status</label>
                     <select name="status" id="status" class="form-control">
                         <option value="">All Statuses</option>
@@ -41,9 +53,23 @@
                         <option value="stuck" {{ $status === 'stuck' ? 'selected' : '' }}>Stuck</option>
                     </select>
                 </div>
+                <div class="filter-group">
+                    <label for="search">Search</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           placeholder="Search by title, session title, or slug..." 
+                           value="{{ $search ?? '' }}">
+                </div>
+                <div class="filter-group">
+                    <label class="flex items-center gap-2 cursor-pointer" style="margin-top: 1.5rem;">
+                        <input type="checkbox" name="view_archived" value="1" id="view_archived" 
+                               {{ $showArchived ?? false ? 'checked' : '' }} 
+                               class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400">
+                        <span class="text-sm font-medium text-gray-700">View Archived Lessons</span>
+                    </label>
+                </div>
                 <div class="filter-group filter-actions">
                     <button type="submit" class="btn btn-primary">Apply Filters</button>
-                    @if($assignedTo || $gradeLevel || $status)
+                    @if($assignedTo || $gradeLevel || $status || $sessionNumber || $search || $showArchived)
                         <a href="{{ route('admin.lesson-tracker') }}" class="btn" style="margin-left: 0.5rem;">Clear</a>
                     @endif
                 </div>
@@ -57,7 +83,7 @@
         @else
             <div class="results-info" style="margin-bottom: 1rem;">
                 <p>Showing {{ $lessons->count() }} lesson{{ $lessons->count() !== 1 ? 's' : '' }}
-                @if($assignedTo || $gradeLevel || $status)
+                @if($assignedTo || $gradeLevel || $status || $sessionNumber || $search || $showArchived)
                     matching your filters
                 @endif
                 </p>
@@ -69,6 +95,7 @@
                     <th>Components</th>
                     <th>Assigned To</th>
                     <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -174,6 +201,7 @@
                                 <option value="Unassigned" {{ $lesson->assigned_to === null ? 'selected' : '' }}>Unassigned</option>
                                 <option value="Leila" {{ $lesson->assigned_to === 'Leila' ? 'selected' : '' }}>Leila</option>
                                 <option value="Jen" {{ $lesson->assigned_to === 'Jen' ? 'selected' : '' }}>Jen</option>
+                                <option value="Daniel" {{ $lesson->assigned_to === 'Daniel' ? 'selected' : '' }}>Daniel</option>
                             </select>
                         </td>
                         <td>
@@ -184,11 +212,55 @@
                                 <option value="stuck" {{ $lesson->status === 'stuck' ? 'selected' : '' }}>Stuck</option>
                             </select>
                         </td>
+                        <td>
+                            <div class="flex gap-2" style="flex-wrap: wrap;">
+                                <a href="{{ route('admin.lessons.manage', $lesson) }}" 
+                                   class="btn btn-sm" 
+                                   style="padding: 0.5rem 1rem; font-size: 0.875rem; background: #3b82f6; color: white; border-radius: 6px; text-decoration: none; display: inline-block;">
+                                    Edit Lesson
+                                </a>
+                                <button type="button" 
+                                        class="btn btn-sm notes-btn" 
+                                        data-lesson-id="{{ $lesson->id }}"
+                                        data-notes="{{ $lesson->admin_notes ?? '' }}"
+                                        style="padding: 0.5rem 1rem; font-size: 0.875rem; background: #10b981; color: white; border-radius: 6px; border: none; cursor: pointer;">
+                                    Notes
+                                    @if($lesson->admin_notes)
+                                        <span style="margin-left: 0.25rem;">📝</span>
+                                    @endif
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
         @endif
+    </div>
+</div>
+
+<!-- Notes Modal -->
+<div id="notesModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content" style="background-color: #fefefe; margin: 10% auto; padding: 2rem; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Admin Notes</h2>
+            <span class="close-modal" style="color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 20px;">&times;</span>
+        </div>
+        <form id="notesForm">
+            <input type="hidden" id="notesLessonId" name="lesson_id">
+            <div style="margin-bottom: 1rem;">
+                <label for="notesTextarea" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Notes:</label>
+                <textarea id="notesTextarea" 
+                          name="admin_notes" 
+                          rows="8" 
+                          style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; font-family: inherit; resize: vertical;"
+                          placeholder="Add notes about this lesson's creation process..."></textarea>
+            </div>
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button type="button" class="btn cancel-notes-btn" style="background: #6b7280; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+                <button type="submit" class="btn" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Save Notes</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -391,6 +463,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    const notesModal = document.getElementById('notesModal');
+    const notesForm = document.getElementById('notesForm');
+    const notesTextarea = document.getElementById('notesTextarea');
+    const notesLessonId = document.getElementById('notesLessonId');
     
     // Handle assigned_to changes
     document.querySelectorAll('.assigned-to-select').forEach(select => {
@@ -415,7 +491,65 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    function updateLesson(lessonId, data) {
+    // Handle Notes button clicks
+    document.querySelectorAll('.notes-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const lessonId = this.dataset.lessonId;
+            const notes = this.dataset.notes || '';
+            
+            notesLessonId.value = lessonId;
+            notesTextarea.value = notes;
+            notesModal.style.display = 'block';
+        });
+    });
+    
+    // Close modal when clicking X or Cancel
+    document.querySelector('.close-modal').addEventListener('click', function() {
+        notesModal.style.display = 'none';
+    });
+    
+    document.querySelector('.cancel-notes-btn').addEventListener('click', function() {
+        notesModal.style.display = 'none';
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === notesModal) {
+            notesModal.style.display = 'none';
+        }
+    });
+    
+    // Handle notes form submission
+    notesForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const lessonId = notesLessonId.value;
+        const adminNotes = notesTextarea.value;
+        
+        updateLesson(lessonId, { admin_notes: adminNotes }, function() {
+            notesModal.style.display = 'none';
+            // Update the notes button indicator
+            const notesBtn = document.querySelector(`.notes-btn[data-lesson-id="${lessonId}"]`);
+            if (notesBtn) {
+                notesBtn.dataset.notes = adminNotes;
+                if (adminNotes) {
+                    if (!notesBtn.querySelector('span')) {
+                        const span = document.createElement('span');
+                        span.style.marginLeft = '0.25rem';
+                        span.textContent = '📝';
+                        notesBtn.appendChild(span);
+                    }
+                } else {
+                    const span = notesBtn.querySelector('span');
+                    if (span) {
+                        span.remove();
+                    }
+                }
+            }
+        });
+    });
+    
+    function updateLesson(lessonId, data, callback) {
         fetch(`/admin/lesson-tracker/${lessonId}`, {
             method: 'PUT',
             headers: {
@@ -429,6 +563,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 // Optionally show a success message
                 console.log('Lesson updated successfully');
+                if (callback) {
+                    callback();
+                }
             } else {
                 alert('Error updating lesson. Please try again.');
                 location.reload();

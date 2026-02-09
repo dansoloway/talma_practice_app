@@ -17,19 +17,27 @@ class LessonTrackerController extends Controller
         $assignedTo = $request->input('assigned_to');
         $gradeLevel = $request->input('grade_level');
         $status = $request->input('status');
+        $sessionNumber = $request->input('session_number');
+        $search = $request->input('search');
+        $showArchived = $request->boolean('view_archived');
         
-        // Build query with filters - exclude archived and inactive lessons
-        $query = Lesson::whereNull('archived_at')
-            ->where('is_active', true)
-            ->with([
-                'vocabulary',
-                'matchingGames',
-                'flashcardGames',
-                'spellingGames',
-                'sentenceBuilderGames',
-                'trueFalseQuestions',
-                'prompts',
-            ]);
+        // Build query with filters
+        if ($showArchived) {
+            $query = Lesson::whereNotNull('archived_at');
+        } else {
+            $query = Lesson::whereNull('archived_at')
+                ->where('is_active', true);
+        }
+        
+        $query->with([
+            'vocabulary',
+            'matchingGames',
+            'flashcardGames',
+            'spellingGames',
+            'sentenceBuilderGames',
+            'trueFalseQuestions',
+            'prompts',
+        ]);
         
         // Apply filters
         if ($assignedTo !== null && $assignedTo !== '') {
@@ -48,6 +56,19 @@ class LessonTrackerController extends Controller
             $query->where('status', $status);
         }
         
+        if ($sessionNumber) {
+            $query->where('session_number', $sessionNumber);
+        }
+        
+        // Filter by search text (title, session_title, slug)
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                  ->orWhere('session_title', 'LIKE', "%{$search}%")
+                  ->orWhere('slug', 'LIKE', "%{$search}%");
+            });
+        }
+        
         $lessons = $query->orderBy('grade_level')
           ->orderBy('session_number')
           ->orderBy('sort_order')
@@ -58,6 +79,12 @@ class LessonTrackerController extends Controller
             ->distinct('grade_level')
             ->orderBy('grade_level')
             ->pluck('grade_level');
+        
+        // Get unique session numbers for filter dropdown
+        $sessionNumbers = Lesson::whereNotNull('session_number')
+            ->distinct('session_number')
+            ->orderBy('session_number')
+            ->pluck('session_number');
 
         // Process lessons to check component status
         $lessons = $lessons->map(function ($lesson) {
@@ -118,7 +145,7 @@ class LessonTrackerController extends Controller
             ];
         });
 
-        return view('admin.lesson-tracker', compact('lessons', 'gradeLevels', 'assignedTo', 'gradeLevel', 'status'));
+        return view('admin.lesson-tracker', compact('lessons', 'gradeLevels', 'sessionNumbers', 'assignedTo', 'gradeLevel', 'status', 'sessionNumber', 'search', 'showArchived'));
     }
 
     /**
@@ -127,8 +154,9 @@ class LessonTrackerController extends Controller
     public function update(Request $request, Lesson $lesson)
     {
         $validated = $request->validate([
-            'assigned_to' => 'nullable|string|in:Unassigned,Leila,Jen',
+            'assigned_to' => 'nullable|string|in:Unassigned,Leila,Jen,Daniel',
             'status' => 'nullable|string|in:not_started,in_progress,done,stuck',
+            'admin_notes' => 'nullable|string',
         ]);
 
         $updateData = [];
@@ -142,6 +170,11 @@ class LessonTrackerController extends Controller
         // Handle status if provided
         if (isset($validated['status'])) {
             $updateData['status'] = $validated['status'];
+        }
+        
+        // Handle admin_notes if provided
+        if (isset($validated['admin_notes'])) {
+            $updateData['admin_notes'] = $validated['admin_notes'];
         }
 
         // Only update if there's data to update

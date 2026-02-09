@@ -29,6 +29,7 @@ class Lesson extends Model
         'archived_at',
         'assigned_to',
         'status',
+        'admin_notes',
     ];
 
     protected $casts = [
