@@ -106,7 +106,10 @@ class LessonController extends Controller
             ->orderBy('session_number')
             ->pluck('session_number');
         
-        return view('admin.lessons.index', compact('lessons', 'gradeLevels', 'sessionNumbers', 'sortBy', 'sortDir', 'showArchived'));
+        // Get available courses for filter dropdown
+        $courses = Course::active()->ordered()->get();
+        
+        return view('admin.lessons.index', compact('lessons', 'gradeLevels', 'sessionNumbers', 'courses', 'sortBy', 'sortDir', 'showArchived'));
     }
 
     /**

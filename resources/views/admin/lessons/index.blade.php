@@ -227,11 +227,26 @@
         <form id="combineForm" class="p-6">
             @csrf
             <div class="mb-6">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Select Source Lessons (to combine from)</label>
-                <p class="text-sm text-gray-500 mb-3">Select multiple lessons that will be merged into the target lesson</p>
-                <div class="border border-gray-300 rounded-xl p-4 max-h-64 overflow-y-auto">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Select Source Lessons (to combine from)</label>
+                        <p class="text-sm text-gray-500">Select multiple lessons that will be merged into the target lesson</p>
+                    </div>
+                    <div class="ml-4">
+                        <label for="course-filter" class="block text-xs font-semibold text-gray-700 mb-1">Filter by Course:</label>
+                        <select id="course-filter" 
+                                class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-800 focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
+                            <option value="">All Courses</option>
+                            @foreach($courses as $course)
+                                <option value="{{ $course->id }}">{{ $course->title }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="border border-gray-300 rounded-xl p-4 max-h-64 overflow-y-auto" id="lessons-list">
                     @foreach($lessons as $lesson)
-                        <label class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                        <label class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer lesson-item"
+                               data-course-id="{{ $lesson->course_id ?? '' }}">
                             <input type="checkbox" name="source_lesson_ids[]" value="{{ $lesson->id }}" 
                                    class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-400 source-lesson-checkbox"
                                    data-title="{{ $lesson->title }}"
@@ -341,6 +356,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     document.getElementById('target_lesson_id').addEventListener('change', updatePreview);
+    
+    // Course filter functionality
+    document.getElementById('course-filter').addEventListener('change', function() {
+        const selectedCourseId = this.value;
+        const lessonItems = document.querySelectorAll('.lesson-item');
+        
+        lessonItems.forEach(item => {
+            const courseId = item.dataset.courseId || '';
+            if (selectedCourseId === '' || courseId === selectedCourseId) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+                // Uncheck hidden items
+                const checkbox = item.querySelector('.source-lesson-checkbox');
+                if (checkbox) {
+                    checkbox.checked = false;
+                }
+            }
+        });
+        
+        updatePreview();
+    });
     
     document.getElementById('combineForm').addEventListener('submit', function(e) {
         e.preventDefault();
