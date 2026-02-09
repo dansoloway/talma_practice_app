@@ -465,15 +465,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Accept': 'application/json'
             }
         })
-        .then(response => {
+        .then(async response => {
             console.log('Response status:', response.status);
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
+            
             if (!response.ok) {
-                return response.text().then(text => {
-                    console.error('Response error:', text);
-                    throw new Error('Server error: ' + response.status);
-                });
+                // Try to parse as JSON for validation errors
+                try {
+                    const jsonError = JSON.parse(responseText);
+                    console.error('JSON error:', jsonError);
+                    if (jsonError.message) {
+                        throw new Error(jsonError.message);
+                    }
+                    if (jsonError.errors) {
+                        const errorMessages = Object.values(jsonError.errors).flat().join(', ');
+                        throw new Error('Validation errors: ' + errorMessages);
+                    }
+                } catch (e) {
+                    if (e.message && e.message.startsWith('Validation errors:')) {
+                        throw e;
+                    }
+                    // Not JSON, use the text as is
+                    throw new Error('Server error: ' + response.status + ' - ' + responseText.substring(0, 200));
+                }
             }
-            return response.json();
+            
+            return JSON.parse(responseText);
         })
         .then(data => {
             console.log('Response data:', data);

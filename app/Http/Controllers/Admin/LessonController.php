@@ -908,11 +908,19 @@ class LessonController extends Controller
      */
     public function combine(Request $request)
     {
-        $validated = $request->validate([
-            'source_lesson_ids' => 'required|array|min:1',
-            'source_lesson_ids.*' => 'exists:lessons,id',
-            'target_lesson_id' => 'required|exists:lessons,id',
-        ]);
+        try {
+            $validated = $request->validate([
+                'source_lesson_ids' => 'required|array|min:1',
+                'source_lesson_ids.*' => 'exists:lessons,id',
+                'target_lesson_id' => 'required|exists:lessons,id',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', $e->errors()),
+                'errors' => $e->errors(),
+            ], 400);
+        }
 
         $sourceLessonIds = $validated['source_lesson_ids'];
         $targetLessonId = $validated['target_lesson_id'];
