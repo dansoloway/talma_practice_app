@@ -50,33 +50,37 @@
         @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
                 <!-- Accordion Header -->
-                <button onclick="toggleVocabAccordion()" class="w-full flex flex-col md:flex-row justify-between items-center p-6 md:p-8 hover:bg-gray-50 transition-colors duration-200">
-                    <div class="flex items-center gap-3 mb-3 md:mb-0">
-                        <h3 class="text-2xl font-bold text-gray-800">Vocabulary for this lesson</h3>
-                        <span class="text-sm text-gray-500">({{ $lesson->vocabulary->count() }} words)</span>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        @php
-                            $hasHebrew = $lesson->vocabulary->contains(fn($v) => !empty($v->hebrew_translation));
-                            $hasArabic = $lesson->vocabulary->contains(fn($v) => !empty($v->arabic_translation));
-                        @endphp
-                        @if($hasHebrew || $hasArabic)
-                            <div class="flex gap-3" onclick="event.stopPropagation()">
-                                @if($hasHebrew)
-                                    <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 active:scale-95" 
-                                            data-lang="hebrew" onclick="toggleVocabLanguage('hebrew')">
-                                        עברית
-                                    </button>
-                                @endif
-                                @if($hasArabic)
-                                    <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-green-400 hover:bg-green-50 transition-all duration-200 active:scale-95" 
-                                            data-lang="arabic" onclick="toggleVocabLanguage('arabic')">
-                                        عربي
-                                    </button>
-                                @endif
+                <button onclick="toggleVocabAccordion()" class="w-full p-6 md:p-8 hover:bg-gray-50 transition-colors duration-200 text-left">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-2xl font-bold text-gray-800">Vocabulary for this lesson</h3>
+                            <span class="text-sm text-gray-500">({{ $lesson->vocabulary->count() }} words)</span>
+                        </div>
+                        <div class="flex items-center gap-4" onclick="event.stopPropagation()">
+                            @php
+                                $hasHebrew = $lesson->vocabulary->contains(fn($v) => !empty($v->hebrew_translation));
+                                $hasArabic = $lesson->vocabulary->contains(fn($v) => !empty($v->arabic_translation));
+                            @endphp
+                            @if($hasHebrew || $hasArabic)
+                                <div class="flex gap-3">
+                                    @if($hasHebrew)
+                                        <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 active:scale-95" 
+                                                data-lang="hebrew" onclick="toggleVocabLanguage('hebrew')">
+                                            עברית
+                                        </button>
+                                    @endif
+                                    @if($hasArabic)
+                                        <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-green-400 hover:bg-green-50 transition-all duration-200 active:scale-95" 
+                                                data-lang="arabic" onclick="toggleVocabLanguage('arabic')">
+                                            عربي
+                                        </button>
+                                    @endif
+                                </div>
+                            @endif
+                            <div class="flex items-center justify-center w-10 h-10 rounded-lg">
+                                <i id="vocab-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
                             </div>
-                        @endif
-                        <i id="vocab-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                        </div>
                     </div>
                 </button>
                 
