@@ -48,60 +48,71 @@
         </div>
 
         @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 mb-8">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <h3 class="text-2xl font-bold text-gray-800">Vocabulary for this lesson</h3>
-                    @php
-                        $hasHebrew = $lesson->vocabulary->contains(fn($v) => !empty($v->hebrew_translation));
-                        $hasArabic = $lesson->vocabulary->contains(fn($v) => !empty($v->arabic_translation));
-                    @endphp
-                    @if($hasHebrew || $hasArabic)
-                        <div class="flex gap-3">
-                            @if($hasHebrew)
-                                <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 active:scale-95" 
-                                        data-lang="hebrew" onclick="toggleVocabLanguage('hebrew')">
-                                    עברית
-                                </button>
-                            @endif
-                            @if($hasArabic)
-                                <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-green-400 hover:bg-green-50 transition-all duration-200 active:scale-95" 
-                                        data-lang="arabic" onclick="toggleVocabLanguage('arabic')">
-                                    عربي
-                                </button>
-                            @endif
-                        </div>
-                    @endif
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                    @foreach($lesson->vocabulary as $vocab)
-                        <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 text-center hover:shadow-md hover:border-blue-300 transition-all duration-200">
-                            @if($vocab->image_path)
-                                <img src="{{ asset('storage/' . $vocab->image_path) }}" 
-                                     alt="{{ $vocab->english_word }}" 
-                                     class="w-full h-24 md:h-32 object-cover rounded-lg mb-3">
-                            @endif
-                            <div class="flex flex-col items-center gap-2">
-                                @if($vocab->word_audio_path)
-                                    <button class="w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
-                                            onclick="playVocabAudio('{{ $vocab->word_audio_url }}')" 
-                                            title="Listen to word">
-                                        <i class="fas fa-volume-up text-sm"></i>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
+                <!-- Accordion Header -->
+                <button onclick="toggleVocabAccordion()" class="w-full flex flex-col md:flex-row justify-between items-center p-6 md:p-8 hover:bg-gray-50 transition-colors duration-200">
+                    <div class="flex items-center gap-3 mb-3 md:mb-0">
+                        <h3 class="text-2xl font-bold text-gray-800">Vocabulary for this lesson</h3>
+                        <span class="text-sm text-gray-500">({{ $lesson->vocabulary->count() }} words)</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        @php
+                            $hasHebrew = $lesson->vocabulary->contains(fn($v) => !empty($v->hebrew_translation));
+                            $hasArabic = $lesson->vocabulary->contains(fn($v) => !empty($v->arabic_translation));
+                        @endphp
+                        @if($hasHebrew || $hasArabic)
+                            <div class="flex gap-3" onclick="event.stopPropagation()">
+                                @if($hasHebrew)
+                                    <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 active:scale-95" 
+                                            data-lang="hebrew" onclick="toggleVocabLanguage('hebrew')">
+                                        עברית
                                     </button>
                                 @endif
-                                <div class="text-lg font-bold text-gray-800">{{ $vocab->english_word }}</div>
-                                @if($vocab->hebrew_translation)
-                                    <div class="translation hebrew vocab-translation-hidden text-sm font-semibold px-3 py-1 rounded-lg bg-blue-100 text-blue-800 border border-blue-200">
-                                        {{ $vocab->hebrew_translation }}
-                                    </div>
-                                @endif
-                                @if($vocab->arabic_translation)
-                                    <div class="translation arabic vocab-translation-hidden text-sm font-semibold px-3 py-1 rounded-lg bg-green-100 text-green-800 border border-green-200">
-                                        {{ $vocab->arabic_translation }}
-                                    </div>
+                                @if($hasArabic)
+                                    <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-green-400 hover:bg-green-50 transition-all duration-200 active:scale-95" 
+                                            data-lang="arabic" onclick="toggleVocabLanguage('arabic')">
+                                        عربي
+                                    </button>
                                 @endif
                             </div>
-                        </div>
-                    @endforeach
+                        @endif
+                        <i id="vocab-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                    </div>
+                </button>
+                
+                <!-- Accordion Content -->
+                <div id="vocab-accordion-content" class="hidden px-6 md:px-8 pb-6 md:pb-8">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                        @foreach($lesson->vocabulary as $vocab)
+                            <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 text-center hover:shadow-md hover:border-blue-300 transition-all duration-200">
+                                @if($vocab->image_path)
+                                    <img src="{{ asset('storage/' . $vocab->image_path) }}" 
+                                         alt="{{ $vocab->english_word }}" 
+                                         class="w-full h-24 md:h-32 object-cover rounded-lg mb-3">
+                                @endif
+                                <div class="flex flex-col items-center gap-2">
+                                    @if($vocab->word_audio_path)
+                                        <button class="w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
+                                                onclick="playVocabAudio('{{ $vocab->word_audio_url }}')" 
+                                                title="Listen to word">
+                                            <i class="fas fa-volume-up text-sm"></i>
+                                        </button>
+                                    @endif
+                                    <div class="text-lg font-bold text-gray-800">{{ $vocab->english_word }}</div>
+                                    @if($vocab->hebrew_translation)
+                                        <div class="translation hebrew vocab-translation-hidden text-sm font-semibold px-3 py-1 rounded-lg bg-blue-100 text-blue-800 border border-blue-200">
+                                            {{ $vocab->hebrew_translation }}
+                                        </div>
+                                    @endif
+                                    @if($vocab->arabic_translation)
+                                        <div class="translation arabic vocab-translation-hidden text-sm font-semibold px-3 py-1 rounded-lg bg-green-100 text-green-800 border border-green-200">
+                                            {{ $vocab->arabic_translation }}
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         @endif
@@ -217,8 +228,8 @@
         @if($allActivities->count() > 0)
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
                 <h3 class="text-2xl font-bold text-gray-800 mb-2 text-center">Activities</h3>
-                <p class="text-gray-600 text-center mb-8">Choose an activity to practice:</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <p class="text-gray-600 text-center mb-6">Choose an activity to practice:</p>
+                <div class="space-y-3">
                     @foreach($allActivities as $index => $activity)
                         @php
                             // Determine display title: use default game name if title matches pattern, otherwise use customized title
@@ -247,9 +258,9 @@
                                 }
                             }
                         @endphp
-                        <div class="group bg-gray-50 rounded-xl border-2 border-gray-200 p-5 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center" 
+                        <div class="group bg-gray-50 rounded-xl border-2 border-gray-200 p-4 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md transition-all duration-300 cursor-pointer flex items-center gap-4" 
                              onclick="startActivity('{{ $activity->type }}', '{{ $activity->id }}')">
-                            <div class="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-3xl md:text-4xl group-hover:border-blue-300 transition-colors duration-200 mb-4">
+                            <div class="flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-2xl md:text-3xl group-hover:border-blue-300 transition-colors duration-200">
                                 @if($activity->type === 'prompts')
                                     📝
                                 @elseif($activity->type === 'matching')
@@ -264,8 +275,11 @@
                                     ✓✗
                                 @endif
                             </div>
-                            <div class="text-base md:text-lg font-bold text-gray-800 group-hover:text-blue-700 transition-colors duration-200">
+                            <div class="flex-1 text-base md:text-lg font-bold text-gray-800 group-hover:text-blue-700 transition-colors duration-200">
                                 {{ $displayTitle }}
+                            </div>
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200"></i>
                             </div>
                         </div>
                     @endforeach
@@ -289,6 +303,15 @@ function playVocabAudio(audioPath) {
     audio.play().catch(error => {
         console.error('Error playing audio:', error);
     });
+}
+
+// Toggle vocabulary accordion
+function toggleVocabAccordion() {
+    const content = document.getElementById('vocab-accordion-content');
+    const icon = document.getElementById('vocab-accordion-icon');
+    
+    content.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
 }
 
 // Toggle vocabulary language display
