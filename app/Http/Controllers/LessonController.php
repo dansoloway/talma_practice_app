@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Lesson;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LessonController extends Controller
 {
@@ -63,7 +64,7 @@ class LessonController extends Controller
         // Only eager load trueFalseGames if table exists (after migrations)
         try {
             // Check if table exists by attempting a simple query
-            \DB::table('true_false_games')->limit(1)->get();
+            DB::table('true_false_games')->limit(1)->get();
             $withRelations['trueFalseGames'] = function ($query) {
                 $query->where('is_active', true)->orderBy('sort_order');
             };
@@ -76,6 +77,7 @@ class LessonController extends Controller
             ->where('slug', $slug)
             ->where('is_active', true)
             ->with($withRelations)
+            ->with('course')
             ->firstOrFail();
         
         // Add full URLs for audio paths in prompts

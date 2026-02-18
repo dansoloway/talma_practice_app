@@ -13,20 +13,20 @@
         </a>
 
         <!-- Lesson Header -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 mb-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-6 mb-8">
             @if($lesson->cover_image_path)
-                <div class="mb-6 text-center">
+                <div class="mb-4 text-center">
                     <img src="{{ $lesson->cover_image_url }}" 
                          alt="{{ $lesson->title }}" 
                          class="max-w-full max-h-64 md:max-h-80 mx-auto rounded-xl shadow-md object-cover">
                 </div>
             @endif
             
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center tracking-tight">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3 text-center tracking-tight">
                 {{ $lesson->title }}
             </h1>
             
-            @if($lesson->grade_level || $lesson->session_number || $lesson->session_title)
+            @if($lesson->grade_level || $lesson->session_number || $lesson->course)
                 <div class="flex flex-wrap justify-center gap-3 mb-4">
                     @if($lesson->grade_level)
                         <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-700 border border-blue-200">
@@ -38,9 +38,9 @@
                             Session {{ $lesson->session_number }}
                         </span>
                     @endif
-                    @if($lesson->session_title)
+                    @if($lesson->course)
                         <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-                            {{ $lesson->session_title }}
+                            {{ $lesson->course->title }}
                         </span>
                     @endif
                 </div>
