@@ -50,19 +50,19 @@
         @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
                 <!-- Accordion Header -->
-                <button onclick="toggleVocabAccordion()" class="w-full p-6 md:p-8 hover:bg-gray-50 transition-colors duration-200 text-left">
+                <div class="p-6 md:p-8">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="flex items-center gap-3">
                             <h3 class="text-2xl font-bold text-gray-800">Vocabulary for this lesson</h3>
                             <span class="text-sm text-gray-500">({{ $lesson->vocabulary->count() }} words)</span>
                         </div>
-                        <div class="flex items-center gap-3" onclick="event.stopPropagation()">
+                        <div class="flex items-center gap-3">
                             @php
                                 $hasHebrew = $lesson->vocabulary->contains(fn($v) => !empty($v->hebrew_translation));
                                 $hasArabic = $lesson->vocabulary->contains(fn($v) => !empty($v->arabic_translation));
                             @endphp
                             @if($hasHebrew || $hasArabic)
-                                <div class="flex gap-3">
+                                <div class="flex gap-3" onclick="event.stopPropagation()">
                                     @if($hasHebrew)
                                         <button class="vocab-lang-toggle-btn px-4 py-2 rounded-xl border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 active:scale-95" 
                                                 data-lang="hebrew" onclick="toggleVocabLanguage('hebrew')">
@@ -77,10 +77,12 @@
                                     @endif
                                 </div>
                             @endif
-                            <i id="vocab-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300 ml-2"></i>
+                            <button onclick="toggleVocabAccordion()" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                                <i id="vocab-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                            </button>
                         </div>
                     </div>
-                </button>
+                </div>
                 
                 <!-- Accordion Content -->
                 <div id="vocab-accordion-content" class="hidden px-6 md:px-8 pt-6 md:pt-8 pb-6 md:pb-8 border-t border-gray-100">
