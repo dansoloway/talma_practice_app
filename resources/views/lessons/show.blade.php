@@ -236,12 +236,12 @@
                             <h3 class="text-2xl font-bold text-gray-800">Activities</h3>
                             <span class="text-sm text-gray-500">({{ $allActivities->count() }} activities)</span>
                         </div>
-                        <i id="activities-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                        <i id="activities-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300 rotate-180"></i>
                     </div>
                 </button>
                 
                 <!-- Accordion Content -->
-                <div id="activities-accordion-content" class="hidden px-6 md:px-8 pt-6 md:pt-8 pb-6 md:pb-8 border-t border-gray-100">
+                <div id="activities-accordion-content" class="px-6 md:px-8 pt-6 md:pt-8 pb-6 md:pb-8 border-t border-gray-100">
                     <p class="text-gray-600 text-center mb-6">Choose an activity to practice:</p>
                     <div class="space-y-3">
                         @foreach($allActivities as $index => $activity)
