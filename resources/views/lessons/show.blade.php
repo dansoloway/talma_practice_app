@@ -230,63 +230,78 @@
         @endphp
 
         @if($allActivities->count() > 0)
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
-                <h3 class="text-2xl font-bold text-gray-800 mb-2 text-center">Activities</h3>
-                <p class="text-gray-600 text-center mb-6">Choose an activity to practice:</p>
-                <div class="space-y-3">
-                    @foreach($allActivities as $index => $activity)
-                        @php
-                            // Determine display title: use default game name if title matches pattern, otherwise use customized title
-                            $displayTitle = $activity->title;
-                            
-                            // Check if title matches default pattern (starts with lesson title + default game name pattern)
-                            $lessonTitleEscaped = preg_quote(trim($lesson->title), '/');
-                            
-                            if ($activity->type === 'matching') {
-                                // Pattern: "{Lesson Title} Matching Game {number}"
-                                $pattern = '/^' . $lessonTitleEscaped . '\s+Matching\s+Game\s+\d+$/i';
-                                if (preg_match($pattern, trim($activity->title))) {
-                                    $displayTitle = 'Matching Game';
-                                }
-                            } elseif ($activity->type === 'flashcard') {
-                                // Pattern: "{Lesson Title} Flashcards {number}"
-                                $pattern = '/^' . $lessonTitleEscaped . '\s+Flashcards\s+\d+$/i';
-                                if (preg_match($pattern, trim($activity->title))) {
-                                    $displayTitle = 'Flashcards';
-                                }
-                            } elseif ($activity->type === 'spelling') {
-                                // Pattern: "{Lesson Title} Spelling Practice {number}"
-                                $pattern = '/^' . $lessonTitleEscaped . '\s+Spelling\s+Practice\s+\d+$/i';
-                                if (preg_match($pattern, trim($activity->title))) {
-                                    $displayTitle = 'Spelling Practice';
-                                }
-                            }
-                        @endphp
-                        <div class="group bg-gray-50 rounded-xl border-2 border-gray-200 p-4 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md transition-all duration-300 cursor-pointer flex items-center gap-4" 
-                             onclick="startActivity('{{ $activity->type }}', '{{ $activity->id }}')">
-                            <div class="flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-2xl md:text-3xl group-hover:border-blue-300 transition-colors duration-200">
-                                @if($activity->type === 'prompts')
-                                    📝
-                                @elseif($activity->type === 'matching')
-                                    🔗
-                                @elseif($activity->type === 'flashcard')
-                                    🎴
-                                @elseif($activity->type === 'spelling')
-                                    ✍️
-                                @elseif($activity->type === 'clause_exercise')
-                                    📄
-                                @elseif($activity->type === 'true_false')
-                                    ✓✗
-                                @endif
-                            </div>
-                            <div class="flex-1 text-base md:text-lg font-bold text-gray-800 group-hover:text-blue-700 transition-colors duration-200">
-                                {{ $displayTitle }}
-                            </div>
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200"></i>
-                            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
+                <!-- Accordion Header -->
+                <div class="p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-2xl font-bold text-gray-800">Activities</h3>
+                            <span class="text-sm text-gray-500">({{ $allActivities->count() }} activities)</span>
                         </div>
-                    @endforeach
+                        <button onclick="toggleActivitiesAccordion()" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                            <i id="activities-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Accordion Content -->
+                <div id="activities-accordion-content" class="hidden px-6 md:px-8 pt-6 md:pt-8 pb-6 md:pb-8 border-t border-gray-100">
+                    <p class="text-gray-600 text-center mb-6">Choose an activity to practice:</p>
+                    <div class="space-y-3">
+                        @foreach($allActivities as $index => $activity)
+                            @php
+                                // Determine display title: use default game name if title matches pattern, otherwise use customized title
+                                $displayTitle = $activity->title;
+                                
+                                // Check if title matches default pattern (starts with lesson title + default game name pattern)
+                                $lessonTitleEscaped = preg_quote(trim($lesson->title), '/');
+                                
+                                if ($activity->type === 'matching') {
+                                    // Pattern: "{Lesson Title} Matching Game {number}"
+                                    $pattern = '/^' . $lessonTitleEscaped . '\s+Matching\s+Game\s+\d+$/i';
+                                    if (preg_match($pattern, trim($activity->title))) {
+                                        $displayTitle = 'Matching Game';
+                                    }
+                                } elseif ($activity->type === 'flashcard') {
+                                    // Pattern: "{Lesson Title} Flashcards {number}"
+                                    $pattern = '/^' . $lessonTitleEscaped . '\s+Flashcards\s+\d+$/i';
+                                    if (preg_match($pattern, trim($activity->title))) {
+                                        $displayTitle = 'Flashcards';
+                                    }
+                                } elseif ($activity->type === 'spelling') {
+                                    // Pattern: "{Lesson Title} Spelling Practice {number}"
+                                    $pattern = '/^' . $lessonTitleEscaped . '\s+Spelling\s+Practice\s+\d+$/i';
+                                    if (preg_match($pattern, trim($activity->title))) {
+                                        $displayTitle = 'Spelling Practice';
+                                    }
+                                }
+                            @endphp
+                            <div class="group bg-gray-50 rounded-xl border-2 border-gray-200 p-4 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md transition-all duration-300 cursor-pointer flex items-center gap-4" 
+                                 onclick="startActivity('{{ $activity->type }}', '{{ $activity->id }}')">
+                                <div class="flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-2xl md:text-3xl group-hover:border-blue-300 transition-colors duration-200">
+                                    @if($activity->type === 'prompts')
+                                        📝
+                                    @elseif($activity->type === 'matching')
+                                        🔗
+                                    @elseif($activity->type === 'flashcard')
+                                        🎴
+                                    @elseif($activity->type === 'spelling')
+                                        ✍️
+                                    @elseif($activity->type === 'clause_exercise')
+                                        📄
+                                    @elseif($activity->type === 'true_false')
+                                        ✓✗
+                                    @endif
+                                </div>
+                                <div class="flex-1 text-base md:text-lg font-bold text-gray-800 group-hover:text-blue-700 transition-colors duration-200">
+                                    {{ $displayTitle }}
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200"></i>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         @endif
@@ -313,6 +328,15 @@ function playVocabAudio(audioPath) {
 function toggleVocabAccordion() {
     const content = document.getElementById('vocab-accordion-content');
     const icon = document.getElementById('vocab-accordion-icon');
+    
+    content.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+}
+
+// Toggle activities accordion
+function toggleActivitiesAccordion() {
+    const content = document.getElementById('activities-accordion-content');
+    const icon = document.getElementById('activities-accordion-icon');
     
     content.classList.toggle('hidden');
     icon.classList.toggle('rotate-180');
