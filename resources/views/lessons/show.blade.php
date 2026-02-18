@@ -50,7 +50,7 @@
         @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
                 <!-- Accordion Header -->
-                <div class="p-6 md:p-8">
+                <button onclick="toggleVocabAccordion()" class="w-full p-6 md:p-8 hover:bg-gray-50 transition-colors duration-200 text-left">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="flex items-center gap-3">
                             <h3 class="text-2xl font-bold text-gray-800">Vocabulary for this lesson</h3>
@@ -77,12 +77,10 @@
                                     @endif
                                 </div>
                             @endif
-                            <button onclick="toggleVocabAccordion()" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                                <i id="vocab-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
-                            </button>
+                            <i id="vocab-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
                         </div>
                     </div>
-                </div>
+                </button>
                 
                 <!-- Accordion Content -->
                 <div id="vocab-accordion-content" class="hidden px-6 md:px-8 pt-6 md:pt-8 pb-6 md:pb-8 border-t border-gray-100">
@@ -232,17 +230,15 @@
         @if($allActivities->count() > 0)
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
                 <!-- Accordion Header -->
-                <div class="p-6 md:p-8">
+                <button onclick="toggleActivitiesAccordion()" class="w-full p-6 md:p-8 hover:bg-gray-50 transition-colors duration-200 text-left">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="flex items-center gap-3">
                             <h3 class="text-2xl font-bold text-gray-800">Activities</h3>
                             <span class="text-sm text-gray-500">({{ $allActivities->count() }} activities)</span>
                         </div>
-                        <button onclick="toggleActivitiesAccordion()" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                            <i id="activities-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
-                        </button>
+                        <i id="activities-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
                     </div>
-                </div>
+                </button>
                 
                 <!-- Accordion Content -->
                 <div id="activities-accordion-content" class="hidden px-6 md:px-8 pt-6 md:pt-8 pb-6 md:pb-8 border-t border-gray-100">
