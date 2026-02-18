@@ -56,7 +56,7 @@
                             <h3 class="text-2xl font-bold text-gray-800">Vocabulary for this lesson</h3>
                             <span class="text-sm text-gray-500">({{ $lesson->vocabulary->count() }} words)</span>
                         </div>
-                        <div class="flex items-center gap-4" onclick="event.stopPropagation()">
+                        <div class="flex items-center gap-3" onclick="event.stopPropagation()">
                             @php
                                 $hasHebrew = $lesson->vocabulary->contains(fn($v) => !empty($v->hebrew_translation));
                                 $hasArabic = $lesson->vocabulary->contains(fn($v) => !empty($v->arabic_translation));
@@ -77,15 +77,13 @@
                                     @endif
                                 </div>
                             @endif
-                            <div class="flex items-center justify-center w-10 h-10 rounded-lg">
-                                <i id="vocab-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
-                            </div>
+                            <i id="vocab-accordion-icon" class="fas fa-chevron-down text-gray-400 transition-transform duration-300 ml-2"></i>
                         </div>
                     </div>
                 </button>
                 
                 <!-- Accordion Content -->
-                <div id="vocab-accordion-content" class="hidden px-6 md:px-8 pb-6 md:pb-8">
+                <div id="vocab-accordion-content" class="hidden px-6 md:px-8 pt-6 md:pt-8 pb-6 md:pb-8 border-t border-gray-100">
                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                         @foreach($lesson->vocabulary as $vocab)
                             <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 text-center hover:shadow-md hover:border-blue-300 transition-all duration-200">
