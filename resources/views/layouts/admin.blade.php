@@ -70,7 +70,7 @@
                     </div>
                 </div>
                 
-                @if(session('admin_user_role') === 'admin')
+                @if(auth('admin')->user()?->role === 'admin')
                     <a href="{{ route('admin.users.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Users</a>
                 @endif
                 
@@ -79,7 +79,7 @@
                 </a>
                 
                 <a href="{{ route('lessons.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Student View</a>
-                <span class="px-3 py-2 text-gray-600 text-sm border-l border-gray-200/60 ml-2 pl-4">{{ session('admin_user_name') }} ({{ ucfirst(session('admin_user_role')) }})</span>
+                <span class="px-3 py-2 text-gray-600 text-sm border-l border-gray-200/60 ml-2 pl-4">{{ auth('admin')->user()->name }} ({{ ucfirst(auth('admin')->user()->role) }})</span>
                 <a href="#" onclick="logout()" class="px-3 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
             </div>
         </nav>
@@ -135,10 +135,13 @@
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                 },
-            }).then(() => {
-                window.location.href = '{{ route('lessons.index') }}';
-            });
+            }).then((res) => res.json().then((data) => {
+                window.location.href = data.redirect || '{{ route('admin.login.show') }}';
+            }).catch(() => {
+                window.location.href = '{{ route('admin.login.show') }}';
+            }));
         }
     }
     </script>

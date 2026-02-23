@@ -33,7 +33,7 @@ Route::get('/lessons', [StudentController::class, 'index'])->name('lessons.index
 Route::get('/courses/{course:slug}', [StudentController::class, 'course'])->name('student.course');
 Route::get('/grade/{gradeLevel}', [StudentController::class, 'grade'])->name('student.grade'); // Kept for backward compatibility
 Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'updateLessonOrder'])
-    ->middleware('admin.auth')
+    ->middleware('auth:admin')
     ->name('student.grade.update-order');
 
 // Individual Lessons
@@ -100,7 +100,7 @@ Route::post('/admin/password/email', [\App\Http\Controllers\Admin\PasswordResetC
 Route::get('/admin/password/reset/{token}', [\App\Http\Controllers\Admin\PasswordResetController::class, 'showResetForm'])->name('admin.password.reset');
 Route::post('/admin/password/reset', [\App\Http\Controllers\Admin\PasswordResetController::class, 'reset'])->name('admin.password.update');
 
-Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'admin.access'])->group(function () {
     // Analytics routes
     Route::get('analytics', [DashboardController::class, 'index'])->name('analytics');
     Route::get('session-length', [DashboardController::class, 'sessionLengthDashboard'])->name('session-length');

@@ -12,7 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'admin.auth' => \App\Http\Middleware\AdminAuth::class,
+            'admin.access' => \App\Http\Middleware\EnsureAdminAccess::class,
             'admin.only' => \App\Http\Middleware\EnsureUserIsAdmin::class,
         ]);
 
@@ -22,6 +22,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // Redirect unauthenticated admin requests to admin login
+        $exceptions->renderable(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->is('admin') || $request->is('admin/*')) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Unauthenticated.'], 401);
+                }
+                return redirect()->guest(route('admin.login.show'));
+            }
+        });
+
         // Log 405 Method Not Allowed errors with details
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException $e, $request) {
             \Illuminate\Support\Facades\Log::warning('405 Method Not Allowed', [

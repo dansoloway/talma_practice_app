@@ -28,7 +28,7 @@
     <div class="game-header">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
-            @if(session('admin_authenticated'))
+            @if(auth('admin')->check())
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn btn-sm" style="background: var(--color-primary); color: white; padding: 0.5rem 1rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.875rem;">
                         <i class="fas fa-cog"></i> Lesson Admin

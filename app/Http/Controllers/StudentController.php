@@ -145,7 +145,7 @@ class StudentController extends Controller
     public function updateLessonOrder(Request $request, $gradeLevel)
     {
         // Check if admin is authenticated
-        if (!session('admin_authenticated')) {
+        if (!auth('admin')->check()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

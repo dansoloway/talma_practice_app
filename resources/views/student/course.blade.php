@@ -3,7 +3,7 @@
 @section('title', $course->title . ' - Lessons')
 
 @php
-    $isAdmin = session('admin_authenticated', false) === true;
+    $isAdmin = auth('admin')->check();
 @endphp
 
 @section('content')

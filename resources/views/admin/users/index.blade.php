@@ -88,7 +88,7 @@
                         <td>{{ $user->created_at->format('M d, Y') }}</td>
                         <td>
                             <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-xs">Edit</a>
-                            @if($user->id !== session('admin_user_id'))
+                            @if($user->id !== auth('admin')->id())
                                 <form action="{{ route('admin.users.destroy', $user) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">
                                     @csrf
                                     @method('DELETE')
