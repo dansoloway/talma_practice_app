@@ -2,6 +2,13 @@
 
 @section('title', $course->title)
 
+@php
+    $params = $courseRouteParams ?? [];
+    $route = fn($name, $course = null) => isset($params['organization'])
+        ? route('org.admin.courses.' . $name, array_merge($params, $course ? ['course' => $course] : []))
+        : ($course ? route('admin.courses.' . $name, $course) : route('admin.courses.' . $name));
+@endphp
+
 @section('content')
 <div class="container mx-auto px-4 py-6 max-w-7xl">
     <div class="flex justify-between items-center mb-8">
@@ -15,14 +22,14 @@
         </div>
         <div class="flex gap-3">
             @if($course->isArchived())
-                <form action="{{ route('admin.courses.unarchive', $course) }}" method="POST" class="inline">
+                <form action="{{ $route('unarchive', $course) }}" method="POST" class="inline">
                     @csrf
                     <button type="submit" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all duration-200">
                         Unarchive Course
                     </button>
                 </form>
             @else
-                <form action="{{ route('admin.courses.archive', $course) }}" method="POST" class="inline">
+                <form action="{{ $route('archive', $course) }}" method="POST" class="inline">
                     @csrf
                     <button type="submit" class="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-xl hover:bg-yellow-700 transition-all duration-200" 
                             onclick="return confirm('Are you sure you want to archive this course? Students will no longer be able to access it, but it can be restored later.')">
@@ -30,10 +37,10 @@
                     </button>
                 </form>
             @endif
-            <a href="{{ route('admin.courses.edit', $course) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200">
+            <a href="{{ $route('edit', $course) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200">
                 Edit Course
             </a>
-            <a href="{{ route('admin.courses.index') }}" class="px-4 py-2 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-all duration-200">
+            <a href="{{ $route('index') }}" class="px-4 py-2 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-all duration-200">
                 Back to Courses
             </a>
         </div>

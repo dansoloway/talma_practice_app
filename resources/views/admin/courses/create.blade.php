@@ -2,15 +2,22 @@
 
 @section('title', 'Create Course')
 
+@php
+    $params = $courseRouteParams ?? [];
+    $route = fn($name, $course = null) => isset($params['organization'])
+        ? route('org.admin.courses.' . $name, array_merge($params, $course ? ['course' => $course] : []))
+        : ($course ? route('admin.courses.' . $name, $course) : route('admin.courses.' . $name));
+@endphp
+
 @section('content')
 <div class="container mx-auto px-4 py-6 max-w-3xl">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800">Create Course</h1>
-        <a href="{{ route('admin.courses.index') }}" class="px-4 py-2 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-all duration-200">Cancel</a>
+        <a href="{{ $route('index') }}" class="px-4 py-2 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-all duration-200">Cancel</a>
     </div>
 
     <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-8">
-        <form action="{{ route('admin.courses.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form action="{{ $route('store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
             <div>
@@ -52,7 +59,7 @@
                 <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
                     Create Course
                 </button>
-                <a href="{{ route('admin.courses.index') }}" class="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200">
+                <a href="{{ $route('index') }}" class="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200">
                     Cancel
                 </a>
             </div>

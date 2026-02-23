@@ -11,9 +11,22 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->redirectGuestsTo(function ($request) {
+            if ($request->is('admin') || $request->is('admin/*') || $request->is('o/*')) {
+                return route('admin.login.show');
+            }
+            return null;
+        });
+
         $middleware->alias([
             'admin.access' => \App\Http\Middleware\EnsureAdminAccess::class,
             'admin.only' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'org.context' => \App\Http\Middleware\OrgContext::class,
+            'org.member' => \App\Http\Middleware\OrgMember::class,
+        ]);
+
+        $middleware->prependToGroup('web', [
+            \App\Http\Middleware\RedirectTrailingSlash::class,
         ]);
 
         $middleware->appendToGroup('web', [
@@ -24,7 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         // Redirect unauthenticated admin requests to admin login
         $exceptions->renderable(function (\Illuminate\Auth\AuthenticationException $e, $request) {
-            if ($request->is('admin') || $request->is('admin/*')) {
+            if ($request->is('admin') || $request->is('admin/*') || $request->is('o/*')) {
                 if ($request->expectsJson()) {
                     return response()->json(['message' => 'Unauthenticated.'], 401);
                 }

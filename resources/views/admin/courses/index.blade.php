@@ -2,18 +2,25 @@
 
 @section('title', 'Courses')
 
+@php
+    $params = $courseRouteParams ?? [];
+    $route = fn($name, $course = null) => isset($params['organization'])
+        ? route('org.admin.courses.' . $name, array_merge($params, $course ? ['course' => $course] : []))
+        : ($course ? route('admin.courses.' . $name, $course) : route('admin.courses.' . $name));
+@endphp
+
 @section('content')
 <div class="container mx-auto px-4 py-6 max-w-7xl">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800">Courses</h1>
-        <a href="{{ route('admin.courses.create') }}" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+        <a href="{{ $route('create') }}" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
             Create Course
         </a>
     </div>
 
     <!-- Filters -->
     <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-6 mb-6">
-        <form method="GET" action="{{ route('admin.courses.index') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <form method="GET" action="{{ $route('index') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div>
                 <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
                 <input type="text" name="search" id="search" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200" 
@@ -37,7 +44,7 @@
                 
                 <div class="flex gap-2">
                     <button type="submit" class="flex-1 px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">Filter</button>
-                    <a href="{{ route('admin.courses.index') }}" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200 text-center">Clear</a>
+                    <a href="{{ $route('index') }}" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200 text-center">Clear</a>
                 </div>
             </div>
         </form>
@@ -48,11 +55,11 @@
             @if(request()->has('search'))
                 <div class="text-6xl mb-4">🔍</div>
                 <h3 class="text-2xl font-bold text-gray-800 mb-3">No courses found</h3>
-                <p class="text-gray-600 mb-6">No courses match your search. Try adjusting your search criteria or <a href="{{ route('admin.courses.index') }}" class="text-blue-600 hover:text-blue-700 font-medium">clear filters</a>.</p>
+                <p class="text-gray-600 mb-6">No courses match your search. Try adjusting your search criteria or <a href="{{ $route('index') }}" class="text-blue-600 hover:text-blue-700 font-medium">clear filters</a>.</p>
             @else
                 <div class="text-6xl mb-4">📚</div>
                 <h3 class="text-2xl font-bold text-gray-800 mb-3">No courses yet</h3>
-                <p class="text-gray-600 mb-6">You haven't created any courses yet. <a href="{{ route('admin.courses.create') }}" class="text-blue-600 hover:text-blue-700 font-medium">Create your first course</a> to get started.</p>
+                <p class="text-gray-600 mb-6">You haven't created any courses yet. <a href="{{ $route('create') }}" class="text-blue-600 hover:text-blue-700 font-medium">Create your first course</a> to get started.</p>
             @endif
         </div>
     @else
@@ -94,10 +101,10 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <a href="{{ route('admin.courses.show', $course) }}" class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-200 text-center">
+                            <a href="{{ $route('show', $course) }}" class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-200 text-center">
                                 View
                             </a>
-                            <a href="{{ route('admin.courses.edit', $course) }}" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-all duration-200 text-center">
+                            <a href="{{ $route('edit', $course) }}" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-all duration-200 text-center">
                                 Edit
                             </a>
                         </div>

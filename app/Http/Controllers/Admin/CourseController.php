@@ -4,12 +4,45 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class CourseController extends Controller
 {
+    /**
+     * Get the current organization from request (when in org-scoped route).
+     */
+    protected function currentOrganization(Request $request): ?Organization
+    {
+        return $request->attributes->get('currentOrganization');
+    }
+
+    /**
+     * Resolve course for org-scoped routes; return 404 if not attached to org.
+     */
+    protected function resolveCourseForOrg(Request $request, int|Course $courseIdOrModel): Course
+    {
+        $org = $this->currentOrganization($request);
+        if (!$org) {
+            return $courseIdOrModel instanceof Course ? $courseIdOrModel : Course::findOrFail($courseIdOrModel);
+        }
+        $id = $courseIdOrModel instanceof Course ? $courseIdOrModel->id : $courseIdOrModel;
+        return $org->courses()->whereKey($id)->firstOrFail();
+    }
+
+    /**
+     * Get the courses index route (org-scoped or legacy).
+     */
+    protected function coursesIndexRoute(Request $request): string
+    {
+        $org = $this->currentOrganization($request);
+        return $org
+            ? route('org.admin.courses.index', ['organization' => $org->slug])
+            : route('admin.courses.index');
+    }
+
     /**
      * Display a listing of all courses.
      */
@@ -18,7 +51,10 @@ class CourseController extends Controller
         // Determine if we should show archived courses
         $showArchived = $request->boolean('view_archived');
         
-        $query = Course::query();
+        $org = $this->currentOrganization($request);
+        $query = $org
+            ? $org->courses()->getQuery()
+            : Course::query();
         
         if ($showArchived) {
             // Show only archived courses
@@ -58,16 +94,19 @@ class CourseController extends Controller
         }
         
         $courses = $query->withCount('lessons')->get();
-        
-        return view('admin.courses.index', compact('courses', 'sortBy', 'sortDir', 'showArchived'));
+        $courseRouteParams = $org ? ['organization' => $org->slug] : [];
+
+        return view('admin.courses.index', compact('courses', 'sortBy', 'sortDir', 'showArchived', 'courseRouteParams'));
     }
 
     /**
      * Show the form for creating a new course.
      */
-    public function create()
+    public function create(Request $request)
     {
-        return view('admin.courses.create');
+        $org = $this->currentOrganization($request);
+        $courseRouteParams = $org ? ['organization' => $org->slug] : [];
+        return view('admin.courses.create', compact('courseRouteParams'));
     }
 
     /**
@@ -105,37 +144,52 @@ class CourseController extends Controller
 
         $validated['is_active'] = $request->has('is_active');
 
-        Course::create($validated);
+        $course = Course::create($validated);
 
-        return redirect()->route('admin.courses.index')
+        $org = $this->currentOrganization($request);
+        if ($org) {
+            $org->courses()->syncWithoutDetaching([$course->id]);
+        }
+
+        return redirect()->to($this->coursesIndexRoute($request))
             ->with('success', 'Course created successfully.');
     }
 
     /**
      * Display the specified course.
+     * Org-scoped routes pass (Request, Organization, Course); legacy routes pass (Request, Course).
      */
-    public function show(Course $course)
+    public function show(Request $request, $organizationOrCourse = null, Course $course = null)
     {
+        $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
         // Load only active, non-archived lessons
         $course->load(['lessons' => function ($query) {
             $query->where('is_active', true)->whereNull('archived_at');
         }]);
-        return view('admin.courses.show', compact('course'));
+        $org = $this->currentOrganization($request);
+        $courseRouteParams = $org ? ['organization' => $org->slug] : [];
+        return view('admin.courses.show', compact('course', 'courseRouteParams'));
     }
 
     /**
      * Show the form for editing the specified course.
+     * Org-scoped routes pass (Request, Organization, Course); legacy routes pass (Request, Course).
      */
-    public function edit(Course $course)
+    public function edit(Request $request, $organizationOrCourse = null, Course $course = null)
     {
-        return view('admin.courses.edit', compact('course'));
+        $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
+        $org = $this->currentOrganization($request);
+        $courseRouteParams = $org ? ['organization' => $org->slug] : [];
+        return view('admin.courses.edit', compact('course', 'courseRouteParams'));
     }
 
     /**
      * Update the specified course.
+     * Org-scoped routes pass (Request, Organization, Course); legacy routes pass (Request, Course).
      */
-    public function update(Request $request, Course $course)
+    public function update(Request $request, $organizationOrCourse = null, Course $course = null)
     {
+        $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:courses,slug,' . $course->id,
@@ -173,18 +227,20 @@ class CourseController extends Controller
 
         $course->update($validated);
 
-        return redirect()->route('admin.courses.index')
+        return redirect()->to($this->coursesIndexRoute($request))
             ->with('success', 'Course updated successfully.');
     }
 
     /**
      * Remove the specified course.
+     * Org-scoped routes pass (Request, Organization, Course); legacy routes pass (Request, Course).
      */
-    public function destroy(Course $course)
+    public function destroy(Request $request, $organizationOrCourse = null, Course $course = null)
     {
+        $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
         // Check if course has lessons
         if ($course->lessons()->count() > 0) {
-            return redirect()->route('admin.courses.index')
+            return redirect()->to($this->coursesIndexRoute($request))
                 ->with('error', 'Cannot delete course with existing lessons. Please remove or reassign lessons first.');
         }
 
@@ -195,15 +251,17 @@ class CourseController extends Controller
 
         $course->delete();
 
-        return redirect()->route('admin.courses.index')
+        return redirect()->to($this->coursesIndexRoute($request))
             ->with('success', 'Course deleted successfully.');
     }
 
     /**
      * Archive the specified course.
+     * Org-scoped routes pass (Request, Organization, Course); legacy routes pass (Request, Course).
      */
-    public function archive(Course $course)
+    public function archive(Request $request, $organizationOrCourse = null, Course $course = null)
     {
+        $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
         $course->archive();
 
         return redirect()->back()
@@ -212,9 +270,11 @@ class CourseController extends Controller
 
     /**
      * Unarchive the specified course.
+     * Org-scoped routes pass (Request, Organization, Course); legacy routes pass (Request, Course).
      */
-    public function unarchive(Course $course)
+    public function unarchive(Request $request, $organizationOrCourse = null, Course $course = null)
     {
+        $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
         $course->unarchive();
 
         return redirect()->back()

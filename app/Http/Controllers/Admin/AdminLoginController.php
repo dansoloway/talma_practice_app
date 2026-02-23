@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -12,13 +13,53 @@ use Illuminate\Validation\ValidationException;
 class AdminLoginController extends Controller
 {
     /**
+     * Validate admin_last_org_slug and return the org if valid.
+     * Returns null if invalid; callers should clear session and redirect to org select.
+     */
+    protected function validateLastOrg(Request $request): ?Organization
+    {
+        $slug = $request->session()->get('admin_last_org_slug');
+        if (!$slug) {
+            return null;
+        }
+
+        $org = Organization::where('slug', $slug)->where('is_active', true)->first();
+        if (!$org) {
+            return null;
+        }
+
+        $user = Auth::guard('admin')->user();
+        if (!$user) {
+            return null;
+        }
+
+        // Global admins can access any org
+        if ($user->role === 'admin') {
+            return $org;
+        }
+
+        // Non-global admins must have membership
+        $membership = $org->users()
+            ->where('users.id', $user->id)
+            ->whereIn('organization_user.role', ['org_admin', 'teacher'])
+            ->exists();
+
+        return $membership ? $org : null;
+    }
+
+    /**
      * Show the admin login form.
      * If already authenticated, redirect to dashboard.
      */
     public function show(Request $request)
     {
         if (Auth::guard('admin')->check()) {
-            return redirect()->intended(route('admin.analytics'));
+            $org = $this->validateLastOrg($request);
+            if ($org) {
+                return redirect()->route('org.admin.analytics', ['organization' => $org->slug]);
+            }
+            $request->session()->forget('admin_last_org_slug');
+            return redirect()->route('admin.org.select');
         }
 
         return view('admin.login');
@@ -94,7 +135,12 @@ class AdminLoginController extends Controller
             $request->session()->regenerate();
             RateLimiter::clear($key);
 
-            return redirect()->intended(route('admin.analytics'));
+            $org = $this->validateLastOrg($request);
+            if ($org) {
+                return redirect()->intended(route('org.admin.analytics', ['organization' => $org->slug]));
+            }
+            $request->session()->forget('admin_last_org_slug');
+            return redirect()->intended(route('admin.org.select'));
         }
 
         Log::warning('Admin login failed: Invalid credentials', [

@@ -18,6 +18,8 @@ use App\Http\Controllers\Admin\OptionController as AdminOptionController;
 use App\Http\Controllers\Admin\FlashcardGameController as AdminFlashcardGameController;
 use App\Http\Controllers\Admin\GrammarConceptController;
 use App\Http\Controllers\Admin\OpenAiUsageController;
+use App\Http\Controllers\Admin\OrgSelectController;
+use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -100,7 +102,28 @@ Route::post('/admin/password/email', [\App\Http\Controllers\Admin\PasswordResetC
 Route::get('/admin/password/reset/{token}', [\App\Http\Controllers\Admin\PasswordResetController::class, 'showResetForm'])->name('admin.password.reset');
 Route::post('/admin/password/reset', [\App\Http\Controllers\Admin\PasswordResetController::class, 'reset'])->name('admin.password.update');
 
+// Org-scoped admin routes: /o/{org}/admin/*
+Route::prefix('o/{organization}')->name('org.admin.')->middleware(['auth:admin', 'admin.access', 'org.context', 'org.member'])->group(function () {
+    Route::get('admin', fn () => redirect()->route('org.admin.analytics', ['organization' => request()->route('organization')]))->name('dashboard');
+    Route::get('admin/analytics', [DashboardController::class, 'index'])->name('analytics');
+    Route::post('admin/courses/{course}/archive', [CourseController::class, 'archive'])->name('courses.archive');
+    Route::post('admin/courses/{course}/unarchive', [CourseController::class, 'unarchive'])->name('courses.unarchive');
+    Route::resource('admin/courses', CourseController::class)->names([
+        'index' => 'courses.index',
+        'create' => 'courses.create',
+        'store' => 'courses.store',
+        'show' => 'courses.show',
+        'edit' => 'courses.edit',
+        'update' => 'courses.update',
+        'destroy' => 'courses.destroy',
+    ]);
+});
+
 Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'admin.access'])->group(function () {
+    // Org selection (before entering org context)
+    Route::get('org/select', [OrgSelectController::class, 'index'])->name('org.select');
+    Route::post('org/select', [OrgSelectController::class, 'store'])->name('org.select.store');
+
     // Analytics routes
     Route::get('analytics', [DashboardController::class, 'index'])->name('analytics');
     Route::get('session-length', [DashboardController::class, 'sessionLengthDashboard'])->name('session-length');

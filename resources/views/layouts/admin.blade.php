@@ -33,13 +33,23 @@
     @stack('styles')
 </head>
 <body class="bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen">
+    @php
+        $org = $currentOrganization ?? null;
+        $analyticsUrl = $org ? route('org.admin.analytics', ['organization' => $org->slug]) : route('admin.analytics');
+        $coursesUrl = $org ? route('org.admin.courses.index', ['organization' => $org->slug]) : route('admin.courses.index');
+    @endphp
     <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200/60 shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <a href="{{ route('admin.analytics') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="TALMA Practice Pal admin home">
+                <a href="{{ $analyticsUrl }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="TALMA Practice Pal admin home">
                     <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="h-9 w-auto">
                     <span class="text-gray-700 font-semibold text-lg">Admin</span>
                 </a>
+                @if($org)
+                    <span class="text-gray-500 text-sm">|</span>
+                    <span class="text-gray-600 text-sm">Current org: <strong>{{ $org->name }}</strong></span>
+                    <a href="{{ route('admin.org.select') }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">Switch org</a>
+                @endif
             </div>
             <div class="flex items-center gap-4 flex-wrap">
                 <!-- Analytics Dropdown -->
@@ -48,14 +58,14 @@
                         Analytics <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
                     </a>
                     <div class="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                        <a href="{{ route('admin.analytics') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">Dashboard</a>
+                        <a href="{{ $analyticsUrl }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">Dashboard</a>
                         <a href="{{ route('admin.session-length') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Session Length</a>
                         <a href="{{ route('admin.openai-usage') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition-colors duration-200">OpenAI Usage & Cost</a>
                     </div>
                 </div>
                 
                 <!-- Courses -->
-                <a href="{{ route('admin.courses.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Courses</a>
+                <a href="{{ $coursesUrl }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Courses</a>
                 
                 <!-- Lessons Dropdown -->
                 <div class="relative group">
