@@ -22,6 +22,7 @@ use App\Models\Vocabulary;
 use App\Models\VocabularyPresentation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ExportContentCommand extends Command
 {
@@ -61,11 +62,8 @@ class ExportContentCommand extends Command
         $export['content']['courses'] = $this->exportModel(Course::class);
         $export['counts']['courses'] = count($export['content']['courses']);
 
-        // Organization-course pivot (which orgs have which courses)
-        $export['content']['organization_course'] = DB::table('organization_course')
-            ->get()
-            ->map(fn ($r) => (array) $r)
-            ->toArray();
+        // Organization-course pivot (skipped if table doesn't exist yet—e.g. pre-migration backup)
+        $export['content']['organization_course'] = $this->exportTableIfExists('organization_course');
         $export['counts']['organization_course'] = count($export['content']['organization_course']);
 
         // Lessons
@@ -73,10 +71,7 @@ class ExportContentCommand extends Command
         $export['counts']['lessons'] = count($export['content']['lessons']);
 
         // Lesson review sources pivot
-        $export['content']['lesson_review_sources'] = DB::table('lesson_review_sources')
-            ->get()
-            ->map(fn ($r) => (array) $r)
-            ->toArray();
+        $export['content']['lesson_review_sources'] = $this->exportTableIfExists('lesson_review_sources');
         $export['counts']['lesson_review_sources'] = count($export['content']['lesson_review_sources']);
 
         // Parts
@@ -144,10 +139,7 @@ class ExportContentCommand extends Command
         $export['counts']['grammar_concepts'] = count($export['content']['grammar_concepts']);
 
         // Grammar set <-> lesson pivot
-        $export['content']['grammar_set_lesson'] = DB::table('grammar_set_lesson')
-            ->get()
-            ->map(fn ($r) => (array) $r)
-            ->toArray();
+        $export['content']['grammar_set_lesson'] = $this->exportTableIfExists('grammar_set_lesson');
         $export['counts']['grammar_set_lesson'] = count($export['content']['grammar_set_lesson']);
 
         $json = json_encode($export, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -166,6 +158,20 @@ class ExportContentCommand extends Command
         );
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Export a table if it exists (for pivot tables that may not exist pre-migration).
+     */
+    protected function exportTableIfExists(string $table): array
+    {
+        if (! Schema::hasTable($table)) {
+            return [];
+        }
+        return DB::table($table)
+            ->get()
+            ->map(fn ($r) => (array) $r)
+            ->toArray();
     }
 
     /**
