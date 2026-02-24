@@ -3,11 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lesson;
+use App\Models\Organization;
+use App\Services\CourseAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class LessonController extends Controller
 {
+    protected CourseAccess $courseAccess;
+
+    public function __construct(CourseAccess $courseAccess)
+    {
+        $this->courseAccess = $courseAccess;
+    }
     /**
      * Display a listing of active lessons.
      */
@@ -20,9 +28,12 @@ class LessonController extends Controller
 
     /**
      * Display the specified lesson with its activities.
+     * Legacy route: /lessons/{slug}. Org route: /o/{organization}/lessons/{lesson}.
      */
-    public function show(string $slug)
+    public function show(Request $request)
     {
+        $organization = $request->route('organization');
+        $lessonParam = $request->route('lesson');
         // Build eager loading array
         $withRelations = [
             'vocabulary' => function ($query) {
@@ -73,12 +84,21 @@ class LessonController extends Controller
             // Skip eager loading trueFalseGames
         }
         
-        $lesson = Lesson::active()
-            ->where('slug', $slug)
-            ->where('is_active', true)
-            ->with($withRelations)
-            ->with('course')
-            ->firstOrFail();
+        $lesson = ($lessonParam instanceof Lesson)
+            ? $lessonParam
+            : Lesson::active()
+                ->where('slug', $request->route('slug'))
+                ->where('is_active', true)
+                ->firstOrFail();
+
+        $lesson->load($withRelations);
+        $lesson->load('course');
+
+        $org = $organization ?? Organization::where('slug', 'default')->where('is_active', true)->firstOrFail();
+        $user = auth('admin')->check() ? auth('admin')->user() : null;
+        if (!$this->courseAccess->canAccessLesson($user, $lesson, $org)) {
+            abort(403, 'You do not have access to this lesson.');
+        }
         
         // Add full URLs for audio paths in prompts
         $lesson->prompts->each(function ($prompt) {
@@ -101,7 +121,8 @@ class LessonController extends Controller
             $lesson->setRelation('vocabulary', $lesson->getVocabularyForGames());
         }
 
-        return view('lessons.show', compact('lesson'));
+        $org = $organization ?? null;
+        return view('lessons.show', compact('lesson', 'org'));
     }
 }
 

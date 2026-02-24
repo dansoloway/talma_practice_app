@@ -88,6 +88,15 @@
                                 {{ $course->lessons_count }} {{ $course->lessons_count === 1 ? 'lesson' : 'lessons' }}
                             </span>
                             <div class="flex flex-wrap gap-2 justify-end">
+                                @if(isset($courseRouteParams['organization']))
+                                    @php $isOrgWide = (bool) ($course->pivot->is_org_wide ?? false); @endphp
+                                    <form method="POST" action="{{ route('org.admin.courses.toggle-org-wide', array_merge($courseRouteParams, ['course' => $course])) }}" class="inline">
+                                        @csrf
+                                        <button type="submit" class="px-2 py-1 text-xs font-semibold rounded-full transition-colors {{ $isOrgWide ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600' }}" title="{{ $isOrgWide ? 'Org-wide (visible to all org members)' : 'Class-only' }}">
+                                            {{ $isOrgWide ? 'Org-wide' : 'Class-only' }}
+                                        </button>
+                                    </form>
+                                @endif
                                 @if($course->isArchived())
                                     <span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">
                                         <i class="fas fa-archive mr-1"></i> Archived

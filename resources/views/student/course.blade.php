@@ -12,7 +12,7 @@
     <div class="container mx-auto px-4 max-w-5xl">
         <!-- Header Section - Stronger visual hierarchy -->
         <div class="mb-8">
-            <a href="{{ route('student.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-6 transition-colors duration-200">
+            <a href="{{ isset($org) && $org ? route('org.student.index', $org) : route('student.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-6 transition-colors duration-200">
                 <i class="fas fa-arrow-left mr-2"></i>
                 <span>Back to Courses</span>
             </a>
@@ -34,7 +34,7 @@
 
         <!-- Filters Section - Reduced visual weight, secondary feel -->
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm p-5 mb-8">
-            <form method="GET" action="{{ route('student.course', $course->slug) }}" class="flex flex-wrap gap-4 items-end">
+            <form method="GET" action="{{ isset($org) && $org ? route('org.student.course', [$org, $course]) : route('student.course', $course->slug) }}" class="flex flex-wrap gap-4 items-end">
                 @if($sessionNumbers->count() > 0)
                     <div class="flex-1 min-w-[150px]">
                         <label for="session_number" class="block text-sm font-semibold text-gray-700 mb-2">Session:</label>
@@ -76,7 +76,7 @@
                         Filter
                     </button>
                     @if(request()->hasAny(['session_number', 'part_number', 'search']))
-                        <a href="{{ route('student.course', $course->slug) }}" class="px-5 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200">
+                        <a href="{{ isset($org) && $org ? route('org.student.course', [$org, $course]) : route('student.course', $course->slug) }}" class="px-5 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200">
                             Clear
                         </a>
                     @endif
@@ -95,7 +95,7 @@
         <!-- Lessons Grid - Interactive tiles with warmth -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="lessons-list">
             @forelse($lessons as $lesson)
-                <a href="{{ route('lessons.show', $lesson->slug) }}" 
+                <a href="{{ isset($org) && $org ? route('org.student.lesson', [$org, $lesson]) : route('lessons.show', $lesson->slug) }}" 
                    class="group relative {{ $lesson->is_review ? 'bg-purple-50 border-purple-300 hover:border-purple-400' : 'bg-white border-gray-200 hover:border-blue-300' }} rounded-2xl border-2 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
                     
                     <!-- Card Content -->
@@ -171,14 +171,14 @@
                             <div class="text-6xl mb-4">🔍</div>
                             <h3 class="text-2xl font-bold text-gray-800 mb-3">No lessons found</h3>
                             <p class="text-gray-600 mb-6">No lessons match your current filters. Try adjusting your search criteria.</p>
-                            <a href="{{ route('student.course', $course->slug) }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
+                            <a href="{{ isset($org) && $org ? route('org.student.course', [$org, $course]) : route('student.course', $course->slug) }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
                                 Clear All Filters
                             </a>
                         @else
                             <div class="text-6xl mb-4">📚</div>
                             <h3 class="text-2xl font-bold text-gray-800 mb-3">No lessons available for this course</h3>
                             <p class="text-gray-600 mb-6">Please check back later for new lessons!</p>
-                            <a href="{{ route('student.index') }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
+                            <a href="{{ isset($org) && $org ? route('org.student.index', $org) : route('student.index') }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
                                 Choose Different Course
                             </a>
                         @endif

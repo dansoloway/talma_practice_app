@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\FlashcardGameController as AdminFlashcardGameCont
 use App\Http\Controllers\Admin\GrammarConceptController;
 use App\Http\Controllers\Admin\OpenAiUsageController;
 use App\Http\Controllers\Admin\OrgSelectController;
+use App\Http\Controllers\Admin\ClassroomController;
 use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -29,10 +30,17 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Student Homepage
+// Student Homepage (legacy - uses Default org)
 Route::get('/', [StudentController::class, 'index'])->name('student.index');
 Route::get('/lessons', [StudentController::class, 'index'])->name('lessons.index');
 Route::get('/courses/{course:slug}', [StudentController::class, 'course'])->name('student.course');
+
+// Org-scoped student routes
+Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'student.org.access'])->group(function () {
+    Route::get('/', [StudentController::class, 'index'])->name('index');
+    Route::get('courses/{course:slug}', [StudentController::class, 'course'])->name('course');
+    Route::get('lessons/{lesson:slug}', [LessonController::class, 'show'])->name('lesson');
+});
 Route::get('/grade/{gradeLevel}', [StudentController::class, 'grade'])->name('student.grade'); // Kept for backward compatibility
 Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'updateLessonOrder'])
     ->middleware('auth:admin')
@@ -108,6 +116,7 @@ Route::prefix('o/{organization}')->name('org.admin.')->middleware(['auth:admin',
     Route::get('admin/analytics', [DashboardController::class, 'index'])->name('analytics');
     Route::post('admin/courses/{course}/archive', [CourseController::class, 'archive'])->name('courses.archive');
     Route::post('admin/courses/{course}/unarchive', [CourseController::class, 'unarchive'])->name('courses.unarchive');
+    Route::post('admin/courses/{course}/toggle-org-wide', [CourseController::class, 'toggleOrgWide'])->name('courses.toggle-org-wide');
     Route::resource('admin/courses', CourseController::class)->names([
         'index' => 'courses.index',
         'create' => 'courses.create',
@@ -117,6 +126,18 @@ Route::prefix('o/{organization}')->name('org.admin.')->middleware(['auth:admin',
         'update' => 'courses.update',
         'destroy' => 'courses.destroy',
     ]);
+    Route::resource('admin/classrooms', ClassroomController::class)->names([
+        'index' => 'classrooms.index',
+        'create' => 'classrooms.create',
+        'store' => 'classrooms.store',
+        'show' => 'classrooms.show',
+        'edit' => 'classrooms.edit',
+        'update' => 'classrooms.update',
+        'destroy' => 'classrooms.destroy',
+    ])->parameters(['classrooms' => 'classroom']);
+    Route::post('admin/classrooms/{classroom}/sync-students', [ClassroomController::class, 'syncStudents'])->name('classrooms.sync-students');
+    Route::post('admin/classrooms/{classroom}/sync-teachers', [ClassroomController::class, 'syncTeachers'])->name('classrooms.sync-teachers');
+    Route::post('admin/classrooms/{classroom}/sync-courses', [ClassroomController::class, 'syncCourses'])->name('classrooms.sync-courses');
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'admin.access'])->group(function () {

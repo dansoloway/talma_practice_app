@@ -22,7 +22,7 @@
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse($courses as $course)
-                    <a href="{{ route('student.course', $course->slug) }}" 
+                    <a href="{{ isset($org) && $org ? route('org.student.course', [$org, $course]) : route('student.course', $course->slug) }}" 
                        class="group relative bg-white rounded-2xl border-2 border-gray-200 shadow-sm hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer block overflow-hidden">
                         @if($course->cover_image_path)
                             <div class="h-48 overflow-hidden">

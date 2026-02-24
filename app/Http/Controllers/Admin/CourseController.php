@@ -280,4 +280,17 @@ class CourseController extends Controller
         return redirect()->back()
             ->with('success', 'Course unarchived successfully.');
     }
+
+    /**
+     * Toggle org-wide access for a course (org-scoped only).
+     */
+    public function toggleOrgWide(Request $request, Organization $organization, Course $course)
+    {
+        $course = $organization->courses()->whereKey($course->id)->firstOrFail();
+        $current = (bool) $course->pivot->is_org_wide;
+        $organization->courses()->updateExistingPivot($course->id, ['is_org_wide' => !$current]);
+
+        return redirect()->back()
+            ->with('success', $current ? 'Course is now class-only.' : 'Course is now org-wide.');
+    }
 }

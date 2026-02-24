@@ -4,31 +4,54 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\Organization;
+use App\Services\CourseAccess;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
 {
-    /**
-     * Show the student homepage with course selection
-     */
-    public function index()
+    protected CourseAccess $courseAccess;
+
+    public function __construct(CourseAccess $courseAccess)
     {
-        // Get all active courses with their lesson counts
-        $courses = Course::active()
-            ->ordered()
+        $this->courseAccess = $courseAccess;
+    }
+
+    /**
+     * Show the student homepage with course selection.
+     * Uses Default org when no organization provided (legacy routes).
+     */
+    public function index(?Organization $organization = null)
+    {
+        $org = $organization ?? Organization::where('slug', 'default')->where('is_active', true)->firstOrFail();
+        $user = auth('admin')->check() ? auth('admin')->user() : null;
+        $courses = $this->courseAccess->accessibleCourses($user, $org)
             ->withCount(['lessons' => function ($query) {
                 $query->where('is_active', true)->whereNull('archived_at');
             }])
             ->get();
 
-        return view('student.index', compact('courses'));
+        return view('student.index', compact('courses', 'org'));
     }
 
     /**
-     * Show lessons for a specific course
+     * Show lessons for a specific course.
+     * Legacy route: /courses/{course}. Org route: /o/{organization}/courses/{course}.
      */
-    public function course(Request $request, Course $course)
+    public function course(Request $request)
     {
+        $courseParam = $request->route('course');
+        $course = $courseParam instanceof Course
+            ? $courseParam
+            : Course::where('slug', $courseParam)->firstOrFail();
+        $organization = $request->route('organization');
+        $org = $organization ?? Organization::where('slug', 'default')->where('is_active', true)->firstOrFail();
+        $user = auth('admin')->check() ? auth('admin')->user() : null;
+
+        if (!$this->courseAccess->canAccessCourse($user, $course, $org)) {
+            abort(403, 'You do not have access to this course.');
+        }
+
         $query = $course->activeLessons();
         
         // Filter by session number (which is now the order within course)
@@ -81,7 +104,7 @@ class StudentController extends Controller
             ->orderBy('part_number')
             ->pluck('part_number');
 
-        return view('student.course', compact('course', 'lessons', 'sessionNumbers', 'partNumbers'));
+        return view('student.course', compact('course', 'lessons', 'sessionNumbers', 'partNumbers', 'org'));
     }
 
     /**

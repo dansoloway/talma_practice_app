@@ -42,11 +42,21 @@ class Course extends Model
     }
 
     /**
-     * Organizations that have access to this course.
+     * Organizations that have access to this course (with pivot is_org_wide).
      */
     public function organizations(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class, 'organization_course')
+            ->withPivot('is_org_wide')
+            ->withTimestamps();
+    }
+
+    /**
+     * Classes that have this course assigned.
+     */
+    public function classrooms(): BelongsToMany
+    {
+        return $this->belongsToMany(Classroom::class, 'class_course', 'course_id', 'class_id')
             ->withTimestamps();
     }
 

@@ -41,56 +41,114 @@
     <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200/60 shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <a href="{{ $analyticsUrl }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="TALMA Practice Pal admin home">
+                <a href="{{ $analyticsUrl }}" class="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200" aria-label="Dashboard">
                     <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="h-9 w-auto">
-                    <span class="text-gray-700 font-semibold text-lg">Admin</span>
                 </a>
-                @if($org)
-                    <span class="text-gray-500 text-sm">|</span>
-                    <span class="text-gray-600 text-sm">Current org: <strong>{{ $org->name }}</strong></span>
-                    <a href="{{ route('admin.org.select') }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">Switch org</a>
+                @if($accessibleOrgs->isNotEmpty())
+                    <span class="text-gray-400">|</span>
+                    <div class="relative group">
+                        <button type="button" class="flex items-center gap-1.5 px-2 py-1.5 text-gray-600 hover:text-blue-600 text-sm font-medium rounded-lg hover:bg-blue-50/80 transition-all duration-200">
+                            <span>{{ $org ? $org->name : 'Select org' }}</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                        </button>
+                        <div class="absolute top-full left-0 pt-1 -mt-1">
+                            <div class="bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-1 min-w-[180px]">
+                            @foreach($accessibleOrgs as $o)
+                                <form method="POST" action="{{ route('admin.org.select.store') }}" class="block">
+                                    @csrf
+                                    <input type="hidden" name="organization" value="{{ $o->slug }}">
+                                    <button type="submit" class="w-full text-left px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 flex items-center justify-between {{ $org && $org->id === $o->id ? 'bg-blue-50/50 font-medium' : '' }}">
+                                        <span>{{ $o->name }}</span>
+                                        @if($org && $org->id === $o->id)
+                                            <i class="fas fa-check text-blue-600 text-sm"></i>
+                                        @endif
+                                    </button>
+                                </form>
+                            @endforeach
+                            </div>
+                        </div>
+                    </div>
                 @endif
             </div>
-            <div class="flex items-center gap-4 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- Content Dropdown: Courses, Classes, Lessons -->
+                <div class="relative group">
+                    <button type="button" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
+                        Courses &amp; Lessons <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                    </button>
+                    <div class="absolute top-full left-0 pt-1 -mt-1">
+                        <div class="w-52 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-1">
+                        <a href="{{ $coursesUrl }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
+                            <i class="fas fa-book-open w-5 mr-2 text-gray-400"></i>Courses
+                        </a>
+                        @if($org)
+                            <a href="{{ route('org.admin.classrooms.index', ['organization' => $org->slug]) }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
+                                <i class="fas fa-chalkboard-teacher w-5 mr-2 text-gray-400"></i>Classes
+                            </a>
+                            <div class="border-t border-gray-100 my-1"></div>
+                        @endif
+                        <a href="{{ route('admin.lessons.index') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
+                            <i class="fas fa-file-alt w-5 mr-2 text-gray-400"></i>All Lessons
+                        </a>
+                        <a href="{{ route('admin.lesson-tracker') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
+                            <i class="fas fa-tasks w-5 mr-2 text-gray-400"></i>Lesson Tracker
+                        </a>
+                        <a href="{{ route('admin.lessons.archived') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
+                            <i class="fas fa-archive w-5 mr-2 text-gray-400"></i>Archived
+                        </a>
+                        <a href="{{ route('admin.grammar-concepts.index') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded-b-xl">
+                            <i class="fas fa-language w-5 mr-2 text-gray-400"></i>Grammar Sets
+                        </a>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Analytics Dropdown -->
                 <div class="relative group">
-                    <a href="#" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
+                    <button type="button" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
                         Analytics <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
-                    </a>
-                    <div class="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                        <a href="{{ $analyticsUrl }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">Dashboard</a>
-                        <a href="{{ route('admin.session-length') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Session Length</a>
-                        <a href="{{ route('admin.openai-usage') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition-colors duration-200">OpenAI Usage & Cost</a>
+                    </button>
+                    <div class="absolute top-full left-0 pt-1 -mt-1">
+                        <div class="w-48 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-1">
+                        <a href="{{ $analyticsUrl }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">
+                            <i class="fas fa-chart-line w-5 mr-2 text-gray-400"></i>Dashboard
+                        </a>
+                        <a href="{{ route('admin.session-length') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
+                            <i class="fas fa-clock w-5 mr-2 text-gray-400"></i>Session Length
+                        </a>
+                        <a href="{{ route('admin.openai-usage') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded-b-xl">
+                            <i class="fas fa-dollar-sign w-5 mr-2 text-gray-400"></i>AI Usage & Cost
+                        </a>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- Courses -->
-                <a href="{{ $coursesUrl }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Courses</a>
-                
-                <!-- Lessons Dropdown -->
-                <div class="relative group">
-                    <a href="#" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
-                        Lessons <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
-                    </a>
-                    <div class="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                        <a href="{{ route('admin.lessons.index') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">All Lessons</a>
-                        <a href="{{ route('admin.lesson-tracker') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Lesson Tracker</a>
-                        <a href="{{ route('admin.lessons.archived') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Archived</a>
-                        <a href="{{ route('admin.grammar-concepts.index') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-xl transition-colors duration-200">Grammar Sets</a>
-                    </div>
-                </div>
-                
+
                 @if(auth('admin')->user()?->role === 'admin')
-                    <a href="{{ route('admin.users.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Users</a>
+                    <a href="{{ route('admin.users.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
+                        <i class="fas fa-users mr-1.5 text-gray-400"></i>Users
+                    </a>
                 @endif
-                
-                <a href="{{ route('admin.openai-usage') }}" title="View AI Cost Dashboard" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
-                    <i class="fas fa-dollar-sign"></i> AI Costs
+
+                <a href="{{ route('lessons.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200" title="View as student">
+                    <i class="fas fa-graduation-cap mr-1.5 text-gray-400"></i>Student View
                 </a>
-                
-                <a href="{{ route('lessons.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Student View</a>
-                <span class="px-3 py-2 text-gray-600 text-sm border-l border-gray-200/60 ml-2 pl-4">{{ auth('admin')->user()->name }} ({{ ucfirst(auth('admin')->user()->role) }})</span>
-                <a href="#" onclick="logout()" class="px-3 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
+
+                <div class="border-l border-gray-200 h-6 mx-1"></div>
+                <!-- User menu: click Daniel (Admin) for Logout -->
+                <div class="relative group">
+                    <button type="button" class="flex items-center gap-1.5 px-3 py-2 text-gray-600 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
+                        <i class="fas fa-user-circle text-gray-400"></i>
+                        <span>{{ auth('admin')->user()->name }} ({{ ucfirst(auth('admin')->user()->role) }})</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                    </button>
+                    <div class="absolute top-full right-0 pt-1 -mt-1">
+                        <div class="bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-1 min-w-[160px]">
+                            <a href="#" onclick="logout(); return false;" class="block px-4 py-2.5 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-200 rounded-lg">
+                                <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </nav>
     </header>

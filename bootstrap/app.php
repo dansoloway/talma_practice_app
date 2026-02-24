@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.only' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'org.context' => \App\Http\Middleware\OrgContext::class,
             'org.member' => \App\Http\Middleware\OrgMember::class,
+            'student.org.access' => \App\Http\Middleware\StudentOrgAccess::class,
         ]);
 
         $middleware->prependToGroup('web', [

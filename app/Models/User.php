@@ -101,4 +101,40 @@ class User extends Authenticatable
             ->withPivot('role')
             ->withTimestamps();
     }
+
+    /**
+     * Classes the user is enrolled in as a student.
+     */
+    public function classes(): BelongsToMany
+    {
+        return $this->belongsToMany(Classroom::class, 'class_user', 'user_id', 'class_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Classes the user teaches.
+     */
+    public function teachingClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(Classroom::class, 'class_teacher', 'user_id', 'class_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the user's role in an organization.
+     */
+    public function orgRole(int $orgId): ?string
+    {
+        $pivot = $this->organizations()->where('organizations.id', $orgId)->first()?->pivot;
+
+        return $pivot?->role;
+    }
+
+    /**
+     * Check if the user is a member of an organization (any role).
+     */
+    public function isMemberOfOrg(int $orgId): bool
+    {
+        return $this->organizations()->where('organizations.id', $orgId)->exists();
+    }
 }

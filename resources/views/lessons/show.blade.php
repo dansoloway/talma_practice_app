@@ -6,10 +6,10 @@
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
     <div class="container mx-auto px-4 max-w-5xl">
         <!-- Back Link -->
-        <a href="{{ route('lessons.index') }}" 
+        <a href="{{ isset($org) && $org && $lesson->course ? route('org.student.course', [$org, $lesson->course]) : ($lesson->course ? route('student.course', $lesson->course->slug) : route('lessons.index')) }}" 
            class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-6 transition-colors duration-200 group">
             <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
-            <span>Back to Lessons</span>
+            <span>{{ $lesson->course ? 'Back to ' . $lesson->course->title : 'Back to Lessons' }}</span>
         </a>
 
         <!-- Lesson Header -->
