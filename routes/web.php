@@ -39,7 +39,7 @@ Route::get('/courses/{course:slug}', [StudentController::class, 'course'])->name
 Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'student.org.access'])->group(function () {
     Route::get('/', [StudentController::class, 'index'])->name('index');
     Route::get('courses/{course:slug}', [StudentController::class, 'course'])->name('course');
-    Route::get('lessons/{lesson:slug}', [LessonController::class, 'show'])->name('lesson');
+    Route::get('lessons/{slug}', [LessonController::class, 'show'])->name('lesson');
 });
 Route::get('/grade/{gradeLevel}', [StudentController::class, 'grade'])->name('student.grade'); // Kept for backward compatibility
 Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'updateLessonOrder'])

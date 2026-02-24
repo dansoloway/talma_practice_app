@@ -33,6 +33,7 @@ class LessonController extends Controller
     public function show(Request $request)
     {
         $organization = $request->route('organization');
+        $slug = $request->route('slug');
         $lessonParam = $request->route('lesson');
         // Build eager loading array
         $withRelations = [
@@ -87,7 +88,7 @@ class LessonController extends Controller
         $lesson = ($lessonParam instanceof Lesson)
             ? $lessonParam
             : Lesson::active()
-                ->where('slug', $request->route('slug'))
+                ->where('slug', $slug ?? $request->route('slug'))
                 ->where('is_active', true)
                 ->firstOrFail();
 

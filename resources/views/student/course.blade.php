@@ -95,7 +95,7 @@
         <!-- Lessons Grid - Interactive tiles with warmth -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="lessons-list">
             @forelse($lessons as $lesson)
-                <a href="{{ isset($org) && $org ? route('org.student.lesson', [$org, $lesson]) : route('lessons.show', $lesson->slug) }}" 
+                <a href="{{ isset($org) && $org ? route('org.student.lesson', [$org, $lesson->slug]) : route('lessons.show', $lesson->slug) }}" 
                    class="group relative {{ $lesson->is_review ? 'bg-purple-50 border-purple-300 hover:border-purple-400' : 'bg-white border-gray-200 hover:border-blue-300' }} rounded-2xl border-2 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
                     
                     <!-- Card Content -->
