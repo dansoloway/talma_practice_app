@@ -18,20 +18,45 @@ class StudentController extends Controller
     }
 
     /**
-     * Show the student homepage with course selection.
-     * Uses Default org when no organization provided (legacy routes).
+     * Show the student homepage with course selection, organized by organization.
+     * Root / and /lessons: show all accessible orgs with their courses.
+     * /o/{organization}/: show that org's courses.
+     * Default org displays as "TALMA Community Resources".
      */
     public function index(?Organization $organization = null)
     {
-        $org = $organization ?? Organization::where('slug', 'default')->where('is_active', true)->firstOrFail();
         $user = auth('admin')->check() ? auth('admin')->user() : null;
-        $courses = $this->courseAccess->accessibleCourses($user, $org)
-            ->withCount(['lessons' => function ($query) {
-                $query->where('is_active', true)->whereNull('archived_at');
-            }])
-            ->get();
 
-        return view('student.index', compact('courses', 'org'));
+        $orgs = $organization
+            ? collect([$organization])
+            : $this->getAccessibleOrgs($user);
+
+        $orgsWithCourses = $orgs->filter(fn ($org) => $org->is_active)->map(function ($org) use ($user) {
+            $courses = $this->courseAccess->accessibleCourses($user, $org)
+                ->withCount(['lessons' => fn ($q) => $q->where('is_active', true)->whereNull('archived_at')])
+                ->get();
+            return ['org' => $org, 'courses' => $courses];
+        })->filter(fn ($row) => $row['courses']->isNotEmpty());
+
+        return view('student.index', ['orgsWithCourses' => $orgsWithCourses]);
+    }
+
+    /**
+     * Get orgs the user can access: open orgs for everyone; restricted orgs if user is member.
+     */
+    protected function getAccessibleOrgs($user)
+    {
+        $query = Organization::where('is_active', true)
+            ->where(function ($q) use ($user) {
+                $q->where('access_mode', 'open');
+                if ($user) {
+                    $q->orWhereIn('id', $user->organizations()->pluck('organizations.id'));
+                }
+            });
+
+        return $query->orderByRaw("CASE WHEN slug = 'default' THEN 0 ELSE 1 END")
+            ->orderBy('name')
+            ->get();
     }
 
     /**

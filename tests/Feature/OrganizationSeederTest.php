@@ -36,7 +36,7 @@ class OrganizationSeederTest extends TestCase
 
         $defaultOrg = Organization::where('slug', 'default')->first();
         $this->assertNotNull($defaultOrg);
-        $this->assertEquals('Default', $defaultOrg->name);
+        $this->assertEquals('TALMA Community Resources', $defaultOrg->name);
         $this->assertEquals('open', $defaultOrg->access_mode);
         $this->assertTrue($defaultOrg->is_active);
 

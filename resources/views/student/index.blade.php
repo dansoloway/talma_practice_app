@@ -15,51 +15,57 @@
             </p>
         </div>
 
-        <!-- Course Selection -->
+        <!-- Course Selection by Organization -->
         <div class="mb-8">
             <h2 class="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-8">
                 Choose Your Course
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @forelse($courses as $course)
-                    <a href="{{ isset($org) && $org ? route('org.student.course', [$org, $course]) : route('student.course', $course->slug) }}" 
-                       class="group relative bg-white rounded-2xl border-2 border-gray-200 shadow-sm hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer block overflow-hidden">
-                        @if($course->cover_image_path)
-                            <div class="h-48 overflow-hidden">
-                                <img src="{{ $course->cover_image_url }}" 
-                                     alt="{{ $course->title }}" 
-                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                            </div>
-                        @endif
-                        <div class="p-6">
-                            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-700 transition-colors duration-200">
-                                {{ $course->title }}
-                            </h3>
-                            @if($course->description)
-                                <p class="text-gray-600 text-sm mb-4 line-clamp-2">
-                                    {{ $course->description }}
-                                </p>
-                            @endif
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-500">
-                                    {{ $course->lessons_count }} {{ $course->lessons_count === 1 ? 'lesson' : 'lessons' }}
-                                </span>
-                                <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                    <i class="fas fa-chevron-right text-blue-500"></i>
+            @forelse($orgsWithCourses as $row)
+                @php $org = $row['org']; $courses = $row['courses']; @endphp
+                <section class="mb-12">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        {{ $org->display_name }}
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        @foreach($courses as $course)
+                            <a href="{{ route('org.student.course', [$org, $course]) }}" 
+                               class="group relative bg-white rounded-2xl border-2 border-gray-200 shadow-sm hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer block overflow-hidden">
+                                @if($course->cover_image_path)
+                                    <div class="h-48 overflow-hidden">
+                                        <img src="{{ $course->cover_image_url }}" 
+                                             alt="{{ $course->title }}" 
+                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                    </div>
+                                @endif
+                                <div class="p-6">
+                                    <h4 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-700 transition-colors duration-200">
+                                        {{ $course->title }}
+                                    </h4>
+                                    @if($course->description)
+                                        <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                                            {{ $course->description }}
+                                        </p>
+                                    @endif
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-500">
+                                            {{ $course->lessons_count }} {{ $course->lessons_count === 1 ? 'lesson' : 'lessons' }}
+                                        </span>
+                                        <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                            <i class="fas fa-chevron-right text-blue-500"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </a>
-                @empty
-                    <div class="col-span-full">
-                        <div class="bg-white rounded-2xl border-2 border-gray-200 p-12 text-center shadow-sm">
-                            <div class="text-6xl mb-4">📚</div>
-                            <h3 class="text-2xl font-bold text-gray-800 mb-3">No courses available yet</h3>
-                            <p class="text-gray-600">Please check back later for new courses!</p>
-                        </div>
+                            </a>
+                        @endforeach
                     </div>
-                @endforelse
-            </div>
+                </section>
+            @empty
+                <div class="bg-white rounded-2xl border-2 border-gray-200 p-12 text-center shadow-sm">
+                    <div class="text-6xl mb-4">📚</div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">No courses available yet</h3>
+                    <p class="text-gray-600">Please check back later for new courses!</p>
+                </div>
+            @endforelse
         </div>
     </div>
 </div>

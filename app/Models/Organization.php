@@ -32,6 +32,15 @@ class Organization extends Model
     }
 
     /**
+     * Display name for student-facing views.
+     * The default org slug displays as "TALMA Community Resources".
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->slug === 'default' ? 'TALMA Community Resources' : $this->name;
+    }
+
+    /**
      * Users belonging to this organization (with pivot role).
      */
     public function users(): BelongsToMany

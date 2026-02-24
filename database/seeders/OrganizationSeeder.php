@@ -19,12 +19,13 @@ class OrganizationSeeder extends Seeder
         $org = Organization::firstOrCreate(
             ['slug' => 'default'],
             [
-                'name' => 'Default',
-                'description' => 'Default organization for existing content',
+                'name' => 'TALMA Community Resources',
+                'description' => 'Community resources available to all',
                 'is_active' => true,
                 'access_mode' => 'open',
             ]
         );
+        $org->update(['name' => 'TALMA Community Resources', 'description' => 'Community resources available to all']);
 
         $this->command->info("Default organization: {$org->name} (id: {$org->id})");
 
