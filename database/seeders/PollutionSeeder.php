@@ -16,7 +16,7 @@ class PollutionSeeder extends Seeder
     {
         $lesson = Lesson::firstOrCreate(
             ['slug' => 'pollution'],
-            ['title' => 'Pollution', 'is_active' => true, 'sort_order' => 4]
+            ['title' => 'Pollution', 'grade_level' => '1', 'is_active' => true, 'sort_order' => 4]
         );
 
         $prompt = Prompt::firstOrCreate(

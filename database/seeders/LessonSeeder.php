@@ -14,10 +14,11 @@ class LessonSeeder extends Seeder
      */
     public function run(): void
     {
-        // Lesson 1: Colors
+        // Lesson 1: Colors (Grade 1)
         $colorsLesson = Lesson::create([
             'title' => 'Favorite Colors',
             'slug' => 'colors',
+            'grade_level' => '1',
             'is_active' => true,
             'sort_order' => 1,
         ]);
@@ -41,10 +42,11 @@ class LessonSeeder extends Seeder
             ]);
         }
 
-        // Lesson 2: Animals
+        // Lesson 2: Animals (Grade 1)
         $animalsLesson = Lesson::create([
             'title' => 'Favorite Animals',
             'slug' => 'animals',
+            'grade_level' => '1',
             'is_active' => true,
             'sort_order' => 2,
         ]);
@@ -68,10 +70,11 @@ class LessonSeeder extends Seeder
             ]);
         }
 
-        // Lesson 3: Food
+        // Lesson 3: Food (Grade 1)
         $foodLesson = Lesson::create([
             'title' => 'Favorite Foods',
             'slug' => 'food',
+            'grade_level' => '1',
             'is_active' => true,
             'sort_order' => 3,
         ]);
@@ -115,11 +118,12 @@ class LessonSeeder extends Seeder
             ]);
         }
 
-        // Lesson 4: Pollution
+        // Lesson 4: Pollution (Grade 1)
         $pollutionLesson = Lesson::firstOrCreate([
-            'slug' => 'pollution'
+            'slug' => 'pollution',
         ], [
             'title' => 'Pollution',
+            'grade_level' => '1',
             'is_active' => true,
             'sort_order' => 4,
         ]);

@@ -150,6 +150,24 @@ class PhaseDTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_guest_can_access_org_student_lesson(): void
+    {
+        $defaultOrg = Organization::where('slug', 'default')->firstOrFail();
+        $lesson = Lesson::where('is_active', true)->first();
+        if (!$lesson) {
+            $this->markTestSkipped('No active lesson to test');
+        }
+        $response = $this->get(route('org.student.lesson', [$defaultOrg->slug, $lesson->slug]));
+        $response->assertOk();
+    }
+
+    public function test_trailing_slash_org_index_does_not_404(): void
+    {
+        $defaultOrg = Organization::where('slug', 'default')->firstOrFail();
+        $response = $this->get('/o/' . $defaultOrg->slug . '/');
+        $this->assertTrue($response->isRedirect() || $response->isSuccessful(), 'Trailing slash should redirect or load');
+    }
+
     public function test_cross_org_same_course_different_access(): void
     {
         $course = Course::whereNull('archived_at')->where('is_active', true)->first();
