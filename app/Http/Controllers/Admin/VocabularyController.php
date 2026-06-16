@@ -528,7 +528,7 @@ class VocabularyController extends Controller
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No image service configured. Please set FREEPIK_API_KEY, FLATICON_API_KEY, UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, LEONARDO_API_KEY, or OPENAI_API_KEY in your .env file.',
+                    'message' => 'No image service configured. Iconify is enabled by default (no key). Or set UNSPLASH_ACCESS_KEY, PIXABAY_API_KEY, LEONARDO_API_KEY, or OPENAI_API_KEY. Configure order via IMAGE_PROVIDERS in .env.',
                 ], 400);
             }
             

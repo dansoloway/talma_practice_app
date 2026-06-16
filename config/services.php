@@ -47,6 +47,13 @@ return [
     'api_key' => env('FREEPIK_API_KEY'),
 ],
 
+'image' => [
+    // Comma-separated priority: iconify, stock, leonardo, openai, flaticon, freepik
+    'providers' => env('IMAGE_PROVIDERS', 'iconify,stock,leonardo,openai'),
+    'iconify_enabled' => env('IMAGE_ICONIFY_ENABLED', true),
+    'iconify_size' => env('IMAGE_ICONIFY_SIZE', 512),
+],
+
     'elevenlabs' => [
         'api_key' => env('ELEVENLABS_API_KEY'),
     ],
