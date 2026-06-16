@@ -92,100 +92,29 @@
             </div>
         @endif
 
-        <!-- Lessons Grid - Interactive tiles with warmth -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="lessons-list">
-            @forelse($lessons as $lesson)
-                <a href="{{ isset($org) && $org ? route('org.student.lesson', [$org, $lesson->slug]) : route('lessons.show', $lesson->slug) }}" 
-                   class="group relative {{ $lesson->is_review ? 'bg-purple-50 border-purple-300 hover:border-purple-400' : 'bg-white border-gray-200 hover:border-blue-300' }} rounded-2xl border-2 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
-                    
-                    <!-- Card Content -->
-                    <div class="flex flex-col h-full">
-                        <!-- Cover Image -->
-                        @if($lesson->cover_image_path)
-                            <div class="mb-4 -mx-6 -mt-6 rounded-t-2xl overflow-hidden">
-                                <img src="{{ $lesson->cover_image_url }}" 
-                                     alt="{{ $lesson->title }}" 
-                                     class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
-                            </div>
-                        @endif
-                        
-                        <!-- Header Row: Badges + Arrow -->
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex flex-wrap gap-2">
-                                @if($lesson->is_review)
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-200 text-purple-800 border border-purple-300">
-                                        <i class="fas fa-redo mr-1"></i> Review
-                                    </span>
-                                @endif
-                                @if($lesson->session_number)
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold {{ $lesson->is_review ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-blue-100 text-blue-700 border-blue-200' }} border">
-                                        Session {{ $lesson->session_number }}
-                                    </span>
-                                @endif
-                                @if($lesson->part_number)
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200">
-                                        Part {{ $lesson->part_number }}
-                                    </span>
-                                @endif
-                            </div>
-                            
-                            <!-- Chevron Arrow - More intentional -->
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full {{ $lesson->is_review ? 'bg-purple-50 group-hover:bg-purple-100' : 'bg-blue-50 group-hover:bg-blue-100' }} flex items-center justify-center transition-all duration-300 group-hover:translate-x-1">
-                                <i class="fas fa-chevron-right {{ $lesson->is_review ? 'text-purple-600' : 'text-blue-600' }} text-sm"></i>
-                            </div>
-                        </div>
-                        
-                        <!-- Lesson Title - Clear focal point -->
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-700 transition-colors duration-200 leading-tight">
-                            {{ $lesson->title }}
-                        </h3>
-                        
-                        <!-- Lesson Stats - Subtle and informative -->
-                        <div class="flex flex-wrap gap-4 mt-auto pt-4 border-t border-gray-100">
-                            @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
-                                <span class="inline-flex items-center text-sm text-gray-600">
-                                    <i class="fas fa-book mr-2 text-blue-500"></i>
-                                    <span class="font-medium">{{ $lesson->vocabulary->count() }}</span>
-                                    <span class="ml-1">words</span>
-                                </span>
-                            @endif
-                            
-                            @php
-                                $activityCount = $lesson->prompts->count() + $lesson->matchingGames->count() + $lesson->flashcardGames->count();
-                            @endphp
-                            
-                            @if($activityCount > 0)
-                                <span class="inline-flex items-center text-sm text-gray-600">
-                                    <i class="fas fa-gamepad mr-2 text-purple-500"></i>
-                                    <span class="font-medium">{{ $activityCount }}</span>
-                                    <span class="ml-1">activities</span>
-                                </span>
-                            @endif
-                        </div>
-                    </div>
+        @if($lessons->isEmpty() && !request()->hasAny(['session_number', 'part_number', 'search']))
+            <div class="bg-white rounded-2xl border-2 border-gray-200 p-12 text-center">
+                <div class="text-6xl mb-4">📚</div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-3">No lessons available for this course</h3>
+                <p class="text-gray-600 mb-6">Please check back later for new lessons!</p>
+                <a href="{{ isset($org) && $org ? route('org.student.index', $org) : route('student.index') }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
+                    Choose Different Course
                 </a>
-            @empty
-                <div class="col-span-full">
-                    <div class="bg-white rounded-2xl border-2 border-gray-200 p-12 text-center">
-                        @if(request()->hasAny(['session_number', 'part_number', 'search']))
-                            <div class="text-6xl mb-4">🔍</div>
-                            <h3 class="text-2xl font-bold text-gray-800 mb-3">No lessons found</h3>
-                            <p class="text-gray-600 mb-6">No lessons match your current filters. Try adjusting your search criteria.</p>
-                            <a href="{{ isset($org) && $org ? route('org.student.course', [$org, $course]) : route('student.course', $course->slug) }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
-                                Clear All Filters
-                            </a>
-                        @else
-                            <div class="text-6xl mb-4">📚</div>
-                            <h3 class="text-2xl font-bold text-gray-800 mb-3">No lessons available for this course</h3>
-                            <p class="text-gray-600 mb-6">Please check back later for new lessons!</p>
-                            <a href="{{ isset($org) && $org ? route('org.student.index', $org) : route('student.index') }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
-                                Choose Different Course
-                            </a>
-                        @endif
-                    </div>
-                </div>
-            @endforelse
-        </div>
+            </div>
+        @else
+            <!-- Lessons grouped by session -->
+            <div id="lessons-list">
+                @include('partials.lesson-session-groups', [
+                    'lessonGroups' => $lessonGroups,
+                    'mode' => 'student',
+                    'org' => $org ?? null,
+                    'course' => $course,
+                    'clearFiltersUrl' => isset($org) && $org
+                        ? route('org.student.course', [$org, $course])
+                        : route('student.course', $course->slug),
+                ])
+            </div>
+        @endif
     </div>
 </div>
 

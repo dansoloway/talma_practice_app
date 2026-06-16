@@ -19,28 +19,35 @@ class FlaticonImageGenerator
 
     public function enabled(): bool
     {
-        return filled($this->apiKey);
+        if (!filled($this->apiKey)) {
+            return false;
+        }
+
+        // Freepik keys start with "FPSX"; they cannot authenticate with Flaticon.
+        if (str_starts_with($this->apiKey, 'FPSX')) {
+            Log::warning('FLATICON_API_KEY looks like a Freepik key. Request a Flaticon API key at https://api.flaticon.com');
+            return false;
+        }
+
+        return true;
     }
 
     /**
-     * Get or refresh the Flaticon access token.
-     * Tokens are valid for 24 hours.
+     * Get or refresh the Flaticon access token (valid 24 hours).
      */
     protected function getAccessToken(): ?string
     {
-        // Check if we have a cached token that's still valid
         if ($this->accessToken && $this->tokenExpiry && $this->tokenExpiry > time()) {
             return $this->accessToken;
         }
 
         try {
-            // Flaticon API expects multipart/form-data (not form-urlencoded)
-            $response = Http::asMultipart()->timeout(30)->post('https://api.flaticon.com/v3/app/authentication', [
-                [
-                    'name' => 'apikey',
-                    'contents' => $this->apiKey,
-                ],
-            ]);
+            $response = Http::asForm()
+                ->acceptJson()
+                ->timeout(30)
+                ->post('https://api.flaticon.com/v3/app/authentication', [
+                    'apikey' => $this->apiKey,
+                ]);
 
             if (!$response->successful()) {
                 Log::error('Flaticon authentication failed', [
@@ -51,20 +58,17 @@ class FlaticonImageGenerator
             }
 
             $data = $response->json();
-            // Response format: { "token": "...", "expires": 1234567890 }
-            $this->accessToken = $data['token'] ?? null;
-            
+            $this->accessToken = $data['token'] ?? $data['data']['token'] ?? null;
+
             if ($this->accessToken) {
-                // Use expires timestamp from API, or default to 23 hours
-                $expires = $data['expires'] ?? (time() + (23 * 60 * 60));
-                $this->tokenExpiry = $expires;
+                $expires = $data['expires'] ?? $data['data']['expires'] ?? (time() + (23 * 60 * 60));
+                $this->tokenExpiry = (int) $expires;
                 Log::info('Flaticon access token obtained successfully', [
-                    'expires_at' => date('Y-m-d H:i:s', $expires),
+                    'expires_at' => date('Y-m-d H:i:s', $this->tokenExpiry),
                 ]);
             }
 
             return $this->accessToken;
-
         } catch (\Throwable $e) {
             Log::error('Flaticon authentication exception', [
                 'message' => $e->getMessage(),
@@ -75,9 +79,6 @@ class FlaticonImageGenerator
 
     /**
      * Generate/find an icon for a vocabulary word using Flaticon API.
-     *
-     * @param string $vocabularyWord The English vocabulary word
-     * @return string|null The relative path to the saved image, or null on failure
      */
     public function generateVocabularyImage(string $vocabularyWord): ?string
     {
@@ -86,20 +87,16 @@ class FlaticonImageGenerator
             return null;
         }
 
-        // Search for icons matching the vocabulary word
-        $iconUrl = $this->searchFlaticon($vocabularyWord);
-        
-        if ($iconUrl) {
-            return $this->downloadAndSaveImage($iconUrl, $vocabularyWord);
+        $imageUrl = $this->searchFlaticon($vocabularyWord);
+
+        if ($imageUrl) {
+            return $this->downloadAndSaveImage($imageUrl, $vocabularyWord);
         }
 
-        Log::info("No Flaticon icon found for '{$vocabularyWord}' - will need manual upload");
+        Log::info("No Flaticon icon found for '{$vocabularyWord}'");
         return null;
     }
 
-    /**
-     * Search Flaticon for an icon matching the vocabulary word.
-     */
     protected function searchFlaticon(string $query): ?string
     {
         $accessToken = $this->getAccessToken();
@@ -107,19 +104,30 @@ class FlaticonImageGenerator
             return null;
         }
 
+        $icon = $this->fetchIcons($query, 'priority', $accessToken)
+            ?? $this->fetchIcons($query . ' icon', 'priority', $accessToken);
+
+        if (!$icon) {
+            return null;
+        }
+
+        return $this->imageUrlFromIcon($icon);
+    }
+
+    protected function fetchIcons(string $query, string $orderBy, string $accessToken): ?array
+    {
         try {
-            // Flaticon API v3 endpoint
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $accessToken,
-            ])->timeout(30)->get('https://api.flaticon.com/v3/search/icons', [
+                'Accept' => 'application/json',
+            ])->timeout(30)->get("https://api.flaticon.com/v3/search/icons/{$orderBy}", [
                 'q' => $query,
                 'limit' => 20,
-                'order_by' => 'downloads', // Most popular/downloaded icons first
-                'style' => 'flat', // Prefer flat style for flashcards
+                'styleShape' => 'fill',
             ]);
 
             if (!$response->successful()) {
-                Log::warning('Flaticon API error', [
+                Log::warning('Flaticon search API error', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                     'query' => $query,
@@ -127,28 +135,23 @@ class FlaticonImageGenerator
                 return null;
             }
 
-            $data = $response->json();
-            $icons = $data['data'] ?? [];
-
+            $icons = $response->json('data') ?? [];
             if (empty($icons)) {
-                // Try with "icon" suffix
-                return $this->searchFlaticonWithSuffix($query);
+                return null;
             }
 
-            // Prefer icons with simple, clear names
+            $needle = strtolower($query);
+
             foreach ($icons as $icon) {
-                $iconName = strtolower($icon['description'] ?? $icon['tags'] ?? '');
-                
-                // Prefer icons that match the word exactly or closely
-                if (stripos($iconName, $query) !== false) {
-                    // Get download URL for this icon
-                    return $this->getIconDownloadUrl($icon['id'] ?? null, $accessToken);
+                $description = strtolower($icon['description'] ?? '');
+                $tags = strtolower($icon['tags'] ?? '');
+
+                if (str_contains($description, $needle) || str_contains($tags, $needle)) {
+                    return $icon;
                 }
             }
 
-            // Return first result if no exact match
-            return $this->getIconDownloadUrl($icons[0]['id'] ?? null, $accessToken);
-
+            return $icons[0];
         } catch (\Throwable $e) {
             Log::error('Flaticon search exception', [
                 'message' => $e->getMessage(),
@@ -158,11 +161,32 @@ class FlaticonImageGenerator
         }
     }
 
-    /**
-     * Search Flaticon with "icon" suffix as fallback.
-     */
-    protected function searchFlaticonWithSuffix(string $query): ?string
+    protected function imageUrlFromIcon(array $icon): ?string
     {
+        $images = $icon['images'] ?? [];
+        if (!is_array($images) || empty($images)) {
+            return $this->getIconDownloadUrl($icon['id'] ?? null);
+        }
+
+        $preferredSizes = ['512', '256', '128', '64'];
+        foreach ($preferredSizes as $size) {
+            if (!empty($images[$size])) {
+                return $images[$size];
+            }
+        }
+
+        return reset($images) ?: null;
+    }
+
+    /**
+     * Fallback: official download endpoint when search results lack CDN URLs.
+     */
+    protected function getIconDownloadUrl($iconId): ?string
+    {
+        if (!$iconId) {
+            return null;
+        }
+
         $accessToken = $this->getAccessToken();
         if (!$accessToken) {
             return null;
@@ -171,43 +195,13 @@ class FlaticonImageGenerator
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $accessToken,
-            ])->timeout(30)->get('https://api.flaticon.com/v3/search/icons', [
-                'q' => $query . ' icon',
-                'limit' => 10,
-                'order_by' => 'downloads',
-                'style' => 'flat',
+                'Accept' => 'application/json',
+            ])->timeout(30)->get("https://api.flaticon.com/v3/item/icon/download/{$iconId}/png", [
+                'size' => 512,
             ]);
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $icons = $data['data'] ?? [];
-                if (!empty($icons)) {
-                    return $this->getIconDownloadUrl($icons[0]['id'] ?? null, $accessToken);
-                }
-            }
-        } catch (\Throwable $e) {
-            // Silent fail
-        }
-
-        return null;
-    }
-
-    /**
-     * Get the download URL for an icon by its ID.
-     */
-    protected function getIconDownloadUrl(?string $iconId, string $accessToken): ?string
-    {
-        if (!$iconId) {
-            return null;
-        }
-
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $accessToken,
-            ])->timeout(30)->get("https://api.flaticon.com/v3/icons/{$iconId}/download");
-
             if (!$response->successful()) {
-                Log::warning('Flaticon download URL request failed', [
+                Log::warning('Flaticon download request failed', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                     'icon_id' => $iconId,
@@ -216,10 +210,9 @@ class FlaticonImageGenerator
             }
 
             $data = $response->json();
-            return $data['data']['download_url'] ?? null;
-
+            return $data['data']['url'] ?? $data['url'] ?? null;
         } catch (\Throwable $e) {
-            Log::error('Flaticon download URL exception', [
+            Log::error('Flaticon download exception', [
                 'message' => $e->getMessage(),
                 'icon_id' => $iconId,
             ]);
@@ -227,9 +220,6 @@ class FlaticonImageGenerator
         }
     }
 
-    /**
-     * Download icon from URL and save it to storage.
-     */
     protected function downloadAndSaveImage(string $imageUrl, string $vocabularyWord): ?string
     {
         try {
@@ -243,17 +233,14 @@ class FlaticonImageGenerator
                 return null;
             }
 
-            // Determine file extension
             $extension = 'png';
             $pathInfo = pathinfo(parse_url($imageUrl, PHP_URL_PATH));
             if (!empty($pathInfo['extension'])) {
                 $extension = strtolower($pathInfo['extension']);
-            } elseif (strpos($imageContent, '<svg') === 0 || strpos($imageContent, '<?xml') === 0) {
+            } elseif (str_starts_with($imageContent, '<svg') || str_starts_with($imageContent, '<?xml')) {
                 $extension = 'svg';
-            } elseif (strpos($imageContent, "\xFF\xD8") === 0) {
+            } elseif (str_starts_with($imageContent, "\xFF\xD8")) {
                 $extension = 'jpg';
-            } elseif (strpos($imageContent, "\x89PNG") === 0) {
-                $extension = 'png';
             }
 
             $filename = 'vocab_' . time() . '_' . uniqid() . '.' . $extension;
@@ -268,7 +255,6 @@ class FlaticonImageGenerator
             ]);
 
             return $relativePath;
-
         } catch (\Throwable $e) {
             Log::error('Failed to download/save Flaticon icon', [
                 'message' => $e->getMessage(),
@@ -279,4 +265,3 @@ class FlaticonImageGenerator
         }
     }
 }
-

@@ -120,31 +120,10 @@
                         </a>
                     </div>
                 @else
-                    <div class="space-y-4">
-                        @foreach($activeLessons->sortBy('session_number') as $lesson)
-                            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors duration-200">
-                                <div class="flex-1">
-                                    <h3 class="font-semibold text-gray-800">{{ $lesson->title }}</h3>
-                                    <div class="flex gap-3 mt-2 text-sm text-gray-600">
-                                        @if($lesson->session_number)
-                                            <span>Session {{ $lesson->session_number }}</span>
-                                        @endif
-                                        @if($lesson->grade_level)
-                                            <span>Grade {{ $lesson->grade_level }}</span>
-                                        @endif
-                                    </div>
-                                </div>
-                                <div class="flex gap-2">
-                                    <a href="{{ route('admin.lessons.show', $lesson) }}" class="px-3 py-1 bg-blue-100 text-blue-700 font-medium rounded-lg hover:bg-blue-200 transition-all duration-200">
-                                        View
-                                    </a>
-                                    <a href="{{ route('admin.lessons.edit', $lesson) }}" class="px-3 py-1 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-all duration-200">
-                                        Edit
-                                    </a>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+                    @include('partials.lesson-session-groups', [
+                        'lessonGroups' => $lessonGroups,
+                        'mode' => 'admin',
+                    ])
                 @endif
             </div>
         </div>

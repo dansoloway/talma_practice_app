@@ -3,16 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Admin\Concerns\GuardsRootCourseContent;
 use App\Models\FlashcardGame;
 use App\Models\Lesson;
 use App\Models\MatchingGame;
 use App\Models\SpellingGame;
 use App\Models\Vocabulary;
-use App\Services\ImageGeneration\FlaticonImageGenerator;
-use App\Services\ImageGeneration\FreepikImageGenerator;
-use App\Services\ImageGeneration\LeonardoImageGenerator;
-use App\Services\ImageGeneration\OpenAiImageGenerator;
-use App\Services\ImageGeneration\StockImageGenerator;
+use App\Services\ImageGeneration\ImageGeneratorService;
 use App\Services\Translation\OpenAiTranslator;
 use App\Services\Tts\ElevenLabsTtsService;
 use Illuminate\Http\Request;
@@ -20,28 +17,13 @@ use Illuminate\Support\Facades\Storage;
 
 class VocabularyController extends Controller
 {
-    protected $imageGenerator;
+    use GuardsRootCourseContent;
 
     public function __construct(
         protected OpenAiTranslator $translator,
-        protected ElevenLabsTtsService $ttsService
+        protected ElevenLabsTtsService $ttsService,
+        protected ImageGeneratorService $imageGenerator,
     ) {
-        // Priority: Freepik > Flaticon > Stock images (Unsplash/Pixabay) > Leonardo.ai > OpenAI
-        $freepikGenerator = app(FreepikImageGenerator::class);
-        $flaticonGenerator = app(FlaticonImageGenerator::class);
-        $stockGenerator = app(StockImageGenerator::class);
-        $leonardoGenerator = app(LeonardoImageGenerator::class);
-        $openAiGenerator = app(OpenAiImageGenerator::class);
-        
-        $this->imageGenerator = $freepikGenerator->enabled() 
-            ? $freepikGenerator 
-            : ($flaticonGenerator->enabled() 
-                ? $flaticonGenerator 
-                : ($stockGenerator->enabled() 
-                    ? $stockGenerator 
-                    : ($leonardoGenerator->enabled() 
-                        ? $leonardoGenerator 
-                        : $openAiGenerator)));
     }
 
     /**
@@ -72,6 +54,7 @@ class VocabularyController extends Controller
      */
     public function store(Request $request, Lesson $lesson)
     {
+        $this->guardRootCourseContent($lesson);
         $validated = $request->validate([
             'english_word' => 'required|string|max:255',
             'hebrew_translation' => 'nullable|string|max:255',
@@ -241,6 +224,7 @@ class VocabularyController extends Controller
      */
     public function update(Request $request, Lesson $lesson, Vocabulary $vocabulary)
     {
+        $this->guardRootCourseContent($lesson);
         $validated = $request->validate([
             'english_word' => 'required|string|max:255',
             'hebrew_translation' => 'nullable|string|max:255',
@@ -538,24 +522,8 @@ class VocabularyController extends Controller
         // Increase execution time for image generation (can take up to 5 minutes for Leonardo.ai polling)
         set_time_limit(300); // 5 minutes
         
-        // Refresh image generator in case config changed
-        // Priority: Freepik > Flaticon > Stock images (Unsplash/Pixabay) > Leonardo.ai > OpenAI
-        $freepikGenerator = app(FreepikImageGenerator::class);
-        $flaticonGenerator = app(FlaticonImageGenerator::class);
-        $stockGenerator = app(StockImageGenerator::class);
-        $leonardoGenerator = app(LeonardoImageGenerator::class);
-        $openAiGenerator = app(OpenAiImageGenerator::class);
-        
-        $imageGenerator = $freepikGenerator->enabled() 
-            ? $freepikGenerator 
-            : ($flaticonGenerator->enabled() 
-                ? $flaticonGenerator 
-                : ($stockGenerator->enabled() 
-                    ? $stockGenerator 
-                    : ($leonardoGenerator->enabled() 
-                        ? $leonardoGenerator 
-                        : $openAiGenerator)));
-        
+        $imageGenerator = $this->imageGenerator;
+
         if (!$imageGenerator->enabled()) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
@@ -630,23 +598,8 @@ class VocabularyController extends Controller
             // Create dedicated image generation log file
             $imageLogFile = storage_path('logs/image_generation.log');
             
-            // Get image generator
-            $freepikGenerator = app(FreepikImageGenerator::class);
-            $flaticonGenerator = app(FlaticonImageGenerator::class);
-            $stockGenerator = app(StockImageGenerator::class);
-            $leonardoGenerator = app(LeonardoImageGenerator::class);
-            $openAiGenerator = app(OpenAiImageGenerator::class);
-            
-            $imageGenerator = $freepikGenerator->enabled() 
-                ? $freepikGenerator 
-                : ($flaticonGenerator->enabled() 
-                    ? $flaticonGenerator 
-                    : ($stockGenerator->enabled() 
-                        ? $stockGenerator 
-                        : ($leonardoGenerator->enabled() 
-                            ? $leonardoGenerator 
-                            : $openAiGenerator)));
-            
+            $imageGenerator = $this->imageGenerator;
+
             if (!$imageGenerator->enabled()) {
                 return response()->json([
                     'success' => false,

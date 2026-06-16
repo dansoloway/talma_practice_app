@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Admin\Concerns\GuardsRootCourseContent;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\GrammarSet;
@@ -24,6 +25,8 @@ use Illuminate\Support\Facades\DB;
 
 class LessonController extends Controller
 {
+    use GuardsRootCourseContent;
+
     /**
      * Display a listing of all lessons.
      */
@@ -168,6 +171,10 @@ class LessonController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->filled('course_id')) {
+            $course = Course::find($request->course_id);
+            $this->guardRootCourseContent($course);
+        }
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:lessons,slug',
@@ -378,6 +385,7 @@ class LessonController extends Controller
      */
     public function update(Request $request, Lesson $lesson)
     {
+        $this->guardRootCourseContent($lesson);
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:lessons,slug,' . $lesson->id,

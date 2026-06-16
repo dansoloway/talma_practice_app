@@ -52,6 +52,14 @@ class Course extends Model
     }
 
     /**
+     * Whether this course is owned by the Root organization (canonical, sync source).
+     */
+    public function isRootOwned(): bool
+    {
+        return $this->organizations()->where('organizations.is_root', true)->exists();
+    }
+
+    /**
      * Classes that have this course assigned.
      */
     public function classrooms(): BelongsToMany
@@ -74,6 +82,17 @@ class Course extends Model
     public function activeLessons(): HasMany
     {
         return $this->lessons()->where('is_active', true)->whereNull('archived_at');
+    }
+
+    /**
+     * Active lessons ordered for session accordion display.
+     */
+    public function activeLessonsOrdered(): HasMany
+    {
+        return $this->activeLessons()
+            ->orderBy('session_number', 'asc')
+            ->orderBy('part_number', 'asc')
+            ->orderBy('created_at', 'asc');
     }
 
     /**

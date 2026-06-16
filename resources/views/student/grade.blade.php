@@ -87,99 +87,24 @@
             </div>
         @endif
 
-        <!-- Lessons Grid - Interactive tiles with warmth -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="lessons-list">
-            @forelse($lessons as $lesson)
-                <a href="{{ route('lessons.show', $lesson->slug) }}" 
-                   class="group relative bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
-                    
-                    <!-- Card Content -->
-                    <div class="flex flex-col h-full">
-                        <!-- Cover Image -->
-                        @if($lesson->cover_image_path)
-                            <div class="mb-4 -mx-6 -mt-6 rounded-t-2xl overflow-hidden">
-                                <img src="{{ $lesson->cover_image_url }}" 
-                                     alt="{{ $lesson->title }}" 
-                                     class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
-                            </div>
-                        @endif
-                        
-                        <!-- Header Row: Badges + Arrow -->
-                        <div class="flex justify-between items-start mb-4">
-                            @if($lesson->session_number || $lesson->part_number)
-                                <div class="flex flex-wrap gap-2">
-                                    @if($lesson->session_number)
-                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
-                                            Session {{ $lesson->session_number }}
-                                        </span>
-                                    @endif
-                                    @if($lesson->part_number)
-                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200">
-                                            Part {{ $lesson->part_number }}
-                                        </span>
-                                    @endif
-                                </div>
-                            @else
-                                <div></div>
-                            @endif
-                            
-                            <!-- Chevron Arrow - More intentional -->
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center transition-all duration-300 group-hover:translate-x-1">
-                                <i class="fas fa-chevron-right text-blue-600 text-sm"></i>
-                            </div>
-                        </div>
-                        
-                        <!-- Lesson Title - Clear focal point -->
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-700 transition-colors duration-200 leading-tight">
-                            {{ $lesson->title }}
-                        </h3>
-                        
-                        <!-- Lesson Stats - Subtle and informative -->
-                        <div class="flex flex-wrap gap-4 mt-auto pt-4 border-t border-gray-100">
-                            @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
-                                <span class="inline-flex items-center text-sm text-gray-600">
-                                    <i class="fas fa-book mr-2 text-blue-500"></i>
-                                    <span class="font-medium">{{ $lesson->vocabulary->count() }}</span>
-                                    <span class="ml-1">words</span>
-                                </span>
-                            @endif
-                            
-                            @php
-                                $activityCount = $lesson->prompts->count() + $lesson->matchingGames->count() + $lesson->flashcardGames->count();
-                            @endphp
-                            
-                            @if($activityCount > 0)
-                                <span class="inline-flex items-center text-sm text-gray-600">
-                                    <i class="fas fa-gamepad mr-2 text-purple-500"></i>
-                                    <span class="font-medium">{{ $activityCount }}</span>
-                                    <span class="ml-1">activities</span>
-                                </span>
-                            @endif
-                        </div>
-                    </div>
+        @if($lessons->isEmpty() && !request()->hasAny(['session_number', 'part_number', 'search']))
+            <div class="bg-white rounded-2xl border-2 border-gray-200 p-12 text-center">
+                <div class="text-6xl mb-4">📚</div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-3">No lessons available for Grade {{ $gradeLevel }}</h3>
+                <p class="text-gray-600 mb-6">Please check back later for new lessons!</p>
+                <a href="{{ route('student.index') }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
+                    Choose Different Grade
                 </a>
-            @empty
-                <div class="col-span-full">
-                    <div class="bg-white rounded-2xl border-2 border-gray-200 p-12 text-center">
-                        @if(request()->hasAny(['session_number', 'part_number', 'search']))
-                            <div class="text-6xl mb-4">🔍</div>
-                            <h3 class="text-2xl font-bold text-gray-800 mb-3">No lessons found</h3>
-                            <p class="text-gray-600 mb-6">No lessons match your current filters. Try adjusting your search criteria.</p>
-                            <a href="{{ route('student.grade', $gradeLevel) }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
-                                Clear All Filters
-                            </a>
-                        @else
-                            <div class="text-6xl mb-4">📚</div>
-                            <h3 class="text-2xl font-bold text-gray-800 mb-3">No lessons available for Grade {{ $gradeLevel }}</h3>
-                            <p class="text-gray-600 mb-6">Please check back later for new lessons!</p>
-                            <a href="{{ route('student.index') }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">
-                                Choose Different Grade
-                            </a>
-                        @endif
-                    </div>
-                </div>
-            @endforelse
-        </div>
+            </div>
+        @else
+            <div id="lessons-list">
+                @include('partials.lesson-session-groups', [
+                    'lessonGroups' => $lessonGroups,
+                    'mode' => 'student',
+                    'clearFiltersUrl' => route('student.grade', $gradeLevel),
+                ])
+            </div>
+        @endif
     </div>
 </div>
 

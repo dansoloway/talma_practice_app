@@ -16,8 +16,14 @@ class TestFlaticonImage extends Command
         $word = $this->argument('word');
         $generator = app(FlaticonImageGenerator::class);
 
-        if (!$generator->enabled()) {
+        if (!config('services.flaticon.api_key')) {
             $this->error('Flaticon API key is not configured. Please set FLATICON_API_KEY in your .env file.');
+            return 1;
+        }
+
+        if (!$generator->enabled()) {
+            $this->error('FLATICON_API_KEY is set but invalid for Flaticon (it may be a Freepik key).');
+            $this->line('Get a separate key at https://api.flaticon.com — it is not the same as FREEPIK_API_KEY.');
             return 1;
         }
 

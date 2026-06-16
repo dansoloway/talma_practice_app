@@ -124,6 +124,9 @@
                 </div>
 
                 @if(auth('admin')->user()?->role === 'admin')
+                    <a href="{{ route('admin.organizations.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
+                        <i class="fas fa-building mr-1.5 text-gray-400"></i>Organizations
+                    </a>
                     <a href="{{ route('admin.users.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
                         <i class="fas fa-users mr-1.5 text-gray-400"></i>Users
                     </a>

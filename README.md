@@ -13,6 +13,7 @@ A Laravel + MySQL application for practicing sentence construction through inter
 
 ## Documentation
 
+- `docs/MAIN_FEATURES.md` — overview of main product features
 - `docs/SETUP.md` — quick start checklist
 - `docs/DEPLOYMENT.md` — production rollout guide
 - `docs/LESSON_IMPORT_GUIDE.md` — CSV import workflow

@@ -117,6 +117,9 @@ Route::prefix('o/{organization}')->name('org.admin.')->middleware(['auth:admin',
     Route::post('admin/courses/{course}/archive', [CourseController::class, 'archive'])->name('courses.archive');
     Route::post('admin/courses/{course}/unarchive', [CourseController::class, 'unarchive'])->name('courses.unarchive');
     Route::post('admin/courses/{course}/toggle-org-wide', [CourseController::class, 'toggleOrgWide'])->name('courses.toggle-org-wide');
+    Route::get('admin/courses/add-from-root', [CourseController::class, 'addFromRoot'])->name('courses.add-from-root')->middleware('admin.only');
+    Route::post('admin/courses/attach-from-root', [CourseController::class, 'attachFromRoot'])->name('courses.attach-from-root')->middleware('admin.only');
+    Route::post('admin/courses/{course}/detach-from-org', [CourseController::class, 'detachFromOrg'])->name('courses.detach-from-org')->middleware('admin.only');
     Route::resource('admin/courses', CourseController::class)->names([
         'index' => 'courses.index',
         'create' => 'courses.create',
@@ -157,6 +160,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'admin.access'
     
     // User Management (admin only) - includes teachers and admins
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->middleware('admin.only');
+
+    // Organization Management (admin only)
+    Route::resource('organizations', \App\Http\Controllers\Admin\OrganizationController::class)->middleware('admin.only')->except(['show', 'destroy']);
     
     // Logout
     Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');

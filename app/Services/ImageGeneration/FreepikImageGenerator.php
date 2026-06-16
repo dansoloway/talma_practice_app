@@ -2,13 +2,24 @@
 
 namespace App\Services\ImageGeneration;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Icon search via Magnific API (formerly Freepik API).
+ * Uses FREEPIK_API_KEY from .env — keys are issued at magnific.com/developers/dashboard.
+ */
 class FreepikImageGenerator
 {
     protected $apiKey;
+
+    /** @var list<string> */
+    protected array $apiBases = [
+        'https://api.magnific.com',
+        'https://api.freepik.com',
+    ];
 
     public function __construct()
     {
@@ -20,84 +31,57 @@ class FreepikImageGenerator
         return filled($this->apiKey);
     }
 
-    /**
-     * Generate/find an image for a vocabulary word using Freepik API.
-     *
-     * @param string $vocabularyWord The English vocabulary word
-     * @return string|null The relative path to the saved image, or null on failure
-     */
     public function generateVocabularyImage(string $vocabularyWord): ?string
     {
         if (!$this->enabled()) {
-            Log::warning('Freepik API key not configured. Skipping image search.');
+            Log::warning('Magnific/Freepik API key not configured. Skipping image search.');
             return null;
         }
 
-        // Search for images/icons matching the vocabulary word
-        $imageUrl = $this->searchFreepik($vocabularyWord);
-        
+        $imageUrl = $this->searchIcons($vocabularyWord);
+
         if ($imageUrl) {
             return $this->downloadAndSaveImage($imageUrl, $vocabularyWord);
         }
 
-        Log::info("No Freepik image found for '{$vocabularyWord}' - will need manual upload");
+        Log::info("No Magnific/Freepik icon found for '{$vocabularyWord}'");
         return null;
     }
 
-    /**
-     * Search Freepik for an image/icon matching the vocabulary word.
-     */
-    protected function searchFreepik(string $query): ?string
+    protected function searchIcons(string $query): ?string
     {
         try {
-            // Freepik API v1 icons endpoint - use 'term' parameter for icon search
-            $response = Http::withHeaders([
-                'x-freepik-api-key' => $this->apiKey,
-                'Accept' => 'application/json',
-            ])->timeout(30)->get('https://api.freepik.com/v1/icons', [
+            $response = $this->apiGet('/v1/icons', [
                 'term' => $query,
                 'per_page' => 20,
-                'order' => 'relevance', // Order by relevance to the search term
             ]);
 
-            if (!$response->successful()) {
-                Log::warning('Freepik API error', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'query' => $query,
-                ]);
+            if (!$response || !$response->successful()) {
                 return null;
             }
 
-            $data = $response->json();
-            
-            // Response structure: {"data": [...], "meta": {...}}
-            $icons = $data['data'] ?? [];
-            
+            $icons = $response->json('data') ?? [];
+
             if (empty($icons)) {
-                Log::info("No Freepik icons found for query: {$query}");
+                Log::info("No Magnific/Freepik icons found for query: {$query}");
                 return null;
             }
 
-            // Prefer icons with names that match the query exactly or closely
             $selectedIcon = null;
+            $needle = strtolower($query);
+
             foreach ($icons as $icon) {
-                $name = strtolower($icon['name'] ?? '');
-                
-                // Prefer icons that match the word exactly
-                if (strtolower($name) === strtolower($query)) {
+                if (strtolower($icon['name'] ?? '') === $needle) {
                     $selectedIcon = $icon;
                     break;
                 }
             }
 
-            // Check tags for matches if no exact name match
             if (!$selectedIcon) {
                 foreach ($icons as $icon) {
-                    $tags = $icon['tags'] ?? [];
-                    foreach ($tags as $tag) {
+                    foreach ($icon['tags'] ?? [] as $tag) {
                         $tagName = strtolower($tag['name'] ?? $tag['slug'] ?? '');
-                        if ($tagName === strtolower($query)) {
+                        if ($tagName === $needle) {
                             $selectedIcon = $icon;
                             break 2;
                         }
@@ -105,20 +89,17 @@ class FreepikImageGenerator
                 }
             }
 
-            // Use first result if no exact match
-            if (!$selectedIcon && !empty($icons)) {
+            if (!$selectedIcon) {
                 $selectedIcon = $icons[0];
             }
 
-            // Fetch full icon details to get all thumbnail sizes (search only returns 128x128)
-            if ($selectedIcon && isset($selectedIcon['id'])) {
+            if (isset($selectedIcon['id'])) {
                 return $this->getFullIconImageUrl($selectedIcon['id']);
             }
 
             return null;
-
         } catch (\Throwable $e) {
-            Log::error('Freepik search exception', [
+            Log::error('Magnific/Freepik search exception', [
                 'message' => $e->getMessage(),
                 'query' => $query,
             ]);
@@ -126,37 +107,22 @@ class FreepikImageGenerator
         }
     }
 
-
-    /**
-     * Fetch full icon details and get the largest available thumbnail URL.
-     * The search endpoint only returns 128x128, but the detail endpoint returns all sizes.
-     */
     protected function getFullIconImageUrl(int $iconId): ?string
     {
         try {
-            $response = Http::withHeaders([
-                'x-freepik-api-key' => $this->apiKey,
-                'Accept' => 'application/json',
-            ])->timeout(30)->get("https://api.freepik.com/v1/icons/{$iconId}");
+            $response = $this->apiGet("/v1/icons/{$iconId}");
 
-            if (!$response->successful()) {
-                Log::warning('Freepik icon detail fetch failed', [
+            if (!$response || !$response->successful()) {
+                Log::warning('Magnific/Freepik icon detail fetch failed', [
                     'icon_id' => $iconId,
-                    'status' => $response->status(),
+                    'status' => $response?->status(),
                 ]);
                 return null;
             }
 
-            $data = $response->json();
-            $icon = $data['data'] ?? null;
-            
-            if (!$icon) {
-                return null;
-            }
-
-            return $this->getImageUrl($icon);
+            return $this->getImageUrl($response->json('data'));
         } catch (\Throwable $e) {
-            Log::error('Freepik icon detail fetch exception', [
+            Log::error('Magnific/Freepik icon detail fetch exception', [
                 'icon_id' => $iconId,
                 'message' => $e->getMessage(),
             ]);
@@ -164,26 +130,17 @@ class FreepikImageGenerator
         }
     }
 
-    /**
-     * Extract image URL from Freepik icon object.
-     * Freepik Icons API structure: thumbnails array with different sizes (128, 256, 512)
-     * Always returns the largest available size (512x512 preferred)
-     */
     protected function getImageUrl(?array $icon): ?string
     {
         if (!$icon) {
             return null;
         }
 
-        // Freepik Icons API returns thumbnails array with different sizes
-        // Available sizes: 128, 256, 512 (512 is the largest available)
         $thumbnails = $icon['thumbnails'] ?? [];
-        
         if (empty($thumbnails)) {
             return null;
         }
-        
-        // Always get the largest available thumbnail (512x512 is max)
+
         $largest = null;
         $maxWidth = 0;
         foreach ($thumbnails as $thumbnail) {
@@ -193,47 +150,69 @@ class FreepikImageGenerator
                 $largest = $thumbnail['url'] ?? null;
             }
         }
-        
-        // Log which size we're using for debugging
+
         if ($largest) {
-            Log::info("Freepik icon selected", [
+            Log::info('Magnific/Freepik icon selected', [
                 'icon_id' => $icon['id'] ?? 'unknown',
                 'icon_name' => $icon['name'] ?? 'unknown',
                 'selected_size' => $maxWidth . 'x' . $maxWidth,
-                'url' => $largest,
             ]);
         }
-        
+
         return $largest;
     }
 
-    /**
-     * Download image from URL and save it to storage.
-     */
+    protected function apiGet(string $path, array $query = []): ?Response
+    {
+        foreach ($this->apiBases as $base) {
+            $response = Http::withHeaders([
+                'x-magnific-api-key' => $this->apiKey,
+                'x-freepik-api-key' => $this->apiKey,
+                'Accept' => 'application/json',
+            ])->timeout(30)->get($base . $path, $query);
+
+            if ($response->successful()) {
+                return $response;
+            }
+
+            Log::warning('Magnific/Freepik API error', [
+                'host' => parse_url($base, PHP_URL_HOST),
+                'path' => $path,
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'query' => $query,
+            ]);
+
+            if ($response->status() === 401) {
+                Log::error('Magnific/Freepik API key rejected. Generate a new key at https://www.magnific.com/developers/dashboard/api-key');
+                return null;
+            }
+        }
+
+        return null;
+    }
+
     protected function downloadAndSaveImage(string $imageUrl, string $vocabularyWord): ?string
     {
         try {
             $imageContent = Http::timeout(60)->get($imageUrl)->body();
 
             if (empty($imageContent)) {
-                Log::error('Failed to download Freepik image', [
+                Log::error('Failed to download Magnific/Freepik image', [
                     'url' => $imageUrl,
                     'word' => $vocabularyWord,
                 ]);
                 return null;
             }
 
-            // Determine file extension
             $extension = 'png';
             $pathInfo = pathinfo(parse_url($imageUrl, PHP_URL_PATH));
             if (!empty($pathInfo['extension'])) {
                 $extension = strtolower($pathInfo['extension']);
-            } elseif (strpos($imageContent, '<svg') === 0 || strpos($imageContent, '<?xml') === 0) {
+            } elseif (str_starts_with($imageContent, '<svg') || str_starts_with($imageContent, '<?xml')) {
                 $extension = 'svg';
-            } elseif (strpos($imageContent, "\xFF\xD8") === 0) {
+            } elseif (str_starts_with($imageContent, "\xFF\xD8")) {
                 $extension = 'jpg';
-            } elseif (strpos($imageContent, "\x89PNG") === 0) {
-                $extension = 'png';
             }
 
             $filename = 'vocab_' . time() . '_' . uniqid() . '.' . $extension;
@@ -241,22 +220,18 @@ class FreepikImageGenerator
 
             Storage::disk('public')->put($relativePath, $imageContent);
 
-            Log::info("Successfully downloaded and saved Freepik image for vocabulary word: {$vocabularyWord}", [
+            Log::info("Successfully downloaded and saved Magnific/Freepik image for vocabulary word: {$vocabularyWord}", [
                 'path' => $relativePath,
                 'size' => strlen($imageContent),
-                'source' => 'Freepik',
             ]);
 
             return $relativePath;
-
         } catch (\Throwable $e) {
-            Log::error('Failed to download/save Freepik image', [
+            Log::error('Failed to download/save Magnific/Freepik image', [
                 'message' => $e->getMessage(),
-                'url' => $imageUrl,
                 'word' => $vocabularyWord,
             ]);
             return null;
         }
     }
 }
-

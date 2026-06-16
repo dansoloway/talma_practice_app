@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Admin\Concerns\GuardsRootCourseContent;
 use App\Models\Lesson;
 use App\Models\Prompt;
 use App\Services\Tts\ElevenLabsTtsService;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 class PromptController extends Controller
 {
     use \App\Http\Controllers\Admin\GeneratesTtsAudio;
+    use GuardsRootCourseContent;
     
     public function __construct(
         protected ElevenLabsTtsService $ttsService
@@ -39,6 +41,7 @@ class PromptController extends Controller
      */
     public function store(Request $request, Lesson $lesson)
     {
+        $this->guardRootCourseContent($lesson);
         $validated = $request->validate([
             'prompt_text' => 'required|string|max:255',
             'template' => 'required|string|max:255',
@@ -84,6 +87,7 @@ class PromptController extends Controller
      */
     public function update(Request $request, Prompt $prompt)
     {
+        $this->guardRootCourseContent($prompt->lesson);
         $validated = $request->validate([
             'prompt_text' => 'required|string|max:255',
             'template' => 'required|string|max:255',

@@ -274,6 +274,44 @@ class Lesson extends Model
     }
 
     /**
+     * Human-readable part label (1 → Part A, 2 → Part B, etc.).
+     */
+    public function partLabel(): ?string
+    {
+        if (!$this->part_number) {
+            return null;
+        }
+
+        $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        $index = $this->part_number - 1;
+
+        if ($index >= 0 && $index < count($letters)) {
+            return 'Part ' . $letters[$index];
+        }
+
+        return 'Part ' . $this->part_number;
+    }
+
+    /**
+     * Label for the session accordion header this lesson belongs to.
+     */
+    public function sessionGroupLabel(): ?string
+    {
+        if (!$this->session_number) {
+            return null;
+        }
+
+        if ($this->session_title) {
+            $title = \App\Services\LessonSessionGrouper::stripPartSuffix($this->session_title);
+            if ($title !== '') {
+                return $title;
+            }
+        }
+
+        return "Session {$this->session_number}";
+    }
+
+    /**
      * Get standardized display name with session information.
      * Format: "Grade X - Session Y: [Title]" or "Session Y: [Title]" or just "[Title]"
      */

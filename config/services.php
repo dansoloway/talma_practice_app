@@ -54,6 +54,7 @@ return [
 'openai' => [
     'key' => env('OPENAI_API_KEY'),
     'translation_model' => env('OPENAI_TRANSLATION_MODEL', 'gpt-4o-mini'),
+    'arabic_variant' => env('OPENAI_ARABIC_VARIANT', 'saudi'), // saudi | msa
     'fallback_model' => env('OPENAI_FALLBACK_MODEL', 'gpt-4o'), // Used when primary model fails validation
     'endpoint' => env('OPENAI_ENDPOINT', 'https://api.openai.com/v1/chat/completions'),
     'rate_limit_delay' => env('OPENAI_RATE_LIMIT_DELAY', null), // Seconds between requests (null = auto-detect from API)

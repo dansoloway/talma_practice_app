@@ -11,11 +11,18 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-6 max-w-7xl">
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex justify-between items-center mb-8 flex-wrap gap-3">
         <h1 class="text-3xl font-bold text-gray-800">Courses</h1>
-        <a href="{{ $route('create') }}" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
-            Create Course
-        </a>
+        <div class="flex gap-2">
+            @if(isset($courseRouteParams['organization']) && ($courseRouteParams['organization'] ?? '') !== 'root' && auth('admin')->user()?->role === 'admin')
+                <a href="{{ route('org.admin.courses.add-from-root', $courseRouteParams) }}" class="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                    Add from Root
+                </a>
+            @endif
+            <a href="{{ $route('create') }}" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                Create Course
+            </a>
+        </div>
     </div>
 
     <!-- Filters -->
@@ -79,7 +86,12 @@
                         </div>
                     @endif
                     <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ $course->title }}</h3>
+                        <div class="flex items-center gap-2 mb-2">
+                            <h3 class="text-xl font-bold text-gray-800">{{ $course->title }}</h3>
+                            @if(in_array($course->id, $rootCourseIds ?? []))
+                                <span class="px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">From Root (Synced)</span>
+                            @endif
+                        </div>
                         @if($course->description)
                             <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ $course->description }}</p>
                         @endif
@@ -88,6 +100,14 @@
                                 {{ $course->lessons_count }} {{ $course->lessons_count === 1 ? 'lesson' : 'lessons' }}
                             </span>
                             <div class="flex flex-wrap gap-2 justify-end">
+                                @if(isset($courseRouteParams['organization']) && ($courseRouteParams['organization'] ?? '') !== 'root')
+                                    @if(in_array($course->id, $rootCourseIds ?? []) && auth('admin')->user()?->role === 'admin')
+                                        <form method="POST" action="{{ route('org.admin.courses.detach-from-org', array_merge($courseRouteParams, ['course' => $course])) }}" class="inline" onsubmit="return confirm('Remove this course from this organization? The course will remain in Root.');">
+                                            @csrf
+                                            <button type="submit" class="px-2 py-1 text-xs font-semibold rounded-full bg-red-50 text-red-600 hover:bg-red-100">Remove from this org</button>
+                                        </form>
+                                    @endif
+                                @endif
                                 @if(isset($courseRouteParams['organization']))
                                     @php $isOrgWide = (bool) ($course->pivot->is_org_wide ?? false); @endphp
                                     <form method="POST" action="{{ route('org.admin.courses.toggle-org-wide', array_merge($courseRouteParams, ['course' => $course])) }}" class="inline">

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Organization;
+use App\Services\LessonSessionGrouper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,6 +19,22 @@ class CourseController extends Controller
     protected function currentOrganization(Request $request): ?Organization
     {
         return $request->attributes->get('currentOrganization');
+    }
+
+    protected function isGlobalAdmin(): bool
+    {
+        return Auth::guard('admin')->user()?->role === 'admin';
+    }
+
+    /**
+     * Reject if Root-owned course is edited outside Root context.
+     * Root course content may only be edited in Root org context by global admins.
+     */
+    protected function guardRootCourseEdit(?Organization $org, Course $course): void
+    {
+        if ($course->isRootOwned() && (!$org || !$org->is_root)) {
+            abort(403, 'Root-owned courses can only be edited in Root organization context.');
+        }
     }
 
     /**
@@ -95,8 +113,9 @@ class CourseController extends Controller
         
         $courses = $query->withCount('lessons')->get();
         $courseRouteParams = $org ? ['organization' => $org->slug] : [];
+        $rootCourseIds = Organization::root()?->courses()->pluck('courses.id')->toArray() ?? [];
 
-        return view('admin.courses.index', compact('courses', 'sortBy', 'sortDir', 'showArchived', 'courseRouteParams'));
+        return view('admin.courses.index', compact('courses', 'sortBy', 'sortDir', 'showArchived', 'courseRouteParams', 'rootCourseIds'));
     }
 
     /**
@@ -148,7 +167,7 @@ class CourseController extends Controller
 
         $org = $this->currentOrganization($request);
         if ($org) {
-            $org->courses()->syncWithoutDetaching([$course->id]);
+            $org->courses()->syncWithoutDetaching([$course->id => ['is_org_wide' => true]]);
         }
 
         return redirect()->to($this->coursesIndexRoute($request))
@@ -162,13 +181,17 @@ class CourseController extends Controller
     public function show(Request $request, $organizationOrCourse = null, Course $course = null)
     {
         $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
-        // Load only active, non-archived lessons
         $course->load(['lessons' => function ($query) {
-            $query->where('is_active', true)->whereNull('archived_at');
+            $query->where('is_active', true)
+                ->whereNull('archived_at')
+                ->orderBy('session_number', 'asc')
+                ->orderBy('part_number', 'asc')
+                ->orderBy('created_at', 'asc');
         }]);
+        $lessonGroups = LessonSessionGrouper::group($course->lessons);
         $org = $this->currentOrganization($request);
         $courseRouteParams = $org ? ['organization' => $org->slug] : [];
-        return view('admin.courses.show', compact('course', 'courseRouteParams'));
+        return view('admin.courses.show', compact('course', 'courseRouteParams', 'lessonGroups'));
     }
 
     /**
@@ -179,6 +202,7 @@ class CourseController extends Controller
     {
         $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
         $org = $this->currentOrganization($request);
+        $this->guardRootCourseEdit($org, $course);
         $courseRouteParams = $org ? ['organization' => $org->slug] : [];
         return view('admin.courses.edit', compact('course', 'courseRouteParams'));
     }
@@ -190,6 +214,8 @@ class CourseController extends Controller
     public function update(Request $request, $organizationOrCourse = null, Course $course = null)
     {
         $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
+        $org = $this->currentOrganization($request);
+        $this->guardRootCourseEdit($org, $course);
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:courses,slug,' . $course->id,
@@ -234,10 +260,15 @@ class CourseController extends Controller
     /**
      * Remove the specified course.
      * Org-scoped routes pass (Request, Organization, Course); legacy routes pass (Request, Course).
+     * Root-owned courses cannot be deleted; use detach to remove from an org.
      */
     public function destroy(Request $request, $organizationOrCourse = null, Course $course = null)
     {
         $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
+        if ($course->isRootOwned()) {
+            return redirect()->to($this->coursesIndexRoute($request))
+                ->with('error', 'Root-owned courses cannot be deleted. Use "Remove from this org" to detach from this organization.');
+        }
         // Check if course has lessons
         if ($course->lessons()->count() > 0) {
             return redirect()->to($this->coursesIndexRoute($request))
@@ -262,6 +293,8 @@ class CourseController extends Controller
     public function archive(Request $request, $organizationOrCourse = null, Course $course = null)
     {
         $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
+        $org = $this->currentOrganization($request);
+        $this->guardRootCourseEdit($org, $course);
         $course->archive();
 
         return redirect()->back()
@@ -275,6 +308,8 @@ class CourseController extends Controller
     public function unarchive(Request $request, $organizationOrCourse = null, Course $course = null)
     {
         $course = $this->resolveCourseForOrg($request, $course ?? $organizationOrCourse);
+        $org = $this->currentOrganization($request);
+        $this->guardRootCourseEdit($org, $course);
         $course->unarchive();
 
         return redirect()->back()
@@ -292,5 +327,76 @@ class CourseController extends Controller
 
         return redirect()->back()
             ->with('success', $current ? 'Course is now class-only.' : 'Course is now org-wide.');
+    }
+
+    /**
+     * Show form to attach a Root course to this tenant org. Global admin only.
+     */
+    public function addFromRoot(Request $request, Organization $organization)
+    {
+        if ($organization->is_root) {
+            return redirect()->back()->with('error', 'Cannot add from Root when viewing Root organization.');
+        }
+        $root = Organization::root();
+        if (!$root) {
+            return redirect()->back()->with('error', 'Root organization not found. Run database seeder.');
+        }
+        $existingIds = $organization->courses()->pluck('courses.id')->toArray();
+        $rootCourses = $root->courses()
+            ->whereNull('archived_at')
+            ->whereNotIn('courses.id', $existingIds)
+            ->orderBy('title')
+            ->get();
+        return view('admin.courses.add-from-root', [
+            'organization' => $organization,
+            'rootCourses' => $rootCourses,
+            'courseRouteParams' => ['organization' => $organization->slug],
+        ]);
+    }
+
+    /**
+     * Attach a Root course to this tenant org. Global admin only.
+     */
+    public function attachFromRoot(Request $request, Organization $organization)
+    {
+        if ($organization->is_root) {
+            return redirect()->back()->with('error', 'Invalid organization.');
+        }
+        $root = Organization::root();
+        if (!$root) {
+            return redirect()->back()->with('error', 'Root organization not found.');
+        }
+        $validated = $request->validate([
+            'course_id' => 'required|integer|exists:courses,id',
+            'is_org_wide' => 'boolean',
+        ]);
+        $courseId = $validated['course_id'];
+        if (!$root->courses()->whereKey($courseId)->exists()) {
+            return redirect()->back()->with('error', 'Course is not a Root course.');
+        }
+        if ($organization->courses()->whereKey($courseId)->exists()) {
+            return redirect()->back()->with('error', 'Course is already attached to this organization.');
+        }
+        $organization->courses()->attach($courseId, ['is_org_wide' => $request->boolean('is_org_wide', true)]);
+
+        return redirect()->route('org.admin.courses.index', ['organization' => $organization->slug])
+            ->with('success', 'Course attached from Root.');
+    }
+
+    /**
+     * Detach a course from this tenant org (pivot only; course record unchanged). Global admin only.
+     */
+    public function detachFromOrg(Request $request, Organization $organization, Course $course)
+    {
+        if ($organization->is_root) {
+            return redirect()->back()->with('error', 'Use course management in Root to remove courses.');
+        }
+        if (!$organization->courses()->whereKey($course->id)->exists()) {
+            return redirect()->back()->with('error', 'Course is not attached to this organization.');
+        }
+        $organization->courses()->detach($course->id);
+
+        return redirect()->route('org.admin.courses.index', ['organization' => $organization->slug])
+            ->with('success', 'Course removed from this organization.');
     }
 }

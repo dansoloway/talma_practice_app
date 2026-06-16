@@ -11,16 +11,45 @@ class Organization extends Model
 {
     use HasFactory;
 
+    /**
+     * System invariant: only one Root organization may exist.
+     * Root cannot be deleted or converted to tenant. Enforced in application.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Organization $org) {
+            if ($org->is_root && static::where('is_root', true)->exists()) {
+                throw new \LogicException('Only one Root organization may exist.');
+            }
+        });
+        static::updating(function (Organization $org) {
+            if ($org->is_root) {
+                if ($org->getOriginal('is_root') !== true && static::where('is_root', true)->where('id', '!=', $org->id)->exists()) {
+                    throw new \LogicException('Only one Root organization may exist.');
+                }
+            } elseif ($org->getOriginal('is_root') === true) {
+                throw new \LogicException('Root organization cannot be converted to a tenant organization.');
+            }
+        });
+        static::deleting(function (Organization $org) {
+            if ($org->is_root) {
+                throw new \LogicException('Root organization cannot be deleted.');
+            }
+        });
+    }
+
     protected $fillable = [
         'name',
         'slug',
         'description',
         'is_active',
         'access_mode',
+        'is_root',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_root' => 'boolean',
     ];
 
     /**
@@ -66,5 +95,13 @@ class Organization extends Model
     public function classes(): HasMany
     {
         return $this->hasMany(Classroom::class, 'organization_id');
+    }
+
+    /**
+     * The Root organization (system-level). Null if not seeded.
+     */
+    public static function root(): ?Organization
+    {
+        return static::where('is_root', true)->first();
     }
 }

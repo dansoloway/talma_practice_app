@@ -11,10 +11,24 @@ class OpenAiTranslator
 {
     protected OpenAiService $openAiService;
     protected const CACHE_PREFIX = 'openai_translation_';
-    protected const DEFAULT_RATE_LIMIT_DELAY_SECONDS = 0.5; // Default delay (200 RPM = ~0.3s between requests, using 0.5s for safety)
-    protected static $lastRequestTime = 0.0; // Use float for microsecond precision
-    protected static $rateLimitRpm = null; // Cached rate limit from API headers
-    protected static $calculatedDelay = null; // Calculated delay based on rate limits
+    protected const DEFAULT_RATE_LIMIT_DELAY_SECONDS = 0.5;
+    protected static $lastRequestTime = 0.0;
+    protected static $rateLimitRpm = null;
+    protected static $calculatedDelay = null;
+
+    /** @var array<string, array{label: string, schema: string, instruction: string}> */
+    protected const ARABIC_VARIANTS = [
+        'saudi' => [
+            'label' => 'Saudi Arabic',
+            'schema' => 'Saudi Arabic (Gulf dialect) translation of the English word, as commonly used in Saudi Arabia',
+            'instruction' => 'Use Saudi Arabic (Gulf dialect) as spoken in Saudi Arabia—natural colloquial forms learners would hear locally, not formal Modern Standard Arabic. Keep single-word vocabulary concise.',
+        ],
+        'msa' => [
+            'label' => 'Modern Standard Arabic',
+            'schema' => 'Modern Standard Arabic translation of the English word',
+            'instruction' => 'Use Modern Standard Arabic (MSA)—neutral formal Arabic suitable across the Arab world.',
+        ],
+    ];
 
     public function __construct(OpenAiService $openAiService)
     {
@@ -26,37 +40,29 @@ class OpenAiTranslator
         return $this->openAiService->enabled();
     }
 
-    /**
-     * Get the delay between requests based on rate limits.
-     * Uses config value if set, otherwise calculates from API limits.
-     */
-    protected function getRateLimitDelay(): float
+    public function arabicVariant(): string
     {
-        // Check if manually configured
-        $configDelay = config('services.openai.rate_limit_delay');
-        if ($configDelay !== null) {
-            return (float) $configDelay;
-        }
+        $variant = strtolower((string) config('services.openai.arabic_variant', 'saudi'));
 
-        // Use cached calculated delay if available
-        if (self::$calculatedDelay !== null) {
-            return self::$calculatedDelay;
-        }
+        return array_key_exists($variant, self::ARABIC_VARIANTS) ? $variant : 'saudi';
+    }
 
-        // Default to safe delay (will be updated after first API call)
-        return self::DEFAULT_RATE_LIMIT_DELAY_SECONDS;
+    public function arabicVariantLabel(): string
+    {
+        return self::ARABIC_VARIANTS[$this->arabicVariant()]['label'];
     }
 
     /**
      * Translate an English word into Hebrew and/or Arabic.
      *
-     * @param  string  $englishWord
-     * @param  bool  $needsHebrew
-     * @param  bool  $needsArabic
      * @return array{hebrew:?string,arabic:?string}
      */
-    public function translate(string $englishWord, bool $needsHebrew = true, bool $needsArabic = true): array
-    {
+    public function translate(
+        string $englishWord,
+        bool $needsHebrew = true,
+        bool $needsArabic = true,
+        bool $forceRefresh = false
+    ): array {
         $englishWord = trim($englishWord);
 
         if (!$this->enabled() || empty($englishWord) || (!$needsHebrew && !$needsArabic)) {
@@ -66,8 +72,8 @@ class OpenAiTranslator
             ];
         }
 
-        $cacheKey = self::CACHE_PREFIX . md5(strtolower($englishWord));
-        $cached = Cache::get($cacheKey);
+        $cacheKey = $this->cacheKey($englishWord);
+        $cached = $forceRefresh ? null : Cache::get($cacheKey);
 
         if (is_array($cached)) {
             return [
@@ -76,7 +82,6 @@ class OpenAiTranslator
             ];
         }
 
-        // Rate limiting: ensure we don't exceed OpenAI's rate limits
         $this->enforceRateLimit();
 
         $result = $this->requestTranslation($englishWord);
@@ -91,9 +96,30 @@ class OpenAiTranslator
         ];
     }
 
-    /**
-     * Enforce rate limiting by adding delays between requests.
-     */
+    public function forgetCachedTranslation(string $englishWord): void
+    {
+        Cache::forget($this->cacheKey($englishWord));
+    }
+
+    protected function cacheKey(string $englishWord): string
+    {
+        return self::CACHE_PREFIX . md5(strtolower($englishWord) . '|' . $this->arabicVariant());
+    }
+
+    protected function getRateLimitDelay(): float
+    {
+        $configDelay = config('services.openai.rate_limit_delay');
+        if ($configDelay !== null) {
+            return (float) $configDelay;
+        }
+
+        if (self::$calculatedDelay !== null) {
+            return self::$calculatedDelay;
+        }
+
+        return self::DEFAULT_RATE_LIMIT_DELAY_SECONDS;
+    }
+
     protected function enforceRateLimit(): void
     {
         $delay = $this->getRateLimitDelay();
@@ -102,19 +128,35 @@ class OpenAiTranslator
 
         if ($timeSinceLastRequest < $delay) {
             $sleepTime = $delay - $timeSinceLastRequest;
-            if ($sleepTime > 0.1) { // Only log if significant delay
-                Log::debug("Rate limiting: sleeping " . round($sleepTime, 2) . " seconds before next OpenAI request");
+            if ($sleepTime > 0.1) {
+                Log::debug('Rate limiting: sleeping ' . round($sleepTime, 2) . ' seconds before next OpenAI request');
             }
-            usleep((int) ($sleepTime * 1000000)); // Convert to microseconds
+            usleep((int) ($sleepTime * 1000000));
         }
 
         self::$lastRequestTime = microtime(true);
     }
 
+    protected function arabicPromptConfig(): array
+    {
+        return self::ARABIC_VARIANTS[$this->arabicVariant()];
+    }
+
+    protected function systemPrompt(): string
+    {
+        $arabic = $this->arabicPromptConfig();
+
+        return 'You translate English vocabulary words for middle-school ESL students. '
+            . 'Respond with JSON containing "hebrew" and "arabic" keys. '
+            . 'Hebrew: use modern Israeli Hebrew. '
+            . 'Arabic: ' . $arabic['instruction'];
+    }
+
     protected function requestTranslation(string $englishWord, int $retryCount = 0): array
     {
         $maxRetries = 3;
-        
+        $arabicConfig = $this->arabicPromptConfig();
+
         try {
             $apiKey = $this->openAiService->getApiKey();
             if (!$apiKey) {
@@ -141,7 +183,7 @@ class OpenAiTranslator
                                 ],
                                 'arabic' => [
                                     'type' => 'string',
-                                    'description' => 'Modern Standard Arabic translation of the English word',
+                                    'description' => $arabicConfig['schema'],
                                 ],
                             ],
                         ],
@@ -150,7 +192,7 @@ class OpenAiTranslator
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'You translate English vocabulary words. Respond with JSON containing "hebrew" and "arabic" keys. Use modern educational vocabulary appropriate for middle-school students.',
+                        'content' => $this->systemPrompt(),
                     ],
                     [
                         'role' => 'user',
@@ -159,22 +201,18 @@ class OpenAiTranslator
                 ],
             ]);
 
-            // Handle rate limit errors with retry
             if ($response->status() === 429 && $retryCount < $maxRetries) {
                 $body = $response->json();
                 $retryAfter = $this->extractRetryAfter($body);
-                
+
                 Log::warning("OpenAI rate limit hit for '{$englishWord}'. Retrying after {$retryAfter} seconds (attempt " . ($retryCount + 1) . "/{$maxRetries})");
-                
+
                 sleep($retryAfter);
-                
-                // Update last request time after sleep
                 self::$lastRequestTime = microtime(true);
-                
+
                 return $this->requestTranslation($englishWord, $retryCount + 1);
             }
 
-            // Update rate limit info from headers (if available)
             $this->updateRateLimitInfo($response);
 
             if (!$response->successful()) {
@@ -209,15 +247,11 @@ class OpenAiTranslator
         }
     }
 
-    /**
-     * Update rate limit information from API response headers.
-     */
     protected function updateRateLimitInfo($response): void
     {
         $headers = $response->headers();
         $rpmLimit = null;
 
-        // Check for rate limit headers
         foreach ($headers as $key => $values) {
             if (strtolower($key) === 'x-ratelimit-limit-requests') {
                 $rpmLimit = (int) ($values[0] ?? null);
@@ -227,29 +261,20 @@ class OpenAiTranslator
 
         if ($rpmLimit && $rpmLimit !== self::$rateLimitRpm) {
             self::$rateLimitRpm = $rpmLimit;
-            // Calculate delay: 60 seconds / RPM, with 20% buffer for safety
-            // Example: 200 RPM = 60/200 = 0.3s, with buffer = 0.36s
             self::$calculatedDelay = (60 / $rpmLimit) * 1.2;
-            
-            Log::info("Detected OpenAI rate limit: {$rpmLimit} RPM. Using delay of " . round(self::$calculatedDelay, 2) . " seconds between requests.");
+
+            Log::info("Detected OpenAI rate limit: {$rpmLimit} RPM. Using delay of " . round(self::$calculatedDelay, 2) . ' seconds between requests.');
         }
     }
 
-    /**
-     * Extract retry-after time from OpenAI rate limit error response.
-     */
     protected function extractRetryAfter(array $body): int
     {
-        // Try to extract retry time from error message
         $errorMessage = $body['error']['message'] ?? '';
-        
-        // Look for "try again in Xs" pattern
+
         if (preg_match('/try again in (\d+)s/i', $errorMessage, $matches)) {
-            return (int) $matches[1] + 2; // Add 2 seconds buffer
+            return (int) $matches[1] + 2;
         }
-        
-        // Default to calculated delay or fallback
+
         return (int) ceil($this->getRateLimitDelay() * 10);
     }
 }
-

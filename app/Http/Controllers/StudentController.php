@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Organization;
 use App\Services\CourseAccess;
+use App\Services\LessonSessionGrouper;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
@@ -129,7 +130,9 @@ class StudentController extends Controller
             ->orderBy('part_number')
             ->pluck('part_number');
 
-        return view('student.course', compact('course', 'lessons', 'sessionNumbers', 'partNumbers', 'org'));
+        $lessonGroups = LessonSessionGrouper::group($lessons);
+
+        return view('student.course', compact('course', 'lessons', 'lessonGroups', 'sessionNumbers', 'partNumbers', 'org'));
     }
 
     /**
@@ -164,7 +167,10 @@ class StudentController extends Controller
         $lessons = $query->orderBy('session_number', 'asc')
             ->orderBy('part_number', 'asc')
             ->orderBy('created_at', 'asc')
+            ->with(['vocabulary', 'prompts', 'matchingGames', 'flashcardGames'])
             ->get();
+
+        $lessonGroups = LessonSessionGrouper::group($lessons);
         
         // Get available session numbers for filter dropdown
         $sessionNumbers = Lesson::active()
@@ -184,7 +190,7 @@ class StudentController extends Controller
             ->orderBy('part_number')
             ->pluck('part_number');
 
-        return view('student.grade', compact('lessons', 'gradeLevel', 'sessionNumbers', 'partNumbers'));
+        return view('student.grade', compact('lessons', 'lessonGroups', 'gradeLevel', 'sessionNumbers', 'partNumbers'));
     }
 
     /**

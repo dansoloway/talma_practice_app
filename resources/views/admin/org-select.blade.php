@@ -8,9 +8,18 @@
         <h1 class="text-2xl font-bold text-gray-800 mb-2">Select Organization</h1>
         <p class="text-gray-600 mb-6">Choose an organization to manage.</p>
 
+        @if(auth('admin')->user()?->role === 'admin')
+            <a href="{{ route('admin.organizations.index') }}" class="inline-block mb-4 text-blue-600 hover:text-blue-700 font-medium">
+                <i class="fas fa-plus mr-1"></i>Create or manage organizations
+            </a>
+        @endif
+
         @if($organizations->isEmpty())
             <p class="text-gray-600">You do not have access to any organizations.</p>
-            <a href="{{ route('admin.logout') }}" class="inline-block mt-4 text-blue-600 hover:text-blue-700 font-medium" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+            @if(auth('admin')->user()?->role === 'admin')
+                <a href="{{ route('admin.organizations.create') }}" class="inline-block mt-4 btn btn-primary">Create your first organization</a>
+            @endif
+            <a href="{{ route('admin.logout') }}" class="inline-block mt-4 ml-2 text-blue-600 hover:text-blue-700 font-medium" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
             <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" class="hidden">@csrf</form>
         @else
             <div class="space-y-3">

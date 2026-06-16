@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             LessonSeeder::class,
             PollutionSeeder::class,
             CourseSeeder::class,
+            RootOrganizationSeeder::class,
             OrganizationSeeder::class,
         ]);
     }

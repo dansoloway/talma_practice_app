@@ -45,10 +45,12 @@ class TestFreepikImage extends Command
             $this->info("Full path: " . storage_path('app/public/' . $imagePath));
             return 0;
         } else {
-            $this->warn("⚠️  No image found for '{$word}' on Freepik.");
-            $this->info("Check logs for API response details: tail -20 storage/logs/laravel.log");
-            $this->info("You can upload an image manually for this word.");
-            return 0; // This is not an error - just means the image doesn't exist
+            $this->warn("⚠️  No image found for '{$word}'.");
+            $this->line('If logs show 401 Unauthorized, your FREEPIK_API_KEY has expired.');
+            $this->line('Freepik is now Magnific — create a new key at:');
+            $this->line('  https://www.magnific.com/developers/dashboard/api-key');
+            $this->info('Check logs: tail -20 storage/logs/laravel.log');
+            return 1;
         }
     }
 }
