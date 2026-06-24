@@ -27,7 +27,14 @@
 
 <div class="true-false-game-container">
     <div class="game-header">
-        <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+            @include('partials.admin-edit-lesson', [
+                'lesson' => $lesson,
+                'activityEditUrl' => route('admin.lessons.true-false-games.show', [$lesson, $trueFalseGame]),
+                'activityEditLabel' => 'Edit Game',
+            ])
+        </div>
         <h1 class="game-title">{{ $trueFalseGame->title }}</h1>
         <p class="game-subtitle">{{ $lesson->title }} • <span class="badge badge-{{ $trueFalseGame->game_version === 'easy' ? 'success' : ($trueFalseGame->game_version === 'medium' ? 'warning' : 'danger') }}">{{ ucfirst($trueFalseGame->game_version) }}</span></p>
     </div>
@@ -165,8 +172,8 @@ function loadQuestion(index) {
     const questionHtml = `
         <div class="question-card">
             <div class="question-audio-section">
-                <button class="big-play-btn" id="play-audio-btn" data-audio="${question.audio_path || ''}">
-                    <i class="fas fa-volume-up"></i>
+                <button type="button" class="big-play-btn talma-audio-btn" id="play-audio-btn" data-audio-url="${question.audio_path || ''}" data-talma-audio-icon="volume-up">
+                    <i class="fas fa-volume-up talma-audio-icon"></i>
                 </button>
                 <p class="audio-hint">Click to listen</p>
             </div>
@@ -203,13 +210,8 @@ function loadQuestion(index) {
 }
 
 function setupQuestionEvents(question) {
-    // Audio playback
     const playBtn = document.getElementById('play-audio-btn');
-    if (playBtn && question.audio_path) {
-        playBtn.addEventListener('click', function() {
-            playAudio(question.audio_path);
-        });
-    } else if (playBtn && !question.audio_path) {
+    if (playBtn && !question.audio_path) {
         playBtn.disabled = true;
         playBtn.classList.add('disabled');
         playBtn.title = 'No audio available';
@@ -361,39 +363,6 @@ function updateProgress() {
     progressFill.style.width = progress + '%';
     currentQuestionSpan.textContent = currentQuestionIndex + 1;
 }
-
-function playAudio(audioPath) {
-    if (!audioPath) return;
-    
-    const audio = document.getElementById('game-audio');
-    const playBtn = document.getElementById('play-audio-btn');
-    
-    if (playBtn) {
-        playBtn.disabled = true;
-        playBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    }
-    
-    audio.src = audioPath;
-    audio.play().then(() => {
-        if (playBtn) {
-            playBtn.disabled = false;
-            playBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        }
-    }).catch(error => {
-        console.error('Error playing audio:', error);
-        if (playBtn) {
-            playBtn.disabled = false;
-            playBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        }
-    });
-    
-    audio.onended = function() {
-        if (playBtn) {
-            playBtn.disabled = false;
-            playBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        }
-    };
-}
 </script>
 
 @push('styles')
@@ -418,18 +387,6 @@ function playAudio(audioPath) {
 .game-subtitle {
     color: var(--color-text-muted);
     font-size: 1.1rem;
-}
-
-.back-link {
-    display: inline-block;
-    color: var(--color-text-muted);
-    text-decoration: none;
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
-}
-
-.back-link:hover {
-    color: var(--color-primary);
 }
 
 .game-progress {

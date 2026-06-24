@@ -7,11 +7,18 @@
     <div class="container mx-auto px-4 max-w-4xl">
         <!-- Game Header -->
         <div class="mb-6">
-            <a href="{{ route('lessons.show', $lesson->slug) }}" 
-               class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4 transition-colors duration-200 group">
-                <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
-                <span>Back to Lesson</span>
-            </a>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <a href="{{ route('lessons.show', $lesson->slug) }}" 
+                   class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 group">
+                    <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
+                    <span>Back to Lesson</span>
+                </a>
+                @include('partials.admin-edit-lesson', [
+                    'lesson' => $lesson,
+                    'activityEditUrl' => route('admin.lessons.prompts.index', $lesson),
+                    'activityEditLabel' => 'Edit Prompts',
+                ])
+            </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
                 <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Sentence Completion</h1>
                 <p class="text-gray-600 font-medium">{{ $lesson->title }}</p>
@@ -236,10 +243,13 @@ function loadPrompt(index) {
             <div class="flex items-center gap-4 mb-6">
                 <h3 class="text-xl md:text-2xl font-bold text-gray-800 flex-1">${prompt.prompt_text}</h3>
                 ${prompt.prompt_audio_path ? `
-                    <button class="w-12 h-12 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
-                            onclick="playPromptAudio('${prompt.prompt_audio_path}')" 
+                    <button type="button" class="talma-audio-btn w-12 h-12 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
+                            data-audio-url="${prompt.prompt_audio_path}" 
+                            data-talma-audio-icon="volume-up"
+                            data-talma-audio-manual
+                            onclick="playPromptAudio(event, '${prompt.prompt_audio_path}', this)"
                             title="Listen to question">
-                        <i class="fas fa-volume-up"></i>
+                        <i class="fas fa-volume-up talma-audio-icon"></i>
                     </button>
                 ` : ''}
             </div>
@@ -260,10 +270,13 @@ function loadPrompt(index) {
                         <div class="flex items-center justify-between gap-3">
                             <span class="option-text text-lg font-semibold text-gray-800">${option.label}</span>
                             ${option.word_audio_path ? `
-                                <button class="w-10 h-10 rounded-full bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm flex-shrink-0" 
-                                        onclick="playOptionAudio(event, '${option.word_audio_path}')" 
+                                <button type="button" class="talma-audio-btn w-10 h-10 rounded-full bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm flex-shrink-0" 
+                                        data-audio-url="${option.word_audio_path}"
+                                        data-talma-audio-icon="volume-up"
+                                        data-talma-audio-manual
+                                        onclick="playOptionAudio(event, '${option.word_audio_path}', this)" 
                                         title="Listen to word">
-                                    <i class="fas fa-volume-up text-sm"></i>
+                                    <i class="fas fa-volume-up text-sm talma-audio-icon"></i>
                                 </button>
                             ` : ''}
                         </div>
@@ -282,10 +295,11 @@ function loadPrompt(index) {
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="bg-white rounded-xl p-6 border border-gray-200">
                         <h5 class="font-semibold text-gray-700 mb-3">Example</h5>
-                        <button class="w-full px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm" 
+                        <button type="button" class="talma-audio-btn w-full px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm" 
                                 id="play-model-btn" 
+                                data-talma-audio-manual
                                 onclick="playModelAudio()">
-                            <i class="fas fa-play mr-2"></i> Play Example
+                            <i class="fas fa-play mr-2 talma-audio-icon"></i> Play Example
                         </button>
                         <div id="model-status" class="mt-3 text-sm text-gray-600"></div>
                     </div>
@@ -612,29 +626,13 @@ function playModelAudio() {
     
     if (!window.currentSentenceAudioPath) {
         statusDiv.textContent = 'No audio available - audio may still be generating';
-        console.log('No sentence audio path available');
         return;
     }
-    
-    const audio = new Audio(window.currentSentenceAudioPath);
-    
-    playBtn.disabled = true;
-    playBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Playing...';
-    statusDiv.textContent = 'Playing model audio...';
-    
-    audio.play();
-    
-    audio.onended = function() {
-        playBtn.disabled = false;
-        playBtn.innerHTML = '<i class="fas fa-play"></i> Play Example';
-        statusDiv.textContent = '';
-    };
-    
-    audio.onerror = function() {
-        playBtn.disabled = false;
-        playBtn.innerHTML = '<i class="fas fa-play"></i> Play Example';
-        statusDiv.textContent = 'Error playing audio';
-    };
+
+    TalmaAudio.toggle(window.currentSentenceAudioPath, playBtn);
+    statusDiv.textContent = TalmaAudio.currentButton === playBtn && !TalmaAudio.audio.paused
+        ? 'Playing model audio...'
+        : '';
 }
 
 // Play recorded audio
@@ -644,6 +642,8 @@ function playRecording() {
         return;
     }
     
+    TalmaAudio.stop();
+
     const audioUrl = URL.createObjectURL(recordedAudioBlob);
     const audio = new Audio(audioUrl);
     
@@ -729,21 +729,16 @@ function restartGame() {
 }
 
 // Audio functions
-function playPromptAudio(audioPath) {
-    const audio = document.getElementById('prompt-audio');
-    audio.src = audioPath;
-    audio.play().catch(error => {
-        console.error('Error playing prompt audio:', error);
-    });
+function playPromptAudio(event, audioPath, button) {
+    if (event) {
+        event.stopPropagation();
+    }
+    TalmaAudio.toggle(audioPath, button);
 }
 
-function playOptionAudio(event, audioPath) {
-    event.stopPropagation(); // Prevent option selection
-    const audio = document.getElementById('option-audio');
-    audio.src = audioPath;
-    audio.play().catch(error => {
-        console.error('Error playing option audio:', error);
-    });
+function playOptionAudio(event, audioPath, button) {
+    event.stopPropagation();
+    TalmaAudio.toggle(audioPath, button);
 }
 </script>
 

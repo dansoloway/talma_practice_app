@@ -309,7 +309,14 @@
 
 <div class="sentence-builder-container">
     <div class="game-header">
-        <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+            @include('partials.admin-edit-lesson', [
+                'lesson' => $lesson,
+                'activityEditUrl' => route('admin.lessons.sentence-builder-games.show', [$lesson, $game]),
+                'activityEditLabel' => 'Edit Game',
+            ])
+        </div>
         <h1 class="game-title">Sentence Builder</h1>
         <p class="game-subtitle">{{ $lesson->title }}</p>
     </div>

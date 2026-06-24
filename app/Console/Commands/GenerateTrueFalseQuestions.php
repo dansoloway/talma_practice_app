@@ -5,9 +5,8 @@ namespace App\Console\Commands;
 use App\Models\Lesson;
 use App\Models\TrueFalseQuestion;
 use App\Services\QuestionGeneration\OpenAiQuestionGenerator;
-use App\Services\Tts\ElevenLabsTtsService;
+use App\Services\Tts\TrueFalseQuestionTtsService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 class GenerateTrueFalseQuestions extends Command
 {
@@ -18,21 +17,18 @@ class GenerateTrueFalseQuestions extends Command
                             {lesson : Lesson ID or slug}
                             {--count=6 : Number of questions to generate (5-8)}
                             {--approve : Auto-approve generated questions}
-                            {--generate-audio : Generate TTS audio for statements}';
+                            {--skip-audio : Skip automatic TTS audio generation}';
 
     /**
      * The console command description.
      */
     protected $description = 'Generate True/False questions for a lesson using AI';
 
-    protected OpenAiQuestionGenerator $questionGenerator;
-    protected ElevenLabsTtsService $ttsService;
-
-    public function __construct(OpenAiQuestionGenerator $questionGenerator, ElevenLabsTtsService $ttsService)
-    {
+    public function __construct(
+        protected OpenAiQuestionGenerator $questionGenerator,
+        protected TrueFalseQuestionTtsService $questionTts
+    ) {
         parent::__construct();
-        $this->questionGenerator = $questionGenerator;
-        $this->ttsService = $ttsService;
     }
 
     /**
@@ -43,7 +39,7 @@ class GenerateTrueFalseQuestions extends Command
         $lessonIdentifier = $this->argument('lesson');
         $count = (int) $this->option('count');
         $autoApprove = $this->option('approve');
-        $generateAudio = $this->option('generate-audio');
+        $skipAudio = $this->option('skip-audio');
 
         // Validate count
         if ($count < 5 || $count > 8) {
@@ -100,52 +96,20 @@ class GenerateTrueFalseQuestions extends Command
         // Create question records
         $created = 0;
         foreach ($questions as $index => $questionData) {
-            $audioPath = null;
-
-            // Generate audio if requested (using vocabulary preset for consistent, clear pronunciation)
-            if ($generateAudio && $this->ttsService->enabled()) {
-                try {
-                    $relativePath = "tts/true-false/question_{$lesson->id}_" . ($index + 1) . ".mp3";
-                    $fullPath = storage_path("app/public/{$relativePath}");
-                    
-                    // Create directory if needed
-                    $dir = dirname($fullPath);
-                    if (!file_exists($dir)) {
-                        mkdir($dir, 0755, true);
-                    }
-                    
-                    // Generate audio using vocabulary preset (optimized for clarity)
-                    $audioData = $this->ttsService->generate(
-                        $questionData['statement'],
-                        'vocabulary', // Use vocabulary preset instead of sentence preset
-                        'EXAVITQu4vr4xnSDxMaL' // Rachel voice
-                    );
-                    
-                    if ($audioData !== null) {
-                        // Save file
-                        file_put_contents($fullPath, $audioData);
-                        
-                        // Verify file
-                        if (file_exists($fullPath) && is_readable($fullPath)) {
-                            $audioPath = "/storage/{$relativePath}";
-                        }
-                    }
-                } catch (\Exception $e) {
-                    $this->warn("Failed to generate audio for question " . ($index + 1) . ": " . $e->getMessage());
-                }
-            }
-
-            TrueFalseQuestion::create([
+            $question = TrueFalseQuestion::create([
                 'lesson_id' => $lesson->id,
                 'statement' => $questionData['statement'],
                 'is_true' => $questionData['is_true'],
                 'explanation' => $questionData['explanation'],
                 'category' => $questionData['category'] ?? null,
-                'audio_path' => $audioPath,
                 'is_approved' => $autoApprove,
                 'is_active' => true,
                 'sort_order' => $index + 1,
             ]);
+
+            if (!$skipAudio) {
+                $this->questionTts->ensure($question);
+            }
 
             $created++;
             $this->line("  ✓ Created: " . substr($questionData['statement'], 0, 60) . "...");

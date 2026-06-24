@@ -7,11 +7,18 @@
     <div class="container mx-auto px-4 max-w-6xl">
         <!-- Game Header -->
         <div class="mb-6">
-            <a href="{{ route('lessons.show', $lesson->slug) }}" 
-               class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-4 transition-colors duration-200 group">
-                <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
-                <span>Back to Lesson</span>
-            </a>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <a href="{{ route('lessons.show', $lesson->slug) }}" 
+                   class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 group">
+                    <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
+                    <span>Back to Lesson</span>
+                </a>
+                @include('partials.admin-edit-lesson', [
+                    'lesson' => $lesson,
+                    'activityEditUrl' => route('admin.lessons.matching-games.edit', [$lesson, $matching_game]),
+                    'activityEditLabel' => 'Edit Game',
+                ])
+            </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center mb-6">
                 <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{{ $matching_game->title }}</h1>
             </div>
@@ -64,10 +71,10 @@
                         <div class="card-content w-full h-full flex items-center justify-center p-3 md:p-4">
                             @if($card['type'] === 'audio')
                                 @if(!empty($card['audio_path']))
-                                    <button class="play-audio-strip w-full h-full bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center" 
+                                    <button type="button" class="play-audio-strip talma-audio-btn w-full h-full bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center" 
                                             data-audio="{{ $card['audio_path'] }}" 
                                             title="Play audio">
-                                        <i class="fas fa-play text-3xl md:text-4xl"></i>
+                                        <i class="fas fa-play text-3xl md:text-4xl talma-audio-icon"></i>
                                     </button>
                                 @else
                                     <div class="text-red-600 font-semibold">No audio</div>
@@ -87,10 +94,11 @@
                                     {{ $card['content'] }}
                                 </div>
                                 @if($card['audio_path'] && $mode !== 'image' && $mode !== 'audio')
-                                    <button class="play-audio-btn absolute top-2 right-2 w-8 h-8 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
+                                    <button type="button" class="play-audio-btn talma-audio-btn absolute top-2 right-2 w-8 h-8 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
                                             data-audio="{{ $card['audio_path'] }}" 
+                                            data-talma-audio-icon="volume-up"
                                             title="Play audio">
-                                        <i class="fas fa-volume-up text-xs"></i>
+                                        <i class="fas fa-volume-up text-xs talma-audio-icon"></i>
                                     </button>
                                 @endif
                             @endif
@@ -679,30 +687,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 matchingGameInstance.positionCardsRandomly();
             }
         }, 300);
-    });
-    
-    // Handle audio playback
-    document.addEventListener('click', function(e) {
-        // Check if click is on regular audio button (for word cards in other modes)
-        const btn = e.target.closest('.play-audio-btn');
-        if (btn) {
-            e.stopPropagation(); // Prevent card selection for regular audio buttons
-            const audioPath = btn.dataset.audio;
-            if (audioPath) {
-                const audio = new Audio(audioPath);
-                audio.play().catch(err => console.log('Audio play failed:', err));
-            }
-        }
-        // For audio strip buttons, play audio but allow card selection to proceed
-        const audioStrip = e.target.closest('.play-audio-strip');
-        if (audioStrip) {
-            const audioPath = audioStrip.dataset.audio;
-            if (audioPath) {
-                const audio = new Audio(audioPath);
-                audio.play().catch(err => console.log('Audio play failed:', err));
-            }
-            // Don't stop propagation - let the card selection happen
-        }
     });
 });
 

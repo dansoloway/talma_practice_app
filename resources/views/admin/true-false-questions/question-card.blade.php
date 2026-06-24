@@ -14,6 +14,10 @@
                     <span class="badge badge-info" style="background: #d1ecf1; color: #0c5460; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
                         <i class="fas fa-volume-up"></i> Audio
                     </span>
+                @else
+                    <span class="badge badge-warning" style="background: #fff3cd; color: #856404; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
+                        <i class="fas fa-volume-mute"></i> No audio
+                    </span>
                 @endif
             </div>
             <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--color-text);">{{ $question->statement }}</h3>

@@ -8,12 +8,15 @@ use App\Models\TrueFalseGame;
 use App\Models\TrueFalseQuestion;
 use App\Models\Vocabulary;
 use App\Services\QuestionGeneration\OpenAiQuestionGenerator;
-use App\Services\Tts\ElevenLabsTtsService;
+use App\Services\Tts\TrueFalseQuestionTtsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class TrueFalseQuestionController extends Controller
 {
+    public function __construct(
+        private TrueFalseQuestionTtsService $questionTts
+    ) {}
     /**
      * Display a listing of questions for a game.
      */
@@ -93,6 +96,8 @@ class TrueFalseQuestionController extends Controller
         // Attach vocabulary items
         $question->vocabulary()->attach($validated['vocabulary_ids']);
 
+        $this->questionTts->ensure($question);
+
         return redirect()
             ->route('admin.lessons.true-false-games.questions.index', [$lesson, $trueFalseGame])
             ->with('success', 'True/False question created successfully!');
@@ -139,10 +144,18 @@ class TrueFalseQuestionController extends Controller
         $validated['is_approved'] = $request->boolean('is_approved', $trueFalseQuestion->is_approved);
         $validated['is_active'] = $request->boolean('is_active', $trueFalseQuestion->is_active);
 
+        $statementChanged = $validated['statement'] !== $trueFalseQuestion->statement;
+
         $trueFalseQuestion->update($validated);
         
         // Sync vocabulary items
         $trueFalseQuestion->vocabulary()->sync($validated['vocabulary_ids']);
+
+        if ($statementChanged) {
+            $this->questionTts->generate($trueFalseQuestion->fresh());
+        } else {
+            $this->questionTts->ensure($trueFalseQuestion->fresh());
+        }
 
         return redirect()
             ->route('admin.lessons.true-false-games.questions.index', [$lesson, $trueFalseGame])
@@ -167,6 +180,7 @@ class TrueFalseQuestionController extends Controller
     public function approve(Lesson $lesson, TrueFalseGame $trueFalseGame, TrueFalseQuestion $trueFalseQuestion)
     {
         $trueFalseQuestion->update(['is_approved' => true]);
+        $this->questionTts->ensure($trueFalseQuestion->fresh());
 
         return redirect()
             ->route('admin.lessons.true-false-games.questions.index', [$lesson, $trueFalseGame])
@@ -191,7 +205,6 @@ class TrueFalseQuestionController extends Controller
     public function generate(Lesson $lesson, TrueFalseGame $trueFalseGame, Request $request)
     {
         $count = (int) $request->input('count', 6);
-        $generateAudio = $request->boolean('generate_audio', false);
         $autoApprove = $request->boolean('auto_approve', false);
 
         // Validate inputs
@@ -237,46 +250,10 @@ class TrueFalseQuestionController extends Controller
                     ->with('error', 'Failed to generate valid questions. Please try again.');
             }
 
-            $ttsService = new ElevenLabsTtsService();
-            $created = 0;
             $maxSortOrder = $trueFalseGame->questions()->max('sort_order') ?? 0;
+            $created = 0;
 
             foreach ($questions as $index => $questionData) {
-                $audioPath = null;
-
-                // Generate audio if requested (using vocabulary preset for consistent, clear pronunciation)
-                if ($generateAudio && $ttsService->enabled()) {
-                    try {
-                        $relativePath = "tts/true-false/question_{$lesson->id}_{$trueFalseGame->id}_" . ($index + 1) . ".mp3";
-                        $fullPath = storage_path("app/public/{$relativePath}");
-                        
-                        // Create directory if needed
-                        $dir = dirname($fullPath);
-                        if (!file_exists($dir)) {
-                            mkdir($dir, 0755, true);
-                        }
-                        
-                        // Generate audio using vocabulary preset (optimized for clarity)
-                        $audioData = $ttsService->generate(
-                            $questionData['statement'],
-                            'vocabulary', // Use vocabulary preset instead of sentence preset
-                            'EXAVITQu4vr4xnSDxMaL' // Rachel voice
-                        );
-                        
-                        if ($audioData !== null) {
-                            // Save file
-                            file_put_contents($fullPath, $audioData);
-                            
-                            // Verify file
-                            if (file_exists($fullPath) && is_readable($fullPath)) {
-                                $audioPath = "/storage/{$relativePath}";
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        Log::warning("Failed to generate audio for question: " . $e->getMessage());
-                    }
-                }
-
                 // Find vocabulary IDs from vocab_words array
                 $vocabWords = $questionData['vocab_words'] ?? [];
                 $vocabIds = [];
@@ -300,7 +277,6 @@ class TrueFalseQuestionController extends Controller
                     'is_true' => $questionData['is_true'],
                     'explanation' => $questionData['explanation'],
                     'category' => $questionData['category'] ?? null,
-                    'audio_path' => $audioPath,
                     'is_approved' => $autoApprove,
                     'is_active' => true,
                     'sort_order' => $maxSortOrder + $index + 1,
@@ -311,12 +287,19 @@ class TrueFalseQuestionController extends Controller
                     $question->vocabulary()->attach($vocabIds);
                 }
 
+                $this->questionTts->ensure($question);
+
                 $created++;
             }
 
             $message = "Generated {$created} question(s)";
             if (!$autoApprove) {
                 $message .= " (pending approval)";
+            }
+            if ($this->questionTts->enabled()) {
+                $message .= " with audio";
+            } elseif ($created > 0) {
+                $message .= " (audio skipped — ElevenLabs not configured)";
             }
 
             return redirect()
@@ -356,6 +339,11 @@ class TrueFalseQuestionController extends Controller
         $count = TrueFalseQuestion::whereIn('id', $questionIds)
             ->where('true_false_game_id', $trueFalseGame->id)
             ->update(['is_approved' => true]);
+
+        $approvedQuestions = TrueFalseQuestion::whereIn('id', $questionIds)
+            ->where('true_false_game_id', $trueFalseGame->id)
+            ->get();
+        $this->questionTts->ensureForGame($approvedQuestions);
 
         return redirect()
             ->route('admin.lessons.true-false-games.questions.index', [$lesson, $trueFalseGame])

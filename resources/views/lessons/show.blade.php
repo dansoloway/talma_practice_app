@@ -5,12 +5,15 @@
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
     <div class="container mx-auto px-4 max-w-5xl">
-        <!-- Back Link -->
-        <a href="{{ isset($org) && $org && $lesson->course ? route('org.student.course', [$org, $lesson->course]) : ($lesson->course ? route('student.course', $lesson->course->slug) : route('lessons.index')) }}" 
-           class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium mb-6 transition-colors duration-200 group">
-            <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
-            <span>{{ $lesson->course ? 'Back to ' . $lesson->course->title : 'Back to Lessons' }}</span>
-        </a>
+        <!-- Back Link + admin toolbar -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <a href="{{ isset($org) && $org && $lesson->course ? route('org.student.course', [$org, $lesson->course]) : ($lesson->course ? route('student.course', $lesson->course->slug) : route('lessons.index')) }}" 
+               class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 group">
+                <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
+                <span>{{ $lesson->course ? 'Back to ' . $lesson->course->title : 'Back to Lessons' }}</span>
+            </a>
+            @include('partials.admin-edit-lesson', ['lesson' => $lesson])
+        </div>
 
         <!-- Lesson Header -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-6 mb-8">
@@ -96,10 +99,11 @@
                                 @endif
                                 <div class="flex flex-col items-center gap-2">
                                     @if($vocab->word_audio_path)
-                                        <button class="w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
-                                                onclick="playVocabAudio('{{ $vocab->word_audio_url }}')" 
+                                        <button type="button"
+                                                class="talma-audio-btn w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm"
+                                                data-audio-url="{{ $vocab->word_audio_url }}"
                                                 title="Listen to word">
-                                            <i class="fas fa-volume-up text-sm"></i>
+                                            <i class="fas fa-play text-sm talma-audio-icon"></i>
                                         </button>
                                     @endif
                                     <div class="text-lg font-bold text-gray-800">{{ $vocab->english_word }}</div>
@@ -315,14 +319,6 @@
 <script>
 const lessonData = @json($lesson);
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
-// Vocabulary audio function
-function playVocabAudio(audioPath) {
-    const audio = new Audio(audioPath);
-    audio.play().catch(error => {
-        console.error('Error playing audio:', error);
-    });
-}
 
 // Toggle vocabulary accordion
 function toggleVocabAccordion() {

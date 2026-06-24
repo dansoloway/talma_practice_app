@@ -27,7 +27,14 @@
 
 <div class="spelling-game-container">
     <div class="game-header">
-        <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+            @include('partials.admin-edit-lesson', [
+                'lesson' => $lesson,
+                'activityEditUrl' => route('admin.lessons.spelling-games.edit', [$lesson, $spelling_game]),
+                'activityEditLabel' => 'Edit Game',
+            ])
+        </div>
         <h1 class="game-title">Spelling Practice</h1>
         <p class="game-subtitle">{{ $lesson->title }}</p>
     </div>
@@ -184,8 +191,8 @@ function loadWord(index) {
     const wordHtml = `
         <div class="word-card">
             <div class="word-audio-section">
-                <button class="big-play-btn" id="play-audio-btn" data-audio="${word.word_audio_path || ''}">
-                    <i class="fas fa-volume-up"></i>
+                <button type="button" class="big-play-btn talma-audio-btn" id="play-audio-btn" data-audio-url="${word.word_audio_path || ''}" data-talma-audio-icon="volume-up">
+                    <i class="fas fa-volume-up talma-audio-icon"></i>
                 </button>
                 <p class="audio-hint">Click to listen</p>
             </div>
@@ -243,12 +250,7 @@ function setupWordEvents(word, hint) {
     const feedbackContent = document.getElementById('feedback-content');
     const playBtn = document.getElementById('play-audio-btn');
     
-    // Audio playback
-    if (playBtn && word.word_audio_path) {
-        playBtn.addEventListener('click', function() {
-            playAudio(word.word_audio_path);
-        });
-    } else if (playBtn && !word.word_audio_path) {
+    if (playBtn && !word.word_audio_path) {
         playBtn.disabled = true;
         playBtn.classList.add('disabled');
         playBtn.title = 'No audio available';
@@ -439,39 +441,6 @@ function updateProgress() {
     progressFill.style.width = progress + '%';
     currentWordSpan.textContent = currentWordIndex + 1;
 }
-
-function playAudio(audioPath) {
-    if (!audioPath) return;
-    
-    const audio = document.getElementById('game-audio');
-    const playBtn = document.getElementById('play-audio-btn');
-    
-    if (playBtn) {
-        playBtn.disabled = true;
-        playBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    }
-    
-    audio.src = audioPath;
-    audio.play().then(() => {
-        if (playBtn) {
-            playBtn.disabled = false;
-            playBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        }
-    }).catch(error => {
-        console.error('Error playing audio:', error);
-        if (playBtn) {
-            playBtn.disabled = false;
-            playBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        }
-    });
-    
-    audio.onended = function() {
-        if (playBtn) {
-            playBtn.disabled = false;
-            playBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        }
-    };
-}
 </script>
 
 @push('styles')
@@ -496,18 +465,6 @@ function playAudio(audioPath) {
 .game-subtitle {
     color: var(--color-text-muted);
     font-size: 1.1rem;
-}
-
-.back-link {
-    display: inline-block;
-    color: var(--color-text-muted);
-    text-decoration: none;
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
-}
-
-.back-link:hover {
-    color: var(--color-primary);
 }
 
 .game-progress {

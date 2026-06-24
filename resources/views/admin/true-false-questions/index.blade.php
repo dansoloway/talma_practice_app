@@ -43,7 +43,7 @@
     <!-- Generate Questions Form -->
     <div class="generate-section">
         <h3>Generate Questions with AI</h3>
-        <p>Use AI to automatically generate 5-8 vocabulary-focused True/False questions.</p>
+        <p>Use AI to automatically generate 5-8 vocabulary-focused True/False questions. Statement audio is generated automatically.</p>
         
         <form action="{{ route('admin.lessons.true-false-games.questions.generate', [$lesson, $trueFalseGame]) }}" method="POST" id="generate-form">
             @csrf
@@ -72,14 +72,6 @@
                         <input type="checkbox" name="auto_approve" value="1">
                         <span class="checkmark"></span>
                         Auto-approve (skip review)
-                    </label>
-                </div>
-                
-                <div class="form-group-inline">
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="generate_audio" value="1">
-                        <span class="checkmark"></span>
-                        Generate audio
                     </label>
                 </div>
                 

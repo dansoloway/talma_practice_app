@@ -149,7 +149,14 @@
 </style>
 <div class="container">
     <div class="game-header">
-        <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+            @include('partials.admin-edit-lesson', [
+                'lesson' => $lesson,
+                'activityEditUrl' => route('admin.lessons.flashcard-games.edit', [$lesson, $flashcardGame]),
+                'activityEditLabel' => 'Edit Game',
+            ])
+        </div>
         <h1 class="page-title">{{ $flashcardGame->title }}</h1>
         <p class="game-description">Practice vocabulary with interactive flashcards</p>
     </div>
@@ -570,7 +577,7 @@ function setupCardEvents(card) {
         btn.addEventListener('click', function() {
             const audioPath = this.dataset.audio;
             if (audioPath) {
-                playAudio(audioPath);
+                playAudio(audioPath, this);
             }
         });
     });
@@ -580,7 +587,7 @@ function setupCardEvents(card) {
         btn.addEventListener('click', function() {
             const audioPath = this.dataset.audio;
             if (audioPath) {
-                playAudio(audioPath);
+                playAudio(audioPath, this);
             }
         });
     });
@@ -590,7 +597,7 @@ function setupCardEvents(card) {
         btn.addEventListener('click', function() {
             const audioPath = this.dataset.audio;
             if (audioPath) {
-                playAudio(audioPath);
+                playAudio(audioPath, this);
             }
         });
     });
@@ -628,7 +635,7 @@ function generateOptions(correctCard) {
                 playBtn.title = 'Play Audio';
                 playBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    playAudio(option.audio_path);
+                    playAudio(option.audio_path, this);
                 });
                 
                 // Select button
@@ -833,10 +840,16 @@ function updateProgress() {
     currentCardSpan.textContent = currentCardIndex + 1;
 }
 
-function playAudio(audioPath) {
-    const audio = document.getElementById('game-audio');
-    audio.src = audioPath;
-    audio.play();
+function playAudio(audioPath, button) {
+    if (!audioPath) {
+        return;
+    }
+
+    if (button) {
+        TalmaAudio.toggle(audioPath, button);
+    } else {
+        TalmaAudio.play(audioPath);
+    }
 }
 
 function autoResizeText(element) {

@@ -109,17 +109,14 @@ function renderPrompt() {
     
     // Set up prompt audio button
     if (currentPrompt.prompt_audio_path) {
-        promptAudio.src = currentPrompt.prompt_audio_path;
         promptAudioBtn.classList.remove('hidden');
+        promptAudioBtn.onclick = () => {
+            TalmaAudio.toggle(currentPrompt.prompt_audio_path, promptAudioBtn);
+        };
     } else {
         promptAudioBtn.classList.add('hidden');
+        promptAudioBtn.onclick = null;
     }
-    
-    // Play prompt audio button
-    promptAudioBtn.addEventListener('click', () => {
-        promptAudio.currentTime = 0;
-        promptAudio.play();
-    });
 
     // Set up drag and drop sentence
     setupDragAndDropSentence();
@@ -147,7 +144,7 @@ function renderPrompt() {
         if (option.word_audio_path) {
             contentHTML += `
                 <div class="option-card-audio">
-                    <button onclick="playWordAudio(event, '${option.word_audio_path}')" title="Listen to word">
+                    <button type="button" onclick="playWordAudio(event, '${option.word_audio_path}')" title="Listen to word">
                         ▶
                     </button>
                 </div>
@@ -326,10 +323,11 @@ function showModelStep(option) {
     document.getElementById('model-text').textContent = modelSentence;
     
     // Set up model audio
+    let modelAudioPath = null;
     if (currentPrompt.assets && currentPrompt.assets.length > 0) {
         const asset = currentPrompt.assets.find(a => a.option_id === option.id);
         if (asset && asset.audio_path) {
-            modelAudio.src = asset.audio_path;
+            modelAudioPath = asset.audio_path;
             playBtn.classList.remove('hidden');
         } else {
             playBtn.classList.add('hidden');
@@ -339,22 +337,20 @@ function showModelStep(option) {
     }
     
     // Set up play button
-    playBtn.addEventListener('click', () => {
-        modelAudio.currentTime = 0;
-        modelAudio.play();
-    });
+    playBtn.onclick = () => {
+        if (modelAudioPath) {
+            TalmaAudio.toggle(modelAudioPath, playBtn);
+        }
+    };
 }
 
 // Legacy selectOption function - now handled by drag and drop
 // This is kept for backward compatibility but not used in drag-and-drop mode
 
 // Play word audio
-let wordAudio = new Audio();
-
 function playWordAudio(event, audioPath) {
-    event.stopPropagation(); // Prevent card selection
-    wordAudio.src = audioPath;
-    wordAudio.play();
+    event.stopPropagation();
+    TalmaAudio.toggle(audioPath, event.currentTarget);
 }
 
 // Start recording
@@ -411,6 +407,7 @@ function stopRecording() {
 // Playback recording
 function playRecording() {
     if (playbackAudio.src) {
+        TalmaAudio.stop();
         playbackAudio.currentTime = 0;
         playbackAudio.play();
     }

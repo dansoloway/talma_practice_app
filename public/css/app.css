@@ -334,6 +334,7 @@ a:focus {
 
 .back-link {
     color: var(--color-primary);
+    -webkit-text-fill-color: currentColor;
     text-decoration: none;
     font-weight: 500;
     margin-bottom: var(--spacing-xl);
@@ -348,9 +349,12 @@ a:focus {
     font-size: 0.9rem;
 }
 
-.back-link:hover {
+.back-link:hover,
+.back-link:focus-visible {
     background: var(--color-primary);
+    border-color: var(--color-primary);
     color: var(--color-white);
+    -webkit-text-fill-color: var(--color-white);
     transform: translateX(-2px);
     text-decoration: none;
 }
@@ -385,6 +389,7 @@ a:focus {
 .btn:hover {
     background-color: var(--color-gray-50);
     border-color: var(--color-border-dark);
+    color: var(--color-gray-700);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
     text-decoration: none;

@@ -28,16 +28,11 @@
     <div class="game-header">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
-            @if(auth('admin')->check())
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <a href="{{ route('admin.lessons.manage', $lesson) }}" class="btn btn-sm" style="background: var(--color-primary); color: white; padding: 0.5rem 1rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.875rem;">
-                        <i class="fas fa-cog"></i> Lesson Admin
-                    </a>
-                    <a href="{{ route('admin.lessons.clause-exercises.edit', [$lesson, $clauseExercise]) }}" class="btn btn-sm" style="background: var(--color-secondary); color: white; padding: 0.5rem 1rem; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.875rem;">
-                        <i class="fas fa-edit"></i> Edit Exercise
-                    </a>
-                </div>
-            @endif
+            @include('partials.admin-edit-lesson', [
+                'lesson' => $lesson,
+                'activityEditUrl' => route('admin.lessons.clause-exercises.edit', [$lesson, $clauseExercise]),
+                'activityEditLabel' => 'Edit Exercise',
+            ])
         </div>
         <h1 class="game-title">{{ $clauseExercise->title }}</h1>
         <p class="game-subtitle">{{ $lesson->title }}</p>
@@ -373,8 +368,8 @@ function renderVocabularyBank() {
     grid.innerHTML = shuffled.map(vocab => `
         <div class="vocab-card">
             <span class="vocab-word">${vocab.word}</span>
-            ${vocab.audio ? `<button class="vocab-audio-btn" onclick="playVocabAudio('${vocab.audio}')" title="Listen">
-                <i class="fas fa-volume-up"></i>
+            ${vocab.audio ? `<button type="button" class="vocab-audio-btn talma-audio-btn" data-audio-url="${vocab.audio}" title="Listen">
+                <i class="fas fa-play talma-audio-icon"></i>
             </button>` : ''}
         </div>
     `).join('');
@@ -573,12 +568,6 @@ function resetExercise() {
     });
 }
 
-function playVocabAudio(audioPath) {
-    const audio = new Audio(audioPath);
-    audio.play().catch(error => {
-        console.error('Error playing audio:', error);
-    });
-}
 </script>
 
 <style>

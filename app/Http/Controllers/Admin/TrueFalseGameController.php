@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\TrueFalseGame;
+use App\Services\Tts\TrueFalseQuestionTtsService;
 use Illuminate\Http\Request;
 
 class TrueFalseGameController extends Controller
 {
+    public function __construct(
+        private TrueFalseQuestionTtsService $questionTts
+    ) {}
     /**
      * Display a listing of True/False games for a lesson.
      */
@@ -57,11 +61,20 @@ class TrueFalseGameController extends Controller
     {
         $trueFalseGame->load(['questions.vocabulary']);
         $questions = $trueFalseGame->questions()->ordered()->get();
+
+        $missingAudioCount = $questions->whereNull('audio_path')->count();
+        $audioBackfilled = 0;
+        if ($missingAudioCount > 0) {
+            $audioBackfilled = $this->questionTts->ensureForGame($questions->whereNull('audio_path'));
+            if ($audioBackfilled > 0) {
+                $questions = $trueFalseGame->questions()->ordered()->get();
+            }
+        }
         
         $pendingCount = $questions->where('is_approved', false)->count();
         $approvedCount = $questions->where('is_approved', true)->where('is_active', true)->count();
         
-        return view('admin.true-false-games.show', compact('lesson', 'trueFalseGame', 'questions', 'pendingCount', 'approvedCount'));
+        return view('admin.true-false-games.show', compact('lesson', 'trueFalseGame', 'questions', 'pendingCount', 'approvedCount', 'audioBackfilled'));
     }
 
     /**

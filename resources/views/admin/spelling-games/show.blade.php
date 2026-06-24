@@ -90,9 +90,12 @@
                                     @endif
                                     <div class="vocab-word">{{ $vocab->english_word }}</div>
                                     @if($vocab->word_audio_path)
-                                        <button class="btn btn-sm btn-outline-primary" 
-                                                onclick="playAudio('{{ $vocab->word_audio_url ?? asset('storage/' . $vocab->word_audio_path) }}')">
-                                            <i class="fas fa-volume-up"></i>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary talma-audio-btn"
+                                                data-audio-url="{{ $vocab->word_audio_url ?? asset('storage/' . $vocab->word_audio_path) }}"
+                                                data-talma-audio-icon="volume-up"
+                                                title="Play audio">
+                                            <i class="fas fa-volume-up talma-audio-icon"></i>
                                         </button>
                                     @endif
                                 </div>
@@ -139,16 +142,6 @@
         </div>
     </div>
 </div>
-
-<audio id="audio-player" preload="auto"></audio>
-
-<script>
-function playAudio(audioPath) {
-    const audio = document.getElementById('audio-player');
-    audio.src = audioPath;
-    audio.play();
-}
-</script>
 
 <style>
 .vocab-list {

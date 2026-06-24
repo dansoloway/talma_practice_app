@@ -180,6 +180,7 @@
         </div>
     </footer>
 
+    <script src="{{ asset('js/talma-audio.js') }}"></script>
     @stack('scripts')
 </body>
 </html>
