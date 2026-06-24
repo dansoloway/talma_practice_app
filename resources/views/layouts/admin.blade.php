@@ -49,7 +49,7 @@
                 <button type="button" class="md:hidden p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200" id="admin-nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
                     <i class="fas fa-bars text-xl"></i>
                 </button>
-                <div class="hidden md:flex items-center gap-2" id="admin-nav-links">
+                <div class="flex max-md:hidden items-center gap-2" id="admin-nav-links">
                     <!-- Content Dropdown: Courses, Classes, Lessons -->
                     <div class="relative group">
                         <button type="button" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
@@ -124,11 +124,8 @@
                     <div class="hidden absolute top-full right-0 pt-1 z-50" id="admin-account-dropdown">
                         <div class="bg-white rounded-xl border border-gray-200/60 shadow-lg py-1 min-w-[220px]">
                             @if($accessibleOrgs->isNotEmpty())
-                                <div class="px-4 py-2">
+                                <div class="px-4 pt-2 pb-1">
                                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Organization</p>
-                                    @if($org)
-                                        <p class="text-sm text-gray-600 mt-0.5 truncate">{{ $org->name }}</p>
-                                    @endif
                                 </div>
                                 @foreach($accessibleOrgs as $o)
                                     <form method="POST" action="{{ route('admin.org.select.store') }}" class="block">
