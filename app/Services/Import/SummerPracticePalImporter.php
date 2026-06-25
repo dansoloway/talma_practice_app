@@ -218,15 +218,23 @@ class SummerPracticePalImporter
             ]
         );
 
-        $defaultOrg = Organization::firstOrCreate(
-            ['slug' => 'default'],
+        $summerOrg = Organization::firstOrCreate(
+            ['slug' => Organization::SUMMER_PRACTICE_PAL_SLUG],
             [
-                'name' => 'TALMA Community Resources',
-                'description' => 'Community resources available to all',
+                'name' => 'Summer Practice Pal',
+                'description' => 'Summer Practice Pal — login required for CEFR practice courses',
                 'is_active' => true,
-                'access_mode' => 'open',
+                'access_mode' => 'restricted',
+                'allow_self_registration' => true,
             ]
         );
+        $summerOrg->update([
+            'name' => 'Summer Practice Pal',
+            'access_mode' => 'restricted',
+            'allow_self_registration' => true,
+        ]);
+
+        $defaultOrg = Organization::where('slug', 'default')->first();
 
         foreach ($grouped as $cefr => $data) {
             $courseSummary = [
@@ -235,7 +243,7 @@ class SummerPracticePalImporter
                 'prompts' => 0,
             ];
 
-            DB::transaction(function () use ($cefr, $data, $options, $rootOrg, $defaultOrg, &$summary, &$courseSummary) {
+            DB::transaction(function () use ($cefr, $data, $options, $rootOrg, $summerOrg, $defaultOrg, &$summary, &$courseSummary) {
                 $courseDef = $data['course'];
                 $course = Course::firstOrNew(['slug' => $courseDef['slug']]);
                 $wasNew = !$course->exists;
@@ -255,7 +263,11 @@ class SummerPracticePalImporter
                 }
 
                 $rootOrg->courses()->syncWithoutDetaching([$course->id => ['is_org_wide' => true]]);
-                $defaultOrg->courses()->syncWithoutDetaching([$course->id => ['is_org_wide' => true]]);
+                $summerOrg->courses()->syncWithoutDetaching([$course->id => ['is_org_wide' => true]]);
+
+                if ($options->detachFromDefault && $defaultOrg) {
+                    $defaultOrg->courses()->detach($course->id);
+                }
 
                 $lessons = $data['lessons'];
                 uasort($lessons, fn ($a, $b) => [$a['day_number'], $a['topic']] <=> [$b['day_number'], $b['topic']]);

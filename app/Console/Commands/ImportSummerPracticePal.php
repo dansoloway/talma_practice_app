@@ -14,7 +14,8 @@ class ImportSummerPracticePal extends Command
                             {--skip-translations : Skip Hebrew/Arabic translation generation}
                             {--skip-images : Skip vocabulary image generation}
                             {--skip-tts : Skip vocabulary and prompt TTS generation}
-                            {--force : Replace vocabulary and prompts on existing lessons}';
+                            {--force : Replace vocabulary and prompts on existing lessons}
+                            {--no-detach-from-default : Keep courses attached to TALMA Community Resources org}';
 
     protected $description = 'Import Summer Practice Pal courses, vocabulary, games, and fill-in-the-blank prompts from the Excel file';
 

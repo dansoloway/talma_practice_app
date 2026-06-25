@@ -73,7 +73,14 @@
                 
                 @if(auth('admin')->check())
                     <span class="px-3 py-2 text-gray-600 text-sm border-l border-gray-200/60 ml-2 pl-4">{{ auth('admin')->user()->name }} ({{ ucfirst(auth('admin')->user()->role) }})</span>
-                    <a href="#" onclick="logout()" class="px-3 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
+                    @if(isset($currentOrganization) && auth('admin')->user()->canAccessStudentPortal())
+                        <form method="POST" action="{{ route('org.student.logout', $currentOrganization) }}" class="inline">
+                            @csrf
+                            <button type="submit" class="px-3 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-200">Logout</button>
+                        </form>
+                    @elseif(auth('admin')->user()->canAccessAdmin())
+                        <a href="#" onclick="logout()" class="px-3 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
+                    @endif
                 @else
                     <a href="{{ route('admin.dashboard') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Login</a>
                 @endif
@@ -100,7 +107,14 @@
                     <div class="border-t border-gray-200/60 my-2 pt-2">
                         <span class="text-gray-600 text-sm px-3">{{ auth('admin')->user()->name }} ({{ ucfirst(auth('admin')->user()->role) }})</span>
                     </div>
-                    <a href="#" onclick="logout()" class="text-gray-700 hover:text-red-600 font-medium py-2 px-3 rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
+                    @if(isset($currentOrganization) && auth('admin')->user()->canAccessStudentPortal())
+                        <form method="POST" action="{{ route('org.student.logout', $currentOrganization) }}" class="px-3">
+                            @csrf
+                            <button type="submit" class="text-gray-700 hover:text-red-600 font-medium py-2">Logout</button>
+                        </form>
+                    @elseif(auth('admin')->user()->canAccessAdmin())
+                        <a href="#" onclick="logout()" class="text-gray-700 hover:text-red-600 font-medium py-2 px-3 rounded-lg hover:bg-red-50 transition-all duration-200">Logout</a>
+                    @endif
                 @else
                     <a href="{{ route('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Login</a>
                 @endif

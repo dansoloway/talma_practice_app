@@ -93,4 +93,36 @@ class CourseAccess
 
         return $query->whereIn('courses.id', $accessibleIds);
     }
+
+    /**
+     * True when the course is not available through any open (public) organization.
+     */
+    public function courseRequiresAuth(Course $course): bool
+    {
+        $modes = DB::table('organization_course')
+            ->join('organizations', 'organizations.id', '=', 'organization_course.organization_id')
+            ->where('organization_course.course_id', $course->id)
+            ->where('organizations.is_active', true)
+            ->pluck('organizations.access_mode');
+
+        if ($modes->isEmpty()) {
+            return false;
+        }
+
+        return !$modes->contains('open');
+    }
+
+    /**
+     * Primary tenant org for login redirects (non-root restricted org that owns the course).
+     */
+    public function primaryTenantOrgForCourse(Course $course): ?Organization
+    {
+        return Organization::query()
+            ->where('is_active', true)
+            ->where('access_mode', 'restricted')
+            ->where('is_root', false)
+            ->whereHas('courses', fn ($q) => $q->where('courses.id', $course->id))
+            ->orderBy('id')
+            ->first();
+    }
 }

@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
 use App\Models\Lesson;
 use App\Models\Organization;
 use App\Services\CourseAccess;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class LessonController extends Controller
 {
+    use GuardsRestrictedCourseAccess;
+
     protected CourseAccess $courseAccess;
 
     public function __construct(CourseAccess $courseAccess)
@@ -95,7 +99,18 @@ class LessonController extends Controller
         $lesson->load($withRelations);
         $lesson->load('course');
 
-        $org = $organization ?? Organization::where('slug', 'default')->where('is_active', true)->firstOrFail();
+        if ($organization instanceof Organization) {
+            $org = $organization;
+        } else {
+            $gate = $this->ensureLegacyCourseAccess($lesson);
+            if ($gate instanceof RedirectResponse) {
+                return $gate;
+            }
+            $org = $gate instanceof Organization
+                ? $gate
+                : Organization::where('slug', 'default')->where('is_active', true)->firstOrFail();
+        }
+
         $user = auth('admin')->check() ? auth('admin')->user() : null;
         if (!$this->courseAccess->canAccessLesson($user, $lesson, $org)) {
             abort(403, 'You do not have access to this lesson.');
@@ -122,7 +137,6 @@ class LessonController extends Controller
             $lesson->setRelation('vocabulary', $lesson->getVocabularyForGames());
         }
 
-        $org = $organization ?? null;
         return view('lessons.show', compact('lesson', 'org'));
     }
 }

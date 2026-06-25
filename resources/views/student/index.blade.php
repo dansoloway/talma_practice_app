@@ -8,11 +8,24 @@
         <!-- Welcome Section -->
         <div class="text-center mb-12">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4 tracking-tight">
-                Welcome to TALMA Practice Pal!
+                @if(isset($currentOrganization))
+                    {{ $currentOrganization->display_name }}
+                @else
+                    Welcome to TALMA Practice Pal!
+                @endif
             </h1>
             <p class="text-lg md:text-xl text-gray-600 font-medium">
-                Practice English with fun activities
+                @if(isset($currentOrganization))
+                    Choose a course to start practicing
+                @else
+                    Practice English with fun activities
+                @endif
             </p>
+            @if(session('success'))
+                <div class="mt-6 mx-auto max-w-lg bg-green-50 border border-green-200 text-green-800 p-4 rounded-xl">
+                    {{ session('success') }}
+                </div>
+            @endif
         </div>
 
         <!-- Course Selection by Organization -->

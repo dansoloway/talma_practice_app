@@ -38,18 +38,22 @@ class Organization extends Model
         });
     }
 
+    public const SUMMER_PRACTICE_PAL_SLUG = 'summer-practice-pal';
+
     protected $fillable = [
         'name',
         'slug',
         'description',
         'is_active',
         'access_mode',
+        'allow_self_registration',
         'is_root',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'is_root' => 'boolean',
+        'allow_self_registration' => 'boolean',
     ];
 
     /**

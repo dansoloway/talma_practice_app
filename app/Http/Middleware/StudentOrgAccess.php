@@ -31,16 +31,21 @@ class StudentOrgAccess
             return $next($request);
         }
 
-        // Restricted: require authentication (admin guard - same login as teachers/org admins)
         if (!Auth::guard('admin')->check()) {
-            return redirect()->guest(route('admin.login.show'));
+            return redirect()->guest(route('org.student.login', $org));
         }
 
         $user = Auth::guard('admin')->user();
 
-        // Must be member of org (any role in organization_user)
-        if (!$user->isMemberOfOrg($org->id)) {
-            return abort(403, 'You do not have access to this organization.');
+        if (!$user->canAccessStudentPortal() && !$user->canAccessAdmin()) {
+            Auth::guard('admin')->logout();
+
+            return redirect()->route('org.student.login', $org)
+                ->withErrors(['email' => 'This account cannot access the student portal.']);
+        }
+
+        if (!$user->isAdmin() && !$user->isMemberOfOrg($org->id)) {
+            abort(403, 'You do not have access to this organization.');
         }
 
         return $next($request);

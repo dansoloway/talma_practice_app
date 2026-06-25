@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Organization;
 use App\Services\CourseAccess;
 use App\Services\LessonSessionGrouper;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
 {
+    use GuardsRestrictedCourseAccess;
+
     protected CourseAccess $courseAccess;
 
     public function __construct(CourseAccess $courseAccess)
@@ -71,7 +75,19 @@ class StudentController extends Controller
             ? $courseParam
             : Course::where('slug', $courseParam)->firstOrFail();
         $organization = $request->route('organization');
-        $org = $organization ?? Organization::where('slug', 'default')->where('is_active', true)->firstOrFail();
+
+        if ($organization instanceof Organization) {
+            $org = $organization;
+        } else {
+            $gate = $this->ensureLegacyCourseAccessForCourse($course);
+            if ($gate instanceof RedirectResponse) {
+                return $gate;
+            }
+            $org = $gate instanceof Organization
+                ? $gate
+                : Organization::where('slug', 'default')->where('is_active', true)->firstOrFail();
+        }
+
         $user = auth('admin')->check() ? auth('admin')->user() : null;
 
         if (!$this->courseAccess->canAccessCourse($user, $course, $org)) {

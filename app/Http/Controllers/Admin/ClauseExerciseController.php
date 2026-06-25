@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
 use App\Http\Controllers\Controller;
 use App\Models\ClauseExercise;
 use App\Models\Lesson;
 use App\Models\GrammarSet;
 use App\Services\AI\ClauseExerciseGenerator;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class ClauseExerciseController extends Controller
 {
+    use GuardsRestrictedCourseAccess;
+
     protected ClauseExerciseGenerator $generator;
 
     public function __construct(ClauseExerciseGenerator $generator)
@@ -264,6 +268,11 @@ class ClauseExerciseController extends Controller
      */
     public function play(Lesson $lesson, ClauseExercise $clauseExercise)
     {
+        $gate = $this->ensureLegacyCourseAccess($lesson);
+        if ($gate instanceof RedirectResponse) {
+            return $gate;
+        }
+
         // Verify exercise belongs to lesson
         if ($clauseExercise->lesson_id !== $lesson->id) {
             abort(404);

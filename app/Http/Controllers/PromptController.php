@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
 use App\Models\Prompt;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 class PromptController extends Controller
 {
+    use GuardsRestrictedCourseAccess;
     /**
      * Get prompt details with options (no audio yet).
      * Only accessible if prompt belongs to an active lesson.
@@ -56,6 +59,11 @@ class PromptController extends Controller
                 }
             ])
             ->findOrFail($lessonId);
+
+        $gate = $this->ensureLegacyCourseAccess($lesson);
+        if ($gate instanceof RedirectResponse) {
+            return $gate;
+        }
 
         // Add full URLs for audio paths
         $lesson->prompts->each(function ($prompt) {

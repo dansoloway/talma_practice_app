@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\SpellingGame;
 use App\Models\Vocabulary;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class SpellingGameController extends Controller
 {
+    use GuardsRestrictedCourseAccess;
     /**
      * Display a listing of spelling games for a lesson.
      */
@@ -117,6 +120,11 @@ class SpellingGameController extends Controller
      */
     public function play(Lesson $lesson, SpellingGame $spelling_game, Request $request)
     {
+        $gate = $this->ensureLegacyCourseAccess($lesson);
+        if ($gate instanceof RedirectResponse) {
+            return $gate;
+        }
+
         // Ensure lesson is active and not archived
         if (!$lesson->is_active || $lesson->archived_at) {
             abort(404);

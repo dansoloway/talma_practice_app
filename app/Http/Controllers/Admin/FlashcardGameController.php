@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
 use App\Http\Controllers\Controller;
 use App\Models\FlashcardGame;
 use App\Models\Lesson;
 use App\Models\Part;
 use App\Models\Vocabulary;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class FlashcardGameController extends Controller
 {
+    use GuardsRestrictedCourseAccess;
     /**
      * Display a listing of the resource.
      */
@@ -171,6 +174,11 @@ class FlashcardGameController extends Controller
      */
     public function play(Lesson $lesson, FlashcardGame $flashcardGame, Request $request)
     {
+        $gate = $this->ensureLegacyCourseAccess($lesson);
+        if ($gate instanceof RedirectResponse) {
+            return $gate;
+        }
+
         // Ensure lesson is active and not archived
         if (!$lesson->is_active || $lesson->archived_at) {
             abort(404);

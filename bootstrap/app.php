@@ -12,9 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->redirectGuestsTo(function ($request) {
-            if ($request->is('admin') || $request->is('admin/*') || $request->is('o/*')) {
+            if ($request->is('admin') || $request->is('admin/*')) {
                 return route('admin.login.show');
             }
+
+            if ($request->is('o/*/login') || $request->is('o/*/register')) {
+                return null;
+            }
+
             return null;
         });
 
@@ -38,11 +43,35 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         // Redirect unauthenticated admin requests to admin login
         $exceptions->renderable(function (\Illuminate\Auth\AuthenticationException $e, $request) {
-            if ($request->is('admin') || $request->is('admin/*') || $request->is('o/*')) {
+            if ($request->is('admin') || $request->is('admin/*')) {
                 if ($request->expectsJson()) {
                     return response()->json(['message' => 'Unauthenticated.'], 401);
                 }
+
                 return redirect()->guest(route('admin.login.show'));
+            }
+
+            if ($request->is('o/*/admin') || $request->is('o/*/admin/*')) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Unauthenticated.'], 401);
+                }
+
+                return redirect()->guest(route('admin.login.show'));
+            }
+
+            if ($request->is('o/*')) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Unauthenticated.'], 401);
+                }
+
+                $orgSlug = $request->segment(2);
+                $org = $orgSlug
+                    ? \App\Models\Organization::where('slug', $orgSlug)->where('is_active', true)->first()
+                    : null;
+
+                if ($org) {
+                    return redirect()->guest(route('org.student.login', $org));
+                }
             }
         });
 

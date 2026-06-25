@@ -69,11 +69,27 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is a student (learner portal).
+     */
+    public function isStudent(): bool
+    {
+        return $this->role === 'student';
+    }
+
+    /**
      * Check if user has admin or teacher access.
      */
     public function canAccessAdmin(): bool
     {
         return $this->isAdmin() || $this->isTeacher();
+    }
+
+    /**
+     * Check if user can use the student-facing org portal.
+     */
+    public function canAccessStudentPortal(): bool
+    {
+        return $this->is_active && ($this->isStudent() || $this->isAdmin());
     }
 
     /**

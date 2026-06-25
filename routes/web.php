@@ -5,6 +5,7 @@ use App\Http\Controllers\LessonController;
 use App\Http\Controllers\PromptController;
 use App\Http\Controllers\PromptModelController;
 use App\Http\Controllers\ResponseController;
+use App\Http\Controllers\StudentAuthController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\Admin\AdminLoginController;
 use App\Http\Controllers\Admin\CourseController;
@@ -35,7 +36,16 @@ Route::get('/', [StudentController::class, 'index'])->name('student.index');
 Route::get('/lessons', [StudentController::class, 'index'])->name('lessons.index');
 Route::get('/courses/{course:slug}', [StudentController::class, 'course'])->name('student.course');
 
-// Org-scoped student routes
+// Org-scoped student auth (public — no student.org.access middleware)
+Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context'])->group(function () {
+    Route::get('login', [StudentAuthController::class, 'showLogin'])->name('login');
+    Route::post('login', [StudentAuthController::class, 'login'])->name('login.submit');
+    Route::get('register', [StudentAuthController::class, 'showRegister'])->name('register');
+    Route::post('register', [StudentAuthController::class, 'register'])->name('register.submit');
+    Route::post('logout', [StudentAuthController::class, 'logout'])->middleware('auth:admin')->name('logout');
+});
+
+// Org-scoped student routes (protected when org is restricted)
 Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'student.org.access'])->group(function () {
     Route::get('/', [StudentController::class, 'index'])->name('index');
     Route::get('courses/{course:slug}', [StudentController::class, 'course'])->name('course');

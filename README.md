@@ -17,6 +17,7 @@ A Laravel + MySQL application for practicing sentence construction through inter
 - `docs/SETUP.md` — quick start checklist
 - `docs/DEPLOYMENT.md` — production rollout guide
 - `docs/LESSON_IMPORT_GUIDE.md` — CSV import workflow
+- `docs/SUMMER_PRACTICE_PAL.md` — Summer Practice Pal gated access, registration, and production import
 - `docs/CREATE_SESSION_WORKFLOW.md` — lesson planning flow
 
 ## Requirements

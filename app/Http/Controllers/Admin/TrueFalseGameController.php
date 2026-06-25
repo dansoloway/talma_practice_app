@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\TrueFalseGame;
 use App\Services\Tts\TrueFalseQuestionTtsService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class TrueFalseGameController extends Controller
 {
+    use GuardsRestrictedCourseAccess;
+
     public function __construct(
         private TrueFalseQuestionTtsService $questionTts
     ) {}
@@ -123,6 +127,11 @@ class TrueFalseGameController extends Controller
      */
     public function play(Lesson $lesson, TrueFalseGame $trueFalseGame)
     {
+        $gate = $this->ensureLegacyCourseAccess($lesson);
+        if ($gate instanceof RedirectResponse) {
+            return $gate;
+        }
+
         // Ensure the game belongs to this lesson
         if ($trueFalseGame->lesson_id !== $lesson->id) {
             abort(404);

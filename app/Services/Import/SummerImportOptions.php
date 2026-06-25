@@ -11,6 +11,7 @@ class SummerImportOptions
         public bool $generateImages = true,
         public bool $generateTts = true,
         public ?string $cefr = null,
+        public bool $detachFromDefault = true,
     ) {}
 
     /**
@@ -25,6 +26,7 @@ class SummerImportOptions
             generateImages: !($flags['skip-images'] ?? false),
             generateTts: !($flags['skip-tts'] ?? false),
             cefr: isset($flags['cefr']) && $flags['cefr'] !== '' ? (string) $flags['cefr'] : null,
+            detachFromDefault: !($flags['no-detach-from-default'] ?? false),
         );
     }
 
