@@ -39,13 +39,52 @@ class LessonFlowService
             return false;
         }
 
-        return $this->steps($lesson)->isNotEmpty();
+        return $this->guidedSteps($lesson)->isNotEmpty();
+    }
+
+    /**
+     * Steps used for guided navigation (respects course flow template).
+     *
+     * @return Collection<int, LessonFlowStep>
+     */
+    public function guidedSteps(Lesson $lesson): Collection
+    {
+        return $this->buildSteps($lesson, $this->flowTemplateForLesson($lesson));
+    }
+
+    /**
+     * Steps that count toward lesson completion (vocabulary only when guided mode is on).
+     *
+     * @return Collection<int, LessonFlowStep>
+     */
+    public function studentSteps(Lesson $lesson): Collection
+    {
+        $lesson->loadMissing('course');
+        $template = $this->flowTemplateForLesson($lesson);
+
+        if (! $lesson->course?->guided_mode_enabled) {
+            $template = array_values(array_filter(
+                $template,
+                fn (string $type) => $type !== 'vocabulary'
+            ));
+        }
+
+        return $this->buildSteps($lesson, $template);
     }
 
     /**
      * @return Collection<int, LessonFlowStep>
      */
     public function steps(Lesson $lesson): Collection
+    {
+        return $this->guidedSteps($lesson);
+    }
+
+    /**
+     * @param  array<int, string>  $template
+     * @return Collection<int, LessonFlowStep>
+     */
+    private function buildSteps(Lesson $lesson, array $template): Collection
     {
         $lesson->loadMissing([
             'course',
@@ -58,7 +97,6 @@ class LessonFlowService
             'trueFalseGames',
         ]);
 
-        $template = $this->flowTemplateForLesson($lesson);
         $steps = collect();
         $order = 0;
 
@@ -76,6 +114,67 @@ class LessonFlowService
         }
 
         return $steps->values();
+    }
+
+    public function isLessonComplete(Lesson $lesson, ?string $practiceSessionId): bool
+    {
+        $summary = $this->completionSummary($lesson, $practiceSessionId);
+
+        return $summary['isComplete'];
+    }
+
+    /**
+     * @return array{isComplete: bool, completed: int, total: int, percent: int, completedKeys: array<int, string>}
+     */
+    public function completionSummary(Lesson $lesson, ?string $practiceSessionId): array
+    {
+        $steps = $this->studentSteps($lesson);
+        $total = $steps->count();
+        $completedKeys = $this->completedStepKeys($lesson, $practiceSessionId);
+        $completed = $steps->filter(
+            fn (LessonFlowStep $step) => $completedKeys->contains($step->isCompletedKey())
+        )->count();
+
+        return [
+            'isComplete' => $total > 0 && $completed === $total,
+            'completed' => $completed,
+            'total' => $total,
+            'percent' => $total === 0 ? 0 : min(100, (int) round(($completed / $total) * 100)),
+            'completedKeys' => $completedKeys->values()->all(),
+        ];
+    }
+
+    /**
+     * Completion keys for steps the student has finished (e.g. prompts:0, matching:12, vocabulary:0).
+     *
+     * @return Collection<int, string>
+     */
+    public function completedStepKeys(Lesson $lesson, ?string $practiceSessionId): Collection
+    {
+        $steps = $this->studentSteps($lesson);
+        $eventKeys = $this->completedKeys($lesson, $practiceSessionId);
+
+        return $steps
+            ->filter(function (LessonFlowStep $step) use ($lesson, $practiceSessionId, $eventKeys) {
+                if ($step->type === 'vocabulary') {
+                    return $this->isVocabularyStepComplete($lesson, $practiceSessionId);
+                }
+
+                return $eventKeys->contains($step->isCompletedKey());
+            })
+            ->map(fn (LessonFlowStep $step) => $step->isCompletedKey())
+            ->values();
+    }
+
+    public function isActivityComplete(Lesson $lesson, string $type, int|string|null $activityId, ?string $practiceSessionId): bool
+    {
+        $key = $type . ':' . ($activityId ?? 0);
+
+        if ($type === 'vocabulary') {
+            return $this->isVocabularyStepComplete($lesson, $practiceSessionId);
+        }
+
+        return $this->completedStepKeys($lesson, $practiceSessionId)->contains($key);
     }
 
     public function playUrl(LessonFlowStep $step, Lesson $lesson, ?Organization $org = null): string
@@ -148,46 +247,12 @@ class LessonFlowService
 
     public function completionPercent(Lesson $lesson, ?string $practiceSessionId): int
     {
-        $steps = $this->steps($lesson);
-        $total = $steps->count();
-
-        if ($total === 0) {
-            return 0;
-        }
-
-        $completedKeys = $this->completedKeys($lesson, $practiceSessionId);
-        $completed = 0;
-
-        foreach ($steps as $step) {
-            if ($step->type === 'vocabulary') {
-                if ($this->isVocabularyStepComplete($lesson, $practiceSessionId)) {
-                    $completed++;
-                }
-            } elseif ($completedKeys->contains($step->isCompletedKey())) {
-                $completed++;
-            }
-        }
-
-        return min(100, (int) round(($completed / $total) * 100));
+        return $this->completionSummary($lesson, $practiceSessionId)['percent'];
     }
 
     public function completedStepCount(Lesson $lesson, ?string $practiceSessionId): int
     {
-        $steps = $this->steps($lesson);
-        $completedKeys = $this->completedKeys($lesson, $practiceSessionId);
-        $completed = 0;
-
-        foreach ($steps as $step) {
-            if ($step->type === 'vocabulary') {
-                if ($this->isVocabularyStepComplete($lesson, $practiceSessionId)) {
-                    $completed++;
-                }
-            } elseif ($completedKeys->contains($step->isCompletedKey())) {
-                $completed++;
-            }
-        }
-
-        return $completed;
+        return $this->completionSummary($lesson, $practiceSessionId)['completed'];
     }
 
     public function stepIndex(Lesson $lesson, LessonFlowStep $step): int

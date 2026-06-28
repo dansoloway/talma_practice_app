@@ -56,11 +56,48 @@
             @endif
         </header>
 
+        @if(!empty($isLessonComplete))
+            @php
+                $courseBackUrl = $lesson->course
+                    ? (isset($org) && $org
+                        ? route('org.student.course', [$org, $lesson->course])
+                        : route('student.course', $lesson->course->slug))
+                    : null;
+            @endphp
+            <div class="mb-8 rounded-xl border border-green-200 bg-green-50/60 px-5 py-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <p class="text-green-800 font-semibold flex items-center gap-2">
+                        <i class="fas fa-circle-check text-green-600" aria-hidden="true"></i>
+                        You finished this lesson!
+                    </p>
+                    @if($courseBackUrl)
+                        <a href="{{ $courseBackUrl }}"
+                           class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200">
+                            Back to course
+                            <i class="fas fa-arrow-right ml-2 text-xs" aria-hidden="true"></i>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        @php
+            $vocabComplete = in_array('vocabulary:0', $completedStepKeys ?? [], true);
+        @endphp
+
         @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
             <section class="mb-8">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
-                    Vocabulary · {{ $lesson->vocabulary->count() }} {{ Str::plural('word', $lesson->vocabulary->count()) }}
-                </p>
+                <div class="flex flex-wrap items-center gap-2 mb-3">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Vocabulary · {{ $lesson->vocabulary->count() }} {{ Str::plural('word', $lesson->vocabulary->count()) }}
+                    </p>
+                    @if(!empty($isGuided) && $vocabComplete)
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-green-700 bg-green-100 border border-green-200">
+                            <i class="fas fa-circle-check text-[10px]" aria-hidden="true"></i>
+                            Vocabulary complete
+                        </span>
+                    @endif
+                </div>
                 <div class="flex flex-wrap gap-2">
                     @foreach($lesson->vocabulary as $vocab)
                         <span class="lesson-vocab-chip inline-flex items-center text-[13px] text-gray-800">
@@ -71,29 +108,59 @@
             </section>
         @endif
 
-        @if(!empty($isGuided) && $guidedStartUrl)
+        @if(!empty($isGuided) && ($guidedStartUrl || !empty($isLessonComplete)))
             <section class="mb-8">
                 @if(!empty($guidedProgress) && $guidedProgress['total'] > 0)
                     <div class="mb-3">
                         <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
-                            <span>Step {{ min($guidedProgress['completed'] + 1, $guidedProgress['total']) }} of {{ $guidedProgress['total'] }}</span>
-                            <span>{{ $guidedProgress['percent'] }}%</span>
+                            @if(!empty($isLessonComplete))
+                                <span class="font-medium text-green-700">Complete · 100%</span>
+                            @elseif($guidedProgress['completed'] < $guidedProgress['total'])
+                                <span>Step {{ $guidedProgress['completed'] + 1 }} of {{ $guidedProgress['total'] }}</span>
+                            @endif
+                            @if(empty($isLessonComplete))
+                                <span>{{ $guidedProgress['percent'] }}%</span>
+                            @endif
                         </div>
                         <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                            <div class="h-full bg-blue-500 rounded-full transition-all duration-300" style="width: {{ $guidedProgress['percent'] }}%"></div>
+                            <div class="h-full rounded-full transition-all duration-300 {{ !empty($isLessonComplete) ? 'bg-green-500' : 'bg-blue-500' }}" style="width: {{ $guidedProgress['percent'] }}%"></div>
                         </div>
                     </div>
                 @endif
 
-                <a href="{{ $guidedStartUrl }}"
-                   class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
-                    @if(!empty($guidedProgress['completed']))
-                        Continue: {{ $resumeStep?->label ?? $startStep?->label }}
-                    @else
-                        Start lesson
-                    @endif
-                    <i class="fas fa-arrow-right ml-2 text-sm" aria-hidden="true"></i>
-                </a>
+                @if($guidedStartUrl)
+                    <a href="{{ $guidedStartUrl }}"
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                        @if(!empty($guidedProgress['completed']))
+                            Continue: {{ $resumeStep?->label ?? $startStep?->label }}
+                        @else
+                            Start lesson
+                        @endif
+                        <i class="fas fa-arrow-right ml-2 text-sm" aria-hidden="true"></i>
+                    </a>
+                @elseif(!empty($isLessonComplete))
+                    <button type="button" id="review-activities"
+                            class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                        Review activities
+                        <i class="fas fa-list ml-2 text-sm" aria-hidden="true"></i>
+                    </button>
+                @endif
+            </section>
+        @elseif(!empty($lessonProgress) && $lessonProgress['total'] > 0 && empty($isGuided))
+            <section class="mb-8">
+                <div class="mb-3">
+                    <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+                        @if(!empty($isLessonComplete))
+                            <span class="font-medium text-green-700">Complete · 100%</span>
+                        @else
+                            <span>{{ $lessonProgress['completed'] }} of {{ $lessonProgress['total'] }} activities</span>
+                            <span>{{ $lessonProgress['percent'] }}%</span>
+                        @endif
+                    </div>
+                    <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all duration-300 {{ !empty($isLessonComplete) ? 'bg-green-500' : 'bg-blue-500' }}" style="width: {{ $lessonProgress['percent'] }}%"></div>
+                    </div>
+                </div>
             </section>
         @endif
 
@@ -201,7 +268,7 @@
         @endphp
 
         @if($allActivities->count() > 0)
-            @if(!empty($isGuided))
+            @if(!empty($isGuided) && empty($isLessonComplete))
                 <p class="mb-3">
                     <button type="button" id="show-all-activities"
                             class="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2">
@@ -210,7 +277,7 @@
                 </p>
             @endif
 
-            <section class="mb-8 {{ !empty($isGuided) ? 'hidden' : '' }}" id="activities-section">
+            <section class="mb-8 {{ !empty($isGuided) && empty($isLessonComplete) ? 'hidden' : '' }}" id="activities-section">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
                     Activities · {{ $allActivities->count() }}
                 </p>
@@ -220,6 +287,10 @@
                             $displayTitle = $activity->title;
                             $subdetail = $activity->subdetail ?? null;
                             $lessonTitleEscaped = preg_quote(trim($lesson->title), '/');
+                            $activityKey = $activity->type === 'prompts'
+                                ? 'prompts:0'
+                                : $activity->type . ':' . $activity->id;
+                            $isActivityDone = in_array($activityKey, $completedStepKeys ?? [], true);
 
                             if ($activity->type === 'matching') {
                                 $pattern = '/^' . $lessonTitleEscaped . '\s+Matching\s+Game\s+\d+$/i';
@@ -241,22 +312,30 @@
                             }
                         @endphp
                         <button type="button"
-                                class="group w-full text-left flex items-center gap-3 rounded-lg border border-gray-200 bg-white py-[10px] px-3 hover:border-blue-300 hover:bg-blue-50/40 transition-colors duration-200"
+                                class="group w-full text-left flex items-center gap-3 rounded-lg border py-[10px] px-3 transition-colors duration-200 {{ $isActivityDone ? 'border-green-200 bg-green-50/40 hover:border-green-300' : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/40' }}"
                                 onclick="startActivity('{{ $activity->type }}', '{{ $activity->id }}')">
-                            <span class="lesson-activity-icon flex-shrink-0 flex items-center justify-center text-gray-600 group-hover:text-blue-600 transition-colors duration-200">
+                            <span class="lesson-activity-icon flex-shrink-0 flex items-center justify-center transition-colors duration-200 {{ $isActivityDone ? 'text-green-600' : 'text-gray-600 group-hover:text-blue-600' }}">
                                 <i class="fas {{ $activityIcons[$activity->type] ?? 'fa-play' }} text-sm" aria-hidden="true"></i>
                             </span>
                             <span class="flex-1 min-w-0">
-                                <span class="block text-sm font-semibold text-gray-800 group-hover:text-blue-700 truncate">
+                                <span class="block text-sm font-semibold truncate {{ $isActivityDone ? 'text-green-800' : 'text-gray-800 group-hover:text-blue-700' }}">
                                     {{ $displayTitle }}
                                 </span>
-                                @if($subdetail)
-                                    <span class="block text-xs text-[var(--color-secondary)] mt-0.5">
-                                        {{ $subdetail }}
+                                @if($subdetail || $isActivityDone)
+                                    <span class="block text-xs mt-0.5 {{ $isActivityDone ? 'text-green-600' : 'text-[var(--color-secondary)]' }}">
+                                        @if($isActivityDone)
+                                            Done
+                                        @elseif($subdetail)
+                                            {{ $subdetail }}
+                                        @endif
                                     </span>
                                 @endif
                             </span>
-                            <i class="fas fa-chevron-right text-[10px] text-gray-300 group-hover:text-blue-500 flex-shrink-0" aria-hidden="true"></i>
+                            @if($isActivityDone)
+                                <i class="fas fa-circle-check text-sm text-green-500 flex-shrink-0" aria-hidden="true"></i>
+                            @else
+                                <i class="fas fa-chevron-right text-[10px] text-gray-300 group-hover:text-blue-500 flex-shrink-0" aria-hidden="true"></i>
+                            @endif
                         </button>
                     @endforeach
                 </div>
@@ -303,6 +382,11 @@ function startActivity(type, id) {
 document.getElementById('show-all-activities')?.addEventListener('click', () => {
     document.getElementById('activities-section')?.classList.remove('hidden');
     document.getElementById('show-all-activities')?.classList.add('hidden');
+});
+
+document.getElementById('review-activities')?.addEventListener('click', () => {
+    document.getElementById('activities-section')?.classList.remove('hidden');
+    document.getElementById('review-activities')?.classList.add('hidden');
 });
 </script>
 @endsection

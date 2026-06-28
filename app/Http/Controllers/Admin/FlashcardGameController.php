@@ -195,15 +195,30 @@ class FlashcardGameController extends Controller
         $vocabularyIds = $flashcardGame->vocabulary_ids ?? [];
         $vocabulary = Vocabulary::whereIn('id', $vocabularyIds)->get();
         
-        // Get the display mode (default to first available mode)
+        // Get the display mode (default to first mode that yields playable cards)
+        $availableModes = $this->getAvailableModes($vocabulary);
         $mode = $request->get('mode');
-        if (!$mode) {
-            $availableModes = $this->getAvailableModes($vocabulary);
+        if (!$mode || ! array_key_exists($mode, $availableModes)) {
             $mode = array_key_first($availableModes) ?: 'image';
         }
-        
+
         // Generate game data based on the selected mode
         $gameData = $this->generateGameData($flashcardGame, $vocabulary, $mode);
+
+        if (empty($gameData['cards'])) {
+            foreach (array_keys($availableModes) as $fallbackMode) {
+                if ($fallbackMode === $mode) {
+                    continue;
+                }
+
+                $candidate = $this->generateGameData($flashcardGame, $vocabulary, $fallbackMode);
+                if (! empty($candidate['cards'])) {
+                    $gameData = $candidate;
+                    $mode = $fallbackMode;
+                    break;
+                }
+            }
+        }
         
         return view('flashcard-games.play', array_merge(
             compact('lesson', 'flashcardGame', 'gameData', 'mode'),
@@ -222,14 +237,14 @@ class FlashcardGameController extends Controller
         
         // Filter vocabulary based on what's available for the selected mode
         $availableVocab = $this->filterVocabularyForMode($vocabulary, $mode);
-        
-        // Select random vocabulary items
-        $selectedVocab = $availableVocab->shuffle()->take($cardsPerGame);
-        if ($selectedVocab->isEmpty()) {
-            $selectedVocab = $availableVocab;
+        if ($availableVocab->isEmpty()) {
+            $availableVocab = $this->filterPlayableVocabulary($vocabulary);
         }
 
-        $cardsPerGame = max(1, $selectedVocab->count());
+        // Select random vocabulary items
+        $selectedVocab = $availableVocab->shuffle()->take($cardsPerGame);
+
+        $cardsPerGame = $selectedVocab->count();
         
         $cards = [];
         
@@ -261,14 +276,33 @@ class FlashcardGameController extends Controller
         return $vocabulary->filter(function ($vocab) use ($mode) {
             switch ($mode) {
                 case 'hebrew':
-                    return !empty($vocab->hebrew_translation);
+                    return ! empty($vocab->hebrew_translation)
+                        && $this->vocabHasPlayableFlashcardAssets($vocab);
                 case 'arabic':
-                    return !empty($vocab->arabic_translation);
+                    return ! empty($vocab->arabic_translation)
+                        && $this->vocabHasPlayableFlashcardAssets($vocab);
                 case 'image':
                 default:
-                    return !empty($vocab->image_path);
+                    return $this->vocabHasPlayableFlashcardAssets($vocab);
             }
         });
+    }
+
+    /**
+     * Vocabulary usable in at least one flashcard game type (image and/or audio).
+     */
+    private function filterPlayableVocabulary($vocabulary)
+    {
+        return $vocabulary->filter(fn ($vocab) => $this->vocabHasPlayableFlashcardAssets($vocab));
+    }
+
+    private function vocabHasPlayableFlashcardAssets(Vocabulary $vocab): bool
+    {
+        if (empty($vocab->english_word)) {
+            return false;
+        }
+
+        return ! empty($vocab->image_path) || ! empty($vocab->word_audio_path);
     }
 
     /**
@@ -277,17 +311,20 @@ class FlashcardGameController extends Controller
     private function getAvailableModes($vocabulary)
     {
         $modes = [];
-        
-        if ($vocabulary->whereNotNull('image_path')->count() > 0) {
-            $modes['image'] = 'Images';
+
+        $playable = $this->filterPlayableVocabulary($vocabulary);
+        if ($playable->isNotEmpty()) {
+            $modes['image'] = $playable->contains(fn ($vocab) => ! empty($vocab->image_path))
+                ? 'Images'
+                : 'English';
         }
-        if ($vocabulary->whereNotNull('hebrew_translation')->count() > 0) {
+        if ($vocabulary->contains(fn ($vocab) => ! empty($vocab->hebrew_translation) && $this->vocabHasPlayableFlashcardAssets($vocab))) {
             $modes['hebrew'] = 'Hebrew';
         }
-        if ($vocabulary->whereNotNull('arabic_translation')->count() > 0) {
+        if ($vocabulary->contains(fn ($vocab) => ! empty($vocab->arabic_translation) && $this->vocabHasPlayableFlashcardAssets($vocab))) {
             $modes['arabic'] = 'Arabic';
         }
-        
+
         return $modes;
     }
 

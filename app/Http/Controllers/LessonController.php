@@ -142,15 +142,29 @@ class LessonController extends Controller
 
         $practiceSessionId = $request->attributes->get('practice_session_id');
         $isGuided = $this->flowService->isGuided($lesson);
+        $completionSummary = $this->flowService->completionSummary($lesson, $practiceSessionId);
+        $isLessonComplete = $completionSummary['isComplete'];
+        $completedStepKeys = $completionSummary['completedKeys'];
+
         $flowSteps = $isGuided ? $this->flowService->steps($lesson) : collect();
         $resumeStep = $isGuided ? $this->flowService->resumeStep($lesson, $practiceSessionId) : null;
-        $startStep = $isGuided ? ($resumeStep ?? $this->flowService->firstStep($lesson)) : null;
-        $guidedProgress = $isGuided ? [
-            'completed' => $this->flowService->completedStepCount($lesson, $practiceSessionId),
-            'total' => $flowSteps->count(),
-            'percent' => $this->flowService->completionPercent($lesson, $practiceSessionId),
+        $startStep = null;
+        $guidedStartUrl = null;
+
+        if ($isGuided && ! $isLessonComplete) {
+            $startStep = $resumeStep ?? $this->flowService->firstStep($lesson);
+            $guidedStartUrl = $startStep
+                ? $this->flowService->playUrl($startStep, $lesson, $org)
+                : null;
+        }
+
+        $lessonProgress = $completionSummary['total'] > 0 ? [
+            'completed' => $completionSummary['completed'],
+            'total' => $completionSummary['total'],
+            'percent' => $completionSummary['percent'],
         ] : null;
-        $guidedStartUrl = $startStep ? $this->flowService->playUrl($startStep, $lesson, $org) : null;
+
+        $guidedProgress = $isGuided ? $lessonProgress : null;
 
         return view('lessons.show', compact(
             'lesson',
@@ -161,6 +175,10 @@ class LessonController extends Controller
             'startStep',
             'guidedProgress',
             'guidedStartUrl',
+            'completionSummary',
+            'isLessonComplete',
+            'completedStepKeys',
+            'lessonProgress',
         ));
     }
 }

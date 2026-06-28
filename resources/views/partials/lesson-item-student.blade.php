@@ -8,11 +8,12 @@
         : 0;
     $activityCount = $lesson->studentActivityCount();
     $completionPercent = ($lessonProgress ?? [])[$lesson->id] ?? 0;
+    $isComplete = $completionPercent >= 100;
     $cardLabel = $lesson->studentCardLabel();
 @endphp
 
 <a href="{{ $lessonUrl }}"
-   class="lesson-card-compact group block bg-white border border-gray-200 rounded-lg overflow-hidden transition-colors duration-200 hover:border-blue-400 {{ $lesson->is_review ? 'border-purple-200 hover:border-purple-400' : '' }}">
+   class="lesson-card-compact group block bg-white border rounded-lg overflow-hidden transition-colors duration-200 {{ $isComplete ? 'border-green-200 hover:border-green-400' : 'border-gray-200 hover:border-blue-400' }} {{ $lesson->is_review && ! $isComplete ? 'border-purple-200 hover:border-purple-400' : '' }}">
 
     <div class="px-[14px] pt-[14px] pb-[12px]">
         @if($cardLabel)
@@ -39,11 +40,18 @@
                     <span>{{ $activityCount }}</span>
                 </span>
             @endif
+
+            @if($isComplete)
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-green-600" title="Lesson complete">
+                    <i class="fas fa-circle-check text-[11px]" aria-hidden="true"></i>
+                    <span>Complete</span>
+                </span>
+            @endif
         </div>
     </div>
 
-    <div class="h-[3px] bg-gray-100" role="progressbar" aria-valuenow="{{ $completionPercent }}" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson progress">
-        <div class="h-full bg-blue-500 transition-all duration-300 {{ $lesson->is_review ? 'bg-purple-500' : '' }}"
+    <div class="h-[3px] bg-gray-100" role="progressbar" aria-valuenow="{{ $completionPercent }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ $isComplete ? 'Lesson complete' : 'Lesson progress' }}">
+        <div class="h-full transition-all duration-300 {{ $isComplete ? 'bg-green-500' : ($lesson->is_review ? 'bg-purple-500' : 'bg-blue-500') }}"
              style="width: {{ $completionPercent }}%"></div>
     </div>
 </a>

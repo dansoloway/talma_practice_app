@@ -254,4 +254,99 @@ class GuidedLessonFlowTest extends TestCase
         $response->assertOk();
         $response->assertSee('Next:');
     }
+
+    public function test_lesson_page_shows_completion_when_all_guided_steps_done(): void
+    {
+        $sessionId = 'complete-session-guid-001';
+        $this->completeAllGuidedSteps($sessionId);
+
+        $response = $this->withCookie('talma_session_id', $sessionId)
+            ->get(route('lessons.show', $this->lesson->slug));
+
+        $response->assertOk();
+        $response->assertSee('You finished this lesson!');
+        $response->assertDontSee('Start lesson');
+        $response->assertSee('Review activities');
+        $response->assertSee('Complete · 100%');
+    }
+
+    public function test_course_page_lesson_card_shows_complete_at_100_percent(): void
+    {
+        $sessionId = 'complete-session-guid-002';
+        $this->completeAllGuidedSteps($sessionId);
+
+        $response = $this->withCookie('talma_session_id', $sessionId)
+            ->get(route('student.course', $this->course->slug));
+
+        $response->assertOk();
+        $response->assertSee('Complete');
+    }
+
+    public function test_is_lesson_complete_for_free_choice_when_all_activities_done(): void
+    {
+        $this->course->update(['guided_mode_enabled' => false]);
+
+        $sessionId = 'free-choice-complete';
+        $matchingId = $this->lesson->matchingGames()->first()->id;
+
+        ActivityEvent::create([
+            'session_id' => $sessionId,
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'prompts',
+            'activity_id' => null,
+            'status' => 'completed',
+        ]);
+
+        ActivityEvent::create([
+            'session_id' => $sessionId,
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'matching',
+            'activity_id' => $matchingId,
+            'status' => 'completed',
+        ]);
+
+        $this->lesson->load([
+            'course',
+            'vocabulary',
+            'prompts',
+            'matchingGames',
+            'flashcardGames',
+            'spellingGames',
+            'clauseExercises',
+            'trueFalseGames',
+        ]);
+
+        $this->assertTrue($this->flowService->isLessonComplete($this->lesson, $sessionId));
+    }
+
+    private function completeAllGuidedSteps(string $sessionId): void
+    {
+        foreach ($this->lesson->vocabulary()->orderBy('sort_order')->pluck('id') as $vocabId) {
+            ActivityEvent::create([
+                'session_id' => $sessionId,
+                'lesson_id' => $this->lesson->id,
+                'activity_type' => 'vocabulary',
+                'activity_id' => $vocabId,
+                'status' => 'completed',
+            ]);
+        }
+
+        ActivityEvent::create([
+            'session_id' => $sessionId,
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'prompts',
+            'activity_id' => null,
+            'status' => 'completed',
+        ]);
+
+        $matchingId = $this->lesson->matchingGames()->first()->id;
+
+        ActivityEvent::create([
+            'session_id' => $sessionId,
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'matching',
+            'activity_id' => $matchingId,
+            'status' => 'completed',
+        ]);
+    }
 }

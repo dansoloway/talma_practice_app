@@ -448,13 +448,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+function showEmptyDeckError() {
+    gameScreen.classList.add('hidden');
+    gameComplete.classList.add('hidden');
+    flashcard.innerHTML = `
+        <div class="card-content text-center py-8">
+            <p class="text-lg font-semibold text-gray-800 mb-2">No flashcards available</p>
+            <p class="text-sm text-gray-600">This game needs vocabulary with images or audio. Try another activity or come back later.</p>
+        </div>
+    `;
+}
+
 function startGame() {
     // Shuffle cards for this game
-    gameCards = [...gameData.cards].sort(() => Math.random() - 0.5).slice(0, gameData.cards_per_game);
+    const deck = Array.isArray(gameData.cards) ? gameData.cards : [];
+    const cardLimit = Math.max(0, Number(gameData.cards_per_game) || deck.length);
+    gameCards = [...deck].sort(() => Math.random() - 0.5).slice(0, cardLimit);
     currentCardIndex = 0;
     correctAnswers = 0;
     userAnswers = [];
     gameStartTime = Date.now();
+
+    if (gameCards.length === 0) {
+        showEmptyDeckError();
+        return;
+    }
+
     logFlashcardEvent('started', {
         mode: currentMode,
         game_type: currentGameType,
@@ -469,6 +488,10 @@ function startGame() {
 }
 
 function loadCard() {
+    if (gameCards.length === 0) {
+        return;
+    }
+
     if (currentCardIndex >= gameCards.length) {
         endGame();
         return;
@@ -789,7 +812,11 @@ function nextCard() {
 
 function endGame() {
     const total = gameCards.length;
-    const accuracy = total > 0 ? Math.round((correctAnswers / total) * 100) : 0;
+    if (total === 0) {
+        return;
+    }
+
+    const accuracy = Math.round((correctAnswers / total) * 100);
     const durationSeconds = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 1000) : null;
 
     completionScore.textContent = `${correctAnswers} / ${total}`;
