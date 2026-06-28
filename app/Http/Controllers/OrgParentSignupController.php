@@ -44,6 +44,9 @@ class OrgParentSignupController extends Controller
 
         $terms = TermsAndCondition::getStudentSignupTerms();
         $termsRules = $terms ? ['terms_accepted' => ['required', 'accepted']] : [];
+        $voiceRules = $organization->retain_voice_recordings
+            ? ['voice_recording_consent' => ['required', 'accepted']]
+            : [];
 
         $rules = array_merge([
             'name' => ['required', 'string', 'max:255'],
@@ -71,13 +74,14 @@ class OrgParentSignupController extends Controller
             'students.*.birth_year' => ['required', 'integer', 'min:1990', 'max:'.(int) date('Y')],
             'students.*.grade' => ['required', 'integer', 'min:1', 'max:12'],
             'students.*.gender' => ['required', 'in:male,female,other'],
+            'students.*.native_language' => ['required', 'in:hebrew,arabic,english,other'],
             'students.*.login_type' => ['required', 'in:shared,separate'],
             'students.*.contact_type' => ['nullable', 'in:email,phone'],
             'students.*.email' => ['nullable', 'email', 'lowercase'],
             'students.*.password' => ['nullable', 'confirmed', Password::min(8)],
             'students.*.phone_prefix' => ['nullable', 'string', 'max:5'],
             'students.*.phone_rest' => ['nullable', 'string', 'max:10'],
-        ], $termsRules);
+        ], $termsRules, $voiceRules);
 
         $prefix = $request->input('phone_prefix', '');
         $rest = preg_replace('/\D/', '', (string) $request->input('phone_rest', ''));
@@ -120,6 +124,7 @@ class OrgParentSignupController extends Controller
                 'is_active' => true,
                 'terms_accepted_at' => $termsAcceptedAt,
                 'terms_version' => $termsVersion,
+                'voice_recording_consented_at' => $organization->retain_voice_recordings ? now() : null,
             ]);
 
             $organization->users()->syncWithoutDetaching([
@@ -154,6 +159,7 @@ class OrgParentSignupController extends Controller
                     'birth_date' => $birthDate,
                     'grade' => $studentData['grade'] ?? null,
                     'gender' => $studentData['gender'] ?? null,
+                    'native_language' => $studentData['native_language'] ?? null,
                     'login_type' => $studentData['login_type'],
                     'terms_accepted_at' => $termsAcceptedAt,
                     'terms_version' => $termsVersion,

@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Option;
 use App\Models\Organization;
+use App\Models\ParentStudent;
 use App\Models\Prompt;
 use App\Models\User;
 use App\Models\VoiceSample;
@@ -88,6 +89,7 @@ class VoiceSampleTest extends TestCase
             'is_active' => true,
             'age' => 11,
             'gender' => 'female',
+            'native_language' => 'hebrew',
             'voice_recording_consented_at' => now(),
         ]);
 
@@ -112,7 +114,7 @@ class VoiceSampleTest extends TestCase
             'password_confirmation' => 'password123',
         ]);
 
-        $response->assertSessionHasErrors(['age', 'gender', 'voice_recording_consent']);
+        $response->assertSessionHasErrors(['age', 'gender', 'native_language', 'voice_recording_consent']);
     }
 
     public function test_registration_stores_age_gender_and_consent(): void
@@ -124,6 +126,7 @@ class VoiceSampleTest extends TestCase
             'password_confirmation' => 'password123',
             'age' => 12,
             'gender' => 'male',
+            'native_language' => 'arabic',
             'voice_recording_consent' => '1',
         ]);
 
@@ -132,6 +135,7 @@ class VoiceSampleTest extends TestCase
         $user = User::where('email', 'new@example.com')->first();
         $this->assertSame(12, $user->age);
         $this->assertSame('male', $user->gender);
+        $this->assertSame('arabic', $user->native_language);
         $this->assertNotNull($user->voice_recording_consented_at);
     }
 
@@ -198,6 +202,7 @@ class VoiceSampleTest extends TestCase
         $this->assertSame('My favorite color is red.', $sample->target_text);
         $this->assertSame(11, $sample->age);
         $this->assertSame('female', $sample->gender);
+        $this->assertSame('hebrew', $sample->native_language);
         $this->assertFalse(Schema::hasColumn('voice_samples', 'user_id'));
 
         Storage::disk('voice_training')->assertExists($sample->s3_key);
@@ -207,6 +212,51 @@ class VoiceSampleTest extends TestCase
         $this->assertSame('My favorite color is red.', $metadata['target_text']);
         $this->assertSame(11, $metadata['age']);
         $this->assertSame('female', $metadata['gender']);
+        $this->assertSame('hebrew', $metadata['native_language']);
         $this->assertArrayNotHasKey('user_id', $metadata);
+    }
+
+    public function test_parent_upload_uses_selected_child_profile(): void
+    {
+        $parent = User::create([
+            'name' => 'Parent User',
+            'email' => 'parent-voice@example.com',
+            'password' => bcrypt('password123'),
+            'role' => User::ROLE_PARENT,
+            'is_active' => true,
+            'voice_recording_consented_at' => now(),
+        ]);
+
+        $this->organization->users()->attach($parent->id, ['role' => 'parent']);
+
+        $child = ParentStudent::create([
+            'parent_id' => $parent->id,
+            'first_name' => 'Kid',
+            'last_name' => 'One',
+            'first_name_english' => 'Kid',
+            'last_name_english' => 'One',
+            'birth_date' => now()->subYears(10)->format('Y-m-d'),
+            'grade' => 4,
+            'gender' => 'male',
+            'native_language' => 'arabic',
+        ]);
+
+        $response = $this->actingAs($parent, 'admin')
+            ->withSession(['selected_student_id' => $child->id])
+            ->postJson(route('voice-samples.store'), [
+                'organization_id' => $this->organization->id,
+                'lesson_id' => $this->lesson->id,
+                'prompt_id' => $this->prompt->id,
+                'option_id' => $this->option->id,
+                'generated_sentence' => 'My favorite color is red.',
+                'recording' => $this->fakeRecording(),
+            ]);
+
+        $response->assertCreated();
+
+        $sample = VoiceSample::first();
+        $this->assertSame(10, $sample->age);
+        $this->assertSame('male', $sample->gender);
+        $this->assertSame('arabic', $sample->native_language);
     }
 }

@@ -1,7 +1,7 @@
 @php
     $s = old('students.'.$index, [
         'first_name' => '', 'last_name' => '', 'first_name_english' => '', 'last_name_english' => '',
-        'birth_year' => '', 'grade' => '', 'gender' => '', 'login_type' => 'shared',
+        'birth_year' => '', 'grade' => '', 'gender' => '', 'native_language' => '', 'login_type' => 'shared',
         'contact_type' => 'email', 'email' => '', 'phone_prefix' => '050', 'phone_rest' => '',
     ]);
 @endphp
@@ -53,6 +53,15 @@
             <option value="">Select gender</option>
             @foreach(\App\Models\ParentStudent::GENDERS as $val => $labels)
                 <option value="{{ $val }}" {{ ($s['gender'] ?? '') == $val ? 'selected' : '' }}>{{ $labels['en'] }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div>
+        <label class="block text-sm mb-1">Native language</label>
+        <select name="students[{{ $index }}][native_language]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            <option value="">Select native language</option>
+            @foreach(\App\Models\ParentStudent::NATIVE_LANGUAGES as $val => $label)
+                <option value="{{ $val }}" {{ ($s['native_language'] ?? '') == $val ? 'selected' : '' }}>{{ $label }}</option>
             @endforeach
         </select>
     </div>

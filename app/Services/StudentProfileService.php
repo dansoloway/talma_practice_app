@@ -22,6 +22,7 @@ class StudentProfileService
             'birth_date' => $data['birth_date'] ?? null,
             'grade' => $data['grade'] ?? null,
             'gender' => $data['gender'] ?? null,
+            'native_language' => $data['native_language'] ?? null,
         ]);
 
         if (($data['login_type'] ?? 'shared') === 'separate') {

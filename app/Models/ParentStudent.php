@@ -17,6 +17,13 @@ class ParentStudent extends Model
         'other' => ['he' => 'Other', 'en' => 'Other'],
     ];
 
+    public const NATIVE_LANGUAGES = [
+        'hebrew' => 'Hebrew',
+        'arabic' => 'Arabic',
+        'english' => 'English',
+        'other' => 'Other',
+    ];
+
     protected $fillable = [
         'parent_id',
         'user_id',
@@ -27,6 +34,7 @@ class ParentStudent extends Model
         'birth_date',
         'grade',
         'gender',
+        'native_language',
     ];
 
     protected $casts = [
@@ -69,5 +77,14 @@ class ParentStudent extends Model
     public function usesSharedLogin(): bool
     {
         return ! $this->hasSeparateIdentity();
+    }
+
+    public function age(): ?int
+    {
+        if (! $this->birth_date) {
+            return null;
+        }
+
+        return (int) $this->birth_date->age;
     }
 }

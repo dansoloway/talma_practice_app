@@ -21,6 +21,7 @@ class VoiceSampleStorage
         string $targetText,
         int $age,
         string $gender,
+        string $nativeLanguage,
         ?int $durationMs = null,
     ): VoiceSample {
         $uuid = (string) Str::uuid();
@@ -42,6 +43,7 @@ class VoiceSampleStorage
             'target_text' => $targetText,
             'age' => $age,
             'gender' => $gender,
+            'native_language' => $nativeLanguage,
             'organization_slug' => $organization->slug,
             'lesson_id' => $lessonId,
             'prompt_id' => $promptId,
@@ -61,6 +63,7 @@ class VoiceSampleStorage
             'target_text' => $targetText,
             'age' => $age,
             'gender' => $gender,
+            'native_language' => $nativeLanguage,
             's3_key' => $mp3Key,
             'metadata_s3_key' => $metadataKey,
             'duration_ms' => $durationMs,

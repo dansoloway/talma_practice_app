@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
 use App\Models\Organization;
 use App\Models\Prompt;
 use App\Services\CourseAccess;
+use App\Services\VoiceSampleLearnerProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
@@ -69,10 +70,10 @@ class PromptController extends Controller
 
         $voiceOrganization = $this->resolveVoiceOrganization($lesson, $gate);
         $user = auth('admin')->user();
+        $voiceProfile = VoiceSampleLearnerProfile::resolve($user);
         $voiceUploadEnabled = $voiceOrganization
             && $voiceOrganization->retain_voice_recordings
-            && $user
-            && $user->hasVoiceRecordingConsent()
+            && $voiceProfile !== null
             && config('app.allow_recording_upload', false);
 
         // Add full URLs for audio paths

@@ -63,6 +63,16 @@
                             <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>Female</option>
                         </select>
                     </div>
+                    <div>
+                        <label for="native_language" class="block text-sm font-semibold text-gray-700 mb-2">Native language</label>
+                        <select id="native_language" name="native_language" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
+                            <option value="">Select...</option>
+                            @foreach(\App\Models\User::NATIVE_LANGUAGES as $value => $label)
+                                <option value="{{ $value }}" {{ old('native_language') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
                         <label class="flex items-start gap-3 cursor-pointer">
                             <input type="checkbox" name="voice_recording_consent" value="1" required

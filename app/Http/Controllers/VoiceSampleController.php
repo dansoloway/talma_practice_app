@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Organization;
 use App\Services\CourseAccess;
 use App\Services\FileUploadSecurity;
+use App\Services\VoiceSampleLearnerProfile;
 use App\Services\VoiceSampleStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,8 +24,9 @@ class VoiceSampleController extends Controller
             return response()->json(['error' => 'Authentication required.'], 401);
         }
 
-        if (! $user->voice_recording_consented_at || $user->age === null || $user->gender === null) {
-            return response()->json(['error' => 'Voice recording consent and profile required.'], 403);
+        $profile = VoiceSampleLearnerProfile::resolve($user);
+        if (! $profile) {
+            return response()->json(['error' => 'Voice recording consent and learner profile required.'], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -74,8 +76,9 @@ class VoiceSampleController extends Controller
             promptId: $request->integer('prompt_id'),
             optionId: $request->integer('option_id'),
             targetText: $request->string('generated_sentence')->toString(),
-            age: (int) $user->age,
-            gender: $user->gender,
+            age: $profile->age,
+            gender: $profile->gender,
+            nativeLanguage: $profile->nativeLanguage,
             durationMs: $request->integer('duration_ms') ?: null,
         );
 

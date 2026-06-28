@@ -19,6 +19,7 @@ class VoiceSample extends Model
         'target_text',
         'age',
         'gender',
+        'native_language',
         's3_key',
         'metadata_s3_key',
         'duration_ms',

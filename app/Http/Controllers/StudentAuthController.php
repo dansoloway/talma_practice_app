@@ -147,6 +147,7 @@ class StudentAuthController extends Controller
             'password' => ['required', 'confirmed', Password::min(8)],
             'age' => [$organization->retain_voice_recordings ? 'required' : 'nullable', 'integer', 'min:5', 'max:120'],
             'gender' => [$organization->retain_voice_recordings ? 'required' : 'nullable', 'in:male,female'],
+            'native_language' => [$organization->retain_voice_recordings ? 'required' : 'nullable', 'in:hebrew,arabic,english,other'],
             'voice_recording_consent' => [$organization->retain_voice_recordings ? 'accepted' : 'nullable'],
         ], $termsRules));
 
@@ -158,6 +159,7 @@ class StudentAuthController extends Controller
             'is_active' => true,
             'age' => $validated['age'] ?? null,
             'gender' => $validated['gender'] ?? null,
+            'native_language' => $validated['native_language'] ?? null,
             'voice_recording_consented_at' => $organization->retain_voice_recordings ? now() : null,
             'terms_accepted_at' => $terms ? now() : null,
             'terms_version' => $terms?->version,

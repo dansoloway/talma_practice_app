@@ -98,6 +98,17 @@
                     <x-terms-modal :terms="$terms" />
                 @endif
 
+                @if($organization->retain_voice_recordings)
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" name="voice_recording_consent" value="1" required
+                                   class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                                   {{ old('voice_recording_consent') ? 'checked' : '' }}>
+                            <span class="text-sm text-gray-700">{{ config('app.voice_waiver_text') }}</span>
+                        </label>
+                    </div>
+                @endif
+
                 <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors">
                     Create Account
                 </button>

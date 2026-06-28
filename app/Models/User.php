@@ -26,6 +26,8 @@ class User extends Authenticatable
 
     public const GENDER_FEMALE = 'female';
 
+    public const NATIVE_LANGUAGES = ParentStudent::NATIVE_LANGUAGES;
+
     public const ROLE_PARENT = 'parent';
 
     protected $fillable = [
@@ -40,6 +42,7 @@ class User extends Authenticatable
         'is_active',
         'age',
         'gender',
+        'native_language',
         'voice_recording_consented_at',
         'terms_accepted_at',
         'terms_version',
@@ -186,7 +189,8 @@ class User extends Authenticatable
     {
         return $this->voice_recording_consented_at !== null
             && $this->age !== null
-            && $this->gender !== null;
+            && $this->gender !== null
+            && $this->native_language !== null;
     }
 
     public function city(): BelongsTo

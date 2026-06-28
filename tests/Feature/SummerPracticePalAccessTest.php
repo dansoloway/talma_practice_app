@@ -75,6 +75,7 @@ class SummerPracticePalAccessTest extends TestCase
                     'birth_year' => '2015',
                     'grade' => '4',
                     'gender' => 'male',
+                    'native_language' => 'hebrew',
                     'login_type' => 'shared',
                 ],
             ],
@@ -90,6 +91,7 @@ class SummerPracticePalAccessTest extends TestCase
 
         $child = ParentStudent::where('parent_id', $user->id)->first();
         $this->assertNotNull($child);
+        $this->assertSame('hebrew', $child->native_language);
 
         $this->get(route('org.student.index', $org))
             ->assertOk()
@@ -172,6 +174,7 @@ class SummerPracticePalAccessTest extends TestCase
                     'birth_year' => '2014',
                     'grade' => '5',
                     'gender' => 'female',
+                    'native_language' => 'arabic',
                     'login_type' => 'shared',
                 ],
                 [
@@ -182,6 +185,7 @@ class SummerPracticePalAccessTest extends TestCase
                     'birth_year' => '2016',
                     'grade' => '3',
                     'gender' => 'male',
+                    'native_language' => 'english',
                     'login_type' => 'shared',
                 ],
             ],
