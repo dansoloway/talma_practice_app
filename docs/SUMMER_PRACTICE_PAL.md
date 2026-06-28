@@ -92,7 +92,7 @@ Entries include timestamps, level (`INFO`, `LESSON`, `WARN`, `ERROR`, `DONE`), a
 | `--force` | **Destructive:** delete and replace all vocab/prompts on existing lessons |
 | `--no-detach-from-default` | Keep courses on TALMA Community Resources (not recommended) |
 | `--vocab-csv=*` | Validated vocab CSV (repeatable; `CEFR=path` or filename containing cefr slug). Replaces XLSX `cleaned vocab` for that level. |
-| `--prompts-csv=` | Additional fill-in-the-blank CSV merged with the XLSX prompt sheet (e.g. A2 prompts) |
+| `--prompts-csv=` | Fill-in-the-blank CSV **replaces** the XLSX prompt sheet when set (e.g. A2 or Pre-A1 prompts) |
 | `--strict` | Fail dry-run/import when any lesson has fewer than 5 or more than 10 vocab words (requires vocab CSV) |
 | `--skip-archive` | With `--force`, skip archiving images/audio before replace |
 
@@ -108,12 +108,13 @@ Convention paths (auto-detected when present):
 
 ```
 data/summer-vocab-pre-a1.csv
+data/summer-prompts-pre-a1.csv
 data/summer-vocab-a1.csv
 data/summer-vocab-a2.csv
 data/summer-prompts-a2.csv
 ```
 
-A2 CSV imports use **legacy lesson slugs** (by day number) so `--force` replaces existing production lessons instead of creating duplicates.
+Pre-A1 and A2 CSV imports use **legacy lesson slugs** (by day number) so `--force` replaces existing production lessons instead of creating duplicates. On `--force`, lessons outside the validated 15-day set are **deactivated**.
 
 ### Corrected import workflow
 
@@ -121,22 +122,27 @@ A2 CSV imports use **legacy lesson slugs** (by day number) so `--force` replaces
 # 1. Archive paid images/audio before cleanup
 php artisan talma:archive-summer-vocab-assets
 
-# 2. Dry-run one CEFR level with corrected CSVs
+# 2. Dry-run Pre-A1 with corrected CSVs
 php artisan talma:import-summer-practice-pal \
-  --cefr=A2 \
-  --vocab-csv=data/summer-vocab-a2.csv \
-  --prompts-csv=data/summer-prompts-a2.csv \
+  --cefr=Pre-A1 \
   --force \
+  --strict \
   --dry-run
 
-# 3. Apply (archives assets per lesson before replace unless --skip-archive)
+# 3. Apply Pre-A1 (archives assets per lesson before replace unless --skip-archive)
+php artisan talma:import-summer-practice-pal \
+  --cefr=Pre-A1 \
+  --force \
+  --strict
+
+# 4. Dry-run / apply A2 (same pattern)
 php artisan talma:import-summer-practice-pal \
   --cefr=A2 \
-  --vocab-csv=data/summer-vocab-a2.csv \
-  --prompts-csv=data/summer-prompts-a2.csv \
-  --force
+  --force \
+  --strict \
+  --dry-run
 
-# 4. Audit lesson word counts and missing prompts (all CEFR levels)
+# 5. Audit lesson word counts and missing prompts (all CEFR levels)
 php artisan talma:summer-practice-pal-audit --summary --source
 
 # List every vocab word per lesson (save to log)
@@ -145,10 +151,10 @@ php artisan talma:summer-practice-pal-audit --list-vocab
 # One level only
 php artisan talma:summer-practice-pal-audit --cefr=A2 --list-vocab
 
-# 5. Enrichment for new vocab only
+# 6. Enrichment for new vocab only
 php artisan talma:import-summer-practice-pal --with-enrichment
 
-# 6. Coverage report
+# 7. Coverage report
 php artisan talma:summer-practice-pal-coverage --incomplete
 ```
 

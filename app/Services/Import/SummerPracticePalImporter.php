@@ -237,14 +237,13 @@ class SummerPracticePalImporter
      */
     private function loadPromptRows(array $xlsxPromptRows, SummerImportOptions $options): array
     {
-        $rows = $xlsxPromptRows;
-
         if ($options->promptsCsv !== null) {
-            $this->reportProgress('Loading additional prompts CSV', ['path' => $options->promptsCsv]);
-            $rows = array_merge($rows, $this->csvReader->read($options->promptsCsv));
+            $this->reportProgress('Loading prompts CSV (replacing XLSX prompts)', ['path' => $options->promptsCsv]);
+
+            return $this->csvReader->read($options->promptsCsv);
         }
 
-        return $rows;
+        return $xlsxPromptRows;
     }
 
     /**
@@ -469,6 +468,7 @@ class SummerPracticePalImporter
             'prompt_tts_generated' => 0,
             'lessons_vocab_only' => 0,
             'assets_archived' => 0,
+            'lessons_deactivated' => 0,
             'by_cefr' => [],
         ];
 
@@ -548,8 +548,11 @@ class SummerPracticePalImporter
                     $this->reportProgress('Archive session started', ['path' => $archiveDir]);
                 }
 
+                $importedSlugs = [];
+
                 foreach ($lessons as $lessonData) {
                     $lessonResult = $this->importLesson($course, $lessonData, $options);
+                    $importedSlugs[] = $lessonData['slug'];
                     $this->reporter?->lessonCompleted(
                         $cefr,
                         $lessonData['title'],
@@ -577,6 +580,21 @@ class SummerPracticePalImporter
 
                     if ($lessonResult['vocabulary_created'] > 0 && $lessonResult['prompts_created'] === 0 && count($lessonData['prompts']) === 0) {
                         $summary['lessons_vocab_only']++;
+                    }
+                }
+
+                if ($options->force && $this->usesLegacyLessonSlugs($cefr, $options)) {
+                    $deactivated = Lesson::query()
+                        ->where('course_id', $course->id)
+                        ->whereNotIn('slug', $importedSlugs)
+                        ->update(['is_active' => false]);
+
+                    if ($deactivated > 0) {
+                        $summary['lessons_deactivated'] += $deactivated;
+                        $this->reportProgress('Deactivated lessons outside validated import set', [
+                            'course' => $cefr,
+                            'count' => $deactivated,
+                        ]);
                     }
                 }
 
@@ -792,29 +810,33 @@ class SummerPracticePalImporter
 
     private function lessonGroupingKey(string $cefr, int $dayNumber, string $csvTopic, SummerImportOptions $options): string
     {
-        if ($this->usesA2LegacyLessonSlugs($cefr, $options)) {
+        if ($this->usesLegacyLessonSlugs($cefr, $options)) {
             return (string) $dayNumber;
         }
 
         return $this->lessonKey($dayNumber, $csvTopic);
     }
 
-    private function usesA2LegacyLessonSlugs(string $cefr, SummerImportOptions $options): bool
+    private function usesLegacyLessonSlugs(string $cefr, SummerImportOptions $options): bool
     {
-        if ($cefr !== 'A2') {
+        if (!in_array($cefr, ['Pre-A1', 'A2'], true)) {
             return false;
         }
 
-        return isset($options->vocabCsvByCefr['A2']) || $options->promptsCsv !== null;
+        return isset($options->vocabCsvByCefr[$cefr]) || $options->promptsCsv !== null;
     }
 
     private function resolveSlugTopic(string $cefr, int $dayNumber, string $csvTopic, SummerImportOptions $options): string
     {
-        if ($this->usesA2LegacyLessonSlugs($cefr, $options)) {
-            return SummerA2LegacyTopics::forDay($dayNumber) ?? $csvTopic;
+        if (!$this->usesLegacyLessonSlugs($cefr, $options)) {
+            return $csvTopic;
         }
 
-        return $csvTopic;
+        return match ($cefr) {
+            'Pre-A1' => SummerPreA1LegacyTopics::forDay($dayNumber) ?? $csvTopic,
+            'A2' => SummerA2LegacyTopics::forDay($dayNumber) ?? $csvTopic,
+            default => $csvTopic,
+        };
     }
 
     private function formatLessonTitle(int $dayNumber, string $displayTopic): string
