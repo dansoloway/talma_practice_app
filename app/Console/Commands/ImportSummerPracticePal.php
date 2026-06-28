@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Import\SummerImportOptions;
+use App\Services\Import\SummerImportReporter;
 use App\Services\Import\SummerPracticePalImporter;
 use Illuminate\Console\Command;
 
@@ -40,7 +41,15 @@ class ImportSummerPracticePal extends Command
             return self::FAILURE;
         }
 
+        $reporter = new SummerImportReporter(function (string $message) {
+            $this->line($message);
+        });
+
         $this->info("Source: {$xlsxPath}");
+        $this->info("Log file: {$reporter->logPath()}");
+        $this->comment('Tail log: tail -f storage/logs/summer_practice_pal_import.log');
+        $this->newLine();
+
         if ($options->dryRun) {
             $this->warn('Dry run — no database changes will be made.');
         }
@@ -56,18 +65,22 @@ class ImportSummerPracticePal extends Command
             $this->warn('--force: existing vocab and prompts on touched lessons will be replaced.');
         }
 
+        $this->newLine();
+
         try {
-            $summary = $importer->import($xlsxPath, $options, function (string $message) {
-                $this->line($message);
-            });
+            $summary = $importer->import($xlsxPath, $options, $reporter);
         } catch (\Throwable $e) {
+            $reporter->error('Import failed: ' . $e->getMessage(), [
+                'exception' => $e::class,
+            ]);
             $this->error('Import failed: ' . $e->getMessage());
+            $this->error("See log: {$reporter->logPath()}");
 
             return self::FAILURE;
         }
 
         $this->newLine();
-        $this->renderSummary($summary);
+        $this->renderSummary($summary, $reporter);
 
         return self::SUCCESS;
     }
@@ -75,7 +88,7 @@ class ImportSummerPracticePal extends Command
     /**
      * @param array<string, mixed> $summary
      */
-    private function renderSummary(array $summary): void
+    private function renderSummary(array $summary, SummerImportReporter $reporter): void
     {
         if (!empty($summary['dry_run'])) {
             $this->info('Dry-run summary');
@@ -111,36 +124,45 @@ class ImportSummerPracticePal extends Command
             return;
         }
 
-        $this->info('Import summary');
-        $this->line('Courses created: ' . ($summary['courses_created'] ?? 0));
-        $this->line('Courses updated: ' . ($summary['courses_updated'] ?? 0));
-        $this->line('Lessons created: ' . ($summary['lessons_created'] ?? 0));
-        $this->line('Lessons skipped (already exist): ' . ($summary['lessons_skipped'] ?? 0));
-        $this->line('Vocabulary created: ' . ($summary['vocabulary_created'] ?? 0));
-        $this->line('Vocabulary skipped (already exist): ' . ($summary['vocabulary_skipped'] ?? 0));
-        $this->line('Prompts created: ' . ($summary['prompts_created'] ?? 0));
-        $this->line('Prompts skipped (already exist): ' . ($summary['prompts_skipped'] ?? 0));
-        $this->line('Options created: ' . ($summary['options_created'] ?? 0));
-        $this->line('Games ensured: ' . ($summary['games_ensured'] ?? 0));
+        $duration = $summary['duration_seconds'] ?? null;
+        $this->info('Import summary' . ($duration !== null ? " ({$duration}s)" : ''));
+
+        $rows = [
+            ['Courses created', $summary['courses_created'] ?? 0],
+            ['Courses updated', $summary['courses_updated'] ?? 0],
+            ['Lessons created', $summary['lessons_created'] ?? 0],
+            ['Lessons skipped (already exist)', $summary['lessons_skipped'] ?? 0],
+            ['Vocabulary created', $summary['vocabulary_created'] ?? 0],
+            ['Vocabulary skipped', $summary['vocabulary_skipped'] ?? 0],
+            ['Prompts created', $summary['prompts_created'] ?? 0],
+            ['Prompts skipped', $summary['prompts_skipped'] ?? 0],
+            ['Options created', $summary['options_created'] ?? 0],
+            ['Games ensured', $summary['games_ensured'] ?? 0],
+        ];
 
         if (!($summary['structure_only'] ?? true)) {
-            $this->line('Translations OK: ' . ($summary['translations_ok'] ?? 0));
-            $this->line('Images OK: ' . ($summary['images_ok'] ?? 0));
-            $this->line('Vocab TTS OK: ' . ($summary['tts_ok'] ?? 0));
-            $this->line('Vocab enrichment errors: ' . ($summary['vocab_enrichment_errors'] ?? 0));
-            $this->line('Prompt TTS generated: ' . ($summary['prompt_tts_generated'] ?? 0));
+            $rows[] = ['Translations OK', $summary['translations_ok'] ?? 0];
+            $rows[] = ['Images OK', $summary['images_ok'] ?? 0];
+            $rows[] = ['Vocab TTS OK', $summary['tts_ok'] ?? 0];
+            $rows[] = ['Enrichment errors', $summary['vocab_enrichment_errors'] ?? 0];
+            $rows[] = ['Prompt TTS generated', $summary['prompt_tts_generated'] ?? 0];
         }
 
-        $this->line('Lessons with vocab only: ' . ($summary['lessons_vocab_only'] ?? 0));
+        $rows[] = ['Lessons vocab-only', $summary['lessons_vocab_only'] ?? 0];
+
+        $this->table(['Metric', 'Count'], $rows);
 
         if (!empty($summary['by_cefr'])) {
             $this->newLine();
             $this->table(
-                ['CEFR', 'Lessons', 'Vocabulary', 'Prompts'],
+                ['CEFR', 'Lessons processed', 'Vocab created', 'Prompts created'],
                 collect($summary['by_cefr'])->map(function ($row, $cefr) {
                     return [$cefr, $row['lessons'], $row['vocabulary'], $row['prompts']];
                 })->values()->all()
             );
         }
+
+        $this->newLine();
+        $this->info("Full log: {$reporter->logPath()}");
     }
 }

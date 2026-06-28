@@ -65,6 +65,22 @@ php artisan talma:import-summer-practice-pal [options]
 
 **Default:** structure only — courses, lessons, vocabulary, games, and fill-in-the-blank prompts. No API calls. **Safe to re-run.**
 
+### Logging
+
+While the import runs, each lesson is printed with progress `[n/total]` and counts. A detailed log is appended to:
+
+```
+storage/logs/summer_practice_pal_import.log
+```
+
+Monitor on the server:
+
+```bash
+tail -f storage/logs/summer_practice_pal_import.log
+```
+
+Entries include timestamps, level (`INFO`, `LESSON`, `WARN`, `ERROR`, `DONE`), and JSON context for each lesson.
+
 | Flag | Description |
 |------|-------------|
 | `--dry-run` | Count courses/lessons only; no DB writes |

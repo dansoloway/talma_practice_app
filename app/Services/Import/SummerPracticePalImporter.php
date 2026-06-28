@@ -10,7 +10,6 @@ use App\Models\Prompt;
 use App\Models\Vocabulary;
 use App\Services\Tts\PromptOptionTtsService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -35,40 +34,60 @@ class SummerPracticePalImporter
     ) {}
 
     /**
-     * @param callable(string): void|null $onProgress
      * @return array<string, mixed>
      */
-    public function import(string $xlsxPath, SummerImportOptions $options, ?callable $onProgress = null): array
+    public function import(string $xlsxPath, SummerImportOptions $options, ?SummerImportReporter $reporter = null): array
     {
         if (!is_readable($xlsxPath)) {
             throw new RuntimeException("XLSX file not found or not readable: {$xlsxPath}");
         }
 
-        $this->progress = $onProgress;
+        $reporter ??= new SummerImportReporter();
+        $this->reporter = $reporter;
+
+        $reporter->info('Import started', [
+            'source' => $xlsxPath,
+            'dry_run' => $options->dryRun,
+            'cefr' => $options->cefr,
+            'structure_only' => $options->isStructureOnly(),
+            'force' => $options->force,
+        ]);
 
         $reader = new XlsxReader($xlsxPath);
-        $this->reportProgress('Reading spreadsheet…');
+        $reporter->info('Reading spreadsheet');
         $vocabRows = $reader->readSheet(self::VOCAB_SHEET);
         $promptRows = $reader->readSheet(self::PROMPTS_SHEET);
-        $this->reportProgress(sprintf('Parsed %d vocab rows, %d fill-in-the-blank rows.', count($vocabRows), count($promptRows)));
+        $reporter->info('Spreadsheet parsed', [
+            'vocab_rows' => count($vocabRows),
+            'prompt_rows' => count($promptRows),
+        ]);
 
         $grouped = $this->groupData($vocabRows, $promptRows, $options);
 
         if ($options->dryRun) {
-            return $this->buildDryRunSummary($grouped, $vocabRows, $promptRows, $options);
+            $summary = $this->buildDryRunSummary($grouped, $vocabRows, $promptRows, $options);
+            $reporter->info('Dry run complete', $summary['totals'] ?? []);
+
+            return $summary;
         }
 
-        return $this->persistImport($grouped, $options);
+        $lessonTotal = 0;
+        foreach ($grouped as $data) {
+            $lessonTotal += count($data['lessons']);
+        }
+        $reporter->setLessonTotal($lessonTotal);
+
+        $summary = $this->persistImport($grouped, $options);
+        $reporter->finish($summary);
+
+        return $summary;
     }
 
-    /** @var callable(string): void|null */
-    private $progress = null;
+    private ?SummerImportReporter $reporter = null;
 
-    private function reportProgress(string $message): void
+    private function reportProgress(string $message, array $context = []): void
     {
-        if ($this->progress !== null) {
-            ($this->progress)($message);
-        }
+        $this->reporter?->info($message, $context);
     }
 
     /**
@@ -262,7 +281,7 @@ class SummerPracticePalImporter
                 'prompts' => 0,
             ];
 
-            $this->reportProgress("Importing {$cefr}…");
+            $this->reportProgress("Course {$cefr}", ['slug' => $data['course']['slug']]);
 
             DB::transaction(function () use ($cefr, $data, $options, $rootOrg, $summerOrg, $defaultOrg, &$summary, &$courseSummary) {
                 $courseDef = $data['course'];
@@ -279,8 +298,10 @@ class SummerPracticePalImporter
 
                 if ($wasNew) {
                     $summary['courses_created']++;
+                    $this->reportProgress("Created course {$courseDef['title']}", ['course_id' => $course->id]);
                 } else {
                     $summary['courses_updated']++;
+                    $this->reportProgress("Updated course {$courseDef['title']}", ['course_id' => $course->id]);
                 }
 
                 $rootOrg->courses()->syncWithoutDetaching([$course->id => ['is_org_wide' => true]]);
@@ -294,8 +315,13 @@ class SummerPracticePalImporter
                 uasort($lessons, fn ($a, $b) => [$a['day_number'], $a['topic']] <=> [$b['day_number'], $b['topic']]);
 
                 foreach ($lessons as $lessonData) {
-                    $this->reportProgress("  {$lessonData['title']} (day {$lessonData['day_number']})…");
                     $lessonResult = $this->importLesson($course, $lessonData, $options);
+                    $this->reporter?->lessonCompleted(
+                        $cefr,
+                        $lessonData['title'],
+                        $lessonData['slug'],
+                        $lessonResult,
+                    );
                     $courseSummary['lessons']++;
                     $courseSummary['vocabulary'] += $lessonResult['vocabulary_created'];
                     $courseSummary['prompts'] += $lessonResult['prompts_created'];
@@ -354,7 +380,11 @@ class SummerPracticePalImporter
         if ($lessonExisted && !$options->force) {
             $result['lesson_skipped'] = true;
             if ($lesson->course_id !== $course->id) {
-                Log::warning("Lesson {$lesson->slug} exists under course {$lesson->course_id}, expected {$course->id}; leaving unchanged.");
+                $this->reporter?->warn('Lesson exists under different course; leaving unchanged', [
+                    'slug' => $lesson->slug,
+                    'course_id' => $lesson->course_id,
+                    'expected_course_id' => $course->id,
+                ]);
             }
         } elseif ($lessonExisted && $options->force) {
             $lesson->prompts()->delete();
@@ -411,6 +441,12 @@ class SummerPracticePalImporter
                 }
                 if ($enrichment['errors'] !== []) {
                     $result['vocab_enrichment_errors'] += count($enrichment['errors']);
+                    foreach ($enrichment['errors'] as $error) {
+                        $this->reporter?->warn($error, [
+                            'lesson_slug' => $lessonData['slug'],
+                            'word' => $englishWord,
+                        ]);
+                    }
                 }
             }
 
