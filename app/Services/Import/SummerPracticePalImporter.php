@@ -35,17 +35,22 @@ class SummerPracticePalImporter
     ) {}
 
     /**
+     * @param callable(string): void|null $onProgress
      * @return array<string, mixed>
      */
-    public function import(string $xlsxPath, SummerImportOptions $options): array
+    public function import(string $xlsxPath, SummerImportOptions $options, ?callable $onProgress = null): array
     {
         if (!is_readable($xlsxPath)) {
             throw new RuntimeException("XLSX file not found or not readable: {$xlsxPath}");
         }
 
+        $this->progress = $onProgress;
+
         $reader = new XlsxReader($xlsxPath);
+        $this->reportProgress('Reading spreadsheet…');
         $vocabRows = $reader->readSheet(self::VOCAB_SHEET);
         $promptRows = $reader->readSheet(self::PROMPTS_SHEET);
+        $this->reportProgress(sprintf('Parsed %d vocab rows, %d fill-in-the-blank rows.', count($vocabRows), count($promptRows)));
 
         $grouped = $this->groupData($vocabRows, $promptRows, $options);
 
@@ -54,6 +59,16 @@ class SummerPracticePalImporter
         }
 
         return $this->persistImport($grouped, $options);
+    }
+
+    /** @var callable(string): void|null */
+    private $progress = null;
+
+    private function reportProgress(string $message): void
+    {
+        if ($this->progress !== null) {
+            ($this->progress)($message);
+        }
     }
 
     /**
@@ -191,13 +206,17 @@ class SummerPracticePalImporter
     {
         $summary = [
             'dry_run' => false,
+            'structure_only' => $options->isStructureOnly(),
             'courses_created' => 0,
             'courses_updated' => 0,
             'lessons_created' => 0,
-            'lessons_updated' => 0,
+            'lessons_skipped' => 0,
             'vocabulary_created' => 0,
+            'vocabulary_skipped' => 0,
             'prompts_created' => 0,
+            'prompts_skipped' => 0,
             'options_created' => 0,
+            'games_ensured' => 0,
             'translations_ok' => 0,
             'images_ok' => 0,
             'tts_ok' => 0,
@@ -243,6 +262,8 @@ class SummerPracticePalImporter
                 'prompts' => 0,
             ];
 
+            $this->reportProgress("Importing {$cefr}…");
+
             DB::transaction(function () use ($cefr, $data, $options, $rootOrg, $summerOrg, $defaultOrg, &$summary, &$courseSummary) {
                 $courseDef = $data['course'];
                 $course = Course::firstOrNew(['slug' => $courseDef['slug']]);
@@ -273,16 +294,20 @@ class SummerPracticePalImporter
                 uasort($lessons, fn ($a, $b) => [$a['day_number'], $a['topic']] <=> [$b['day_number'], $b['topic']]);
 
                 foreach ($lessons as $lessonData) {
+                    $this->reportProgress("  {$lessonData['title']} (day {$lessonData['day_number']})…");
                     $lessonResult = $this->importLesson($course, $lessonData, $options);
                     $courseSummary['lessons']++;
                     $courseSummary['vocabulary'] += $lessonResult['vocabulary_created'];
                     $courseSummary['prompts'] += $lessonResult['prompts_created'];
 
                     $summary['lessons_created'] += $lessonResult['lesson_created'] ? 1 : 0;
-                    $summary['lessons_updated'] += $lessonResult['lesson_created'] ? 0 : 1;
+                    $summary['lessons_skipped'] += $lessonResult['lesson_skipped'] ? 1 : 0;
                     $summary['vocabulary_created'] += $lessonResult['vocabulary_created'];
+                    $summary['vocabulary_skipped'] += $lessonResult['vocabulary_skipped'];
                     $summary['prompts_created'] += $lessonResult['prompts_created'];
+                    $summary['prompts_skipped'] += $lessonResult['prompts_skipped'];
                     $summary['options_created'] += $lessonResult['options_created'];
+                    $summary['games_ensured'] += $lessonResult['games_ensured'] ? 1 : 0;
                     $summary['translations_ok'] += $lessonResult['translations_ok'];
                     $summary['images_ok'] += $lessonResult['images_ok'];
                     $summary['tts_ok'] += $lessonResult['tts_ok'];
@@ -309,9 +334,13 @@ class SummerPracticePalImporter
     {
         $result = [
             'lesson_created' => false,
+            'lesson_skipped' => false,
             'vocabulary_created' => 0,
+            'vocabulary_skipped' => 0,
             'prompts_created' => 0,
+            'prompts_skipped' => 0,
             'options_created' => 0,
+            'games_ensured' => false,
             'translations_ok' => 0,
             'images_ok' => 0,
             'tts_ok' => 0,
@@ -319,81 +348,89 @@ class SummerPracticePalImporter
             'prompt_tts_generated' => 0,
         ];
 
-        $lesson = Lesson::firstOrNew(['slug' => $lessonData['slug']]);
-        $result['lesson_created'] = !$lesson->exists;
+        $lesson = Lesson::where('slug', $lessonData['slug'])->first();
+        $lessonExisted = $lesson !== null;
 
-        $lesson->fill([
-            'course_id' => $course->id,
-            'title' => $lessonData['title'],
-            'session_number' => $lessonData['session_number'],
-            'grade_level' => '4-12',
-            'is_active' => true,
-            'sort_order' => $lessonData['session_number'],
-        ]);
-        $lesson->save();
-
-        $words = array_values($lessonData['vocabulary']);
-        $existingWordCount = $lesson->vocabulary()->count();
-        $existingPromptCount = $lesson->prompts()->count();
-
-        if ($options->force && ($existingWordCount > 0 || $existingPromptCount > 0)) {
+        if ($lessonExisted && !$options->force) {
+            $result['lesson_skipped'] = true;
+            if ($lesson->course_id !== $course->id) {
+                Log::warning("Lesson {$lesson->slug} exists under course {$lesson->course_id}, expected {$course->id}; leaving unchanged.");
+            }
+        } elseif ($lessonExisted && $options->force) {
             $lesson->prompts()->delete();
             $lesson->vocabulary()->delete();
             $this->lessonGameCreator->clearGamesForLesson($lesson);
-        } elseif (!$options->force && $existingWordCount > 0 && count($words) > 0) {
-            Log::info("Skipping vocab re-import for existing lesson {$lesson->slug}; use --force to replace");
-            $words = [];
+            $result['lesson_skipped'] = true;
+        } else {
+            $lesson = Lesson::create([
+                'slug' => $lessonData['slug'],
+                'course_id' => $course->id,
+                'title' => $lessonData['title'],
+                'session_number' => $lessonData['session_number'],
+                'grade_level' => '4-12',
+                'is_active' => true,
+                'sort_order' => $lessonData['session_number'],
+            ]);
+            $result['lesson_created'] = true;
         }
 
-        $sortOrder = 1;
+        $words = array_values($lessonData['vocabulary']);
+        $existingWords = $lesson->vocabulary()
+            ->pluck('english_word')
+            ->map(fn ($w) => strtolower(trim($w)))
+            ->flip();
+
+        $sortOrder = (int) ($lesson->vocabulary()->max('sort_order') ?? 0);
+
         foreach ($words as $englishWord) {
-            if (!$options->force) {
-                $exists = $lesson->vocabulary()->where('english_word', $englishWord)->exists();
-                if ($exists) {
-                    continue;
-                }
+            $wordKey = strtolower(trim($englishWord));
+            if ($existingWords->has($wordKey)) {
+                $result['vocabulary_skipped']++;
+                continue;
             }
 
+            $sortOrder++;
             $vocabulary = Vocabulary::create([
                 'lesson_id' => $lesson->id,
                 'english_word' => $englishWord,
-                'sort_order' => $sortOrder++,
+                'sort_order' => $sortOrder,
                 'is_active' => true,
             ]);
+            $existingWords->put($wordKey, true);
 
-            $enrichment = $this->vocabularyEnricher->enrich($vocabulary, $options);
-            if ($enrichment['translations_ok']) {
-                $result['translations_ok']++;
-            }
-            if ($enrichment['images_ok']) {
-                $result['images_ok']++;
-            }
-            if ($enrichment['tts_ok']) {
-                $result['tts_ok']++;
-            }
-            if ($enrichment['errors'] !== []) {
-                $result['vocab_enrichment_errors'] += count($enrichment['errors']);
+            if (!$options->isStructureOnly()) {
+                $enrichment = $this->vocabularyEnricher->enrich($vocabulary, $options);
+                if ($enrichment['translations_ok']) {
+                    $result['translations_ok']++;
+                }
+                if ($enrichment['images_ok']) {
+                    $result['images_ok']++;
+                }
+                if ($enrichment['tts_ok']) {
+                    $result['tts_ok']++;
+                }
+                if ($enrichment['errors'] !== []) {
+                    $result['vocab_enrichment_errors'] += count($enrichment['errors']);
+                }
             }
 
             $result['vocabulary_created']++;
         }
 
-        if ($result['vocabulary_created'] > 0) {
+        if ($lesson->vocabulary()->count() >= 2) {
             $this->lessonGameCreator->createGamesForLesson($lesson);
+            $result['games_ensured'] = true;
         }
 
         $prompts = array_values($lessonData['prompts']);
-        if (!$options->force && $existingPromptCount > 0 && count($prompts) > 0) {
-            Log::info("Skipping prompt re-import for existing lesson {$lesson->slug}; use --force to replace");
-            return $result;
-        }
+        $existingTemplates = $lesson->prompts()->pluck('template')->flip();
 
         $lessonVocab = $lesson->vocabulary()->pluck('english_word')->all();
         if ($lessonVocab === []) {
             $lessonVocab = $words;
         }
 
-        $promptSort = 1;
+        $promptSort = (int) ($lesson->prompts()->max('sort_order') ?? 0);
         $createdOptions = [];
 
         foreach ($prompts as $index => $promptRow) {
@@ -408,15 +445,22 @@ class SummerPracticePalImporter
                 continue;
             }
 
+            if ($existingTemplates->has($built['template'])) {
+                $result['prompts_skipped']++;
+                continue;
+            }
+
+            $promptSort++;
             $prompt = Prompt::create([
                 'lesson_id' => $lesson->id,
                 'prompt_text' => $built['prompt_text'],
                 'template' => $built['template'],
                 'tts_voice' => 'default',
                 'correct_answer' => $built['correct_answer'],
-                'sort_order' => $promptSort++,
+                'sort_order' => $promptSort,
                 'is_active' => true,
             ]);
+            $existingTemplates->put($built['template'], true);
 
             $optionOrder = 1;
             foreach ($built['options'] as $optionText) {

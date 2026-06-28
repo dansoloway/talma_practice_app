@@ -7,24 +7,31 @@ class SummerImportOptions
     public function __construct(
         public bool $dryRun = false,
         public bool $force = false,
-        public bool $translate = true,
-        public bool $generateImages = true,
-        public bool $generateTts = true,
+        public bool $translate = false,
+        public bool $generateImages = false,
+        public bool $generateTts = false,
         public ?string $cefr = null,
         public bool $detachFromDefault = true,
     ) {}
+
+    public function isStructureOnly(): bool
+    {
+        return !$this->translate && !$this->generateImages && !$this->generateTts;
+    }
 
     /**
      * @param array<string, mixed> $flags
      */
     public static function fromCommandFlags(array $flags): self
     {
+        $withEnrichment = (bool) ($flags['with-enrichment'] ?? false);
+
         return new self(
             dryRun: (bool) ($flags['dry-run'] ?? false),
             force: (bool) ($flags['force'] ?? false),
-            translate: !($flags['skip-translations'] ?? false),
-            generateImages: !($flags['skip-images'] ?? false),
-            generateTts: !($flags['skip-tts'] ?? false),
+            translate: $withEnrichment && !($flags['skip-translations'] ?? false),
+            generateImages: $withEnrichment && !($flags['skip-images'] ?? false),
+            generateTts: $withEnrichment && !($flags['skip-tts'] ?? false),
             cefr: isset($flags['cefr']) && $flags['cefr'] !== '' ? (string) $flags['cefr'] : null,
             detachFromDefault: !($flags['no-detach-from-default'] ?? false),
         );

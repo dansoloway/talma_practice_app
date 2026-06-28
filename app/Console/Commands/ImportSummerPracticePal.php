@@ -11,13 +11,14 @@ class ImportSummerPracticePal extends Command
     protected $signature = 'talma:import-summer-practice-pal
                             {--dry-run : Parse the spreadsheet and show counts without writing to the database}
                             {--cefr= : Import a single CEFR level (Pre-A1, A1, A2, or B1)}
-                            {--skip-translations : Skip Hebrew/Arabic translation generation}
-                            {--skip-images : Skip vocabulary image generation}
-                            {--skip-tts : Skip vocabulary and prompt TTS generation}
-                            {--force : Replace vocabulary and prompts on existing lessons}
+                            {--with-enrichment : Enable translations, images, and TTS (slow; uses API credits)}
+                            {--skip-translations : With --with-enrichment, skip Hebrew/Arabic translations}
+                            {--skip-images : With --with-enrichment, skip vocabulary images}
+                            {--skip-tts : With --with-enrichment, skip vocabulary and prompt TTS}
+                            {--force : Replace all vocabulary and prompts on existing lessons (destructive)}
                             {--no-detach-from-default : Keep courses attached to TALMA Community Resources org}';
 
-    protected $description = 'Import Summer Practice Pal courses, vocabulary, games, and fill-in-the-blank prompts from the Excel file';
+    protected $description = 'Import Summer Practice Pal courses, lessons, vocabulary, games, and prompts (structure-only by default; safe to re-run)';
 
     public function handle(SummerPracticePalImporter $importer): int
     {
@@ -46,9 +47,19 @@ class ImportSummerPracticePal extends Command
         if ($options->cefr !== null) {
             $this->info("CEFR filter: {$options->cefr}");
         }
+        if ($options->isStructureOnly()) {
+            $this->info('Mode: structure only (no translations, images, or TTS). Safe to re-run.');
+        } else {
+            $this->warn('Mode: with enrichment (API calls — may take hours).');
+        }
+        if ($options->force) {
+            $this->warn('--force: existing vocab and prompts on touched lessons will be replaced.');
+        }
 
         try {
-            $summary = $importer->import($xlsxPath, $options);
+            $summary = $importer->import($xlsxPath, $options, function (string $message) {
+                $this->line($message);
+            });
         } catch (\Throwable $e) {
             $this->error('Import failed: ' . $e->getMessage());
 
@@ -104,15 +115,22 @@ class ImportSummerPracticePal extends Command
         $this->line('Courses created: ' . ($summary['courses_created'] ?? 0));
         $this->line('Courses updated: ' . ($summary['courses_updated'] ?? 0));
         $this->line('Lessons created: ' . ($summary['lessons_created'] ?? 0));
-        $this->line('Lessons updated: ' . ($summary['lessons_updated'] ?? 0));
+        $this->line('Lessons skipped (already exist): ' . ($summary['lessons_skipped'] ?? 0));
         $this->line('Vocabulary created: ' . ($summary['vocabulary_created'] ?? 0));
+        $this->line('Vocabulary skipped (already exist): ' . ($summary['vocabulary_skipped'] ?? 0));
         $this->line('Prompts created: ' . ($summary['prompts_created'] ?? 0));
+        $this->line('Prompts skipped (already exist): ' . ($summary['prompts_skipped'] ?? 0));
         $this->line('Options created: ' . ($summary['options_created'] ?? 0));
-        $this->line('Translations OK: ' . ($summary['translations_ok'] ?? 0));
-        $this->line('Images OK: ' . ($summary['images_ok'] ?? 0));
-        $this->line('Vocab TTS OK: ' . ($summary['tts_ok'] ?? 0));
-        $this->line('Vocab enrichment errors: ' . ($summary['vocab_enrichment_errors'] ?? 0));
-        $this->line('Prompt TTS generated: ' . ($summary['prompt_tts_generated'] ?? 0));
+        $this->line('Games ensured: ' . ($summary['games_ensured'] ?? 0));
+
+        if (!($summary['structure_only'] ?? true)) {
+            $this->line('Translations OK: ' . ($summary['translations_ok'] ?? 0));
+            $this->line('Images OK: ' . ($summary['images_ok'] ?? 0));
+            $this->line('Vocab TTS OK: ' . ($summary['tts_ok'] ?? 0));
+            $this->line('Vocab enrichment errors: ' . ($summary['vocab_enrichment_errors'] ?? 0));
+            $this->line('Prompt TTS generated: ' . ($summary['prompt_tts_generated'] ?? 0));
+        }
+
         $this->line('Lessons with vocab only: ' . ($summary['lessons_vocab_only'] ?? 0));
 
         if (!empty($summary['by_cefr'])) {

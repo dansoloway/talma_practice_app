@@ -34,14 +34,14 @@ composer install --optimize-autoloader --no-dev
 php artisan migrate --force
 php artisan storage:link
 
-# 3. Import content (long-running — requires API keys for full enrichment)
+# 3. Import lesson structure (fast, no API calls — safe to re-run)
 php artisan talma:import-summer-practice-pal
 
 # Optional: import one CEFR level first
 # php artisan talma:import-summer-practice-pal --cefr=Pre-A1
 
-# Optional: structure-only test (no API calls)
-# php artisan talma:import-summer-practice-pal --skip-translations --skip-images --skip-tts
+# Later: add translations, images, and TTS when API credits are available
+# php artisan talma:import-summer-practice-pal --with-enrichment
 
 # 4. Cache for production
 php artisan config:cache
@@ -49,7 +49,9 @@ php artisan route:cache
 php artisan view:cache
 ```
 
-### Required environment variables for full import
+### Required environment variables for enrichment import
+
+Only needed with `--with-enrichment`:
 
 - `OPENAI_API_KEY` — Hebrew/Arabic translations
 - Image provider keys (see `IMAGE_PROVIDERS` in `.env`)
@@ -61,20 +63,23 @@ php artisan view:cache
 php artisan talma:import-summer-practice-pal [options]
 ```
 
+**Default:** structure only — courses, lessons, vocabulary, games, and fill-in-the-blank prompts. No API calls. **Safe to re-run.**
+
 | Flag | Description |
 |------|-------------|
 | `--dry-run` | Count courses/lessons only; no DB writes |
 | `--cefr=Pre-A1` | Import a single CEFR level |
-| `--skip-translations` | English-only vocabulary |
-| `--skip-images` | Skip image generation |
-| `--skip-tts` | Skip audio generation |
-| `--force` | Replace vocab/prompts on existing lessons |
+| `--with-enrichment` | Enable translations, images, and TTS (slow; uses API credits) |
+| `--skip-translations` | With `--with-enrichment`, skip Hebrew/Arabic |
+| `--skip-images` | With `--with-enrichment`, skip images |
+| `--skip-tts` | With `--with-enrichment`, skip audio |
+| `--force` | **Destructive:** delete and replace all vocab/prompts on existing lessons |
 | `--no-detach-from-default` | Keep courses on TALMA Community Resources (not recommended) |
 
 ## Re-import / updates
 
-- Safe to re-run without `--force` — skips existing vocabulary and prompts.
-- Use `--force` to replace lesson content after spreadsheet changes.
+- **Safe to re-run** (default mode): existing lessons are left unchanged; only **missing** vocabulary words and prompts are added; games are created if missing.
+- Use `--force` only to wipe and replace lesson content after spreadsheet changes.
 - If courses were previously attached to the default org, re-run import (default detaches automatically) or use `--no-detach-from-default` to opt out.
 
 ## Learner flow
