@@ -7,6 +7,7 @@ use App\Models\FlashcardGame;
 use App\Models\Lesson;
 use App\Models\MatchingGame;
 use App\Models\Organization;
+use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -94,6 +95,56 @@ class StudentFlowTest extends TestCase
         }
         $response = $this->get(route('matching-games.play', [$lesson, $game]));
         $response->assertOk();
+    }
+
+    public function test_game_play_hides_admin_edit_links_for_students(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $lesson = Lesson::where('is_active', true)->first();
+        if (!$lesson) {
+            $this->markTestSkipped('No active lesson');
+        }
+        $game = $lesson->matchingGames()->where('is_active', true)->first();
+        if (!$game) {
+            $game = MatchingGame::create([
+                'lesson_id' => $lesson->id,
+                'title' => 'Test Matching Game',
+                'vocabulary_ids' => [],
+                'is_active' => true,
+            ]);
+        }
+
+        $response = $this->actingAs($student, 'admin')
+            ->get(route('matching-games.play', [$lesson, $game]));
+
+        $response->assertOk();
+        $response->assertDontSee('Edit Lesson', false);
+        $response->assertDontSee('Edit Game', false);
+    }
+
+    public function test_game_play_shows_admin_edit_links_for_teachers(): void
+    {
+        $teacher = User::factory()->teacher()->create();
+        $lesson = Lesson::where('is_active', true)->first();
+        if (!$lesson) {
+            $this->markTestSkipped('No active lesson');
+        }
+        $game = $lesson->matchingGames()->where('is_active', true)->first();
+        if (!$game) {
+            $game = MatchingGame::create([
+                'lesson_id' => $lesson->id,
+                'title' => 'Test Matching Game',
+                'vocabulary_ids' => [],
+                'is_active' => true,
+            ]);
+        }
+
+        $response = $this->actingAs($teacher, 'admin')
+            ->get(route('matching-games.play', [$lesson, $game]));
+
+        $response->assertOk();
+        $response->assertSee('Edit Lesson', false);
+        $response->assertSee('Edit Game', false);
     }
 
     public function test_flashcard_game_play_route_exists(): void

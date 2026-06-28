@@ -1,4 +1,4 @@
-@if(auth('admin')->check())
+@if(auth('admin')->user()?->canAccessAdmin())
     <div class="flex flex-wrap items-center gap-2 {{ $class ?? '' }}">
         <a href="{{ route('admin.lessons.manage', $lesson) }}"
            class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm">
