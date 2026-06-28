@@ -14,9 +14,10 @@ use Illuminate\Console\Command;
 class SummerPracticePalAudit extends Command
 {
     protected $signature = 'talma:summer-practice-pal-audit
-                            {--cefr= : Limit to one CEFR level (Pre-A1, A1, A2, or B1)}';
+                            {--cefr= : Limit to one CEFR level (Pre-A1, A1, A2, or B1)}
+                            {--list-vocab : List every vocabulary word grouped by lesson}';
 
-    protected $description = 'Audit Summer Practice Pal lessons for vocab count, prompts, and duplicate slugs';
+    protected $description = 'Audit Summer Practice Pal lessons for vocab count, prompts, duplicate slugs, and invalid words';
 
     public function handle(): int
     {
@@ -38,9 +39,12 @@ class SummerPracticePalAudit extends Command
         $this->info('========================');
         $this->newLine();
 
+        $validator = app(VocabularyWordValidator::class);
         $wordCountIssues = [];
         $emptyLessons = [];
         $duplicateSlugs = [];
+        $invalidVocab = [];
+        $vocabByLesson = [];
 
         foreach ($courses as $course) {
             $lessons = $course->lessons()->orderBy('sort_order')->get();
@@ -55,10 +59,34 @@ class SummerPracticePalAudit extends Command
             }
 
             foreach ($lessons as $lesson) {
-                $vocabCount = Vocabulary::query()
+                $vocabItems = Vocabulary::query()
                     ->where('lesson_id', $lesson->id)
                     ->where('is_active', true)
-                    ->count();
+                    ->orderBy('sort_order')
+                    ->get(['english_word']);
+                $vocabCount = $vocabItems->count();
+                $words = $vocabItems->pluck('english_word')->all();
+
+                if ($this->option('list-vocab')) {
+                    $vocabByLesson[] = [
+                        'course' => $course->title,
+                        'lesson' => $lesson->title,
+                        'count' => $vocabCount,
+                        'words' => $words,
+                    ];
+                }
+
+                foreach ($words as $word) {
+                    $validation = $validator->validate($word);
+                    if (!$validation['valid']) {
+                        $invalidVocab[] = [
+                            'course' => $course->title,
+                            'lesson' => $lesson->title,
+                            'word' => $word,
+                            'reason' => $validation['reason'] ?? 'invalid',
+                        ];
+                    }
+                }
                 $promptCount = Prompt::query()
                     ->where('lesson_id', $lesson->id)
                     ->where('is_active', true)
@@ -89,6 +117,31 @@ class SummerPracticePalAudit extends Command
                     ];
                 }
             }
+        }
+
+        if ($this->option('list-vocab')) {
+            $this->info('Vocabulary by lesson');
+            $this->info('==================');
+            $this->newLine();
+            foreach ($vocabByLesson as $row) {
+                $this->line("<info>{$row['lesson']}</info> ({$row['count']} words)");
+                $this->line('  ' . ($row['words'] === [] ? '(none)' : implode(', ', $row['words'])));
+                $this->newLine();
+            }
+        }
+
+        $this->line('Invalid vocabulary entries (sentences, phrases, activity titles): ' . count($invalidVocab));
+        if ($invalidVocab !== []) {
+            $this->table(
+                ['Course', 'Lesson', 'Word', 'Issue'],
+                collect($invalidVocab)->map(fn ($row) => [
+                    $row['course'],
+                    $row['lesson'],
+                    $row['word'],
+                    $row['reason'],
+                ])->all()
+            );
+            $this->newLine();
         }
 
         $this->line('Lessons outside 5–10 vocabulary words: ' . count($wordCountIssues));
