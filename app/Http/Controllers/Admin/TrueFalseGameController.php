@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
+use App\Http\Controllers\Concerns\ProvidesGuidedFlowContext;
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\TrueFalseGame;
@@ -13,6 +14,7 @@ use Illuminate\Http\Request;
 class TrueFalseGameController extends Controller
 {
     use GuardsRestrictedCourseAccess;
+    use ProvidesGuidedFlowContext;
 
     public function __construct(
         private TrueFalseQuestionTtsService $questionTts
@@ -125,7 +127,7 @@ class TrueFalseGameController extends Controller
     /**
      * Play the True/False game (student-facing)
      */
-    public function play(Lesson $lesson, TrueFalseGame $trueFalseGame)
+    public function play(Lesson $lesson, TrueFalseGame $trueFalseGame, Request $request)
     {
         $gate = $this->ensureLegacyCourseAccess($lesson);
         if ($gate instanceof RedirectResponse) {
@@ -166,7 +168,10 @@ class TrueFalseGameController extends Controller
             ];
         });
 
-        return view('true-false-games.play', compact('lesson', 'trueFalseGame', 'questions'));
+        return view('true-false-games.play', array_merge(
+            compact('lesson', 'trueFalseGame', 'questions'),
+            $this->guidedFlowViewData($request, $lesson, 'true_false', $trueFalseGame->id)
+        ));
     }
 
     /**

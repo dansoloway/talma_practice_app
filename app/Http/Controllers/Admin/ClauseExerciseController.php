@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
+use App\Http\Controllers\Concerns\ProvidesGuidedFlowContext;
 use App\Http\Controllers\Controller;
 use App\Models\ClauseExercise;
 use App\Models\Lesson;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 class ClauseExerciseController extends Controller
 {
     use GuardsRestrictedCourseAccess;
+    use ProvidesGuidedFlowContext;
 
     protected ClauseExerciseGenerator $generator;
 
@@ -266,7 +268,7 @@ class ClauseExerciseController extends Controller
     /**
      * Show the clause exercise for students to play.
      */
-    public function play(Lesson $lesson, ClauseExercise $clauseExercise)
+    public function play(Lesson $lesson, ClauseExercise $clauseExercise, Request $request)
     {
         $gate = $this->ensureLegacyCourseAccess($lesson);
         if ($gate instanceof RedirectResponse) {
@@ -304,7 +306,10 @@ class ClauseExerciseController extends Controller
             ->get()
             ->keyBy('id');
 
-        return view('clause-exercises.play', compact('lesson', 'clauseExercise', 'vocabulary'));
+        return view('clause-exercises.play', array_merge(
+            compact('lesson', 'clauseExercise', 'vocabulary'),
+            $this->guidedFlowViewData($request, $lesson, 'clause_exercise', $clauseExercise->id)
+        ));
     }
 
     /**

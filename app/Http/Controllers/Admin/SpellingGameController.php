@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
+use App\Http\Controllers\Concerns\ProvidesGuidedFlowContext;
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\SpellingGame;
@@ -13,6 +14,7 @@ use Illuminate\Http\Request;
 class SpellingGameController extends Controller
 {
     use GuardsRestrictedCourseAccess;
+    use ProvidesGuidedFlowContext;
     /**
      * Display a listing of spelling games for a lesson.
      */
@@ -156,7 +158,10 @@ class SpellingGameController extends Controller
                 ->with('info', 'No vocabulary available for this spelling game.');
         }
 
-        return view('spelling-games.play', compact('lesson', 'spelling_game', 'vocabulary'));
+        return view('spelling-games.play', array_merge(
+            compact('lesson', 'spelling_game', 'vocabulary'),
+            $this->guidedFlowViewData($request, $lesson, 'spelling', $spelling_game->id)
+        ));
     }
 
     /**

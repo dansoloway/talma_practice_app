@@ -19,11 +19,15 @@ class Course extends Model
         'cover_image_path',
         'sort_order',
         'is_active',
+        'guided_mode_enabled',
+        'guided_flow',
         'archived_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'guided_mode_enabled' => 'boolean',
+        'guided_flow' => 'array',
         'archived_at' => 'datetime',
     ];
 
@@ -151,5 +155,37 @@ class Course extends Model
     public function isArchived(): bool
     {
         return !is_null($this->archived_at);
+    }
+
+    /**
+     * Human-readable labels for guided flow step types.
+     *
+     * @return array<string, string>
+     */
+    public static function guidedFlowTypeLabels(): array
+    {
+        return [
+            'vocabulary' => 'Vocabulary',
+            'prompts' => 'Sentence Completion',
+            'matching' => 'Matching Games',
+            'flashcard' => 'Flashcards',
+            'spelling' => 'Spelling',
+            'true_false' => 'True/False',
+            'clause_exercise' => 'Clause Exercises',
+        ];
+    }
+
+    public function guidedFlowOrDefault(): array
+    {
+        $flow = $this->guided_flow;
+
+        if (! is_array($flow) || $flow === []) {
+            return \App\Services\LessonFlowService::DEFAULT_FLOW;
+        }
+
+        return array_values(array_filter(
+            $flow,
+            fn ($type) => in_array($type, \App\Services\LessonFlowService::FLOW_TYPES, true)
+        ));
     }
 }

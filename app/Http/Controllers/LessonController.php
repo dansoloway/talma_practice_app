@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
 use App\Models\Lesson;
 use App\Models\Organization;
 use App\Services\CourseAccess;
+use App\Services\LessonFlowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,8 +17,10 @@ class LessonController extends Controller
 
     protected CourseAccess $courseAccess;
 
-    public function __construct(CourseAccess $courseAccess)
-    {
+    public function __construct(
+        CourseAccess $courseAccess,
+        protected LessonFlowService $flowService,
+    ) {
         $this->courseAccess = $courseAccess;
     }
     /**
@@ -137,7 +140,28 @@ class LessonController extends Controller
             $lesson->setRelation('vocabulary', $lesson->getVocabularyForGames());
         }
 
-        return view('lessons.show', compact('lesson', 'org'));
+        $practiceSessionId = $request->attributes->get('practice_session_id');
+        $isGuided = $this->flowService->isGuided($lesson);
+        $flowSteps = $isGuided ? $this->flowService->steps($lesson) : collect();
+        $resumeStep = $isGuided ? $this->flowService->resumeStep($lesson, $practiceSessionId) : null;
+        $startStep = $isGuided ? ($resumeStep ?? $this->flowService->firstStep($lesson)) : null;
+        $guidedProgress = $isGuided ? [
+            'completed' => $this->flowService->completedStepCount($lesson, $practiceSessionId),
+            'total' => $flowSteps->count(),
+            'percent' => $this->flowService->completionPercent($lesson, $practiceSessionId),
+        ] : null;
+        $guidedStartUrl = $startStep ? $this->flowService->playUrl($startStep, $lesson, $org) : null;
+
+        return view('lessons.show', compact(
+            'lesson',
+            'org',
+            'isGuided',
+            'flowSteps',
+            'resumeStep',
+            'startStep',
+            'guidedProgress',
+            'guidedStartUrl',
+        ));
     }
 }
 

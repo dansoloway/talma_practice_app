@@ -517,7 +517,7 @@ class LessonController extends Controller
     {
         $validated = $request->validate([
             'activities' => 'required|array',
-            'activities.*.type' => 'required|in:prompt,prompts,matching,flashcard',
+            'activities.*.type' => 'required|in:prompt,prompts,matching,flashcard,spelling,clause_exercise,true_false',
             'activities.*.id' => 'required',
             'activities.*.sort_order' => 'required|integer',
         ]);
@@ -530,7 +530,6 @@ class LessonController extends Controller
                         $activity->update(['sort_order' => $activityData['sort_order']]);
                         break;
                     case 'prompts':
-                        // Update all prompts in this lesson with the new sort order
                         $lesson->prompts()->update(['sort_order' => $activityData['sort_order']]);
                         break;
                     case 'matching':
@@ -539,6 +538,18 @@ class LessonController extends Controller
                         break;
                     case 'flashcard':
                         $activity = $lesson->flashcardGames()->findOrFail($activityData['id']);
+                        $activity->update(['sort_order' => $activityData['sort_order']]);
+                        break;
+                    case 'spelling':
+                        $activity = $lesson->spellingGames()->findOrFail($activityData['id']);
+                        $activity->update(['sort_order' => $activityData['sort_order']]);
+                        break;
+                    case 'clause_exercise':
+                        $activity = $lesson->clauseExercises()->findOrFail($activityData['id']);
+                        $activity->update(['sort_order' => $activityData['sort_order']]);
+                        break;
+                    case 'true_false':
+                        $activity = $lesson->trueFalseGames()->findOrFail($activityData['id']);
                         $activity->update(['sort_order' => $activityData['sort_order']]);
                         break;
                 }

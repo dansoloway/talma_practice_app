@@ -78,7 +78,7 @@
                 </div>
                 <div class="completion-actions">
                     <button id="play-again-btn" class="btn btn-primary">Play Again</button>
-                    <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-secondary">Back to Lesson</a>
+                    @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson])
                 </div>
             </div>
         </div>
@@ -107,7 +107,7 @@ const activityEventEndpoint = '{{ route('activity-events.store') }}';
 const activityEventPayload = {
     lesson_id: lessonId,
     activity_type: 'true_false',
-    activity_id: null,
+    activity_id: {{ $trueFalseGame->id }},
 };
 
 function logActivityEvent(status, meta = {}) {

@@ -29,11 +29,14 @@ class VoiceSampleController extends Controller
             return response()->json(['error' => 'Voice recording consent and learner profile required.'], 403);
         }
 
+        $isVocabulary = $request->filled('vocabulary_id');
+
         $validator = Validator::make($request->all(), [
             'organization_id' => 'required|exists:organizations,id',
             'lesson_id' => 'required|exists:lessons,id',
-            'prompt_id' => 'required|exists:prompts,id',
-            'option_id' => 'required|exists:options,id',
+            'vocabulary_id' => 'nullable|exists:vocabulary,id',
+            'prompt_id' => 'required_without:vocabulary_id|nullable|exists:prompts,id',
+            'option_id' => 'required_without:vocabulary_id|nullable|exists:options,id',
             'generated_sentence' => 'required|string|max:255',
             'recording' => 'required|file|mimes:webm,mp3,wav,ogg,m4a|max:10240',
             'duration_ms' => 'nullable|integer|min:0|max:120000',
@@ -63,6 +66,12 @@ class VoiceSampleController extends Controller
             return response()->json(['error' => 'You do not have access to this lesson.'], 403);
         }
 
+        if ($isVocabulary) {
+            $vocab = \App\Models\Vocabulary::where('id', $request->integer('vocabulary_id'))
+                ->where('lesson_id', $lesson->id)
+                ->firstOrFail();
+        }
+
         $file = $request->file('recording');
         $allowedMimes = ['audio/webm', 'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/x-wav', 'video/webm'];
         if (! FileUploadSecurity::validateFileContent($file, $allowedMimes)) {
@@ -73,12 +82,13 @@ class VoiceSampleController extends Controller
             file: $file,
             organization: $organization,
             lessonId: $request->integer('lesson_id'),
-            promptId: $request->integer('prompt_id'),
-            optionId: $request->integer('option_id'),
             targetText: $request->string('generated_sentence')->toString(),
             age: $profile->age,
             gender: $profile->gender,
             nativeLanguage: $profile->nativeLanguage,
+            promptId: $isVocabulary ? null : $request->integer('prompt_id'),
+            optionId: $isVocabulary ? null : $request->integer('option_id'),
+            vocabularyId: $isVocabulary ? $request->integer('vocabulary_id') : null,
             durationMs: $request->integer('duration_ms') ?: null,
         );
 

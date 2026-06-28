@@ -3,16 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
+use App\Http\Controllers\Concerns\ProvidesGuidedFlowContext;
 use App\Models\Organization;
 use App\Models\Prompt;
 use App\Services\CourseAccess;
 use App\Services\VoiceSampleLearnerProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class PromptController extends Controller
 {
     use GuardsRestrictedCourseAccess;
+    use ProvidesGuidedFlowContext;
     /**
      * Get prompt details with options (no audio yet).
      * Only accessible if prompt belongs to an active lesson.
@@ -48,7 +51,7 @@ class PromptController extends Controller
      * Play all prompts for a lesson (sentence completion activity).
      * Only accessible if lesson is active and not archived.
      */
-    public function play($lessonId)
+    public function play($lessonId, Request $request)
     {
         $lesson = \App\Models\Lesson::where('is_active', true)
             ->whereNull('archived_at')
@@ -91,7 +94,10 @@ class PromptController extends Controller
             });
         });
 
-        return view('prompts.play', compact('lesson', 'voiceOrganization', 'voiceUploadEnabled'));
+        return view('prompts.play', array_merge(
+            compact('lesson', 'voiceOrganization', 'voiceUploadEnabled'),
+            $this->guidedFlowViewData($request, $lesson, 'prompts')
+        ));
     }
 
     private function resolveVoiceOrganization(\App\Models\Lesson $lesson, Organization|RedirectResponse|null $gate): ?Organization

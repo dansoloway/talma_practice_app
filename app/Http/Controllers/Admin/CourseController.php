@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Organization;
+use App\Services\LessonFlowService;
 use App\Services\LessonSessionGrouper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -139,6 +140,9 @@ class CourseController extends Controller
             'description' => 'nullable|string',
             'cover_image' => 'nullable|image|max:2048',
             'is_active' => 'boolean',
+            'guided_mode_enabled' => 'boolean',
+            'guided_flow' => 'nullable|array',
+            'guided_flow.*' => 'string|in:' . implode(',', LessonFlowService::FLOW_TYPES),
         ]);
 
         // Generate slug if not provided
@@ -162,6 +166,8 @@ class CourseController extends Controller
         }
 
         $validated['is_active'] = $request->has('is_active');
+        $validated['guided_mode_enabled'] = $request->has('guided_mode_enabled');
+        $validated['guided_flow'] = $this->normalizeGuidedFlow($request);
 
         $course = Course::create($validated);
 
@@ -222,6 +228,9 @@ class CourseController extends Controller
             'description' => 'nullable|string',
             'cover_image' => 'nullable|image|max:2048',
             'is_active' => 'boolean',
+            'guided_mode_enabled' => 'boolean',
+            'guided_flow' => 'nullable|array',
+            'guided_flow.*' => 'string|in:' . implode(',', LessonFlowService::FLOW_TYPES),
         ]);
 
         // Generate slug if not provided
@@ -250,6 +259,8 @@ class CourseController extends Controller
         }
 
         $validated['is_active'] = $request->has('is_active');
+        $validated['guided_mode_enabled'] = $request->has('guided_mode_enabled');
+        $validated['guided_flow'] = $this->normalizeGuidedFlow($request);
 
         $course->update($validated);
 
@@ -398,5 +409,28 @@ class CourseController extends Controller
 
         return redirect()->route('org.admin.courses.index', ['organization' => $organization->slug])
             ->with('success', 'Course removed from this organization.');
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function normalizeGuidedFlow(Request $request): ?array
+    {
+        if (! $request->has('guided_mode_enabled')) {
+            return null;
+        }
+
+        $flow = $request->input('guided_flow', []);
+
+        if (! is_array($flow)) {
+            return LessonFlowService::DEFAULT_FLOW;
+        }
+
+        $flow = array_values(array_filter(
+            $flow,
+            fn ($type) => is_string($type) && in_array($type, LessonFlowService::FLOW_TYPES, true)
+        ));
+
+        return $flow !== [] ? $flow : LessonFlowService::DEFAULT_FLOW;
     }
 }

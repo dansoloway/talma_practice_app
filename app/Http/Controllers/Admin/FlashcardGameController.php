@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
+use App\Http\Controllers\Concerns\ProvidesGuidedFlowContext;
 use App\Http\Controllers\Controller;
 use App\Models\FlashcardGame;
 use App\Models\Lesson;
@@ -14,6 +15,7 @@ use Illuminate\Http\Request;
 class FlashcardGameController extends Controller
 {
     use GuardsRestrictedCourseAccess;
+    use ProvidesGuidedFlowContext;
     /**
      * Display a listing of the resource.
      */
@@ -203,7 +205,10 @@ class FlashcardGameController extends Controller
         // Generate game data based on the selected mode
         $gameData = $this->generateGameData($flashcardGame, $vocabulary, $mode);
         
-        return view('flashcard-games.play', compact('lesson', 'flashcardGame', 'gameData', 'mode'));
+        return view('flashcard-games.play', array_merge(
+            compact('lesson', 'flashcardGame', 'gameData', 'mode'),
+            $this->guidedFlowViewData($request, $lesson, 'flashcard', $flashcardGame->id)
+        ));
     }
 
     private function generateGameData(FlashcardGame $flashcardGame, $vocabulary, $mode = 'image')

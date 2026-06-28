@@ -384,8 +384,23 @@ class Lesson extends Model
         $count += $this->activeRelatedCount('matchingGames');
         $count += $this->activeRelatedCount('flashcardGames');
         $count += $this->activeRelatedCount('spellingGames');
+        $count += $this->activeRelatedCount('clauseExercises');
+        $count += $this->activeTrueFalseGameCount();
 
         return $count;
+    }
+
+    private function activeTrueFalseGameCount(): int
+    {
+        try {
+            if ($this->relationLoaded('trueFalseGames')) {
+                return $this->trueFalseGames->where('is_active', true)->count();
+            }
+
+            return $this->trueFalseGames()->where('is_active', true)->count();
+        } catch (\Exception) {
+            return 0;
+        }
     }
 
     private function activeRelatedCount(string $relation): int

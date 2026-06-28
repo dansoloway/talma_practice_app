@@ -136,10 +136,7 @@
                             class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
                         Play Again
                     </button>
-                    <a href="{{ route('lessons.show', $lesson->slug) }}" 
-                       class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 active:scale-95 transition-all duration-200 shadow-sm">
-                        Continue Lesson
-                    </a>
+                    @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson, 'fallbackLabel' => 'Continue Lesson'])
                 </div>
             </div>
         </div>

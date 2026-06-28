@@ -71,6 +71,32 @@
             </section>
         @endif
 
+        @if(!empty($isGuided) && $guidedStartUrl)
+            <section class="mb-8">
+                @if(!empty($guidedProgress) && $guidedProgress['total'] > 0)
+                    <div class="mb-3">
+                        <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+                            <span>Step {{ min($guidedProgress['completed'] + 1, $guidedProgress['total']) }} of {{ $guidedProgress['total'] }}</span>
+                            <span>{{ $guidedProgress['percent'] }}%</span>
+                        </div>
+                        <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-500 rounded-full transition-all duration-300" style="width: {{ $guidedProgress['percent'] }}%"></div>
+                        </div>
+                    </div>
+                @endif
+
+                <a href="{{ $guidedStartUrl }}"
+                   class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                    @if(!empty($guidedProgress['completed']))
+                        Continue: {{ $resumeStep?->label ?? $startStep?->label }}
+                    @else
+                        Start lesson
+                    @endif
+                    <i class="fas fa-arrow-right ml-2 text-sm" aria-hidden="true"></i>
+                </a>
+            </section>
+        @endif
+
         @php
             $allActivities = collect();
 
@@ -175,7 +201,16 @@
         @endphp
 
         @if($allActivities->count() > 0)
-            <section class="mb-8">
+            @if(!empty($isGuided))
+                <p class="mb-3">
+                    <button type="button" id="show-all-activities"
+                            class="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2">
+                        All activities
+                    </button>
+                </p>
+            @endif
+
+            <section class="mb-8 {{ !empty($isGuided) ? 'hidden' : '' }}" id="activities-section">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
                     Activities · {{ $allActivities->count() }}
                 </p>
@@ -233,28 +268,42 @@
 <script>
 const lessonData = @json($lesson);
 
+const activityRoutes = {
+    prompts: @json(route('prompts.play', ['lesson' => $lesson->id])),
+    matching: (id) => @json(url('/lessons/' . $lesson->id . '/matching-games')) + `/${id}/play`,
+    flashcard: (id) => @json(url('/lessons/' . $lesson->id . '/flashcard-games')) + `/${id}/play`,
+    spelling: (id) => @json(url('/lessons/' . $lesson->id . '/spelling-games')) + `/${id}/play`,
+    clause_exercise: (id) => @json(url('/lessons/' . $lesson->id . '/clause-exercises')) + `/${id}/play`,
+    true_false: (id) => @json(url('/lessons/' . $lesson->id . '/true-false-games')) + `/${id}/play`,
+};
+
 function startActivity(type, id) {
     switch(type) {
         case 'prompts':
-            window.location.href = `/lessons/{{ $lesson->id }}/prompts/play`;
+            window.location.href = activityRoutes.prompts;
             break;
         case 'matching':
-            window.location.href = `/lessons/{{ $lesson->id }}/matching-games/${id}/play`;
+            window.location.href = activityRoutes.matching(id);
             break;
         case 'flashcard':
-            window.location.href = `/lessons/{{ $lesson->id }}/flashcard-games/${id}/play`;
+            window.location.href = activityRoutes.flashcard(id);
             break;
         case 'spelling':
-            window.location.href = `/lessons/{{ $lesson->id }}/spelling-games/${id}/play`;
+            window.location.href = activityRoutes.spelling(id);
             break;
         case 'clause_exercise':
-            window.location.href = `/lessons/{{ $lesson->id }}/clause-exercises/${id}/play`;
+            window.location.href = activityRoutes.clause_exercise(id);
             break;
         case 'true_false':
-            window.location.href = `/lessons/{{ $lesson->id }}/true-false-games/${id}/play`;
+            window.location.href = activityRoutes.true_false(id);
             break;
     }
 }
+
+document.getElementById('show-all-activities')?.addEventListener('click', () => {
+    document.getElementById('activities-section')?.classList.remove('hidden');
+    document.getElementById('show-all-activities')?.classList.add('hidden');
+});
 </script>
 @endsection
 

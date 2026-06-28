@@ -14,6 +14,7 @@ class VoiceSample extends Model
     protected $fillable = [
         'organization_id',
         'lesson_id',
+        'vocabulary_id',
         'prompt_id',
         'option_id',
         'target_text',
@@ -52,5 +53,10 @@ class VoiceSample extends Model
     public function option(): BelongsTo
     {
         return $this->belongsTo(Option::class);
+    }
+
+    public function vocabulary(): BelongsTo
+    {
+        return $this->belongsTo(Vocabulary::class);
     }
 }

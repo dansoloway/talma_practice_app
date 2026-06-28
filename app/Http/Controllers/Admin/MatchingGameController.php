@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
+use App\Http\Controllers\Concerns\ProvidesGuidedFlowContext;
 use App\Http\Controllers\Controller;
 use App\Models\Lesson;
 use App\Models\MatchingGame;
@@ -14,6 +15,7 @@ use Illuminate\Http\Request;
 class MatchingGameController extends Controller
 {
     use GuardsRestrictedCourseAccess;
+    use ProvidesGuidedFlowContext;
     public function index(Lesson $lesson)
     {
         $matchingGames = $lesson->matchingGames()->ordered()->get();
@@ -139,7 +141,10 @@ class MatchingGameController extends Controller
         // Generate game data based on the selected mode
         $gameData = $this->generateGameData($matching_game, $vocabulary, $mode);
         
-        return view('matching-games.play', compact('lesson', 'matching_game', 'gameData', 'mode'));
+        return view('matching-games.play', array_merge(
+            compact('lesson', 'matching_game', 'gameData', 'mode'),
+            $this->guidedFlowViewData($request, $lesson, 'matching', $matching_game->id)
+        ));
     }
 
     /**

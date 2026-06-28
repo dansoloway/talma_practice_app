@@ -66,7 +66,7 @@
                 <div class="score-display" id="score-display"></div>
                 <div class="results-actions">
                     <button id="try-again-btn" class="btn btn-primary">Try Again</button>
-                    <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-secondary">Back to Lesson</a>
+                    @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson])
                 </div>
             </div>
         </div>

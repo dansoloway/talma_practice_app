@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityEventController;
+use App\Http\Controllers\GuidedLessonController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\PromptController;
 use App\Http\Controllers\PromptModelController;
@@ -54,6 +55,7 @@ Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.contex
     Route::post('select-child', [StudentChildController::class, 'storeSelectedChild'])->name('select-child.submit');
     Route::get('courses/{course:slug}', [StudentController::class, 'course'])->name('course');
     Route::get('lessons/{slug}', [LessonController::class, 'show'])->name('lesson');
+    Route::get('lessons/{lesson}/guided/vocabulary', [GuidedLessonController::class, 'vocabulary'])->name('guided.vocabulary');
 });
 Route::get('/grade/{gradeLevel}', [StudentController::class, 'grade'])->name('student.grade'); // Kept for backward compatibility
 Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'updateLessonOrder'])
@@ -62,6 +64,7 @@ Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'upda
 
 // Individual Lessons
 Route::get('/lessons/{slug}', [LessonController::class, 'show'])->name('lessons.show');
+Route::get('/lessons/{lesson}/guided/vocabulary', [GuidedLessonController::class, 'vocabulary'])->name('guided.vocabulary');
 
 // Matching Games (public)
 Route::get('/lessons/{lesson}/matching-games/{matching_game}/play', [App\Http\Controllers\Admin\MatchingGameController::class, 'play'])

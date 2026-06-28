@@ -78,7 +78,7 @@
                 </div>
                 <div class="completion-actions">
                     <button id="play-again-btn" class="btn btn-primary">Play Again</button>
-                    <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-secondary">Back to Lesson</a>
+                    @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson])
                 </div>
             </div>
         </div>

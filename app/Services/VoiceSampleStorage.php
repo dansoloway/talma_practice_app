@@ -16,12 +16,13 @@ class VoiceSampleStorage
         UploadedFile $file,
         Organization $organization,
         int $lessonId,
-        int $promptId,
-        int $optionId,
         string $targetText,
         int $age,
         string $gender,
         string $nativeLanguage,
+        ?int $promptId = null,
+        ?int $optionId = null,
+        ?int $vocabularyId = null,
         ?int $durationMs = null,
     ): VoiceSample {
         $uuid = (string) Str::uuid();
@@ -48,6 +49,7 @@ class VoiceSampleStorage
             'lesson_id' => $lessonId,
             'prompt_id' => $promptId,
             'option_id' => $optionId,
+            'vocabulary_id' => $vocabularyId,
             'recorded_at' => $now->toIso8601String(),
             'duration_ms' => $durationMs,
         ];
@@ -58,6 +60,7 @@ class VoiceSampleStorage
         return VoiceSample::create([
             'organization_id' => $organization->id,
             'lesson_id' => $lessonId,
+            'vocabulary_id' => $vocabularyId,
             'prompt_id' => $promptId,
             'option_id' => $optionId,
             'target_text' => $targetText,
