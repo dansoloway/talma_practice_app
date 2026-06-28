@@ -211,7 +211,7 @@ class SummerPracticePalCoverage extends Command
     private function accumulate(array &$target, array $source): void
     {
         foreach ($source as $key => $value) {
-            if ($key === 'fully_enriched') {
+            if ($key === 'fully_enriched' || $key === 'lessons') {
                 continue;
             }
             if (!isset($target[$key])) {
