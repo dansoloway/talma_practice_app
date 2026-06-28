@@ -145,6 +145,13 @@ class TestVoiceTrainingStorage extends Command
             $this->newLine();
             $this->info('Voice training storage is configured correctly.');
 
+            if ($driver === 's3') {
+                $this->line("Expected S3 keys: {$jsonKey}, {$mp3Key}");
+                if (str_contains($jsonKey, '/home/') || str_contains($jsonKey, 'public_html')) {
+                    $this->warn('Key looks like a server filesystem path — check voice_training disk root is empty for S3.');
+                }
+            }
+
             return self::SUCCESS;
         } catch (\Throwable $e) {
             $this->newLine();

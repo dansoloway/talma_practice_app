@@ -22,7 +22,10 @@ return [
 
         'voice_training' => [
             'driver' => env('VOICE_TRAINING_DISK_DRIVER', 'local'),
-            'root' => storage_path('app/voice-training'),
+            // Only used for local driver. On S3, root becomes an object key prefix — leave empty.
+            'root' => env('VOICE_TRAINING_DISK_DRIVER', 'local') === 's3'
+                ? ''
+                : storage_path('app/voice-training'),
             'throw' => true,
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
