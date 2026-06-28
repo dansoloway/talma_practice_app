@@ -63,4 +63,14 @@ class SummerVocabAssetArchiverTest extends TestCase
         $this->assertFileExists($summary['archive_dir'] . '/audio/' . $vocabulary->id . '_test-word.mp3');
         Storage::disk('public')->assertExists('images/vocabulary/test-word.png');
     }
+
+    public function test_create_archive_directory_is_idempotent(): void
+    {
+        $archiver = app(SummerVocabAssetArchiver::class);
+        $dir = $archiver->createArchiveDirectory();
+        $archiver->createArchiveDirectory();
+
+        $this->assertDirectoryExists($dir . '/images');
+        $this->assertDirectoryExists($dir . '/audio');
+    }
 }

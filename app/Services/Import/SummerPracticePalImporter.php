@@ -543,6 +543,11 @@ class SummerPracticePalImporter
                 $lessons = $data['lessons'];
                 uasort($lessons, fn ($a, $b) => [$a['day_number'], $a['topic']] <=> [$b['day_number'], $b['topic']]);
 
+                if ($options->force && !$options->skipArchive) {
+                    $archiveDir = $this->assetArchiver->beginSession();
+                    $this->reportProgress('Archive session started', ['path' => $archiveDir]);
+                }
+
                 foreach ($lessons as $lessonData) {
                     $lessonResult = $this->importLesson($course, $lessonData, $options);
                     $this->reporter?->lessonCompleted(
@@ -573,6 +578,10 @@ class SummerPracticePalImporter
                     if ($lessonResult['vocabulary_created'] > 0 && $lessonResult['prompts_created'] === 0 && count($lessonData['prompts']) === 0) {
                         $summary['lessons_vocab_only']++;
                     }
+                }
+
+                if ($options->force && !$options->skipArchive) {
+                    $this->assetArchiver->endSession();
                 }
             });
 

@@ -19,6 +19,8 @@ class SummerVocabAssetArchiver
         'B1' => 'summer-practice-pal-b1',
     ];
 
+    private ?string $sessionArchiveDir = null;
+
     /**
      * @param list<string>|null $courseSlugs
      * @return array<string, mixed>
@@ -43,11 +45,26 @@ class SummerVocabAssetArchiver
     }
 
     /**
+     * Reuse one archive directory for multiple lessons in a single import run.
+     */
+    public function beginSession(): string
+    {
+        $this->sessionArchiveDir = $this->createArchiveDirectory();
+
+        return $this->sessionArchiveDir;
+    }
+
+    public function endSession(): void
+    {
+        $this->sessionArchiveDir = null;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function archiveLesson(Lesson $lesson, string $reason = 'pre_reimport_cleanup'): array
     {
-        $archiveDir = $this->createArchiveDirectory();
+        $archiveDir = $this->sessionArchiveDir ?? $this->createArchiveDirectory();
         $vocabulary = $lesson->vocabulary()->get();
 
         return $this->archiveVocabularyCollection($vocabulary, $archiveDir, $reason);
@@ -127,13 +144,20 @@ class SummerVocabAssetArchiver
     {
         $timestamp = now()->format('Y-m-d_His');
         $dir = storage_path("app/archived/summer-practice-pal/{$timestamp}");
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-        mkdir($dir . '/images', 0755, true);
-        mkdir($dir . '/audio', 0755, true);
+        $this->ensureDirectory($dir);
+        $this->ensureDirectory($dir . '/images');
+        $this->ensureDirectory($dir . '/audio');
 
         return $dir;
+    }
+
+    private function ensureDirectory(string $path): void
+    {
+        if (is_dir($path)) {
+            return;
+        }
+
+        mkdir($path, 0755, true);
     }
 
     private function copyAsset(string $path, string $targetDir, string $targetFilename): ?string
