@@ -1,0 +1,84 @@
+<?php
+
+return [
+    'page_title' => 'רישום הורה — :org',
+    'heading' => 'הצטרפות ל-:org',
+    'subtitle' => 'רישום הורה / אפוטרופוס',
+
+    'parent_section' => 'פרטי הורה / אפוטרופוס',
+    'hebrew_name' => 'שם מלא (עברית)',
+    'english_name' => 'שם מלא (אנגלית)',
+    'id_number' => 'מספר ת.ז.',
+    'email' => 'דוא"ל',
+    'password' => 'סיסמה',
+    'password_hint' => 'לפחות 8 תווים',
+    'confirm_password' => 'אימות סיסמה',
+    'phone' => 'טלפון',
+    'phone_placeholder' => 'מספר בלבד',
+    'city_optional' => 'עיר (לא חובה)',
+    'select_city' => 'בחרו עיר',
+
+    'children' => 'ילדים',
+    'add_child' => '+ הוספת ילד',
+
+    'terms_prefix' => 'אני מסכים/ה ל',
+    'terms_link' => 'תנאי השימוש ומדיניות הפרטיות',
+
+    'voice_waiver' => 'אני מסכים/ה שהקלטות הקול שלי יישמרו באופן אנונימי כדי לסייע בשיפור כלי זיהוי קול.',
+    'voice_applies_all' => 'ההסכמה חלה על כל הילדים בחשבון.',
+
+    'create_account' => 'יצירת חשבון',
+    'already_have' => 'כבר יש לכם חשבון?',
+    'sign_in' => 'התחברות',
+
+    'child' => [
+        'label' => 'ילד/ה :number',
+        'remove' => 'הסרה',
+        'first_name_hebrew' => 'שם פרטי (עברית)',
+        'last_name_hebrew' => 'שם משפחה (עברית)',
+        'first_name_english' => 'שם פרטי (אנגלית)',
+        'last_name_english' => 'שם משפחה (אנגלית)',
+        'birth_year' => 'שנת לידה',
+        'grade' => 'כיתה',
+        'select_grade' => 'בחרו כיתה',
+        'grade_option' => 'כיתה :grade',
+        'gender' => 'מגדר',
+        'select_gender' => 'בחרו מגדר',
+        'native_language' => 'שפת אם',
+        'select_native_language' => 'בחרו שפת אם',
+        'login_type' => 'סוג התחברות',
+        'login_shared' => 'משותף עם ההורה',
+        'login_separate' => 'התחברות נפרדת לילד/ה',
+        'separate_hint' => 'יש להשתמש בדוא"ל או בטלפון שונים מחשבון ההורה.',
+        'contact_email' => 'דוא"ל',
+        'contact_phone' => 'טלפון',
+        'child_email' => 'דוא"ל של הילד/ה',
+        'child_password' => 'סיסמה של הילד/ה',
+        'confirm_child_password' => 'אימות סיסמה של הילד/ה',
+    ],
+
+    'terms_modal' => [
+        'close' => 'סגירה',
+        'version' => 'גרסה :version · עודכן :date',
+    ],
+
+    'validation' => [
+        'terms_accepted' => 'יש לסמן את תיבת ההסכמה לתנאי השימוש ומדיניות הפרטיות.',
+        'phone_invalid' => 'יש להזין מספר טלפון ישראלי תקין (החל מ-0 או +972).',
+        'phone_registered' => 'מספר הטלפון הזה כבר רשום במערכת.',
+        'child_password_required' => 'נדרשת סיסמה עבור התחברות נפרדת של הילד/ה.',
+        'child_email_required' => 'יש להזין דוא"ל עבור ילד/ה עם התחברות נפרדת.',
+        'child_email_different' => 'דוא"ל הילד/ה חייב להיות שונה מדוא"ל ההורה.',
+        'child_email_registered' => 'דוא"ל זה כבר רשום במערכת.',
+        'child_email_taken' => 'דוא"ל זה כבר משויך לילד/ה אחר/ת.',
+        'child_email_duplicate' => 'דוא"ל זה כבר בשימוש עבור ילד/ה אחר/ה בטופס.',
+        'child_phone_required' => 'יש להזין טלפון עבור ילד/ה עם התחברות נפרדת.',
+        'child_phone_invalid' => 'יש להזין מספר טלפון ישראלי תקין.',
+        'child_phone_different' => 'טלפון הילד/ה חייב להיות שונה מטלפון ההורה.',
+        'child_phone_registered' => 'מספר הטלפון הזה כבר רשום במערכת.',
+        'child_phone_taken' => 'מספר הטלפון הזה כבר משויך לילד/ה אחר/ת.',
+        'child_phone_duplicate' => 'מספר הטלפון הזה כבר בשימוש עבור ילד/ה אחר/ה בטופס.',
+    ],
+
+    'welcome' => 'ברוכים הבאים! החשבון שלכם נוצר.',
+];

@@ -13,12 +13,14 @@ class TermsAndCondition extends Model
         'type',
         'title',
         'content',
+        'translations',
         'version',
         'active',
     ];
 
     protected $casts = [
         'active' => 'boolean',
+        'translations' => 'array',
     ];
 
     public static function getActiveByType(string $type): ?self
@@ -32,5 +34,26 @@ class TermsAndCondition extends Model
     public static function getStudentSignupTerms(): ?self
     {
         return self::getActiveByType('student_signup');
+    }
+
+    /**
+     * @return array{title: string, content: string}
+     */
+    public function localized(?string $locale = null): array
+    {
+        $locale = \App\Support\SignupLocale::normalize($locale ?? app()->getLocale());
+        $translations = $this->translations ?? [];
+
+        if (isset($translations[$locale]['title'], $translations[$locale]['content'])) {
+            return [
+                'title' => $translations[$locale]['title'],
+                'content' => $translations[$locale]['content'],
+            ];
+        }
+
+        return [
+            'title' => $this->title,
+            'content' => $this->content,
+        ];
     }
 }

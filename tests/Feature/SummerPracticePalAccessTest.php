@@ -44,6 +44,24 @@ class SummerPracticePalAccessTest extends TestCase
         $response->assertRedirect(route('org.student.login', $org));
     }
 
+    public function test_parent_register_defaults_to_hebrew(): void
+    {
+        $org = $this->summerOrg();
+
+        $this->get(route('org.student.register', $org))
+            ->assertOk()
+            ->assertSee('רישום הורה / אפוטרופוס', false);
+    }
+
+    public function test_parent_register_can_switch_to_english(): void
+    {
+        $org = $this->summerOrg();
+
+        $this->get(route('org.student.register', ['organization' => $org, 'lang' => 'en']))
+            ->assertOk()
+            ->assertSee('Parent or guardian registration', false);
+    }
+
     public function test_parent_can_register_and_access_org_courses(): void
     {
         $org = $this->summerOrg();

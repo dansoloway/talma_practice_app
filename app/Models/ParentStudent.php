@@ -12,17 +12,28 @@ class ParentStudent extends Model
     use HasFactory;
 
     public const GENDERS = [
-        'male' => ['he' => 'Male', 'en' => 'Male'],
-        'female' => ['he' => 'Female', 'en' => 'Female'],
-        'other' => ['he' => 'Other', 'en' => 'Other'],
+        'male' => ['he' => 'זכר', 'en' => 'Male', 'ar' => 'ذكر'],
+        'female' => ['he' => 'נקבה', 'en' => 'Female', 'ar' => 'أنثى'],
+        'other' => ['he' => 'אחר', 'en' => 'Other', 'ar' => 'آخر'],
     ];
 
     public const NATIVE_LANGUAGES = [
-        'hebrew' => 'Hebrew',
-        'arabic' => 'Arabic',
-        'english' => 'English',
-        'other' => 'Other',
+        'hebrew' => ['he' => 'עברית', 'en' => 'Hebrew', 'ar' => 'العبرية'],
+        'arabic' => ['he' => 'ערבית', 'en' => 'Arabic', 'ar' => 'العربية'],
+        'english' => ['he' => 'אנגלית', 'en' => 'English', 'ar' => 'الإنجليزية'],
+        'other' => ['he' => 'אחר', 'en' => 'Other', 'ar' => 'أخرى'],
     ];
+
+    public static function optionLabel(array|string $label, ?string $locale = null): string
+    {
+        if (! is_array($label)) {
+            return $label;
+        }
+
+        $locale = \App\Support\SignupLocale::normalize($locale ?? app()->getLocale());
+
+        return $label[$locale] ?? $label['en'] ?? (string) reset($label);
+    }
 
     protected $fillable = [
         'parent_id',

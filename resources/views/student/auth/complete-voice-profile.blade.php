@@ -54,7 +54,7 @@
                             <option value="">Select...</option>
                             @foreach(\App\Models\ParentStudent::GENDERS as $value => $labels)
                                 <option value="{{ $value }}" {{ old('gender', $context['student']?->gender ?? $context['user']->gender) === $value ? 'selected' : '' }}>
-                                    {{ $labels['en'] }}
+                                    {{ \App\Models\ParentStudent::optionLabel($labels) }}
                                 </option>
                             @endforeach
                         </select>
@@ -67,7 +67,7 @@
                             <option value="">Select...</option>
                             @foreach(\App\Models\User::NATIVE_LANGUAGES as $value => $label)
                                 <option value="{{ $value }}" {{ old('native_language', $context['student']?->native_language ?? $context['user']->native_language) === $value ? 'selected' : '' }}>
-                                    {{ $label }}
+                                    {{ \App\Models\ParentStudent::optionLabel($label) }}
                                 </option>
                             @endforeach
                         </select>

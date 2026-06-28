@@ -69,7 +69,7 @@
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
                             <option value="">Select...</option>
                             @foreach(\App\Models\User::NATIVE_LANGUAGES as $value => $label)
-                                <option value="{{ $value }}" {{ old('native_language') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                <option value="{{ $value }}" {{ old('native_language') === $value ? 'selected' : '' }}>{{ \App\Models\ParentStudent::optionLabel($label) }}</option>
                             @endforeach
                         </select>
                     </div>

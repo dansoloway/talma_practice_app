@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator as ValidatorInstance;
+use App\Support\SignupLocale;
 use Illuminate\View\View;
 
 class OrgParentSignupController extends Controller
@@ -30,6 +31,8 @@ class OrgParentSignupController extends Controller
 
     public function showRegister(Organization $organization): View
     {
+        SignupLocale::apply(request());
+
         $terms = TermsAndCondition::getStudentSignupTerms();
         $cities = City::orderBy('name')->get();
 
@@ -38,6 +41,8 @@ class OrgParentSignupController extends Controller
 
     public function register(Request $request, Organization $organization): RedirectResponse
     {
+        SignupLocale::apply($request);
+
         if (! $organization->allow_self_registration || $organization->access_mode !== 'restricted' || ! $organization->usesParentSignup()) {
             abort(404);
         }
@@ -61,7 +66,7 @@ class OrgParentSignupController extends Controller
                     $cleaned = preg_replace('/\D/', '', (string) $value);
                     $withLeadingZero = strlen($cleaned) === 9 ? '0'.$cleaned : $cleaned;
                     if (! PhoneRules::isValidIsraeliPhone($withLeadingZero)) {
-                        $fail('Phone must be a valid Israeli number (starting with 0 or +972).');
+                        $fail(__('parent-signup.validation.phone_invalid'));
                     }
                 },
             ],
@@ -101,7 +106,7 @@ class OrgParentSignupController extends Controller
         $request->merge(['students' => $studentsInput]);
 
         $validator = Validator::make($request->all(), $rules, [
-            'terms_accepted.accepted' => 'Please check the box to accept the terms of use and privacy policy.',
+            'terms_accepted.accepted' => __('parent-signup.validation.terms_accepted'),
         ]);
         $validator->after(fn ($v) => $this->validateParentSignupIdentities($v, $request));
         $validated = $validator->validate();
@@ -144,7 +149,7 @@ class OrgParentSignupController extends Controller
                     }
                     if (empty($studentData['password'])) {
                         throw ValidationException::withMessages([
-                            'students.0.password' => 'Password is required for separate child login.',
+                            'students.0.password' => __('parent-signup.validation.child_password_required'),
                         ]);
                     }
                 }
@@ -195,7 +200,7 @@ class OrgParentSignupController extends Controller
         $request->session()->regenerate();
 
         return $this->learnerSession->redirectAfterAuth($parent, $organization)
-            ->with('success', 'Welcome! Your account has been created.');
+            ->with('success', __('parent-signup.welcome'));
     }
 
     protected function validateParentSignupIdentities(ValidatorInstance $v, Request $request): void
@@ -205,7 +210,7 @@ class OrgParentSignupController extends Controller
         $parentPhoneNorm = PhoneRules::normalize((string) ($request->input('phone_number') ?? ''));
 
         if ($parentPhoneNorm !== '' && User::where('phone_number', $parentPhoneNorm)->exists()) {
-            $v->errors()->add('phone_rest', 'This phone number is already registered.');
+            $v->errors()->add('phone_rest', __('parent-signup.validation.phone_registered'));
         }
 
         $studentEmailEntries = [];
@@ -217,7 +222,7 @@ class OrgParentSignupController extends Controller
             }
 
             if (empty($s['password'])) {
-                $v->errors()->add("students.{$i}.password", 'Password is required for separate child login.');
+                $v->errors()->add("students.{$i}.password", __('parent-signup.validation.child_password_required'));
             }
 
             $contactType = $s['contact_type'] ?? 'email';
@@ -225,42 +230,42 @@ class OrgParentSignupController extends Controller
             if ($contactType === 'email') {
                 $email = strtolower(trim((string) ($s['email'] ?? '')));
                 if ($email === '') {
-                    $v->errors()->add("students.{$i}.email", 'Please enter email for student with separate login.');
+                    $v->errors()->add("students.{$i}.email", __('parent-signup.validation.child_email_required'));
                     continue;
                 }
                 if ($email === $parentEmail) {
-                    $v->errors()->add("students.{$i}.email", 'Student email must be different from parent\'s email.');
+                    $v->errors()->add("students.{$i}.email", __('parent-signup.validation.child_email_different'));
                     continue;
                 }
                 if (User::where('email', $email)->exists()) {
-                    $v->errors()->add("students.{$i}.email", 'This email is already registered.');
+                    $v->errors()->add("students.{$i}.email", __('parent-signup.validation.child_email_registered'));
                 }
                 if (StudentIdentity::where('email', $email)->exists()) {
-                    $v->errors()->add("students.{$i}.email", 'This email is already registered to another student.');
+                    $v->errors()->add("students.{$i}.email", __('parent-signup.validation.child_email_taken'));
                 }
                 $studentEmailEntries[] = ['index' => $i, 'email' => $email];
             } else {
                 $phone = trim((string) ($s['phone_number'] ?? ''));
                 if ($phone === '') {
-                    $v->errors()->add("students.{$i}.phone_rest", 'Please enter phone for student with separate login.');
+                    $v->errors()->add("students.{$i}.phone_rest", __('parent-signup.validation.child_phone_required'));
                     continue;
                 }
                 $cleaned = preg_replace('/\D/', '', $phone);
                 $withLeadingZero = strlen($cleaned) === 9 ? '0'.$cleaned : $cleaned;
                 if (! PhoneRules::isValidIsraeliPhone($withLeadingZero)) {
-                    $v->errors()->add("students.{$i}.phone_rest", 'Phone must be a valid Israeli number.');
+                    $v->errors()->add("students.{$i}.phone_rest", __('parent-signup.validation.child_phone_invalid'));
                     continue;
                 }
                 $studentPhoneNorm = PhoneRules::normalize($phone);
                 if ($studentPhoneNorm !== '' && $studentPhoneNorm === $parentPhoneNorm) {
-                    $v->errors()->add("students.{$i}.phone_rest", 'Student phone must be different from parent\'s phone.');
+                    $v->errors()->add("students.{$i}.phone_rest", __('parent-signup.validation.child_phone_different'));
                     continue;
                 }
                 if (User::where('phone_number', $studentPhoneNorm)->exists()) {
-                    $v->errors()->add("students.{$i}.phone_rest", 'This phone number is already registered.');
+                    $v->errors()->add("students.{$i}.phone_rest", __('parent-signup.validation.child_phone_registered'));
                 }
                 if (StudentIdentity::where('phone_number', $studentPhoneNorm)->exists()) {
-                    $v->errors()->add("students.{$i}.phone_rest", 'This phone number is already registered to another student.');
+                    $v->errors()->add("students.{$i}.phone_rest", __('parent-signup.validation.child_phone_taken'));
                 }
                 $studentPhoneEntries[] = ['index' => $i, 'phone' => $studentPhoneNorm];
             }
@@ -269,7 +274,7 @@ class OrgParentSignupController extends Controller
         foreach (collect($studentEmailEntries)->groupBy('email') as $indices) {
             if ($indices->count() > 1) {
                 foreach ($indices as $entry) {
-                    $v->errors()->add("students.{$entry['index']}.email", 'This email is already used for another child in this form.');
+                    $v->errors()->add("students.{$entry['index']}.email", __('parent-signup.validation.child_email_duplicate'));
                 }
             }
         }
@@ -277,7 +282,7 @@ class OrgParentSignupController extends Controller
         foreach (collect($studentPhoneEntries)->groupBy('phone') as $indices) {
             if ($indices->count() > 1) {
                 foreach ($indices as $entry) {
-                    $v->errors()->add("students.{$entry['index']}.phone_rest", 'This phone number is already used for another child in this form.');
+                    $v->errors()->add("students.{$entry['index']}.phone_rest", __('parent-signup.validation.child_phone_duplicate'));
                 }
             }
         }
