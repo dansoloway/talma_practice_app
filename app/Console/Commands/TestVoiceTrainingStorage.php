@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use JsonException;
 
 class TestVoiceTrainingStorage extends Command
 {
@@ -60,18 +61,45 @@ class TestVoiceTrainingStorage extends Command
             'bucket' => $diskConfig['bucket'] ?? null,
         ];
 
+        $jsonBody = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
         $disk = Storage::disk($diskName);
 
         try {
-            $this->components->task('Write JSON sidecar', function () use ($disk, $jsonKey, $payload) {
-                $disk->put($jsonKey, json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
+            $this->components->task('Write JSON sidecar', function () use ($disk, $jsonKey, $jsonBody) {
+                $written = $disk->put($jsonKey, $jsonBody, ['ContentType' => 'application/json']);
+
+                if ($written === false) {
+                    throw new \RuntimeException(
+                        'put() returned false. Upload failed — check IAM policy, bucket name/region, and that the access key belongs to the same AWS account as the bucket.'
+                    );
+                }
+
+                if (! $disk->exists($jsonKey)) {
+                    throw new \RuntimeException(
+                        "Upload did not create s3://…/{$jsonKey}. The access key may belong to a different AWS account than the bucket, or PutObject is denied."
+                    );
+                }
 
                 return true;
             });
 
-            $this->components->task('Read JSON sidecar', function () use ($disk, $jsonKey, $payload) {
+            $this->components->task('Read JSON sidecar', function () use ($disk, $jsonKey, $payload, $driver) {
+                if (! $disk->exists($jsonKey)) {
+                    throw new \RuntimeException("Object not found after upload: {$jsonKey}");
+                }
+
+                $size = $disk->size($jsonKey);
+                if ($size === 0) {
+                    throw new \RuntimeException('Object exists but size is 0 bytes.');
+                }
+
                 $raw = $disk->get($jsonKey);
-                $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+
+                try {
+                    $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+                } catch (JsonException $e) {
+                    throw new \RuntimeException($this->describeUnreadableBody($raw, $driver, $e->getMessage()));
+                }
 
                 if (($decoded['test'] ?? false) !== true) {
                     throw new \RuntimeException('Unexpected JSON payload.');
@@ -85,8 +113,11 @@ class TestVoiceTrainingStorage extends Command
             });
 
             $this->components->task('Write MP3 placeholder', function () use ($disk, $mp3Key) {
-                // Minimal bytes — real uploads use ffmpeg; this only checks object permissions.
-                $disk->put($mp3Key, "ID3\x03\x00connectivity-test");
+                $written = $disk->put($mp3Key, "ID3\x03\x00connectivity-test", ['ContentType' => 'audio/mpeg']);
+
+                if ($written === false || ! $disk->exists($mp3Key)) {
+                    throw new \RuntimeException('MP3 placeholder upload failed.');
+                }
 
                 return true;
             });
@@ -122,12 +153,32 @@ class TestVoiceTrainingStorage extends Command
             if ($driver === 's3') {
                 $this->line('');
                 $this->line('Common causes:');
-                $this->line('  • Wrong bucket name or region');
-                $this->line('  • IAM policy not attached to the access key user');
-                $this->line('  • VOICE_TRAINING_DISK_DRIVER still set to local');
+                $this->line('  • Access key belongs to a different AWS account than the bucket');
+                $this->line('  • IAM policy not attached to the user that owns this access key');
+                $this->line('  • Wrong bucket name, region, or secret key');
+                $this->line('  • Run: composer install --no-dev (needs league/flysystem-aws-s3-v3)');
             }
 
             return self::FAILURE;
         }
+    }
+
+    private function describeUnreadableBody(string $raw, string $driver, string $jsonError): string
+    {
+        $length = strlen($raw);
+        $preview = Str::limit(trim($raw), 240);
+
+        if ($length === 0) {
+            return 'Read returned empty body (check s3:GetObject on the IAM policy).';
+        }
+
+        if (str_starts_with(ltrim($raw), '<?xml') || str_contains($raw, '<Error>')) {
+            $code = preg_match('/<Code>([^<]+)<\/Code>/', $raw, $matches) ? $matches[1] : 'Unknown';
+            $message = preg_match('/<Message>([^<]+)<\/Message>/', $raw, $matches) ? $matches[1] : 'Unknown S3 error';
+
+            return "S3 returned XML instead of JSON ({$code}: {$message}). Add s3:GetObject for arn:aws:s3:::your-bucket/* to the IAM policy.";
+        }
+
+        return "JSON parse error ({$jsonError}). Read {$length} bytes starting with: {$preview}";
     }
 }

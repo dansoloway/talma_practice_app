@@ -23,7 +23,7 @@ return [
         'voice_training' => [
             'driver' => env('VOICE_TRAINING_DISK_DRIVER', 'local'),
             'root' => storage_path('app/voice-training'),
-            'throw' => false,
+            'throw' => true,
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION'),
