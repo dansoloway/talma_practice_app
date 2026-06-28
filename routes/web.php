@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActivityEventController;
 use App\Http\Controllers\GuidedLessonController;
+use App\Http\Controllers\LearnerProfileController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\PromptController;
 use App\Http\Controllers\PromptModelController;
@@ -50,9 +51,14 @@ Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.contex
 
 // Org-scoped student routes (protected when org is restricted)
 Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'student.org.access', 'learner.selected'])->group(function () {
-    Route::get('/', [StudentController::class, 'index'])->name('index');
+    Route::get('complete-voice-profile', [LearnerProfileController::class, 'showCompleteVoiceProfile'])->name('complete-voice-profile');
+    Route::post('complete-voice-profile', [LearnerProfileController::class, 'storeCompleteVoiceProfile'])->name('complete-voice-profile.submit');
     Route::get('select-child', [StudentChildController::class, 'selectChild'])->name('select-child');
     Route::post('select-child', [StudentChildController::class, 'storeSelectedChild'])->name('select-child.submit');
+});
+
+Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'student.org.access', 'learner.selected', 'learner.voice-profile'])->group(function () {
+    Route::get('/', [StudentController::class, 'index'])->name('index');
     Route::get('courses/{course:slug}', [StudentController::class, 'course'])->name('course');
     Route::get('lessons/{lesson}/guided/vocabulary', [GuidedLessonController::class, 'vocabulary'])->name('guided.vocabulary');
     Route::get('lessons/{slug}', [LessonController::class, 'show'])->name('lesson');

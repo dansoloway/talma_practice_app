@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'org.member' => \App\Http\Middleware\OrgMember::class,
             'student.org.access' => \App\Http\Middleware\StudentOrgAccess::class,
             'learner.selected' => \App\Http\Middleware\EnsureSelectedLearner::class,
+            'learner.voice-profile' => \App\Http\Middleware\EnsureLearnerVoiceProfile::class,
         ]);
 
         $middleware->prependToGroup('web', [

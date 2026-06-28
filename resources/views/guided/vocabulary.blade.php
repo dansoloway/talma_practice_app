@@ -78,6 +78,11 @@
                         Choose who is practicing to save recordings.
                         <a href="{{ route('org.student.select-child', $org) }}" class="font-semibold underline underline-offset-2">Select a child</a>
                     </p>
+                @elseif(($voiceProfileBlockedReason ?? null) === 'profile_incomplete' && isset($org) && $org)
+                    <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
+                        Complete your learner profile to save recordings.
+                        <a href="{{ route('org.student.complete-voice-profile', $org) }}" class="font-semibold underline underline-offset-2">Complete profile</a>
+                    </p>
                 @else
                     <p class="text-sm text-gray-500 mb-4">Recording will be available once your learner profile is complete.</p>
                 @endif

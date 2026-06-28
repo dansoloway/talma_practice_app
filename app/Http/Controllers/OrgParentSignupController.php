@@ -124,7 +124,9 @@ class OrgParentSignupController extends Controller
                 'is_active' => true,
                 'terms_accepted_at' => $termsAcceptedAt,
                 'terms_version' => $termsVersion,
-                'voice_recording_consented_at' => $organization->retain_voice_recordings ? now() : null,
+                'voice_recording_consented_at' => ($organization->retain_voice_recordings && ! empty($validated['voice_recording_consent']))
+                    ? $termsAcceptedAt
+                    : null,
             ]);
 
             $organization->users()->syncWithoutDetaching([
@@ -180,6 +182,8 @@ class OrgParentSignupController extends Controller
 
                 $this->studentService->createStudent($parent, $organization, $payload);
             }
+
+            $this->studentService->propagateVoiceConsent($parent);
 
             DB::commit();
         } catch (\Throwable $e) {

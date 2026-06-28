@@ -8,6 +8,7 @@ use App\Models\StudentIdentity;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Carbon;
 
 class StudentProfileService
 {
@@ -26,6 +27,11 @@ class StudentProfileService
         ]);
 
         if (($data['login_type'] ?? 'shared') === 'separate') {
+            $birthDate = isset($data['birth_date']) && $data['birth_date']
+                ? Carbon::parse($data['birth_date'])
+                : null;
+            $parent->refresh();
+
             $childUser = User::create([
                 'name' => trim(($data['first_name_english'] ?? $data['first_name']).' '.($data['last_name_english'] ?? $data['last_name'])),
                 'email' => $data['email'],
@@ -33,6 +39,10 @@ class StudentProfileService
                 'password' => Hash::make($data['password']),
                 'role' => 'student',
                 'is_active' => true,
+                'age' => $birthDate ? (int) $birthDate->age : null,
+                'gender' => $data['gender'] ?? null,
+                'native_language' => $data['native_language'] ?? null,
+                'voice_recording_consented_at' => $parent->voice_recording_consented_at,
                 'terms_accepted_at' => $data['terms_accepted_at'] ?? null,
                 'terms_version' => $data['terms_version'] ?? null,
             ]);
@@ -52,6 +62,43 @@ class StudentProfileService
         }
 
         return $student->fresh(['identity', 'user']);
+    }
+
+    /**
+     * Copy parent voice-recording consent to all linked child login accounts.
+     */
+    public function propagateVoiceConsent(User $parent): void
+    {
+        $parent->refresh();
+
+        if (! $parent->voice_recording_consented_at) {
+            return;
+        }
+
+        ParentStudent::query()
+            ->where('parent_id', $parent->id)
+            ->whereNotNull('user_id')
+            ->with('user')
+            ->each(function (ParentStudent $student) use ($parent) {
+                $childUser = $student->user;
+                if (! $childUser || $childUser->voice_recording_consented_at) {
+                    return;
+                }
+
+                $updates = ['voice_recording_consented_at' => $parent->voice_recording_consented_at];
+
+                if (! $childUser->gender && $student->gender) {
+                    $updates['gender'] = $student->gender;
+                }
+                if (! $childUser->native_language && $student->native_language) {
+                    $updates['native_language'] = $student->native_language;
+                }
+                if ($childUser->age === null && $student->birth_date) {
+                    $updates['age'] = (int) $student->birth_date->age;
+                }
+
+                $childUser->update($updates);
+            });
     }
 
     public function getStudentsForParent(User $parent): Collection

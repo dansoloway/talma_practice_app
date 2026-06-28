@@ -104,7 +104,10 @@
                             <input type="checkbox" name="voice_recording_consent" value="1" required
                                    class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-400"
                                    {{ old('voice_recording_consent') ? 'checked' : '' }}>
-                            <span class="text-sm text-gray-700">{{ config('app.voice_waiver_text') }}</span>
+                            <span class="text-sm text-gray-700">
+                                {{ config('app.voice_waiver_text') }}
+                                <span class="block mt-1 text-gray-500">This applies to every child on your account.</span>
+                            </span>
                         </label>
                     </div>
                 @endif
