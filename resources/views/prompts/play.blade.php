@@ -89,16 +89,20 @@
 <audio id="prompt-audio" preload="auto"></audio>
 <audio id="option-audio" preload="auto"></audio>
 
+@php
+    $voiceUploadConfigData = [
+        'enabled' => $voiceUploadEnabled ?? false,
+        'endpoint' => route('voice-samples.store'),
+        'organizationId' => $voiceOrganization?->id,
+        'lessonId' => $lesson->id,
+        'maxSeconds' => (int) config('app.recording_max_seconds', 20),
+    ];
+@endphp
+
 <script>
 const lessonData = @json($lesson);
 const prompts = lessonData.prompts;
-const voiceUploadConfig = @json([
-    'enabled' => $voiceUploadEnabled ?? false,
-    'endpoint' => route('voice-samples.store'),
-    'organizationId' => $voiceOrganization?->id,
-    'lessonId' => $lesson->id,
-    'maxSeconds' => (int) config('app.recording_max_seconds', 20),
-]);
+const voiceUploadConfig = @json($voiceUploadConfigData);
 let currentPromptIndex = 0;
 let score = 0;
 let totalQuestions = prompts.length;
