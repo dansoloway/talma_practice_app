@@ -398,6 +398,50 @@ class Lesson extends Model
     }
 
     /**
+     * Uppercase day/session label for compact student course cards.
+     */
+    public function studentCardLabel(): ?string
+    {
+        if ($this->is_review) {
+            return 'Review';
+        }
+
+        $parts = [];
+
+        if ($this->session_number) {
+            $parts[] = 'Day ' . $this->session_number;
+        }
+
+        if ($partLabel = $this->partLabel()) {
+            $parts[] = $partLabel;
+        }
+
+        return $parts !== [] ? implode(' · ', $parts) : null;
+    }
+
+    /**
+     * Lesson title for cards, with redundant day prefix removed when session_number is set.
+     */
+    public function studentCardTitle(): string
+    {
+        $title = trim($this->title);
+
+        if ($this->session_number) {
+            $stripped = preg_replace(
+                '/^day\s+' . preg_quote((string) $this->session_number, '/') . '\s*[:\-–—]\s*/iu',
+                '',
+                $title
+            );
+
+            if (is_string($stripped) && trim($stripped) !== '') {
+                return trim($stripped);
+            }
+        }
+
+        return $title;
+    }
+
+    /**
      * Get the full URL for the cover image.
      */
     public function getCoverImageUrlAttribute(): ?string

@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Organization;
 use App\Services\CourseAccess;
+use App\Services\LessonProgressCalculator;
 use App\Services\LessonSessionGrouper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -148,7 +149,11 @@ class StudentController extends Controller
 
         $lessonGroups = LessonSessionGrouper::group($lessons);
 
-        return view('student.course', compact('course', 'lessons', 'lessonGroups', 'sessionNumbers', 'partNumbers', 'org'));
+        $practiceSessionId = $request->cookie(config('app.practice_session_cookie', 'talma_session_id'));
+        $lessonProgress = app(LessonProgressCalculator::class)
+            ->completionPercentsForLessons($lessons, $practiceSessionId);
+
+        return view('student.course', compact('course', 'lessons', 'lessonGroups', 'sessionNumbers', 'partNumbers', 'org', 'lessonProgress'));
     }
 
     /**
@@ -206,7 +211,13 @@ class StudentController extends Controller
             ->orderBy('part_number')
             ->pluck('part_number');
 
-        return view('student.grade', compact('lessons', 'lessonGroups', 'gradeLevel', 'sessionNumbers', 'partNumbers'));
+        $lessonGroups = LessonSessionGrouper::group($lessons);
+
+        $practiceSessionId = $request->cookie(config('app.practice_session_cookie', 'talma_session_id'));
+        $lessonProgress = app(LessonProgressCalculator::class)
+            ->completionPercentsForLessons($lessons, $practiceSessionId);
+
+        return view('student.grade', compact('lessons', 'lessonGroups', 'gradeLevel', 'sessionNumbers', 'partNumbers', 'lessonProgress'));
     }
 
     /**

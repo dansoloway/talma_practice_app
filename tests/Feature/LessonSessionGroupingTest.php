@@ -19,13 +19,13 @@ class LessonSessionGroupingTest extends TestCase
         $this->seed(DatabaseSeeder::class);
     }
 
-    public function test_student_course_page_renders_session_accordion(): void
+    public function test_student_course_page_renders_lesson_grid(): void
     {
         $org = Organization::where('slug', 'default')->firstOrFail();
 
         $course = Course::create([
-            'title' => 'Accordion Test Course',
-            'slug' => 'accordion-test-course',
+            'title' => 'Grid Test Course',
+            'slug' => 'grid-test-course',
             'is_active' => true,
             'sort_order' => 200,
         ]);
@@ -55,12 +55,13 @@ class LessonSessionGroupingTest extends TestCase
         $response = $this->get(route('student.course', $course->slug));
 
         $response->assertOk();
-        $response->assertSee('Session 2');
+        $response->assertSee('Grid Test Course');
+        $response->assertSee('2 lessons');
         $response->assertSee('Pets Vocabulary');
         $response->assertSee('Pets Practice');
-        $response->assertSee('Part A');
-        $response->assertSee('Part B');
-        $response->assertSee('data-session-accordion="session-2"', false);
+        $response->assertSee('lesson-grid', false);
+        $response->assertSee('Day 2', false);
+        $response->assertDontSee('data-session-accordion', false);
     }
 
     public function test_admin_course_show_renders_session_accordion(): void

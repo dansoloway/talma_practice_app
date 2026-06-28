@@ -1,64 +1,49 @@
 @php
+    $lessonProgress = $lessonProgress ?? [];
     $lessonUrl = isset($org) && $org
         ? route('org.student.lesson', [$org, $lesson->slug])
         : route('lessons.show', $lesson->slug);
+    $wordCount = $lesson->relationLoaded('vocabulary') && $lesson->vocabulary
+        ? $lesson->vocabulary->count()
+        : 0;
+    $activityCount = $lesson->studentActivityCount();
+    $completionPercent = ($lessonProgress ?? [])[$lesson->id] ?? 0;
+    $cardLabel = $lesson->studentCardLabel();
 @endphp
 
 <a href="{{ $lessonUrl }}"
-   class="group relative {{ $lesson->is_review ? 'bg-purple-50 border-purple-300 hover:border-purple-400' : 'bg-white border-gray-200 hover:border-blue-300' }} rounded-2xl border-2 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
+   class="lesson-card-compact group block bg-white border border-gray-200 rounded-lg overflow-hidden transition-colors duration-200 hover:border-blue-400 {{ $lesson->is_review ? 'border-purple-200 hover:border-purple-400' : '' }}">
 
-    <div class="flex flex-col h-full">
-        @if($lesson->cover_image_path)
-            <div class="mb-4 -mx-6 -mt-6 rounded-t-2xl overflow-hidden">
-                <img src="{{ $lesson->cover_image_url }}"
-                     alt="{{ $lesson->title }}"
-                     class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+    <div class="px-[14px] pt-[14px] pb-[12px]">
+        @if($cardLabel)
+            <div class="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400 mb-1.5">
+                {{ $cardLabel }}
             </div>
         @endif
 
-        <div class="flex justify-between items-start mb-4">
-            <div class="flex flex-wrap gap-2">
-                @if($lesson->is_review)
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-200 text-purple-800 border border-purple-300">
-                        <i class="fas fa-redo mr-1"></i> Review
-                    </span>
-                @endif
-                @if($lesson->partLabel())
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200">
-                        {{ $lesson->partLabel() }}
-                    </span>
-                @endif
-            </div>
-
-            <div class="flex-shrink-0 w-8 h-8 rounded-full {{ $lesson->is_review ? 'bg-purple-50 group-hover:bg-purple-100' : 'bg-blue-50 group-hover:bg-blue-100' }} flex items-center justify-center transition-all duration-300 group-hover:translate-x-1">
-                <i class="fas fa-chevron-right {{ $lesson->is_review ? 'text-purple-600' : 'text-blue-600' }} text-sm"></i>
-            </div>
-        </div>
-
-        <h3 class="text-xl font-bold text-gray-800 mb-4 group-hover:text-blue-700 transition-colors duration-200 leading-tight">
-            {{ $lesson->title }}
+        <h3 class="text-[14px] font-medium text-gray-800 leading-snug mb-3 group-hover:text-blue-700 transition-colors duration-200 line-clamp-3">
+            {{ $lesson->studentCardTitle() }}
         </h3>
 
-        <div class="flex flex-wrap gap-4 mt-auto pt-4 border-t border-gray-100">
-            @if($lesson->relationLoaded('vocabulary') && $lesson->vocabulary && $lesson->vocabulary->count() > 0)
-                <span class="inline-flex items-center text-sm text-gray-600">
-                    <i class="fas fa-book mr-2 text-blue-500"></i>
-                    <span class="font-medium">{{ $lesson->vocabulary->count() }}</span>
-                    <span class="ml-1">words</span>
+        <div class="flex items-center gap-3 text-gray-500">
+            @if($wordCount > 0)
+                <span class="inline-flex items-center gap-1 text-xs font-medium" title="Words">
+                    <i class="fas fa-book text-[11px] text-blue-500" aria-hidden="true"></i>
+                    <span>{{ $wordCount }}</span>
                 </span>
             @endif
 
-            @php
-                $activityCount = $lesson->studentActivityCount();
-            @endphp
-
             @if($activityCount > 0)
-                <span class="inline-flex items-center text-sm text-gray-600">
-                    <i class="fas fa-gamepad mr-2 text-purple-500"></i>
-                    <span class="font-medium">{{ $activityCount }}</span>
-                    <span class="ml-1">activities</span>
+                <span class="inline-flex items-center gap-1 text-xs font-medium" title="Activities">
+                    <i class="fas fa-puzzle-piece text-[11px] text-violet-500" aria-hidden="true"></i>
+                    <span>{{ $activityCount }}</span>
                 </span>
             @endif
         </div>
+    </div>
+
+    <div class="h-[3px] bg-gray-100" role="progressbar" aria-valuenow="{{ $completionPercent }}" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson progress">
+        <div class="h-full bg-blue-500 transition-all duration-300 {{ $lesson->is_review ? 'bg-purple-500' : '' }}"
+             style="width: {{ $completionPercent }}%"></div>
     </div>
 </a>
