@@ -128,6 +128,9 @@
             }
 
             this.audio.play().catch((err) => {
+                if (err && err.name === 'AbortError') {
+                    return;
+                }
                 console.error('Error playing audio:', err);
                 this.stop();
             });
@@ -150,6 +153,9 @@
             if (isSame && this.audio.paused && this.audio.currentTime > 0 && !this.audio.ended) {
                 setPlayingState(button);
                 this.audio.play().catch((err) => {
+                    if (err && err.name === 'AbortError') {
+                        return;
+                    }
                     console.error('Error resuming audio:', err);
                     this.stop();
                 });

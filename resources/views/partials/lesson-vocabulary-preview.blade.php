@@ -48,10 +48,11 @@
                     <div class="flex flex-col items-center gap-1.5">
                         @if($vocab->word_audio_url)
                             <button type="button"
-                                    class="lesson-vocab-audio-btn w-9 h-9 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center shadow-sm"
+                                    class="lesson-vocab-audio-btn talma-audio-btn w-9 h-9 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center shadow-sm"
                                     data-audio-url="{{ $vocab->word_audio_url }}"
+                                    data-talma-audio-icon="volume-up"
                                     title="Listen to {{ $vocab->english_word }}">
-                                <i class="fas fa-volume-up text-xs" aria-hidden="true"></i>
+                                <i class="fas fa-volume-up text-xs talma-audio-icon" aria-hidden="true"></i>
                             </button>
                         @endif
 

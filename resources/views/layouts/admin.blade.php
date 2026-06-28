@@ -55,8 +55,8 @@
                         <button type="button" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
                             Courses &amp; Lessons <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
                         </button>
-                        <div class="absolute top-full left-0 pt-1 -mt-1">
-                            <div class="w-52 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-1">
+                        <div class="absolute top-full left-0 pt-1 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+                            <div class="bg-white rounded-xl border border-gray-200/60 shadow-lg py-1">
                             <a href="{{ $coursesUrl }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
                                 <i class="fas fa-book-open w-5 mr-2 text-gray-400"></i>Courses
                             </a>
@@ -87,8 +87,8 @@
                         <button type="button" class="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
                             Analytics <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
                         </button>
-                        <div class="absolute top-full left-0 pt-1 -mt-1">
-                            <div class="w-48 bg-white rounded-xl border border-gray-200/60 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-1">
+                        <div class="absolute top-full left-0 pt-1 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+                            <div class="bg-white rounded-xl border border-gray-200/60 shadow-lg py-1">
                             <a href="{{ $analyticsUrl }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">
                                 <i class="fas fa-chart-line w-5 mr-2 text-gray-400"></i>Dashboard
                             </a>

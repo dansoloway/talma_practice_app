@@ -426,15 +426,6 @@ document.querySelectorAll('.lesson-vocab-lang-btn').forEach((button) => {
         });
     });
 });
-
-document.querySelectorAll('.lesson-vocab-audio-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-        const audioUrl = button.dataset.audioUrl;
-        if (audioUrl && window.TalmaAudio) {
-            TalmaAudio.toggle(audioUrl, button);
-        }
-    });
-});
 </script>
 @endsection
 
