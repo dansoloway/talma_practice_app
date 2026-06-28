@@ -115,7 +115,7 @@ class GuidedLessonFlowTest extends TestCase
         $response = $this->get(route('lessons.show', $this->lesson->slug));
 
         $response->assertOk();
-        $response->assertSee('Start lesson');
+        $response->assertSee('Start: Learn the Words');
         $response->assertSee('All activities');
         $response->assertSee('id="activities-section"', false);
     }
@@ -205,7 +205,7 @@ class GuidedLessonFlowTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('hello');
-        $response->assertSee('Record yourself saying the word');
+        $response->assertSee('Tap listen, then continue when you are ready.');
     }
 
     public function test_vocabulary_voice_upload_accepts_vocabulary_id(): void

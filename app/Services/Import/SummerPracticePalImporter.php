@@ -522,6 +522,14 @@ class SummerPracticePalImporter
                     'description' => "Summer Practice Pal content for {$cefr} learners.",
                     'sort_order' => $courseDef['sort_order'],
                     'is_active' => true,
+                    'guided_mode_enabled' => true,
+                    'guided_flow' => [
+                        'vocabulary',
+                        'prompts',
+                        'matching',
+                        'flashcard',
+                        'spelling',
+                    ],
                 ]);
                 $course->save();
 

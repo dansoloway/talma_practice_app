@@ -28,7 +28,22 @@
                      class="mx-auto max-h-48 rounded-xl object-cover mb-4">
             @endif
 
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ $currentWord->english_word }}</h1>
+            <h1 class="text-3xl font-bold text-gray-900 mb-3">{{ $currentWord->english_word }}</h1>
+
+            @if($currentWord->hebrew_translation || $currentWord->arabic_translation)
+                <div class="flex flex-wrap justify-center gap-2 mb-4">
+                    @if($currentWord->hebrew_translation)
+                        <span class="text-sm font-medium px-3 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-100">
+                            {{ $currentWord->hebrew_translation }}
+                        </span>
+                    @endif
+                    @if($currentWord->arabic_translation)
+                        <span class="text-sm font-medium px-3 py-1 rounded-lg bg-green-50 text-green-800 border border-green-100">
+                            {{ $currentWord->arabic_translation }}
+                        </span>
+                    @endif
+                </div>
+            @endif
 
             @if($currentWord->word_audio_url)
                 <button type="button" id="play-model-btn"
@@ -38,6 +53,7 @@
                 </button>
             @endif
 
+            @if($voiceUploadEnabled ?? false)
             <div class="border-t border-gray-100 pt-6">
                 <p class="text-sm text-gray-600 mb-4">Record yourself saying the word</p>
                 <div class="flex flex-wrap justify-center gap-3 mb-3">
@@ -54,10 +70,13 @@
                 </div>
                 <p id="recording-status" class="text-sm text-gray-500 min-h-[1.25rem]"></p>
             </div>
+            @else
+            <p class="text-sm text-gray-500 mb-6">Tap listen, then continue when you are ready.</p>
+            @endif
 
             <div class="mt-8 flex flex-col sm:flex-row justify-center gap-3">
-                <button type="button" id="next-word-btn" disabled
-                        class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                <button type="button" id="next-word-btn"
+                        class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors">
                     @if($isLastWord)
                         Continue
                     @else
@@ -189,9 +208,9 @@ async function toggleRecording() {
     }
 }
 
-recordBtn.addEventListener('click', toggleRecording);
+recordBtn?.addEventListener('click', toggleRecording);
 
-playRecordingBtn.addEventListener('click', () => {
+playRecordingBtn?.addEventListener('click', () => {
     if (!recordedAudioBlob) return;
     playbackAudio.src = URL.createObjectURL(recordedAudioBlob);
     playbackAudio.play();
@@ -242,7 +261,11 @@ function finishVocabularyStep() {
     document.getElementById('vocab-complete').classList.remove('hidden');
 }
 
-nextWordBtn.addEventListener('click', () => {
+nextWordBtn.addEventListener('click', async () => {
+    if (! voiceUploadConfig.enabled) {
+        await logVocabComplete();
+    }
+
     if (isLastWord) {
         finishVocabularyStep();
     } else {
@@ -251,7 +274,10 @@ nextWordBtn.addEventListener('click', () => {
 });
 
 document.getElementById('skip-word-btn').addEventListener('click', async () => {
-    if (!confirm('Skip recording this word?')) return;
+    if (voiceUploadConfig.enabled && ! confirm('Skip recording this word?')) {
+        return;
+    }
+
     await logVocabComplete();
     if (isLastWord) {
         finishVocabularyStep();

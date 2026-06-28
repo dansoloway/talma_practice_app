@@ -332,7 +332,7 @@ class LessonFlowService
         $steps->push(new LessonFlowStep(
             type: 'vocabulary',
             activityId: null,
-            label: 'Vocabulary',
+            label: 'Learn the Words',
             subdetail: $count . ' ' . Str::plural('word', $count),
             sortOrder: $order++,
         ));

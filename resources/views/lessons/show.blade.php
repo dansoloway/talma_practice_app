@@ -83,29 +83,28 @@
 
         @php
             $vocabComplete = in_array('vocabulary:0', $completedStepKeys ?? [], true);
+            $vocabGuidedUrl = isset($org) && $org
+                ? route('org.student.guided.vocabulary', ['organization' => $org, 'lesson' => $lesson])
+                : route('guided.vocabulary', ['lesson' => $lesson]);
         @endphp
 
-        @if($lesson->vocabulary && $lesson->vocabulary->count() > 0)
-            <section class="mb-8">
-                <div class="flex flex-wrap items-center gap-2 mb-3">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        Vocabulary · {{ $lesson->vocabulary->count() }} {{ Str::plural('word', $lesson->vocabulary->count()) }}
-                    </p>
-                    @if(!empty($isGuided) && $vocabComplete)
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-green-700 bg-green-100 border border-green-200">
-                            <i class="fas fa-circle-check text-[10px]" aria-hidden="true"></i>
-                            Vocabulary complete
-                        </span>
-                    @endif
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    @foreach($lesson->vocabulary as $vocab)
-                        <span class="lesson-vocab-chip inline-flex items-center text-[13px] text-gray-800">
-                            {{ $vocab->english_word }}
-                        </span>
-                    @endforeach
-                </div>
-            </section>
+        @include('partials.lesson-vocabulary-preview', ['lesson' => $lesson])
+
+        @if(!empty($isGuided) && $lesson->vocabulary->where('is_active', true)->isNotEmpty())
+            <div class="mb-6 flex flex-wrap items-center gap-3">
+                @if($vocabComplete)
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-green-700 bg-green-100 border border-green-200">
+                        <i class="fas fa-circle-check text-[10px]" aria-hidden="true"></i>
+                        Vocabulary practice complete
+                    </span>
+                @else
+                    <a href="{{ $vocabGuidedUrl }}"
+                       class="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
+                        <i class="fas fa-volume-up mr-2 text-xs" aria-hidden="true"></i>
+                        Practice vocabulary
+                    </a>
+                @endif
+            </div>
         @endif
 
         @if(!empty($isGuided) && ($guidedStartUrl || !empty($isLessonComplete)))
@@ -134,7 +133,7 @@
                         @if(!empty($guidedProgress['completed']))
                             Continue: {{ $resumeStep?->label ?? $startStep?->label }}
                         @else
-                            Start lesson
+                            Start: {{ $startStep?->label ?? 'lesson' }}
                         @endif
                         <i class="fas fa-arrow-right ml-2 text-sm" aria-hidden="true"></i>
                     </a>
@@ -166,6 +165,19 @@
 
         @php
             $allActivities = collect();
+
+            if (! empty($isGuided) && $lesson->vocabulary->where('is_active', true)->isNotEmpty()) {
+                $wordCount = $lesson->vocabulary->where('is_active', true)->count();
+                $allActivities->push((object) [
+                    'id' => 'vocabulary',
+                    'type' => 'vocabulary',
+                    'title' => 'Learn the Words',
+                    'subdetail' => $wordCount . ' ' . Str::plural('word', $wordCount),
+                    'sort_order' => -1,
+                    'is_active' => true,
+                    'model' => null,
+                ]);
+            }
 
             if($lesson->prompts->count() > 0) {
                 $activePrompts = $lesson->prompts->where('is_active', true);
@@ -258,6 +270,7 @@
             $allActivities = $allActivities->where('is_active', true)->sortBy('sort_order');
 
             $activityIcons = [
+                'vocabulary' => 'fa-volume-up',
                 'prompts' => 'fa-pencil',
                 'matching' => 'fa-link',
                 'flashcard' => 'fa-clone',
@@ -287,9 +300,11 @@
                             $displayTitle = $activity->title;
                             $subdetail = $activity->subdetail ?? null;
                             $lessonTitleEscaped = preg_quote(trim($lesson->title), '/');
-                            $activityKey = $activity->type === 'prompts'
-                                ? 'prompts:0'
-                                : $activity->type . ':' . $activity->id;
+                            $activityKey = match ($activity->type) {
+                                'prompts' => 'prompts:0',
+                                'vocabulary' => 'vocabulary:0',
+                                default => $activity->type . ':' . $activity->id,
+                            };
                             $isActivityDone = in_array($activityKey, $completedStepKeys ?? [], true);
 
                             if ($activity->type === 'matching') {
@@ -348,6 +363,7 @@
 const lessonData = @json($lesson);
 
 const activityRoutes = {
+    vocabulary: @json($vocabGuidedUrl),
     prompts: @json(route('prompts.play', ['lesson' => $lesson->id])),
     matching: (id) => @json(url('/lessons/' . $lesson->id . '/matching-games')) + `/${id}/play`,
     flashcard: (id) => @json(url('/lessons/' . $lesson->id . '/flashcard-games')) + `/${id}/play`,
@@ -358,6 +374,9 @@ const activityRoutes = {
 
 function startActivity(type, id) {
     switch(type) {
+        case 'vocabulary':
+            window.location.href = activityRoutes.vocabulary;
+            break;
         case 'prompts':
             window.location.href = activityRoutes.prompts;
             break;
@@ -388,15 +407,50 @@ document.getElementById('review-activities')?.addEventListener('click', () => {
     document.getElementById('activities-section')?.classList.remove('hidden');
     document.getElementById('review-activities')?.classList.add('hidden');
 });
+
+document.querySelectorAll('.lesson-vocab-lang-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+        const lang = button.dataset.lang;
+        const isActive = button.classList.toggle('is-active');
+
+        if (lang === 'hebrew') {
+            button.classList.toggle('border-blue-400', isActive);
+            button.classList.toggle('bg-blue-50', isActive);
+        } else if (lang === 'arabic') {
+            button.classList.toggle('border-green-400', isActive);
+            button.classList.toggle('bg-green-50', isActive);
+        }
+
+        document.querySelectorAll(`.lesson-vocab-translation-${lang}`).forEach((translation) => {
+            translation.classList.toggle('hidden', ! isActive);
+        });
+    });
+});
+
+document.querySelectorAll('.lesson-vocab-audio-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+        const audioUrl = button.dataset.audioUrl;
+        if (audioUrl && window.TalmaAudio) {
+            TalmaAudio.toggle(audioUrl, button);
+        }
+    });
+});
 </script>
 @endsection
 
 @push('styles')
 <style>
-    .lesson-vocab-chip {
-        padding: 4px 10px;
-        background: var(--color-bg-secondary);
-        border-radius: var(--radius-md);
+    .lesson-vocab-card {
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .lesson-vocab-card:hover {
+        border-color: rgb(147 197 253);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+    }
+
+    .lesson-vocab-lang-btn.is-active {
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.15);
     }
 
     .lesson-activity-icon {
