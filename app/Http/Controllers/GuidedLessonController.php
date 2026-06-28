@@ -12,6 +12,7 @@ use App\Services\LessonFlowService;
 use App\Services\VoiceSampleLearnerProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class GuidedLessonController extends Controller
 {
@@ -23,20 +24,28 @@ class GuidedLessonController extends Controller
         protected LessonFlowService $flowService,
     ) {}
 
-    public function vocabulary(Request $request, Lesson $lesson)
+    public function vocabulary(Request $request, $organizationOrLesson = null, ?Lesson $lesson = null)
     {
+        if ($lesson instanceof Lesson) {
+            // Org-scoped route: /o/{organization}/lessons/{lesson}/guided/vocabulary
+        } elseif ($organizationOrLesson instanceof Lesson) {
+            $lesson = $organizationOrLesson;
+        } else {
+            abort(404);
+        }
+
         $lesson->load([
             'course',
             'vocabulary' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
         ]);
 
-        if (! $this->flowService->isGuided($lesson)) {
-            return redirect()->route('lessons.show', $lesson->slug);
-        }
-
         $org = $request->route('organization');
         if ($org && ! $org instanceof Organization) {
             $org = Organization::where('slug', $org)->first();
+        }
+
+        if (! $this->flowService->isGuided($lesson)) {
+            return redirect()->to($this->lessonShowUrl($lesson, $org instanceof Organization ? $org : null));
         }
 
         if ($org instanceof Organization) {
@@ -65,11 +74,12 @@ class GuidedLessonController extends Controller
                 return redirect()->to($this->flowService->playUrl($next, $lesson, $org));
             }
 
-            return redirect()->route('lessons.show', $lesson->slug);
+            return redirect()->to($this->lessonShowUrl($lesson, $org));
         }
 
         $currentWord = $this->flowService->firstIncompleteVocabulary($lesson, $sessionId) ?? $words->first();
         $wordIndex = $words->search(fn ($w) => $w->id === $currentWord->id);
+        $wordIndex = $wordIndex === false ? 0 : $wordIndex;
         $isLastWord = $wordIndex === $words->count() - 1;
 
         $voiceOrganization = $this->resolveVoiceOrganization($lesson, $org);
@@ -110,6 +120,10 @@ class GuidedLessonController extends Controller
 
     private function resolveVoiceOrganization(Lesson $lesson, ?Organization $org): ?Organization
     {
+        if (! Schema::hasColumn('organizations', 'retain_voice_recordings')) {
+            return null;
+        }
+
         if ($org?->retain_voice_recordings) {
             return $org;
         }
@@ -128,5 +142,14 @@ class GuidedLessonController extends Controller
         return $course->organizations()
             ->where('retain_voice_recordings', true)
             ->first();
+    }
+
+    private function lessonShowUrl(Lesson $lesson, ?Organization $org): string
+    {
+        if ($org) {
+            return route('org.student.lesson', ['organization' => $org, 'slug' => $lesson->slug]);
+        }
+
+        return route('lessons.show', $lesson->slug);
     }
 }

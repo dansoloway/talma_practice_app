@@ -208,6 +208,29 @@ class GuidedLessonFlowTest extends TestCase
         $response->assertSee('Tap listen, then continue when you are ready.');
     }
 
+    public function test_org_scoped_guided_vocabulary_route_loads_for_authenticated_member(): void
+    {
+        $user = User::create([
+            'name' => 'Summer Student',
+            'email' => 'summer-student@example.com',
+            'password' => bcrypt('password123'),
+            'role' => 'student',
+            'is_active' => true,
+        ]);
+
+        $this->organization->users()->attach($user->id, ['role' => 'student']);
+
+        $response = $this->actingAs($user, 'admin')->get(
+            route('org.student.guided.vocabulary', [
+                'organization' => $this->organization,
+                'lesson' => $this->lesson,
+            ])
+        );
+
+        $response->assertOk();
+        $response->assertSee('hello');
+    }
+
     public function test_vocabulary_voice_upload_accepts_vocabulary_id(): void
     {
         config(['app.allow_recording_upload' => true]);

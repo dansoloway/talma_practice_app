@@ -7,6 +7,7 @@ use App\Models\ActivityEvent;
 use App\Models\Lesson;
 use App\Models\Organization;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class LessonFlowService
@@ -86,16 +87,7 @@ class LessonFlowService
      */
     private function buildSteps(Lesson $lesson, array $template): Collection
     {
-        $lesson->loadMissing([
-            'course',
-            'vocabulary',
-            'prompts',
-            'matchingGames',
-            'flashcardGames',
-            'spellingGames',
-            'clauseExercises',
-            'trueFalseGames',
-        ]);
+        $lesson->loadMissing($this->relationsForFlowTemplate($template));
 
         $steps = collect();
         $order = 0;
@@ -114,6 +106,39 @@ class LessonFlowService
         }
 
         return $steps->values();
+    }
+
+    /**
+     * @param  array<int, string>  $template
+     * @return array<int, string>
+     */
+    private function relationsForFlowTemplate(array $template): array
+    {
+        $relations = ['course', 'vocabulary', 'prompts'];
+        $map = [
+            'matching' => 'matchingGames',
+            'flashcard' => 'flashcardGames',
+            'spelling' => 'spellingGames',
+            'clause_exercise' => 'clauseExercises',
+            'true_false' => 'trueFalseGames',
+        ];
+
+        foreach ($template as $type) {
+            if (isset($map[$type])) {
+                $relations[] = $map[$type];
+            }
+        }
+
+        $relations = array_values(array_unique($relations));
+
+        if (in_array('trueFalseGames', $relations, true) && ! Schema::hasTable('true_false_games')) {
+            $relations = array_values(array_filter(
+                $relations,
+                fn (string $relation) => $relation !== 'trueFalseGames'
+            ));
+        }
+
+        return $relations;
     }
 
     public function isLessonComplete(Lesson $lesson, ?string $practiceSessionId): bool

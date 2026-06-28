@@ -54,8 +54,8 @@ Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.contex
     Route::get('select-child', [StudentChildController::class, 'selectChild'])->name('select-child');
     Route::post('select-child', [StudentChildController::class, 'storeSelectedChild'])->name('select-child.submit');
     Route::get('courses/{course:slug}', [StudentController::class, 'course'])->name('course');
-    Route::get('lessons/{slug}', [LessonController::class, 'show'])->name('lesson');
     Route::get('lessons/{lesson}/guided/vocabulary', [GuidedLessonController::class, 'vocabulary'])->name('guided.vocabulary');
+    Route::get('lessons/{slug}', [LessonController::class, 'show'])->name('lesson');
 });
 Route::get('/grade/{gradeLevel}', [StudentController::class, 'grade'])->name('student.grade'); // Kept for backward compatibility
 Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'updateLessonOrder'])
