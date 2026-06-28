@@ -94,12 +94,11 @@ class SummerPracticePalPreA1CsvImportTest extends TestCase
         ));
 
         $primary->refresh();
-        $orphan->refresh();
 
         $this->assertSame('Day 1: Introductions Day', $primary->title);
         $this->assertSame(['hello', 'goodbye', 'please', 'yes', 'no', 'thanks', 'name', 'friend'], $primary->vocabulary()->orderBy('sort_order')->pluck('english_word')->all());
-        $this->assertFalse($orphan->is_active);
-        $this->assertGreaterThanOrEqual(1, $summary['lessons_deactivated']);
+        $this->assertNull(Lesson::find($orphan->id));
+        $this->assertGreaterThanOrEqual(1, $summary['lessons_removed']);
         $this->assertGreaterThan(0, Prompt::where('lesson_id', $primary->id)->count());
     }
 }

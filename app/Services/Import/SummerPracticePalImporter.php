@@ -468,7 +468,7 @@ class SummerPracticePalImporter
             'prompt_tts_generated' => 0,
             'lessons_vocab_only' => 0,
             'assets_archived' => 0,
-            'lessons_deactivated' => 0,
+            'lessons_removed' => 0,
             'by_cefr' => [],
         ];
 
@@ -584,16 +584,20 @@ class SummerPracticePalImporter
                 }
 
                 if ($options->force && $this->usesLegacyLessonSlugs($cefr, $options)) {
-                    $deactivated = Lesson::query()
+                    $orphans = Lesson::query()
                         ->where('course_id', $course->id)
                         ->whereNotIn('slug', $importedSlugs)
-                        ->update(['is_active' => false]);
+                        ->get();
 
-                    if ($deactivated > 0) {
-                        $summary['lessons_deactivated'] += $deactivated;
-                        $this->reportProgress('Deactivated lessons outside validated import set', [
+                    foreach ($orphans as $orphan) {
+                        $this->lessonGameCreator->deleteLesson($orphan);
+                        $summary['lessons_removed']++;
+                    }
+
+                    if ($orphans->isNotEmpty()) {
+                        $this->reportProgress('Removed lessons outside validated import set', [
                             'course' => $cefr,
-                            'count' => $deactivated,
+                            'count' => $orphans->count(),
                         ]);
                     }
                 }

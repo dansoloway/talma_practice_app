@@ -65,7 +65,7 @@ class SummerPracticePalAudit extends Command
                 'duplicate_slugs' => 0,
             ];
 
-            $lessons = $course->lessons()->orderBy('sort_order')->get();
+            $lessons = $course->lessons()->where('is_active', true)->orderBy('sort_order')->get();
             $slugCounts = $lessons->groupBy('slug')->filter(fn ($group) => $group->count() > 1);
 
             foreach ($slugCounts as $slug => $group) {

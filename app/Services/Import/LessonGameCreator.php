@@ -91,4 +91,20 @@ class LessonGameCreator
         $lesson->flashcardGames()->delete();
         $lesson->spellingGames()->delete();
     }
+
+    /**
+     * Permanently remove a lesson and its activities (used when pruning duplicate Summer imports).
+     */
+    public function deleteLesson(Lesson $lesson): void
+    {
+        $this->clearGamesForLesson($lesson);
+
+        $lesson->prompts()->each(function ($prompt) {
+            $prompt->options()->delete();
+            $prompt->delete();
+        });
+
+        $lesson->vocabulary()->delete();
+        $lesson->delete();
+    }
 }

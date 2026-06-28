@@ -47,6 +47,7 @@ class SummerPracticePalCoverage extends Command
 
         $lessonIds = Lesson::query()
             ->whereIn('course_id', $courses->pluck('id'))
+            ->where('is_active', true)
             ->pluck('id');
 
         $vocabByLesson = Vocabulary::query()
@@ -72,7 +73,7 @@ class SummerPracticePalCoverage extends Command
         $incomplete = [];
 
         foreach ($courses as $course) {
-            $courseLessons = $course->lessons()->orderBy('sort_order')->get();
+            $courseLessons = $course->lessons()->where('is_active', true)->orderBy('sort_order')->get();
             $courseStats = $this->emptyTotals();
             $courseStats['lessons'] = $courseLessons->count();
 

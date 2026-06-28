@@ -114,7 +114,13 @@ data/summer-vocab-a2.csv
 data/summer-prompts-a2.csv
 ```
 
-Pre-A1 and A2 CSV imports use **legacy lesson slugs** (by day number) so `--force` replaces existing production lessons instead of creating duplicates. On `--force`, lessons outside the validated 15-day set are **deactivated**.
+Pre-A1 and A2 CSV imports use **legacy lesson slugs** (by day number) so `--force` replaces existing production lessons instead of creating duplicates. On `--force`, duplicate lessons outside the validated 15-day set are **permanently deleted**.
+
+To remove leftover inactive lessons from an earlier import:
+
+```bash
+php artisan talma:summer-practice-pal-prune-lessons --cefr=Pre-A1
+```
 
 ### Corrected import workflow
 
