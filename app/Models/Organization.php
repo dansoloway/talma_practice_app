@@ -85,6 +85,14 @@ class Organization extends Model
         return $this->registration_type === self::REGISTRATION_TYPE_PARENT_SIGNUP;
     }
 
+    /**
+     * Whether this org collects and stores learner voice recordings.
+     */
+    public function collectsVoiceRecordings(): bool
+    {
+        return (bool) $this->retain_voice_recordings;
+    }
+
     public function usesStudentSignup(): bool
     {
         return ! $this->usesParentSignup();

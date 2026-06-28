@@ -201,11 +201,24 @@ class GuidedLessonFlowTest extends TestCase
 
     public function test_guided_vocabulary_route_loads(): void
     {
-        $response = $this->get(route('guided.vocabulary', $this->lesson));
+        $user = User::create([
+            'name' => 'Guided Guest Learner',
+            'email' => 'guided-guest@example.com',
+            'password' => bcrypt('password123'),
+            'role' => 'student',
+            'is_active' => true,
+            'age' => 10,
+            'gender' => 'female',
+            'native_language' => 'hebrew',
+            'voice_recording_consented_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user, 'admin')->get(route('guided.vocabulary', $this->lesson));
 
         $response->assertOk();
         $response->assertSee('hello');
-        $response->assertSee('Tap listen, then continue when you are ready.');
+        $response->assertSee('Record yourself saying the word');
+        $response->assertSee('id="record-btn"', false);
     }
 
     public function test_org_scoped_guided_vocabulary_route_loads_for_authenticated_member(): void
@@ -216,8 +229,13 @@ class GuidedLessonFlowTest extends TestCase
             'password' => bcrypt('password123'),
             'role' => 'student',
             'is_active' => true,
+            'age' => 10,
+            'gender' => 'female',
+            'native_language' => 'hebrew',
+            'voice_recording_consented_at' => now(),
         ]);
 
+        $this->organization->update(['retain_voice_recordings' => true]);
         $this->organization->users()->attach($user->id, ['role' => 'student']);
 
         $response = $this->actingAs($user, 'admin')->get(
@@ -229,6 +247,8 @@ class GuidedLessonFlowTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('hello');
+        $response->assertSee('Record yourself saying the word');
+        $response->assertSee('id="record-btn"', false);
     }
 
     public function test_vocabulary_voice_upload_accepts_vocabulary_id(): void

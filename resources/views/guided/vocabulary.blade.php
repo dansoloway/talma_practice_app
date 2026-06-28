@@ -70,6 +70,18 @@
                 </div>
                 <p id="recording-status" class="text-sm text-gray-500 min-h-[1.25rem]"></p>
             </div>
+            @elseif(!empty($voiceRecordingOffered))
+            <div class="border-t border-gray-100 pt-6">
+                <p class="text-sm text-gray-600 mb-3">Record yourself saying the word</p>
+                @if(($voiceProfileBlockedReason ?? null) === 'select_child' && isset($org) && $org)
+                    <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
+                        Choose who is practicing to save recordings.
+                        <a href="{{ route('org.student.select-child', $org) }}" class="font-semibold underline underline-offset-2">Select a child</a>
+                    </p>
+                @else
+                    <p class="text-sm text-gray-500 mb-4">Recording will be available once your learner profile is complete.</p>
+                @endif
+            </div>
             @else
             <p class="text-sm text-gray-500 mb-6">Tap listen, then continue when you are ready.</p>
             @endif

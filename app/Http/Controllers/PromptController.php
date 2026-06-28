@@ -75,9 +75,8 @@ class PromptController extends Controller
         $user = auth('admin')->user();
         $voiceProfile = VoiceSampleLearnerProfile::resolve($user);
         $voiceUploadEnabled = $voiceOrganization
-            && $voiceOrganization->retain_voice_recordings
-            && $voiceProfile !== null
-            && config('app.allow_recording_upload', false);
+            && $voiceOrganization->collectsVoiceRecordings()
+            && $voiceProfile !== null;
 
         // Add full URLs for audio paths
         $lesson->prompts->each(function ($prompt) {

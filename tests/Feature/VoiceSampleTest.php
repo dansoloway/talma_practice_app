@@ -180,6 +180,23 @@ class VoiceSampleTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_voice_sample_upload_works_when_org_collects_recordings_without_global_flag(): void
+    {
+        config(['app.allow_recording_upload' => false]);
+        $user = $this->createConsentedStudent();
+
+        $response = $this->actingAs($user, 'admin')->postJson(route('voice-samples.store'), [
+            'organization_id' => $this->organization->id,
+            'lesson_id' => $this->lesson->id,
+            'prompt_id' => $this->prompt->id,
+            'option_id' => $this->option->id,
+            'generated_sentence' => 'My favorite color is red.',
+            'recording' => $this->fakeRecording(),
+        ]);
+
+        $response->assertCreated();
+    }
+
     public function test_voice_sample_upload_stores_anonymized_metadata(): void
     {
         $user = $this->createConsentedStudent();

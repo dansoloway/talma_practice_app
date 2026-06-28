@@ -492,6 +492,7 @@ class SummerPracticePalImporter
                 'access_mode' => 'restricted',
                 'allow_self_registration' => true,
                 'registration_type' => Organization::REGISTRATION_TYPE_PARENT_SIGNUP,
+                'retain_voice_recordings' => true,
             ]
         );
         $summerOrg->update([
@@ -499,6 +500,7 @@ class SummerPracticePalImporter
             'access_mode' => 'restricted',
             'allow_self_registration' => true,
             'registration_type' => Organization::REGISTRATION_TYPE_PARENT_SIGNUP,
+            'retain_voice_recordings' => true,
         ]);
 
         $defaultOrg = Organization::where('slug', 'default')->first();

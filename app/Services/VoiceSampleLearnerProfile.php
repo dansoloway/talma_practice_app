@@ -53,8 +53,9 @@ readonly class VoiceSampleLearnerProfile
     private static function fromParentStudent(ParentStudent $student): ?self
     {
         $parent = $student->parent;
+        $hasVoiceConsent = $parent?->voice_recording_consented_at || $parent?->terms_accepted_at;
         if (
-            ! $parent?->voice_recording_consented_at
+            ! $hasVoiceConsent
             || ! $student->gender
             || ! $student->native_language
             || ! $student->birth_date

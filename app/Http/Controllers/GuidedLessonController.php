@@ -85,10 +85,16 @@ class GuidedLessonController extends Controller
         $voiceOrganization = $this->resolveVoiceOrganization($lesson, $org);
         $user = auth('admin')->user();
         $voiceProfile = VoiceSampleLearnerProfile::resolve($user);
-        $voiceUploadEnabled = $voiceOrganization
-            && $voiceOrganization->retain_voice_recordings
-            && $voiceProfile !== null
-            && config('app.allow_recording_upload', false);
+        $voiceRecordingOffered = $voiceOrganization?->collectsVoiceRecordings() && $user !== null;
+        $voiceUploadEnabled = $voiceRecordingOffered && $voiceProfile !== null;
+        $voiceProfileBlockedReason = null;
+        if ($voiceRecordingOffered && ! $voiceUploadEnabled) {
+            if ($user->isParent() && ! session('selected_student_id')) {
+                $voiceProfileBlockedReason = 'select_child';
+            } else {
+                $voiceProfileBlockedReason = 'profile_incomplete';
+            }
+        }
 
         $guidedData = $this->guidedFlowViewData($request, $lesson, 'vocabulary', null);
         $guidedFlow = $guidedData['guidedFlow'] ?? null;
@@ -112,7 +118,9 @@ class GuidedLessonController extends Controller
             'isLastWord',
             'wordsCount',
             'voiceOrganization',
+            'voiceRecordingOffered',
             'voiceUploadEnabled',
+            'voiceProfileBlockedReason',
             'guidedFlow',
             'continueUrl',
         ));

@@ -16,7 +16,10 @@ class VoiceSampleController extends Controller
     public function store(Request $request, VoiceSampleStorage $storage): JsonResponse
     {
         if (! config('app.allow_recording_upload', false)) {
-            return response()->json(['error' => 'Recording uploads are disabled.'], 403);
+            $organization = Organization::find($request->integer('organization_id'));
+            if (! $organization?->collectsVoiceRecordings()) {
+                return response()->json(['error' => 'Recording uploads are disabled.'], 403);
+            }
         }
 
         $user = auth('admin')->user();
