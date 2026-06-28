@@ -136,8 +136,14 @@ php artisan talma:import-summer-practice-pal \
   --prompts-csv=data/summer-prompts-a2.csv \
   --force
 
-# 4. Audit lesson word counts and missing prompts
-php artisan talma:summer-practice-pal-audit
+# 4. Audit lesson word counts and missing prompts (all CEFR levels)
+php artisan talma:summer-practice-pal-audit --summary --source
+
+# List every vocab word per lesson (save to log)
+php artisan talma:summer-practice-pal-audit --list-vocab
+
+# One level only
+php artisan talma:summer-practice-pal-audit --cefr=A2 --list-vocab
 
 # 5. Enrichment for new vocab only
 php artisan talma:import-summer-practice-pal --with-enrichment
