@@ -49,10 +49,38 @@ class SummerImportOptions
             strict: (bool) ($flags['strict'] ?? false),
             skipArchive: (bool) ($flags['skip-archive'] ?? false),
             vocabCsvByCefr: self::resolveVocabCsvPaths($flags),
-            promptsCsv: isset($flags['prompts-csv']) && $flags['prompts-csv'] !== ''
-                ? (string) $flags['prompts-csv']
-                : null,
+            promptsCsv: self::resolvePromptsCsvPath($flags),
         );
+    }
+
+    /**
+     * @param array<string, mixed> $flags
+     */
+    private static function resolvePromptsCsvPath(array $flags): ?string
+    {
+        if (isset($flags['prompts-csv']) && $flags['prompts-csv'] !== '') {
+            return (string) $flags['prompts-csv'];
+        }
+
+        $cefrFilter = isset($flags['cefr']) && $flags['cefr'] !== ''
+            ? self::normalizeCefr((string) $flags['cefr'])
+            : null;
+
+        $candidates = [];
+        if ($cefrFilter === 'A2') {
+            $candidates = [
+                base_path('data/summer-prompts-a2.csv'),
+                base_path('data/A2_FillInTheBlanks - A2_FillInTheBlanks.csv.csv'),
+            ];
+        }
+
+        foreach ($candidates as $path) {
+            if (is_readable($path)) {
+                return $path;
+            }
+        }
+
+        return null;
     }
 
     /**
