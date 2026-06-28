@@ -29,10 +29,12 @@ class OrganizationController extends Controller
             'description' => 'nullable|string|max:65535',
             'access_mode' => ['required', Rule::in(['open', 'restricted'])],
             'is_active' => 'boolean',
+            'retain_voice_recordings' => 'boolean',
         ]);
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['name']);
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['retain_voice_recordings'] = $request->boolean('retain_voice_recordings', false);
 
         $org = Organization::create($validated);
 
@@ -54,10 +56,12 @@ class OrganizationController extends Controller
             'description' => 'nullable|string|max:65535',
             'access_mode' => ['required', Rule::in(['open', 'restricted'])],
             'is_active' => 'boolean',
+            'retain_voice_recordings' => 'boolean',
         ]);
 
         $validated['slug'] = $validated['slug'] ?? Str::slug($validated['name']);
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['retain_voice_recordings'] = $request->boolean('retain_voice_recordings', false);
 
         $organization->update($validated);
 

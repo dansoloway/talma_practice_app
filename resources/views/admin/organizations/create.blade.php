@@ -42,6 +42,14 @@
             </label>
         </div>
 
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="retain_voice_recordings" value="1" {{ old('retain_voice_recordings') ? 'checked' : '' }}>
+                Retain anonymized voice recordings for training
+            </label>
+            <small class="text-gray-500">When enabled, registering students must provide age, gender, and consent. Recordings are stored without user linkage.</small>
+        </div>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create Organization</button>
             <a href="{{ route('admin.organizations.index') }}" class="btn">Cancel</a>

@@ -47,6 +47,7 @@ class Organization extends Model
         'is_active',
         'access_mode',
         'allow_self_registration',
+        'retain_voice_recordings',
         'is_root',
     ];
 
@@ -54,6 +55,7 @@ class Organization extends Model
         'is_active' => 'boolean',
         'is_root' => 'boolean',
         'allow_self_registration' => 'boolean',
+        'retain_voice_recordings' => 'boolean',
     ];
 
     /**

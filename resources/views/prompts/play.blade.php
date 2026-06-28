@@ -92,6 +92,13 @@
 <script>
 const lessonData = @json($lesson);
 const prompts = lessonData.prompts;
+const voiceUploadConfig = @json([
+    'enabled' => $voiceUploadEnabled ?? false,
+    'endpoint' => route('voice-samples.store'),
+    'organizationId' => $voiceOrganization?->id,
+    'lessonId' => $lesson->id,
+    'maxSeconds' => (int) config('app.recording_max_seconds', 20),
+]);
 let currentPromptIndex = 0;
 let score = 0;
 let totalQuestions = prompts.length;
@@ -377,6 +384,12 @@ function handleWordSelection(optionIndex, selectedWord) {
     // Show the completed sentence
     const fullSentence = prompt.template.replace('{}', displayWord);
     completedSentence.textContent = fullSentence;
+
+    currentRecordingContext = {
+        promptId: prompt.id,
+        optionId: displayOptionData.id,
+        targetText: fullSentence,
+    };
     
     // Store the pre-generated sentence audio path
     window.currentSentenceAudioPath = displayOptionData.sentence_audio_path;
@@ -523,6 +536,9 @@ let mediaRecorder;
 let recordedChunks = [];
 let isRecording = false;
 let recordedAudioBlob = null;
+let currentRecordingContext = null;
+let recordingStartedAt = null;
+let recordingMaxTimeout = null;
 
 // Reset recording state when new word is selected
 function resetRecordingState() {
@@ -570,12 +586,24 @@ async function initializeRecording() {
         };
         
         mediaRecorder.onstop = function() {
-            recordedAudioBlob = new Blob(recordedChunks, { type: 'audio/wav' });
+            recordedAudioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
             recordedChunks = [];
             
             // Enable play button
             document.getElementById('play-recording-btn').disabled = false;
-            document.getElementById('recording-status').textContent = 'Recording saved!';
+            const statusDiv = document.getElementById('recording-status');
+            if (voiceUploadConfig.enabled && currentRecordingContext) {
+                statusDiv.textContent = 'Uploading recording...';
+                uploadVoiceSample(recordedAudioBlob, currentRecordingContext)
+                    .then(() => {
+                        statusDiv.textContent = 'Recording saved for practice!';
+                    })
+                    .catch(() => {
+                        statusDiv.textContent = 'Recording saved locally (upload failed).';
+                    });
+            } else {
+                statusDiv.textContent = 'Recording saved!';
+            }
         };
         
         return true;
@@ -601,10 +629,21 @@ async function toggleRecording() {
         recordedChunks = [];
         mediaRecorder.start();
         isRecording = true;
+        recordingStartedAt = Date.now();
         
         recordBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
         recordBtn.classList.add('recording');
         statusDiv.textContent = 'Recording...';
+        
+        if (recordingMaxTimeout) {
+            clearTimeout(recordingMaxTimeout);
+        }
+        recordingMaxTimeout = setTimeout(() => {
+            if (isRecording) {
+                toggleRecording();
+                statusDiv.textContent = 'Recording stopped (time limit reached).';
+            }
+        }, voiceUploadConfig.maxSeconds * 1000);
         
         // Disable play button while recording
         document.getElementById('play-recording-btn').disabled = true;
@@ -612,11 +651,41 @@ async function toggleRecording() {
         // Stop recording
         mediaRecorder.stop();
         isRecording = false;
+        if (recordingMaxTimeout) {
+            clearTimeout(recordingMaxTimeout);
+            recordingMaxTimeout = null;
+        }
         
         recordBtn.innerHTML = '<i class="fas fa-microphone"></i> Record';
         recordBtn.classList.remove('recording');
         statusDiv.textContent = 'Processing...';
     }
+}
+
+async function uploadVoiceSample(blob, context) {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const formData = new FormData();
+    formData.append('organization_id', voiceUploadConfig.organizationId);
+    formData.append('lesson_id', voiceUploadConfig.lessonId);
+    formData.append('prompt_id', context.promptId);
+    formData.append('option_id', context.optionId);
+    formData.append('generated_sentence', context.targetText);
+    formData.append('recording', blob, 'recording.webm');
+    if (recordingStartedAt) {
+        formData.append('duration_ms', String(Date.now() - recordingStartedAt));
+    }
+
+    const response = await fetch(voiceUploadConfig.endpoint, {
+        method: 'POST',
+        headers: token ? { 'X-CSRF-TOKEN': token } : {},
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error('Upload failed');
+    }
+
+    return response.json();
 }
 
 // Play model audio (pre-generated sentence audio)

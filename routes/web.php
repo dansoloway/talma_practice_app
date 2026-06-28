@@ -7,6 +7,7 @@ use App\Http\Controllers\PromptModelController;
 use App\Http\Controllers\ResponseController;
 use App\Http\Controllers\StudentAuthController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\VoiceSampleController;
 use App\Http\Controllers\Admin\AdminLoginController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -99,6 +100,9 @@ Route::get('/prompts/{promptId}/options/{optionId}/model', [PromptModelControlle
 Route::post('/responses', [ResponseController::class, 'store'])
     ->middleware('throttle:60,1')
     ->name('responses.store');
+Route::post('/voice-samples', [VoiceSampleController::class, 'store'])
+    ->middleware(['auth:admin', 'throttle:60,1'])
+    ->name('voice-samples.store');
 Route::post('/activity-events', [ActivityEventController::class, 'store'])
     ->middleware('throttle:60,1')
     ->name('activity-events.store');

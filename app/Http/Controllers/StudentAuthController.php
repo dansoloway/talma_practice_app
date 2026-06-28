@@ -113,6 +113,9 @@ class StudentAuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(8)],
+            'age' => [$organization->retain_voice_recordings ? 'required' : 'nullable', 'integer', 'min:5', 'max:120'],
+            'gender' => [$organization->retain_voice_recordings ? 'required' : 'nullable', 'in:male,female'],
+            'voice_recording_consent' => [$organization->retain_voice_recordings ? 'accepted' : 'nullable'],
         ]);
 
         $user = User::create([
@@ -121,6 +124,9 @@ class StudentAuthController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => 'student',
             'is_active' => true,
+            'age' => $validated['age'] ?? null,
+            'gender' => $validated['gender'] ?? null,
+            'voice_recording_consented_at' => $organization->retain_voice_recordings ? now() : null,
         ]);
 
         $organization->users()->syncWithoutDetaching([

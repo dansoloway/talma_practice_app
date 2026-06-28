@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
+use App\Models\Organization;
 use App\Models\Prompt;
+use App\Services\CourseAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
@@ -65,6 +67,14 @@ class PromptController extends Controller
             return $gate;
         }
 
+        $voiceOrganization = $this->resolveVoiceOrganization($lesson, $gate);
+        $user = auth('admin')->user();
+        $voiceUploadEnabled = $voiceOrganization
+            && $voiceOrganization->retain_voice_recordings
+            && $user
+            && $user->hasVoiceRecordingConsent()
+            && config('app.allow_recording_upload', false);
+
         // Add full URLs for audio paths
         $lesson->prompts->each(function ($prompt) {
             if ($prompt->prompt_audio_path) {
@@ -80,7 +90,30 @@ class PromptController extends Controller
             });
         });
 
-        return view('prompts.play', compact('lesson'));
+        return view('prompts.play', compact('lesson', 'voiceOrganization', 'voiceUploadEnabled'));
+    }
+
+    private function resolveVoiceOrganization(\App\Models\Lesson $lesson, Organization|RedirectResponse|null $gate): ?Organization
+    {
+        if ($gate instanceof Organization && $gate->retain_voice_recordings) {
+            return $gate;
+        }
+
+        $lesson->loadMissing('course.organizations');
+        $course = $lesson->course;
+        if (! $course) {
+            return null;
+        }
+
+        $courseAccess = app(CourseAccess::class);
+        $tenantOrg = $courseAccess->primaryTenantOrgForCourse($course);
+        if ($tenantOrg?->retain_voice_recordings) {
+            return $tenantOrg;
+        }
+
+        return $course->organizations()
+            ->where('retain_voice_recordings', true)
+            ->first();
     }
 }
 

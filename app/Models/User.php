@@ -19,12 +19,19 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+    public const GENDER_MALE = 'male';
+
+    public const GENDER_FEMALE = 'female';
+
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
         'is_active',
+        'age',
+        'gender',
+        'voice_recording_consented_at',
         'remember_token',
     ];
 
@@ -49,6 +56,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'voice_recording_consented_at' => 'datetime',
         ];
     }
 
@@ -152,5 +160,15 @@ class User extends Authenticatable
     public function isMemberOfOrg(int $orgId): bool
     {
         return $this->organizations()->where('organizations.id', $orgId)->exists();
+    }
+
+    /**
+     * Whether this user opted in to anonymized voice recording retention.
+     */
+    public function hasVoiceRecordingConsent(): bool
+    {
+        return $this->voice_recording_consented_at !== null
+            && $this->age !== null
+            && $this->gender !== null;
     }
 }

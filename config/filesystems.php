@@ -20,7 +20,20 @@ return [
             'throw' => false,
         ],
 
+        'voice_training' => [
+            'driver' => env('VOICE_TRAINING_DISK_DRIVER', 'local'),
+            'root' => storage_path('app/voice-training'),
+            'throw' => false,
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_VOICE_TRAINING_BUCKET'),
+            'visibility' => 'private',
+        ],
+
     ],
+
+    'voice_training_disk' => env('VOICE_TRAINING_DISK', 'voice_training'),
 
     'links' => [
         public_path('storage') => storage_path('app/public'),
