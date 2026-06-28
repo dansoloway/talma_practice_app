@@ -180,6 +180,18 @@ class OpenAiService
     }
 
     /**
+     * Extract base64 image data from image generation response (gpt-image models).
+     */
+    public function extractImageBase64(?array $response): ?string
+    {
+        if (!$response) {
+            return null;
+        }
+
+        return data_get($response, 'data.0.b64_json');
+    }
+
+    /**
      * Log API usage including tokens and cost
      * 
      * @param string $model The model used

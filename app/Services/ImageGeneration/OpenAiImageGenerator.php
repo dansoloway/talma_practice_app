@@ -48,7 +48,6 @@ class OpenAiImageGenerator
                 'size' => $this->size,
                 'quality' => 'standard',
                 'n' => 1,
-                'response_format' => 'url',
                 'timeout' => 120,
             ];
 
@@ -72,16 +71,20 @@ class OpenAiImageGenerator
 
             $imageUrl = $this->openAiService->extractImageUrl($response);
 
-            if (!$imageUrl) {
-                Log::error('No image URL in OpenAI response', [
-                    'response' => $response,
-                    'word' => $vocabularyWord,
-                ]);
-                return null;
+            if ($imageUrl) {
+                return $this->downloadAndSaveImage($imageUrl, $vocabularyWord);
             }
 
-            // Download the image (with increased timeout for large images)
-            return $this->downloadAndSaveImage($imageUrl, $vocabularyWord);
+            $base64 = $this->openAiService->extractImageBase64($response);
+            if ($base64) {
+                return $this->saveBase64Image($base64, $vocabularyWord);
+            }
+
+            Log::error('No image URL or base64 in OpenAI response', [
+                'response' => $response,
+                'word' => $vocabularyWord,
+            ]);
+            return null;
 
         } catch (\Throwable $e) {
             // Retry on timeout errors
@@ -144,6 +147,34 @@ class OpenAiImageGenerator
             Log::error('Failed to download/save OpenAI image', [
                 'message' => $e->getMessage(),
                 'url' => $imageUrl,
+                'word' => $vocabularyWord,
+            ]);
+            return null;
+        }
+    }
+
+    protected function saveBase64Image(string $base64, string $vocabularyWord): ?string
+    {
+        try {
+            $imageContent = base64_decode($base64, true);
+            if ($imageContent === false || $imageContent === '') {
+                Log::error('Failed to decode OpenAI base64 image', ['word' => $vocabularyWord]);
+                return null;
+            }
+
+            $filename = 'vocab_' . time() . '_' . uniqid() . '.png';
+            $relativePath = 'images/vocabulary/' . $filename;
+            Storage::disk('public')->put($relativePath, $imageContent);
+
+            Log::info("Successfully saved base64 OpenAI image for vocabulary word: {$vocabularyWord}", [
+                'path' => $relativePath,
+                'size' => strlen($imageContent),
+            ]);
+
+            return $relativePath;
+        } catch (\Throwable $e) {
+            Log::error('Failed to save OpenAI base64 image', [
+                'message' => $e->getMessage(),
                 'word' => $vocabularyWord,
             ]);
             return null;
