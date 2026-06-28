@@ -73,6 +73,21 @@
                     </div>
                 @endif
 
+                @if($terms ?? null)
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" name="terms_accepted" value="1" required
+                                   class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                                   {{ old('terms_accepted') ? 'checked' : '' }}>
+                            <span class="text-sm text-gray-700">
+                                I agree to the
+                                <button type="button" onclick="openTermsModal()" class="text-blue-600 hover:underline font-medium">terms of use and privacy policy</button>
+                            </span>
+                        </label>
+                    </div>
+                    <x-terms-modal :terms="$terms" />
+                @endif
+
                 <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors">
                     Create Account
                 </button>

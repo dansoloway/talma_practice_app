@@ -39,6 +39,23 @@
 
         <div class="form-group">
             <label class="checkbox-label">
+                <input type="checkbox" name="allow_self_registration" value="1" {{ old('allow_self_registration', $organization->allow_self_registration) ? 'checked' : '' }}>
+                Allow self-registration
+            </label>
+            <small class="text-gray-500">When enabled on a restricted org, learners can create accounts at /o/{{ $organization->slug }}/register.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="registration_type">Registration Type *</label>
+            <select id="registration_type" name="registration_type" required class="form-control">
+                <option value="student" {{ old('registration_type', $organization->registration_type ?? 'student') === 'student' ? 'selected' : '' }}>Student self-signup (simple form)</option>
+                <option value="parent_signup" {{ old('registration_type', $organization->registration_type) === 'parent_signup' ? 'selected' : '' }}>Parent / guardian signup (multi-child form)</option>
+            </select>
+            <small class="text-gray-500">Parent signup requires restricted access and self-registration. Includes privacy terms acceptance.</small>
+        </div>
+
+        <div class="form-group">
+            <label class="checkbox-label">
                 <input type="checkbox" name="is_active" value="1" {{ old('is_active', $organization->is_active) ? 'checked' : '' }}>
                 Active
             </label>

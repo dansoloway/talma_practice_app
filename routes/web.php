@@ -6,6 +6,7 @@ use App\Http\Controllers\PromptController;
 use App\Http\Controllers\PromptModelController;
 use App\Http\Controllers\ResponseController;
 use App\Http\Controllers\StudentAuthController;
+use App\Http\Controllers\StudentChildController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\VoiceSampleController;
 use App\Http\Controllers\Admin\AdminLoginController;
@@ -47,8 +48,10 @@ Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.contex
 });
 
 // Org-scoped student routes (protected when org is restricted)
-Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'student.org.access'])->group(function () {
+Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'student.org.access', 'learner.selected'])->group(function () {
     Route::get('/', [StudentController::class, 'index'])->name('index');
+    Route::get('select-child', [StudentChildController::class, 'selectChild'])->name('select-child');
+    Route::post('select-child', [StudentChildController::class, 'storeSelectedChild'])->name('select-child.submit');
     Route::get('courses/{course:slug}', [StudentController::class, 'course'])->name('course');
     Route::get('lessons/{slug}', [LessonController::class, 'show'])->name('lesson');
 });
@@ -177,6 +180,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'admin.access'
 
     // Organization Management (admin only)
     Route::resource('organizations', \App\Http\Controllers\Admin\OrganizationController::class)->middleware('admin.only')->except(['show', 'destroy']);
+
+    // Terms and Conditions (admin only)
+    Route::get('terms-and-conditions', [\App\Http\Controllers\Admin\TermsAndConditionsController::class, 'index'])
+        ->middleware('admin.only')->name('terms-and-conditions.index');
+    Route::get('terms-and-conditions/{termsAndCondition}/edit', [\App\Http\Controllers\Admin\TermsAndConditionsController::class, 'edit'])
+        ->middleware('admin.only')->name('terms-and-conditions.edit');
+    Route::put('terms-and-conditions/{termsAndCondition}', [\App\Http\Controllers\Admin\TermsAndConditionsController::class, 'update'])
+        ->middleware('admin.only')->name('terms-and-conditions.update');
     
     // Logout
     Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');

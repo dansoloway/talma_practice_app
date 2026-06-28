@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'org.context' => \App\Http\Middleware\OrgContext::class,
             'org.member' => \App\Http\Middleware\OrgMember::class,
             'student.org.access' => \App\Http\Middleware\StudentOrgAccess::class,
+            'learner.selected' => \App\Http\Middleware\EnsureSelectedLearner::class,
         ]);
 
         $middleware->prependToGroup('web', [

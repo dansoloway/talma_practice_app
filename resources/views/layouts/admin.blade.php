@@ -109,6 +109,9 @@
                         <a href="{{ route('admin.users.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
                             <i class="fas fa-users mr-1.5 text-gray-400"></i>Users
                         </a>
+                        <a href="{{ route('admin.terms-and-conditions.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">
+                            <i class="fas fa-file-contract mr-1.5 text-gray-400"></i>Terms
+                        </a>
                     @endif
 
                     <a href="{{ route('lessons.index') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200" title="View as student">

@@ -40,6 +40,10 @@ class Organization extends Model
 
     public const SUMMER_PRACTICE_PAL_SLUG = 'summer-practice-pal';
 
+    public const REGISTRATION_TYPE_STUDENT = 'student';
+
+    public const REGISTRATION_TYPE_PARENT_SIGNUP = 'parent_signup';
+
     protected $fillable = [
         'name',
         'slug',
@@ -47,6 +51,7 @@ class Organization extends Model
         'is_active',
         'access_mode',
         'allow_self_registration',
+        'registration_type',
         'retain_voice_recordings',
         'is_root',
     ];
@@ -73,6 +78,16 @@ class Organization extends Model
     public function getDisplayNameAttribute(): string
     {
         return $this->slug === 'default' ? 'TALMA Community Resources' : $this->name;
+    }
+
+    public function usesParentSignup(): bool
+    {
+        return $this->registration_type === self::REGISTRATION_TYPE_PARENT_SIGNUP;
+    }
+
+    public function usesStudentSignup(): bool
+    {
+        return ! $this->usesParentSignup();
     }
 
     /**

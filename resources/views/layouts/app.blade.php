@@ -72,6 +72,14 @@
                 </a>
                 
                 @if(auth('admin')->check())
+                    @php
+                        $selectedStudent = session('selected_student_id') ? \App\Models\ParentStudent::find(session('selected_student_id')) : null;
+                    @endphp
+                    @if($selectedStudent && isset($currentOrganization) && $currentOrganization->usesParentSignup())
+                        <a href="{{ route('org.student.select-child', $currentOrganization) }}" class="px-3 py-2 text-sm text-blue-700 bg-blue-50 font-medium rounded-lg hover:bg-blue-100 transition-all duration-200">
+                            Practicing as: {{ $selectedStudent->display_name }}
+                        </a>
+                    @endif
                     <span class="px-3 py-2 text-gray-600 text-sm border-l border-gray-200/60 ml-2 pl-4">{{ auth('admin')->user()->name }} ({{ ucfirst(auth('admin')->user()->role) }})</span>
                     @if(isset($currentOrganization) && auth('admin')->user()->canAccessStudentPortal())
                         <form method="POST" action="{{ route('org.student.logout', $currentOrganization) }}" class="inline">

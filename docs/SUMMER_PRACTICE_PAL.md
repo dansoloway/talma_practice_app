@@ -91,6 +91,62 @@ Entries include timestamps, level (`INFO`, `LESSON`, `WARN`, `ERROR`, `DONE`), a
 | `--skip-tts` | With `--with-enrichment`, skip audio |
 | `--force` | **Destructive:** delete and replace all vocab/prompts on existing lessons |
 | `--no-detach-from-default` | Keep courses on TALMA Community Resources (not recommended) |
+| `--vocab-csv=*` | Validated vocab CSV (repeatable; `CEFR=path` or filename containing cefr slug). Replaces XLSX `cleaned vocab` for that level. |
+| `--prompts-csv=` | Additional fill-in-the-blank CSV merged with the XLSX prompt sheet (e.g. A2 prompts) |
+| `--strict` | Fail dry-run/import when any lesson has fewer than 5 or more than 10 vocab words (requires vocab CSV) |
+| `--skip-archive` | With `--force`, skip archiving images/audio before replace |
+
+## Correcting vocabulary and fill-in-the-blank
+
+The XLSX `cleaned vocab` sheet imported activity titles and sentences for some levels (especially A2). Use **per-CEFR vocab CSV files** with 5–10 **single words** per lesson instead.
+
+Expected vocab CSV columns: `CEFR Level`, `Day Number`, `Day / Topic`, `Vocabulary Word`
+
+Expected prompts CSV columns: `CEFR Level`, `Day Number`, `Day / Topic`, `Question` (must contain `{blank}`), `Answer`
+
+Convention paths (auto-detected when present):
+
+```
+data/summer-vocab-pre-a1.csv
+data/summer-vocab-a1.csv
+data/summer-vocab-a2.csv
+data/summer-prompts-a2.csv
+```
+
+A2 CSV imports use **legacy lesson slugs** (by day number) so `--force` replaces existing production lessons instead of creating duplicates.
+
+### Corrected import workflow
+
+```bash
+# 1. Archive paid images/audio before cleanup
+php artisan talma:archive-summer-vocab-assets
+
+# 2. Dry-run one CEFR level with corrected CSVs
+php artisan talma:import-summer-practice-pal \
+  --cefr=A2 \
+  --vocab-csv=data/summer-vocab-a2.csv \
+  --prompts-csv=data/summer-prompts-a2.csv \
+  --force \
+  --dry-run
+
+# 3. Apply (archives assets per lesson before replace unless --skip-archive)
+php artisan talma:import-summer-practice-pal \
+  --cefr=A2 \
+  --vocab-csv=data/summer-vocab-a2.csv \
+  --prompts-csv=data/summer-prompts-a2.csv \
+  --force
+
+# 4. Audit lesson word counts and missing prompts
+php artisan talma:summer-practice-pal-audit
+
+# 5. Enrichment for new vocab only
+php artisan talma:import-summer-practice-pal --with-enrichment
+
+# 6. Coverage report
+php artisan talma:summer-practice-pal-coverage --incomplete
+```
+
+Archives are written to `storage/app/archived/summer-practice-pal/{timestamp}/` with a `manifest.jsonl` per vocabulary row (original word, lesson slug, image/audio paths).
 
 ## Re-import / updates
 
@@ -101,12 +157,17 @@ Entries include timestamps, level (`INFO`, `LESSON`, `WARN`, `ERROR`, `DONE`), a
 ## Learner flow
 
 1. User visits `/o/summer-practice-pal` → redirected to login.
-2. User registers at `/o/summer-practice-pal/register` → account created with `student` role and org membership.
-3. User sees all four Summer courses on the org course picker.
-4. Legacy public URLs (`/lessons/...`, game play URLs) redirect guests to Summer login when the lesson belongs to a restricted-only course.
+2. New families register at `/o/summer-practice-pal/register` → **parent/guardian signup** with privacy terms acceptance, parent account, and one or more children.
+3. After login, parents with multiple shared-login children choose who is practicing (`/o/summer-practice-pal/select-child`).
+4. User sees all four Summer courses on the org course picker.
+5. Legacy public URLs (`/lessons/...`, game play URLs) redirect guests to Summer login when the lesson belongs to a restricted-only course.
+
+## Registration settings
+
+Summer Practice Pal uses **parent / guardian signup** (`registration_type = parent_signup`). Global admins can choose registration type per organization under Admin → Organizations.
 
 ## Admin notes
 
 - Global admins can still access Summer content for testing via org-scoped URLs when logged in as admin.
 - Teacher/admin login remains at `/admin/login` — unchanged.
-- Summer org settings: `access_mode = restricted`, `allow_self_registration = true` (set by import).
+- Summer org settings: `access_mode = restricted`, `allow_self_registration = true`, `registration_type = parent_signup` (set by import).

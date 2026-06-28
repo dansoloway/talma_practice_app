@@ -6,6 +6,7 @@ use App\Services\Import\SummerImportOptions;
 use App\Services\Import\SummerImportReporter;
 use App\Services\Import\SummerPracticePalImporter;
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 
 class ImportSummerPracticePal extends Command
 {
@@ -17,7 +18,11 @@ class ImportSummerPracticePal extends Command
                             {--skip-images : With --with-enrichment, skip vocabulary images}
                             {--skip-tts : With --with-enrichment, skip vocabulary and prompt TTS}
                             {--force : Replace all vocabulary and prompts on existing lessons (destructive)}
-                            {--no-detach-from-default : Keep courses attached to TALMA Community Resources org}';
+                            {--no-detach-from-default : Keep courses attached to TALMA Community Resources org}
+                            {--vocab-csv=* : Validated vocab CSV path (repeatable; use CEFR=path or filename with cefr slug)}
+                            {--prompts-csv= : Additional fill-in-the-blank prompts CSV to merge}
+                            {--strict : Fail when any lesson has fewer than 5 or more than 10 vocab words (requires vocab CSV)}
+                            {--skip-archive : With --force, do not archive vocab assets before replace}';
 
     protected $description = 'Import Summer Practice Pal courses, lessons, vocabulary, games, and prompts (structure-only by default; safe to re-run)';
 
@@ -56,6 +61,12 @@ class ImportSummerPracticePal extends Command
         if ($options->cefr !== null) {
             $this->info("CEFR filter: {$options->cefr}");
         }
+        if ($options->usesValidatedVocabCsv()) {
+            $this->info('Validated vocab CSV: ' . implode(', ', $options->vocabCsvByCefr));
+        }
+        if ($options->promptsCsv !== null) {
+            $this->info("Additional prompts CSV: {$options->promptsCsv}");
+        }
         if ($options->isStructureOnly()) {
             $this->info('Mode: structure only (no translations, images, or TTS). Safe to re-run.');
         } else {
@@ -63,6 +74,12 @@ class ImportSummerPracticePal extends Command
         }
         if ($options->force) {
             $this->warn('--force: existing vocab and prompts on touched lessons will be replaced.');
+            if (!$options->skipArchive) {
+                $this->info('Assets will be archived before replace (use --skip-archive to disable).');
+            }
+        }
+        if ($options->strict) {
+            $this->info('--strict: import will fail if any lesson is outside 5–10 vocab words.');
         }
 
         $this->newLine();
@@ -80,7 +97,13 @@ class ImportSummerPracticePal extends Command
         }
 
         $this->newLine();
-        $this->renderSummary($summary, $reporter);
+        $this->renderSummary($summary, $importer, $reporter);
+
+        if (!empty($summary['strict_failed'])) {
+            $this->error('--strict check failed. Fix lesson word counts before importing.');
+
+            return self::FAILURE;
+        }
 
         return self::SUCCESS;
     }
@@ -88,7 +111,7 @@ class ImportSummerPracticePal extends Command
     /**
      * @param array<string, mixed> $summary
      */
-    private function renderSummary(array $summary, SummerImportReporter $reporter): void
+    private function renderSummary(array $summary, SummerPracticePalImporter $importer, SummerImportReporter $reporter): void
     {
         if (!empty($summary['dry_run'])) {
             $this->info('Dry-run summary');
@@ -120,6 +143,7 @@ class ImportSummerPracticePal extends Command
                 $summary['source_vocab_rows'] ?? 0,
                 $summary['source_prompt_rows'] ?? 0
             ));
+            $this->renderRejectedRows($summary, $importer);
 
             return;
         }
@@ -134,10 +158,13 @@ class ImportSummerPracticePal extends Command
             ['Lessons skipped (already exist)', $summary['lessons_skipped'] ?? 0],
             ['Vocabulary created', $summary['vocabulary_created'] ?? 0],
             ['Vocabulary skipped', $summary['vocabulary_skipped'] ?? 0],
+            ['Vocab rows rejected', $summary['vocab_rejected'] ?? 0],
             ['Prompts created', $summary['prompts_created'] ?? 0],
             ['Prompts skipped', $summary['prompts_skipped'] ?? 0],
+            ['Prompts rejected', $summary['prompts_rejected'] ?? 0],
             ['Options created', $summary['options_created'] ?? 0],
             ['Games ensured', $summary['games_ensured'] ?? 0],
+            ['Assets archived (vocab rows)', $summary['assets_archived'] ?? 0],
         ];
 
         if (!($summary['structure_only'] ?? true)) {
@@ -162,7 +189,64 @@ class ImportSummerPracticePal extends Command
             );
         }
 
+        $this->renderRejectedRows($summary, $importer);
+
         $this->newLine();
         $this->info("Full log: {$reporter->logPath()}");
+    }
+
+    /**
+     * @param array<string, mixed> $summary
+     */
+    private function renderRejectedRows(array $summary, SummerPracticePalImporter $importer): void
+    {
+        $wordCountIssues = $summary['lesson_word_count_issues'] ?? $importer->lessonWordCountIssues();
+        if ($wordCountIssues !== []) {
+            $this->newLine();
+            $this->warn('Lesson word count issues (expected 5–10 per lesson):');
+            $this->table(
+                ['CEFR', 'Lesson', 'Words', 'Issue'],
+                collect($wordCountIssues)->map(fn ($row) => [
+                    $row['cefr'],
+                    $row['lesson'],
+                    $row['word_count'],
+                    $row['reason'],
+                ])->take(20)->all()
+            );
+        }
+
+        $vocabRejected = $importer->vocabRejectedRows();
+        if ($vocabRejected !== []) {
+            $this->newLine();
+            $this->warn('Rejected vocabulary rows (' . count($vocabRejected) . '):');
+            $this->table(
+                ['CEFR', 'Day', 'Topic', 'Word', 'Reason'],
+                collect($vocabRejected)->map(fn ($row) => [
+                    $row['cefr'],
+                    $row['day'],
+                    Str::limit($row['topic'], 30),
+                    Str::limit($row['word'], 30),
+                    $row['reason'],
+                ])->take(15)->all()
+            );
+            if (count($vocabRejected) > 15) {
+                $this->comment('… and ' . (count($vocabRejected) - 15) . ' more (see log).');
+            }
+        }
+
+        $promptRejected = $importer->promptRejectedRows();
+        if ($promptRejected !== []) {
+            $this->newLine();
+            $this->warn('Rejected prompt rows (' . count($promptRejected) . '):');
+            $this->table(
+                ['CEFR', 'Day', 'Question', 'Reason'],
+                collect($promptRejected)->map(fn ($row) => [
+                    $row['cefr'],
+                    $row['day'],
+                    $row['question'],
+                    $row['reason'],
+                ])->take(15)->all()
+            );
+        }
     }
 }

@@ -4,7 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -23,15 +26,23 @@ class User extends Authenticatable
 
     public const GENDER_FEMALE = 'female';
 
+    public const ROLE_PARENT = 'parent';
+
     protected $fillable = [
         'name',
+        'hebrew_name',
+        'id_number',
         'email',
+        'phone_number',
+        'city_id',
         'password',
         'role',
         'is_active',
         'age',
         'gender',
         'voice_recording_consented_at',
+        'terms_accepted_at',
+        'terms_version',
         'remember_token',
     ];
 
@@ -57,6 +68,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'voice_recording_consented_at' => 'datetime',
+            'terms_accepted_at' => 'datetime',
         ];
     }
 
@@ -84,6 +96,11 @@ class User extends Authenticatable
         return $this->role === 'student';
     }
 
+    public function isParent(): bool
+    {
+        return $this->role === self::ROLE_PARENT;
+    }
+
     /**
      * Check if user has admin or teacher access.
      */
@@ -97,7 +114,7 @@ class User extends Authenticatable
      */
     public function canAccessStudentPortal(): bool
     {
-        return $this->is_active && ($this->isStudent() || $this->isAdmin());
+        return $this->is_active && ($this->isStudent() || $this->isParent() || $this->isAdmin());
     }
 
     /**
@@ -170,5 +187,28 @@ class User extends Authenticatable
         return $this->voice_recording_consented_at !== null
             && $this->age !== null
             && $this->gender !== null;
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    public function parentStudents(): HasMany
+    {
+        return $this->hasMany(ParentStudent::class, 'parent_id');
+    }
+
+    public function linkedParentStudent(): HasOne
+    {
+        return $this->hasOne(ParentStudent::class, 'user_id');
+    }
+
+    public function sharedLoginChildren(): HasMany
+    {
+        return $this->parentStudents()->where(function ($query) {
+            $query->whereDoesntHave('identity')
+                ->orWhereHas('identity', fn ($q) => $q->where('login_type', 'shared'));
+        });
     }
 }

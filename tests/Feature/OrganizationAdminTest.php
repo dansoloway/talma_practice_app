@@ -27,6 +27,7 @@ class OrganizationAdminTest extends TestCase
             'name' => 'New School',
             'slug' => 'new-school',
             'access_mode' => 'open',
+            'registration_type' => 'student',
             'is_active' => true,
         ]);
         $response->assertRedirect(route('admin.organizations.index'));
@@ -43,6 +44,7 @@ class OrganizationAdminTest extends TestCase
             'name' => 'TALMA Community (Updated)',
             'slug' => 'default',
             'access_mode' => 'open',
+            'registration_type' => 'student',
             'is_active' => true,
         ]);
         $response->assertRedirect(route('admin.organizations.index'));

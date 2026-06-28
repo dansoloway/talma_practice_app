@@ -26,12 +26,48 @@ class SummerPracticePalImporter
         'B1' => ['title' => 'Summer Practice Pal — B1', 'slug' => 'summer-practice-pal-b1', 'sort_order' => 4],
     ];
 
+    /** @var list<array<string, string>> */
+    private array $vocabRejectedRows = [];
+
+    /** @var list<array<string, string>> */
+    private array $promptRejectedRows = [];
+
+    /** @var list<array<string, mixed>> */
+    private array $lessonWordCountIssues = [];
+
     public function __construct(
         private VocabularyEnricher $vocabularyEnricher,
         private LessonGameCreator $lessonGameCreator,
         private PromptFromFillBlankBuilder $promptBuilder,
         private PromptOptionTtsService $promptOptionTtsService,
+        private VocabularyWordValidator $vocabularyValidator,
+        private SummerVocabAssetArchiver $assetArchiver,
+        private ImportCsvReader $csvReader,
     ) {}
+
+    /**
+     * @return list<array<string, string>>
+     */
+    public function vocabRejectedRows(): array
+    {
+        return $this->vocabRejectedRows;
+    }
+
+    /**
+     * @return list<array<string, string>>
+     */
+    public function promptRejectedRows(): array
+    {
+        return $this->promptRejectedRows;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function lessonWordCountIssues(): array
+    {
+        return $this->lessonWordCountIssues;
+    }
 
     /**
      * @return array<string, mixed>
@@ -44,6 +80,9 @@ class SummerPracticePalImporter
 
         $reporter ??= new SummerImportReporter();
         $this->reporter = $reporter;
+        $this->vocabRejectedRows = [];
+        $this->promptRejectedRows = [];
+        $this->lessonWordCountIssues = [];
 
         $reporter->info('Import started', [
             'source' => $xlsxPath,
@@ -51,18 +90,37 @@ class SummerPracticePalImporter
             'cefr' => $options->cefr,
             'structure_only' => $options->isStructureOnly(),
             'force' => $options->force,
+            'validated_vocab_csv' => $options->usesValidatedVocabCsv(),
+            'prompts_csv' => $options->promptsCsv,
+            'strict' => $options->strict,
         ]);
 
         $reader = new XlsxReader($xlsxPath);
         $reporter->info('Reading spreadsheet');
-        $vocabRows = $reader->readSheet(self::VOCAB_SHEET);
-        $promptRows = $reader->readSheet(self::PROMPTS_SHEET);
-        $reporter->info('Spreadsheet parsed', [
+        $xlsxVocabRows = $reader->readSheet(self::VOCAB_SHEET);
+        $xlsxPromptRows = $reader->readSheet(self::PROMPTS_SHEET);
+
+        $vocabRows = $this->loadVocabRows($xlsxVocabRows, $options);
+        $promptRows = $this->loadPromptRows($xlsxPromptRows, $options);
+
+        $reporter->info('Sources parsed', [
             'vocab_rows' => count($vocabRows),
             'prompt_rows' => count($promptRows),
+            'vocab_rejected' => count($this->vocabRejectedRows),
+            'xlsx_vocab_rows' => count($xlsxVocabRows),
+            'xlsx_prompt_rows' => count($xlsxPromptRows),
         ]);
 
         $grouped = $this->groupData($vocabRows, $promptRows, $options);
+        $this->auditLessonWordCounts($grouped, $options);
+
+        if ($options->strict && $this->lessonWordCountIssues !== []) {
+            $summary = $this->buildDryRunSummary($grouped, $vocabRows, $promptRows, $options);
+            $summary['strict_failed'] = true;
+            $summary['strict_errors'] = array_column($this->lessonWordCountIssues, 'reason');
+
+            return $summary;
+        }
 
         if ($options->dryRun) {
             $summary = $this->buildDryRunSummary($grouped, $vocabRows, $promptRows, $options);
@@ -88,6 +146,105 @@ class SummerPracticePalImporter
     private function reportProgress(string $message, array $context = []): void
     {
         $this->reporter?->info($message, $context);
+    }
+
+    /**
+     * @param list<array<string, string>> $xlsxVocabRows
+     * @return list<array<string, string>>
+     */
+    private function loadVocabRows(array $xlsxVocabRows, SummerImportOptions $options): array
+    {
+        $allowedCefrs = $options->cefrLevels();
+        $rows = [];
+
+        foreach ($allowedCefrs as $cefr) {
+            if (isset($options->vocabCsvByCefr[$cefr])) {
+                $csvPath = $options->vocabCsvByCefr[$cefr];
+                $this->reportProgress("Loading validated vocab CSV for {$cefr}", ['path' => $csvPath]);
+                foreach ($this->csvReader->read($csvPath) as $row) {
+                    $processed = $this->processVocabRow($row, $cefr, true);
+                    if ($processed !== null) {
+                        $rows[] = $processed;
+                    }
+                }
+                continue;
+            }
+
+            foreach ($xlsxVocabRows as $row) {
+                if (SummerImportOptions::normalizeCefr($row['CEFR Level'] ?? '') !== $cefr) {
+                    continue;
+                }
+                $processed = $this->processVocabRow($row, $cefr, false);
+                if ($processed !== null) {
+                    $rows[] = $processed;
+                }
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param array<string, string> $row
+     * @return array<string, string>|null
+     */
+    private function processVocabRow(array $row, string $expectedCefr, bool $validate): ?array
+    {
+        $cefr = SummerImportOptions::normalizeCefr($row['CEFR Level'] ?? $expectedCefr);
+        if ($cefr !== $expectedCefr) {
+            $this->vocabRejectedRows[] = [
+                'cefr' => $cefr,
+                'day' => $row['Day Number'] ?? '',
+                'topic' => $row['Day / Topic'] ?? '',
+                'word' => $row['Vocabulary Word'] ?? '',
+                'reason' => "CEFR mismatch (expected {$expectedCefr})",
+            ];
+
+            return null;
+        }
+
+        $word = trim($row['Vocabulary Word'] ?? '');
+        if ($word === '') {
+            return null;
+        }
+
+        if ($validate) {
+            $validation = $this->vocabularyValidator->validate($word);
+            if (!$validation['valid']) {
+                $this->vocabRejectedRows[] = [
+                    'cefr' => $cefr,
+                    'day' => $row['Day Number'] ?? '',
+                    'topic' => $row['Day / Topic'] ?? '',
+                    'word' => $word,
+                    'reason' => $validation['reason'] ?? 'invalid',
+                ];
+
+                return null;
+            }
+        }
+
+        return [
+            'CEFR Level' => $cefr,
+            'Day Number' => $row['Day Number'] ?? '',
+            'Day / Topic' => $row['Day / Topic'] ?? '',
+            'Vocabulary Word' => $word,
+        ];
+    }
+
+    /**
+     * @param list<array<string, string>> $xlsxPromptRows
+     * @return list<array<string, string>>
+     */
+    private function loadPromptRows(array $xlsxPromptRows, SummerImportOptions $options): array
+    {
+        $rows = $xlsxPromptRows;
+
+        if ($options->promptsCsv !== null) {
+            $this->reportProgress('Loading additional prompts CSV', ['path' => $options->promptsCsv]);
+            $rows = array_merge($rows, $this->csvReader->read($options->promptsCsv));
+        }
+
+        return $rows;
     }
 
     /**
@@ -121,9 +278,22 @@ class SummerPracticePalImporter
                 continue;
             }
 
-            $lessonKey = $this->lessonKey($dayNumber, $topic);
-            $grouped[$cefr]['lessons'][$lessonKey] ??= $this->emptyLesson($dayNumber, $topic, $cefr);
-            $grouped[$cefr]['lessons'][$lessonKey]['vocabulary'][$this->normalizeWordKey($word)] = $word;
+            $lessonKey = $this->lessonGroupingKey($cefr, $dayNumber, $topic, $options);
+            $grouped[$cefr]['lessons'][$lessonKey] ??= $this->emptyLesson($dayNumber, $topic, $cefr, $options);
+
+            $wordKey = $this->normalizeWordKey($word);
+            if (isset($grouped[$cefr]['lessons'][$lessonKey]['vocabulary'][$wordKey])) {
+                $this->vocabRejectedRows[] = [
+                    'cefr' => $cefr,
+                    'day' => (string) $dayNumber,
+                    'topic' => $topic,
+                    'word' => $word,
+                    'reason' => 'duplicate within lesson',
+                ];
+                continue;
+            }
+
+            $grouped[$cefr]['lessons'][$lessonKey]['vocabulary'][$wordKey] = $word;
         }
 
         foreach ($promptRows as $row) {
@@ -138,11 +308,17 @@ class SummerPracticePalImporter
             $answer = trim($row['Answer'] ?? '');
 
             if ($dayNumber === null || $topic === '' || $question === '' || $answer === '') {
+                $this->rejectPromptRow($row, 'missing required field');
                 continue;
             }
 
-            $lessonKey = $this->lessonKey($dayNumber, $topic);
-            $grouped[$cefr]['lessons'][$lessonKey] ??= $this->emptyLesson($dayNumber, $topic, $cefr);
+            if (!preg_match('/\{blank\}/i', $question)) {
+                $this->rejectPromptRow($row, 'question missing {blank}');
+                continue;
+            }
+
+            $lessonKey = $this->lessonGroupingKey($cefr, $dayNumber, $topic, $options);
+            $grouped[$cefr]['lessons'][$lessonKey] ??= $this->emptyLesson($dayNumber, $topic, $cefr, $options);
 
             $questionKey = $this->promptBuilder->normalizeQuestionKey($question);
             $grouped[$cefr]['lessons'][$lessonKey]['prompts'][$questionKey] = [
@@ -155,16 +331,59 @@ class SummerPracticePalImporter
     }
 
     /**
+     * @param array<string, string> $row
+     */
+    private function rejectPromptRow(array $row, string $reason): void
+    {
+        $this->promptRejectedRows[] = [
+            'cefr' => $row['CEFR Level'] ?? '',
+            'day' => $row['Day Number'] ?? '',
+            'topic' => $row['Day / Topic'] ?? '',
+            'question' => Str::limit($row['Question'] ?? '', 80),
+            'answer' => $row['Answer'] ?? '',
+            'reason' => $reason,
+        ];
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $grouped
+     */
+    private function auditLessonWordCounts(array $grouped, SummerImportOptions $options): void
+    {
+        if (!$options->usesValidatedVocabCsv()) {
+            return;
+        }
+
+        foreach ($grouped as $cefr => $data) {
+            foreach ($data['lessons'] as $lesson) {
+                $count = count($lesson['vocabulary']);
+                $validation = $this->vocabularyValidator->validateLessonWordCount($count);
+                if (!$validation['valid']) {
+                    $this->lessonWordCountIssues[] = [
+                        'cefr' => $cefr,
+                        'lesson' => $lesson['title'],
+                        'slug' => $lesson['slug'],
+                        'word_count' => $count,
+                        'reason' => $validation['reason'],
+                    ];
+                }
+            }
+        }
+    }
+
+    /**
      * @return array{day_number: int, topic: string, slug: string, title: string, session_number: int, vocabulary: array<string, string>, prompts: array<string, array{question: string, answer: string}>}
      */
-    private function emptyLesson(int $dayNumber, string $topic, string $cefr): array
+    private function emptyLesson(int $dayNumber, string $displayTopic, string $cefr, SummerImportOptions $options): array
     {
+        $slugTopic = $this->resolveSlugTopic($cefr, $dayNumber, $displayTopic, $options);
+
         return [
             'day_number' => $dayNumber,
-            'topic' => $topic,
-            'title' => $topic,
+            'topic' => $displayTopic,
+            'title' => $this->formatLessonTitle($dayNumber, $displayTopic),
             'session_number' => $dayNumber,
-            'slug' => $this->lessonSlug($cefr, $dayNumber, $topic),
+            'slug' => $this->lessonSlug($cefr, $dayNumber, $slugTopic),
             'vocabulary' => [],
             'prompts' => [],
         ];
@@ -181,6 +400,11 @@ class SummerPracticePalImporter
             'cefr_filter' => $options->cefr,
             'source_vocab_rows' => count($vocabRows),
             'source_prompt_rows' => count($promptRows),
+            'vocab_rejected' => count($this->vocabRejectedRows),
+            'prompts_rejected' => count($this->promptRejectedRows),
+            'lesson_word_count_issues' => $this->lessonWordCountIssues,
+            'vocab_csv_files' => $options->vocabCsvByCefr,
+            'prompts_csv' => $options->promptsCsv,
             'courses' => [],
             'totals' => [
                 'courses' => 0,
@@ -234,6 +458,8 @@ class SummerPracticePalImporter
             'vocabulary_skipped' => 0,
             'prompts_created' => 0,
             'prompts_skipped' => 0,
+            'prompts_rejected' => count($this->promptRejectedRows),
+            'vocab_rejected' => count($this->vocabRejectedRows),
             'options_created' => 0,
             'games_ensured' => 0,
             'translations_ok' => 0,
@@ -242,6 +468,7 @@ class SummerPracticePalImporter
             'vocab_enrichment_errors' => 0,
             'prompt_tts_generated' => 0,
             'lessons_vocab_only' => 0,
+            'assets_archived' => 0,
             'by_cefr' => [],
         ];
 
@@ -264,12 +491,14 @@ class SummerPracticePalImporter
                 'is_active' => true,
                 'access_mode' => 'restricted',
                 'allow_self_registration' => true,
+                'registration_type' => Organization::REGISTRATION_TYPE_PARENT_SIGNUP,
             ]
         );
         $summerOrg->update([
             'name' => 'Summer Practice Pal',
             'access_mode' => 'restricted',
             'allow_self_registration' => true,
+            'registration_type' => Organization::REGISTRATION_TYPE_PARENT_SIGNUP,
         ]);
 
         $defaultOrg = Organization::where('slug', 'default')->first();
@@ -339,6 +568,7 @@ class SummerPracticePalImporter
                     $summary['tts_ok'] += $lessonResult['tts_ok'];
                     $summary['vocab_enrichment_errors'] += $lessonResult['vocab_enrichment_errors'];
                     $summary['prompt_tts_generated'] += $lessonResult['prompt_tts_generated'];
+                    $summary['assets_archived'] += $lessonResult['assets_archived'];
 
                     if ($lessonResult['vocabulary_created'] > 0 && $lessonResult['prompts_created'] === 0 && count($lessonData['prompts']) === 0) {
                         $summary['lessons_vocab_only']++;
@@ -365,6 +595,7 @@ class SummerPracticePalImporter
             'vocabulary_skipped' => 0,
             'prompts_created' => 0,
             'prompts_skipped' => 0,
+            'prompts_rejected' => 0,
             'options_created' => 0,
             'games_ensured' => false,
             'translations_ok' => 0,
@@ -372,6 +603,7 @@ class SummerPracticePalImporter
             'tts_ok' => 0,
             'vocab_enrichment_errors' => 0,
             'prompt_tts_generated' => 0,
+            'assets_archived' => 0,
         ];
 
         $lesson = Lesson::where('slug', $lessonData['slug'])->first();
@@ -387,9 +619,25 @@ class SummerPracticePalImporter
                 ]);
             }
         } elseif ($lessonExisted && $options->force) {
+            if (!$options->skipArchive) {
+                $archiveSummary = $this->assetArchiver->archiveLesson($lesson);
+                $result['assets_archived'] = $archiveSummary['vocabulary_rows'];
+                $this->reportProgress('Archived vocabulary assets before replace', [
+                    'slug' => $lesson->slug,
+                    'rows' => $archiveSummary['vocabulary_rows'],
+                    'images' => $archiveSummary['images_copied'],
+                    'audio' => $archiveSummary['audio_copied'],
+                ]);
+            }
+
             $lesson->prompts()->delete();
             $lesson->vocabulary()->delete();
             $this->lessonGameCreator->clearGamesForLesson($lesson);
+            $lesson->update([
+                'title' => $lessonData['title'],
+                'session_number' => $lessonData['session_number'],
+                'sort_order' => $lessonData['session_number'],
+            ]);
             $result['lesson_skipped'] = true;
         } else {
             $lesson = Lesson::create([
@@ -478,6 +726,14 @@ class SummerPracticePalImporter
             );
 
             if ($built === null) {
+                $result['prompts_rejected']++;
+                $this->rejectPromptRow([
+                    'CEFR Level' => '',
+                    'Day Number' => (string) ($lessonData['day_number'] ?? ''),
+                    'Day / Topic' => $lessonData['topic'] ?? '',
+                    'Question' => $promptRow['question'],
+                    'Answer' => $promptRow['answer'],
+                ], 'failed to build prompt');
                 continue;
             }
 
@@ -523,6 +779,43 @@ class SummerPracticePalImporter
     private function lessonKey(int $dayNumber, string $topic): string
     {
         return $dayNumber . '|' . strtolower(trim($topic));
+    }
+
+    private function lessonGroupingKey(string $cefr, int $dayNumber, string $csvTopic, SummerImportOptions $options): string
+    {
+        if ($this->usesA2LegacyLessonSlugs($cefr, $options)) {
+            return (string) $dayNumber;
+        }
+
+        return $this->lessonKey($dayNumber, $csvTopic);
+    }
+
+    private function usesA2LegacyLessonSlugs(string $cefr, SummerImportOptions $options): bool
+    {
+        if ($cefr !== 'A2') {
+            return false;
+        }
+
+        return isset($options->vocabCsvByCefr['A2']) || $options->promptsCsv !== null;
+    }
+
+    private function resolveSlugTopic(string $cefr, int $dayNumber, string $csvTopic, SummerImportOptions $options): string
+    {
+        if ($this->usesA2LegacyLessonSlugs($cefr, $options)) {
+            return SummerA2LegacyTopics::forDay($dayNumber) ?? $csvTopic;
+        }
+
+        return $csvTopic;
+    }
+
+    private function formatLessonTitle(int $dayNumber, string $displayTopic): string
+    {
+        $displayTopic = trim($displayTopic);
+        if (preg_match('/^day\s+\d+/i', $displayTopic)) {
+            return $displayTopic;
+        }
+
+        return "Day {$dayNumber}: {$displayTopic}";
     }
 
     private function lessonSlug(string $cefr, int $dayNumber, string $topic): string

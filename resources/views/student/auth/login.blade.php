@@ -30,8 +30,10 @@
             <form method="POST" action="{{ route('org.student.login.submit', $organization) }}" class="space-y-6">
                 @csrf
                 <div>
-                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                    <input type="email" id="email" name="email" required autofocus
+                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
+                        {{ $organization->usesParentSignup() ? 'Email or phone' : 'Email' }}
+                    </label>
+                    <input type="text" id="email" name="email" required autofocus
                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
                            value="{{ old('email') }}">
                 </div>

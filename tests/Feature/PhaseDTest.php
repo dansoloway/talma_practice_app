@@ -81,7 +81,7 @@ class PhaseDTest extends TestCase
             'is_active' => true,
         ]);
         $response = $this->get(route('org.student.index', $org->slug));
-        $response->assertRedirect(route('admin.login.show'));
+        $response->assertRedirect(route('org.student.login', $org));
     }
 
     public function test_logged_in_member_can_access_restricted_org_org_wide_course(): void
@@ -201,7 +201,7 @@ class PhaseDTest extends TestCase
         $guestResponseA->assertOk();
 
         $guestResponseB = $this->get(route('org.student.course', [$orgB->slug, $course->slug]));
-        $guestResponseB->assertRedirect(route('admin.login.show'));
+        $guestResponseB->assertRedirect(route('org.student.login', $orgB));
 
         $memberResponseB = $this->actingAs($user, 'admin')
             ->get(route('org.student.course', [$orgB->slug, $course->slug]));

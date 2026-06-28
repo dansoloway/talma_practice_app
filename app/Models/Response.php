@@ -12,6 +12,7 @@ class Response extends Model
 
     protected $fillable = [
         'user_id',
+        'parent_student_id',
         'session_id',
         'device_type',
         'ip_address',
@@ -52,6 +53,11 @@ class Response extends Model
     public function option(): BelongsTo
     {
         return $this->belongsTo(Option::class);
+    }
+
+    public function parentStudent(): BelongsTo
+    {
+        return $this->belongsTo(ParentStudent::class);
     }
 
     /**

@@ -62,6 +62,7 @@ class ResponseController extends Controller
 
         $response = Response::create([
             'user_id' => auth()->id(),
+            'parent_student_id' => session('selected_student_id'),
             'session_id' => $request->attributes->get('practice_session_id'),
             'device_type' => $this->detectDeviceType($request),
             'ip_address' => $ipAddress,
