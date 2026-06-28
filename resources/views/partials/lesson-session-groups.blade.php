@@ -28,44 +28,77 @@
     </div>
 @else
     @foreach($lessonGroups['sessions'] as $index => $sessionGroup)
-        @include('partials.lesson-session-accordion', [
-            'mode' => $mode,
-            'accordionId' => 'session-' . $sessionGroup['session_number'],
-            'sessionNumber' => $sessionGroup['session_number'],
-            'label' => $sessionGroup['label'],
-            'lessons' => $sessionGroup['lessons'],
-            'expanded' => $filteredSession
-                ? (int) $filteredSession === $sessionGroup['session_number']
-                : $index === 0,
-            'org' => $org ?? null,
-            'course' => $course ?? null,
-        ])
+        @if($mode === 'student' && $sessionGroup['lessons']->count() === 1)
+            <div class="mb-4">
+                @include('partials.lesson-item-student', [
+                    'lesson' => $sessionGroup['lessons']->first(),
+                    'org' => $org ?? null,
+                    'course' => $course ?? null,
+                ])
+            </div>
+        @else
+            @include('partials.lesson-session-accordion', [
+                'mode' => $mode,
+                'accordionId' => 'session-' . $sessionGroup['session_number'],
+                'sessionNumber' => $sessionGroup['session_number'],
+                'label' => $sessionGroup['label'],
+                'lessons' => $sessionGroup['lessons'],
+                'multiLesson' => $sessionGroup['lessons']->count() > 1,
+                'expanded' => $filteredSession
+                    ? (int) $filteredSession === $sessionGroup['session_number']
+                    : $index === 0,
+                'org' => $org ?? null,
+                'course' => $course ?? null,
+            ])
+        @endif
     @endforeach
 
     @if($lessonGroups['ungrouped']->isNotEmpty())
-        @include('partials.lesson-session-accordion', [
-            'mode' => $mode,
-            'accordionId' => 'other-lessons',
-            'sessionNumber' => null,
-            'label' => 'Other Lessons',
-            'lessons' => $lessonGroups['ungrouped'],
-            'expanded' => empty($lessonGroups['sessions']) && $lessonGroups['review']->isEmpty(),
-            'org' => $org ?? null,
-            'course' => $course ?? null,
-        ])
+        @if($mode === 'student' && $lessonGroups['ungrouped']->count() === 1)
+            <div class="mb-4">
+                @include('partials.lesson-item-student', [
+                    'lesson' => $lessonGroups['ungrouped']->first(),
+                    'org' => $org ?? null,
+                    'course' => $course ?? null,
+                ])
+            </div>
+        @else
+            @include('partials.lesson-session-accordion', [
+                'mode' => $mode,
+                'accordionId' => 'other-lessons',
+                'sessionNumber' => null,
+                'label' => 'Other Lessons',
+                'lessons' => $lessonGroups['ungrouped'],
+                'multiLesson' => $lessonGroups['ungrouped']->count() > 1,
+                'expanded' => empty($lessonGroups['sessions']) && $lessonGroups['review']->isEmpty(),
+                'org' => $org ?? null,
+                'course' => $course ?? null,
+            ])
+        @endif
     @endif
 
     @if($lessonGroups['review']->isNotEmpty())
-        @include('partials.lesson-session-accordion', [
-            'mode' => $mode,
-            'accordionId' => 'review-lessons',
-            'sessionNumber' => null,
-            'label' => 'Review Lessons',
-            'lessons' => $lessonGroups['review'],
-            'expanded' => false,
-            'org' => $org ?? null,
-            'course' => $course ?? null,
-        ])
+        @if($mode === 'student' && $lessonGroups['review']->count() === 1)
+            <div class="mb-4">
+                @include('partials.lesson-item-student', [
+                    'lesson' => $lessonGroups['review']->first(),
+                    'org' => $org ?? null,
+                    'course' => $course ?? null,
+                ])
+            </div>
+        @else
+            @include('partials.lesson-session-accordion', [
+                'mode' => $mode,
+                'accordionId' => 'review-lessons',
+                'sessionNumber' => null,
+                'label' => 'Review Lessons',
+                'lessons' => $lessonGroups['review'],
+                'multiLesson' => $lessonGroups['review']->count() > 1,
+                'expanded' => false,
+                'org' => $org ?? null,
+                'course' => $course ?? null,
+            ])
+        @endif
     @endif
 @endif
 

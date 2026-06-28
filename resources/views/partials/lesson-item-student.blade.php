@@ -49,9 +49,7 @@
             @endif
 
             @php
-                $activityCount = ($lesson->relationLoaded('prompts') ? $lesson->prompts->count() : 0)
-                    + ($lesson->relationLoaded('matchingGames') ? $lesson->matchingGames->count() : 0)
-                    + ($lesson->relationLoaded('flashcardGames') ? $lesson->flashcardGames->count() : 0);
+                $activityCount = $lesson->studentActivityCount();
             @endphp
 
             @if($activityCount > 0)

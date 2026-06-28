@@ -118,7 +118,7 @@ class StudentController extends Controller
         $lessons = $query->orderBy('session_number', 'asc')
             ->orderBy('part_number', 'asc')
             ->orderBy('created_at', 'asc')
-            ->with(['vocabulary', 'prompts', 'matchingGames', 'flashcardGames', 'reviewSources'])
+            ->with(['vocabulary', 'prompts', 'matchingGames', 'flashcardGames', 'spellingGames', 'reviewSources'])
             ->get();
         
         // For review lessons, load vocabulary from source lessons for display
@@ -183,7 +183,7 @@ class StudentController extends Controller
         $lessons = $query->orderBy('session_number', 'asc')
             ->orderBy('part_number', 'asc')
             ->orderBy('created_at', 'asc')
-            ->with(['vocabulary', 'prompts', 'matchingGames', 'flashcardGames'])
+            ->with(['vocabulary', 'prompts', 'matchingGames', 'flashcardGames', 'spellingGames'])
             ->get();
 
         $lessonGroups = LessonSessionGrouper::group($lessons);

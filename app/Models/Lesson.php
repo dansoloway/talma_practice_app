@@ -367,6 +367,37 @@ class Lesson extends Model
     }
 
     /**
+     * Count student-facing activities (matches the lesson detail page: one block per game type).
+     */
+    public function studentActivityCount(): int
+    {
+        $count = 0;
+
+        $hasPrompts = $this->relationLoaded('prompts')
+            ? $this->prompts->where('is_active', true)->isNotEmpty()
+            : $this->prompts()->where('is_active', true)->exists();
+
+        if ($hasPrompts) {
+            $count++;
+        }
+
+        $count += $this->activeRelatedCount('matchingGames');
+        $count += $this->activeRelatedCount('flashcardGames');
+        $count += $this->activeRelatedCount('spellingGames');
+
+        return $count;
+    }
+
+    private function activeRelatedCount(string $relation): int
+    {
+        if ($this->relationLoaded($relation)) {
+            return $this->{$relation}->where('is_active', true)->count();
+        }
+
+        return $this->{$relation}()->where('is_active', true)->count();
+    }
+
+    /**
      * Get the full URL for the cover image.
      */
     public function getCoverImageUrlAttribute(): ?string
