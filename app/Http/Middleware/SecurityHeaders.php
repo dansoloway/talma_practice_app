@@ -29,8 +29,8 @@ class SecurityHeaders
         // Referrer-Policy: Control referrer information
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin', false);
 
-        // Permissions-Policy: Restrict browser features
-        $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()', false);
+        // Permissions-Policy: Restrict browser features (microphone allowed for same-origin speaking activities)
+        $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(self), camera=()', false);
 
         // HSTS: Force HTTPS (only in production)
         if (app()->environment('production')) {

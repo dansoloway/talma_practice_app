@@ -218,8 +218,9 @@ async function initializeRecording() {
         };
 
         return true;
-    } catch {
-        recordingStatus.textContent = 'Microphone access denied. You can skip this word.';
+    } catch (error) {
+        console.error('Error accessing microphone:', error);
+        recordingStatus.textContent = 'Microphone is blocked. Check browser site permissions, then try again. You can skip this word.';
         return false;
     }
 }
