@@ -129,6 +129,38 @@
         var recorder = null;
         var chunks = [];
         var startedAt = null;
+        var recordStream = stream;
+
+        function pickRecorderMimeType() {
+            if (!hasMediaRecorder()) {
+                return '';
+            }
+
+            var candidates = [
+                'audio/webm;codecs=opus',
+                'audio/webm',
+                'audio/mp4',
+            ];
+
+            for (var i = 0; i < candidates.length; i++) {
+                if (MediaRecorder.isTypeSupported(candidates[i])) {
+                    return candidates[i];
+                }
+            }
+
+            return '';
+        }
+
+        function releaseRecordStream() {
+            if (!recordStream || recordStream === cachedMicStream) {
+                return;
+            }
+
+            recordStream.getTracks().forEach(function (track) {
+                track.stop();
+            });
+            recordStream = null;
+        }
 
         return {
             start: function () {
@@ -139,15 +171,31 @@
                 try {
                     chunks = [];
                     startedAt = Date.now();
-                    recorder = new MediaRecorder(stream);
+
+                    try {
+                        var tracks = stream.getAudioTracks();
+                        if (tracks.length > 0) {
+                            recordStream = new MediaStream([tracks[0].clone()]);
+                        } else {
+                            recordStream = stream;
+                        }
+                    } catch (cloneError) {
+                        recordStream = stream;
+                    }
+
+                    var mimeType = pickRecorderMimeType();
+                    recorder = mimeType
+                        ? new MediaRecorder(recordStream, { mimeType: mimeType })
+                        : new MediaRecorder(recordStream);
                     recorder.ondataavailable = function (event) {
                         if (event.data && event.data.size > 0) {
                             chunks.push(event.data);
                         }
                     };
-                    recorder.start();
+                    recorder.start(250);
                     return true;
                 } catch (e) {
+                    releaseRecordStream();
                     recorder = null;
                     chunks = [];
                     startedAt = null;
@@ -157,6 +205,7 @@
             stop: function () {
                 return new Promise(function (resolve) {
                     if (!recorder || recorder.state === 'inactive') {
+                        releaseRecordStream();
                         resolve({ audioBlob: null, durationMs: null });
                         return;
                     }
@@ -170,18 +219,24 @@
                         chunks = [];
                         recorder = null;
                         startedAt = null;
+                        releaseRecordStream();
                         resolve({ audioBlob: blob, durationMs: durationMs });
                     };
 
                     try {
+                        if (typeof recorder.requestData === 'function') {
+                            recorder.requestData();
+                        }
                         recorder.stop();
                     } catch (e) {
+                        releaseRecordStream();
                         resolve({ audioBlob: null, durationMs: durationMs });
                     }
                 });
             },
             abort: function () {
                 if (!recorder) {
+                    releaseRecordStream();
                     return Promise.resolve({ audioBlob: null, durationMs: null });
                 }
 
@@ -196,6 +251,7 @@
                 chunks = [];
                 recorder = null;
                 startedAt = null;
+                releaseRecordStream();
                 return Promise.resolve({ audioBlob: null, durationMs: null });
             },
         };
@@ -405,7 +461,7 @@
 
     function checkPronunciation(options) {
         options = options || {};
-        var session = { aborted: false, listenHandle: null, audioRecorder: null };
+        var session = { aborted: false, listenHandle: null, audioRecorder: null, feedbackComplete: false, pendingEnd: false };
 
         if (!getRecognitionConstructor()) {
             if (typeof options.onUnsupported === 'function') {
@@ -444,6 +500,19 @@
             return recorder.abort();
         }
 
+        function finishSession() {
+            session.feedbackComplete = true;
+            if (typeof options.onEnd === 'function') {
+                options.onEnd();
+            }
+        }
+
+        function maybeFinishSession() {
+            if (session.pendingEnd) {
+                finishSession();
+            }
+        }
+
         requestMicrophoneAccess()
             .then(function (stream) {
                 if (session.aborted) {
@@ -468,6 +537,7 @@
                             if (typeof options.onFeedback === 'function') {
                                 options.onFeedback(attachAudioToResult(result, audio));
                             }
+                            maybeFinishSession();
                         });
                     },
                     onError: function (error) {
@@ -478,9 +548,15 @@
                                 payload.durationMs = audio.durationMs;
                                 options.onError(payload);
                             }
+                            maybeFinishSession();
                         });
                     },
-                    onEnd: options.onEnd,
+                    onEnd: function () {
+                        session.pendingEnd = true;
+                        if (session.feedbackComplete) {
+                            finishSession();
+                        }
+                    },
                 });
             })
             .catch(function (error) {

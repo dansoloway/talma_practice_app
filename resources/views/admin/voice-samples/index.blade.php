@@ -216,6 +216,7 @@
                             <th class="text-left px-4 py-3 font-semibold text-gray-700">Word</th>
                             <th class="text-left px-4 py-3 font-semibold text-gray-700">Result</th>
                             <th class="text-left px-4 py-3 font-semibold text-gray-700">Heard</th>
+                            <th class="text-left px-4 py-3 font-semibold text-gray-700">Audio saved</th>
                             <th class="text-left px-4 py-3 font-semibold text-gray-700">Skipped</th>
                         </tr>
                     </thead>
@@ -244,6 +245,15 @@
                                 </td>
                                 <td class="px-4 py-3 text-gray-600 max-w-xs">
                                     {{ $meta['heard'] ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 text-gray-600">
+                                    @if(! empty($meta['audio_captured']))
+                                        <span class="text-green-700">Yes</span>
+                                    @elseif(! empty($meta['skipped']))
+                                        —
+                                    @else
+                                        <span class="text-amber-700" title="Browser did not capture uploadable audio during the pronunciation check">No</span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-gray-600">
                                     {{ ! empty($meta['skipped']) ? 'Yes' : 'No' }}

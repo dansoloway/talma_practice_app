@@ -329,6 +329,7 @@ function buildPronunciationMeta({ skipped = false } = {}) {
             pronunciation_pass: false,
             skipped: true,
             source: 'pronunciation_check',
+            audio_captured: false,
         };
     }
 
@@ -340,6 +341,7 @@ function buildPronunciationMeta({ skipped = false } = {}) {
         ratio: typeof attempt?.ratio === 'number' ? attempt.ratio : null,
         source: 'pronunciation_check',
         skipped: false,
+        audio_captured: !!(attempt?.audioBlob && attempt.audioBlob.size > 0),
     };
 }
 
@@ -376,7 +378,7 @@ async function logVocabProgress({ skipped = false } = {}) {
 async function advanceVocabularyWord({ skipped = false } = {}) {
     const attempt = window.talmaVocabPronunciation.lastAttempt;
 
-    if (!skipped && voiceUploadConfig.enabled && attempt?.audioBlob) {
+    if (!skipped && voiceUploadConfig.enabled && attempt?.audioBlob && attempt.audioBlob.size > 0) {
         try {
             await uploadVoiceSample(attempt.audioBlob, {
                 recordingSource: 'pronunciation_check',
