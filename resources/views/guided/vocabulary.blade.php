@@ -207,8 +207,10 @@ async function initializeRecording() {
                 try {
                     await uploadVoiceSample(recordedAudioBlob);
                     recordingStatus.textContent = 'Recording saved!';
-                } catch {
-                    recordingStatus.textContent = 'Recording saved locally (upload failed).';
+                } catch (error) {
+                    recordingStatus.textContent = error?.message
+                        ? `${error.message} You can skip this word.`
+                        : 'Recording saved locally (upload failed).';
                 }
             } else {
                 recordingStatus.textContent = 'Recording saved!';
@@ -255,7 +257,10 @@ recordBtn?.addEventListener('click', toggleRecording);
 playRecordingBtn?.addEventListener('click', () => {
     if (!recordedAudioBlob) return;
     playbackAudio.src = URL.createObjectURL(recordedAudioBlob);
-    playbackAudio.play();
+    playbackAudio.play().catch((error) => {
+        console.error('Playback failed:', error);
+        recordingStatus.textContent = 'Could not play recording in this browser.';
+    });
 });
 
 async function uploadVoiceSample(blob) {
@@ -276,7 +281,11 @@ async function uploadVoiceSample(blob) {
         body: formData,
     });
 
-    if (!response.ok) throw new Error('Upload failed');
+    if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || 'Upload failed');
+    }
+
     return response.json();
 }
 

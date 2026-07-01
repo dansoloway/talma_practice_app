@@ -7,8 +7,8 @@ use App\Models\VoiceSample;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use Throwable;
 
 class VoiceSampleStorage
 {
@@ -34,11 +34,15 @@ class VoiceSampleStorage
             $now->format('m')
         );
 
-        $mp3Path = $this->transcodeToMp3($file);
-        $mp3Key = "{$prefix}/{$uuid}.mp3";
+        $audio = $this->prepareAudioForUpload($file);
+        $audioKey = "{$prefix}/{$uuid}.{$audio['extension']}";
 
-        Storage::disk($this->disk())->put($mp3Key, file_get_contents($mp3Path));
-        @unlink($mp3Path);
+        Storage::disk($this->disk())->put(
+            $audioKey,
+            file_get_contents($audio['path']),
+            ['ContentType' => $audio['content_type']]
+        );
+        @unlink($audio['path']);
 
         $metadata = [
             'target_text' => $targetText,
@@ -55,7 +59,11 @@ class VoiceSampleStorage
         ];
 
         $metadataKey = "{$prefix}/{$uuid}.json";
-        Storage::disk($this->disk())->put($metadataKey, json_encode($metadata, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
+        Storage::disk($this->disk())->put(
+            $metadataKey,
+            json_encode($metadata, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            ['ContentType' => 'application/json']
+        );
 
         return VoiceSample::create([
             'organization_id' => $organization->id,
@@ -67,7 +75,7 @@ class VoiceSampleStorage
             'age' => $age,
             'gender' => $gender,
             'native_language' => $nativeLanguage,
-            's3_key' => $mp3Key,
+            's3_key' => $audioKey,
             'metadata_s3_key' => $metadataKey,
             'duration_ms' => $durationMs,
             'mime_original' => $file->getMimeType(),
@@ -80,15 +88,80 @@ class VoiceSampleStorage
         return config('filesystems.voice_training_disk', 'voice_training');
     }
 
+    /**
+     * @return array{path: string, extension: string, content_type: string}
+     */
+    private function prepareAudioForUpload(UploadedFile $file): array
+    {
+        if ($this->shouldTranscodeToMp3($file)) {
+            try {
+                $mp3Path = $this->transcodeToMp3($file);
+                if (is_file($mp3Path) && filesize($mp3Path) > 0) {
+                    return [
+                        'path' => $mp3Path,
+                        'extension' => 'mp3',
+                        'content_type' => 'audio/mpeg',
+                    ];
+                }
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+
+        $mime = $file->getMimeType() ?: 'application/octet-stream';
+        $extension = $this->extensionForMime($mime, $file);
+        $tempPath = sys_get_temp_dir().'/'.Str::uuid().'.'.$extension;
+        copy($file->getRealPath(), $tempPath);
+
+        return [
+            'path' => $tempPath,
+            'extension' => $extension,
+            'content_type' => $mime,
+        ];
+    }
+
+    private function shouldTranscodeToMp3(UploadedFile $file): bool
+    {
+        if (app()->runningUnitTests()) {
+            return false;
+        }
+
+        $mime = strtolower($file->getMimeType() ?: '');
+        if (in_array($mime, ['audio/mpeg', 'audio/mp3'], true)) {
+            return false;
+        }
+
+        return $this->ffmpegAvailable();
+    }
+
+    private function extensionForMime(string $mime, UploadedFile $file): string
+    {
+        $mime = strtolower($mime);
+
+        if (str_contains($mime, 'webm')) {
+            return 'webm';
+        }
+        if (str_contains($mime, 'mpeg') || str_contains($mime, 'mp3')) {
+            return 'mp3';
+        }
+        if (str_contains($mime, 'wav')) {
+            return 'wav';
+        }
+        if (str_contains($mime, 'ogg')) {
+            return 'ogg';
+        }
+        if (str_contains($mime, 'm4a')) {
+            return 'm4a';
+        }
+
+        $extension = strtolower($file->getClientOriginalExtension() ?: '');
+
+        return $extension !== '' ? $extension : 'webm';
+    }
+
     private function transcodeToMp3(UploadedFile $file): string
     {
-        $outputPath = sys_get_temp_dir() . '/' . Str::uuid() . '.mp3';
-
-        if (app()->runningUnitTests() || ! $this->ffmpegAvailable()) {
-            copy($file->getRealPath(), $outputPath);
-
-            return $outputPath;
-        }
+        $outputPath = sys_get_temp_dir().'/'.Str::uuid().'.mp3';
 
         $process = new Process([
             'ffmpeg',
@@ -103,7 +176,7 @@ class VoiceSampleStorage
         $process->run();
 
         if (! $process->isSuccessful()) {
-            throw new ProcessFailedException($process);
+            throw new \RuntimeException(trim($process->getErrorOutput()) ?: 'ffmpeg transcoding failed.');
         }
 
         return $outputPath;

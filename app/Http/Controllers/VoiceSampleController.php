@@ -41,7 +41,7 @@ class VoiceSampleController extends Controller
             'prompt_id' => 'required_without:vocabulary_id|nullable|exists:prompts,id',
             'option_id' => 'required_without:vocabulary_id|nullable|exists:options,id',
             'generated_sentence' => 'required|string|max:255',
-            'recording' => 'required|file|mimes:webm,mp3,wav,ogg,m4a|max:10240',
+            'recording' => 'required|file|max:10240|mimetypes:audio/webm,video/webm,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/m4a,audio/x-m4a',
             'duration_ms' => 'nullable|integer|min:0|max:120000',
         ]);
 
@@ -81,19 +81,27 @@ class VoiceSampleController extends Controller
             return response()->json(['error' => 'Invalid file type.'], 422);
         }
 
-        $sample = $storage->store(
-            file: $file,
-            organization: $organization,
-            lessonId: $request->integer('lesson_id'),
-            targetText: $request->string('generated_sentence')->toString(),
-            age: $profile->age,
-            gender: $profile->gender,
-            nativeLanguage: $profile->nativeLanguage,
-            promptId: $isVocabulary ? null : $request->integer('prompt_id'),
-            optionId: $isVocabulary ? null : $request->integer('option_id'),
-            vocabularyId: $isVocabulary ? $request->integer('vocabulary_id') : null,
-            durationMs: $request->integer('duration_ms') ?: null,
-        );
+        try {
+            $sample = $storage->store(
+                file: $file,
+                organization: $organization,
+                lessonId: $request->integer('lesson_id'),
+                targetText: $request->string('generated_sentence')->toString(),
+                age: $profile->age,
+                gender: $profile->gender,
+                nativeLanguage: $profile->nativeLanguage,
+                promptId: $isVocabulary ? null : $request->integer('prompt_id'),
+                optionId: $isVocabulary ? null : $request->integer('option_id'),
+                vocabularyId: $isVocabulary ? $request->integer('vocabulary_id') : null,
+                durationMs: $request->integer('duration_ms') ?: null,
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'error' => 'Could not save recording. Please try again later.',
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
