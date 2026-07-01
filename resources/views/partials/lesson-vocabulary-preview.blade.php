@@ -2,14 +2,24 @@
     $vocabItems = $lesson->vocabulary->where('is_active', true);
     $hasHebrew = $vocabItems->contains(fn ($v) => ! empty($v->hebrew_translation));
     $hasArabic = $vocabItems->contains(fn ($v) => ! empty($v->arabic_translation));
+    $statuses = $vocabularyProgress['statuses'] ?? [];
+    $hasProgress = ! empty($vocabularyProgress) && ($vocabularyProgress['visited'] ?? 0) > 0;
 @endphp
 
 @if($vocabItems->isNotEmpty())
     <section class="mb-8" id="lesson-vocabulary-preview">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Vocabulary · {{ $vocabItems->count() }} {{ Str::plural('word', $vocabItems->count()) }}
-            </p>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Vocabulary · {{ $vocabItems->count() }} {{ Str::plural('word', $vocabItems->count()) }}
+                </p>
+                @if($hasProgress)
+                    <p class="text-sm text-gray-700 mt-1">
+                        <span class="font-semibold text-green-700">{{ $vocabularyProgress['learned'] }}</span>
+                        of {{ $vocabularyProgress['total'] }} words mastered
+                    </p>
+                @endif
+            </div>
             @if($hasHebrew || $hasArabic)
                 <div class="flex flex-wrap gap-2">
                     @if($hasHebrew)
@@ -30,11 +40,31 @@
             @endif
         </div>
 
-        <p class="text-sm text-gray-600 mb-4">Listen to each word and review the pictures before you start the activities.</p>
+        @if($hasProgress)
+            <div class="flex flex-wrap gap-3 mb-4 text-xs text-gray-500">
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> Got it</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Try again</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-300"></span> Not yet / skipped</span>
+            </div>
+        @else
+            <p class="text-sm text-gray-600 mb-4">Listen to each word and review the pictures before you start the activities.</p>
+        @endif
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             @foreach($vocabItems as $vocab)
-                <div class="lesson-vocab-card rounded-xl border border-gray-200 bg-white p-3 text-center shadow-sm">
+                @php
+                    $wordStatus = $statuses[$vocab->id] ?? 'not_started';
+                @endphp
+                <div @class([
+                    'lesson-vocab-card rounded-xl border bg-white p-3 text-center shadow-sm',
+                    'border-green-300 ring-1 ring-green-100' => $wordStatus === 'learned',
+                    'border-amber-200 ring-1 ring-amber-50' => $wordStatus === 'needs_practice',
+                    'border-gray-200' => in_array($wordStatus, ['not_started', 'skipped'], true),
+                ])>
+                    <div class="flex justify-center mb-1 min-h-[1.25rem]">
+                        @include('partials.vocabulary-word-status', ['status' => $wordStatus])
+                    </div>
+
                     @if($vocab->image_url)
                         <img src="{{ $vocab->image_url }}"
                              alt="{{ $vocab->english_word }}"

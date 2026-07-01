@@ -111,6 +111,8 @@ class GuidedLessonController extends Controller
 
         $speechFeedbackEnabled = (bool) config('app.speech_feedback_enabled', true);
 
+        $vocabularyProgress = $this->flowService->vocabularyProgressSummary($lesson, $sessionId);
+
         return view('guided.vocabulary', compact(
             'lesson',
             'org',
@@ -126,6 +128,7 @@ class GuidedLessonController extends Controller
             'speechFeedbackEnabled',
             'guidedFlow',
             'continueUrl',
+            'vocabularyProgress',
         ));
     }
 

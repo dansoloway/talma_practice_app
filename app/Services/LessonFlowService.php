@@ -528,4 +528,87 @@ class LessonFlowService
             ->sortBy('sort_order')
             ->first(fn ($vocab) => ! $visited->contains($vocab->id));
     }
+
+    /**
+     * Latest per-word vocabulary status for the current practice session.
+     *
+     * @return array<int, string> vocabulary_id => learned|needs_practice|skipped|not_started
+     */
+    public function vocabularyWordStatuses(Lesson $lesson, ?string $practiceSessionId): array
+    {
+        if (! $practiceSessionId) {
+            return [];
+        }
+
+        $events = ActivityEvent::query()
+            ->where('session_id', $practiceSessionId)
+            ->where('lesson_id', $lesson->id)
+            ->where('activity_type', 'vocabulary')
+            ->where('status', 'completed')
+            ->whereNotNull('activity_id')
+            ->orderByDesc('id')
+            ->get();
+
+        $statuses = [];
+
+        foreach ($events as $event) {
+            if (isset($statuses[$event->activity_id])) {
+                continue;
+            }
+
+            $statuses[$event->activity_id] = $this->vocabularyStatusFromEvent($event);
+        }
+
+        return $statuses;
+    }
+
+    /**
+     * @return array{total: int, learned: int, visited: int, statuses: array<int, string>}
+     */
+    public function vocabularyProgressSummary(Lesson $lesson, ?string $practiceSessionId): array
+    {
+        $words = $lesson->vocabulary->where('is_active', true);
+        $statuses = $this->vocabularyWordStatuses($lesson, $practiceSessionId);
+
+        $learned = 0;
+        $visited = 0;
+
+        foreach ($words as $word) {
+            $status = $statuses[$word->id] ?? 'not_started';
+
+            if ($status === 'learned') {
+                $learned++;
+            }
+
+            if ($status !== 'not_started') {
+                $visited++;
+            }
+        }
+
+        return [
+            'total' => $words->count(),
+            'learned' => $learned,
+            'visited' => $visited,
+            'statuses' => $statuses,
+        ];
+    }
+
+    public function vocabularyStatusFromEvent(ActivityEvent $event): string
+    {
+        $meta = $event->meta ?? [];
+
+        if (! array_key_exists('pronunciation_pass', $meta)) {
+            return 'learned';
+        }
+
+        if (! empty($meta['skipped'])) {
+            return 'skipped';
+        }
+
+        if (($meta['pronunciation_pass'] ?? false) === true) {
+            return 'learned';
+        }
+
+        return 'needs_practice';
+    }
 }

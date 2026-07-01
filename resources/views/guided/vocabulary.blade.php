@@ -17,6 +17,12 @@
             <p class="text-xs text-gray-500 mb-4">Step {{ $guidedFlow['currentIndex'] }} of {{ $guidedFlow['totalSteps'] }}</p>
         @endif
 
+        @include('partials.vocabulary-progress-strip', [
+            'vocabularyProgress' => $vocabularyProgress ?? null,
+            'words' => $words ?? collect(),
+            'currentWordId' => $currentWord->id ?? null,
+        ])
+
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 text-center" id="vocab-step">
             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
                 Vocabulary · Word {{ $wordIndex + 1 }} of {{ $wordsCount }}
@@ -126,8 +132,24 @@
 
         <div id="vocab-complete" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
             <h2 class="text-2xl font-bold text-gray-900 mb-3">Vocabulary complete!</h2>
-            <p class="text-gray-600 mb-6">Great job practicing all the words.</p>
+            @if(!empty($vocabularyProgress))
+                <p class="text-gray-700 mb-2">
+                    You mastered
+                    <span class="font-bold text-green-700" id="vocab-complete-learned-count">{{ $vocabularyProgress['learned'] }}</span>
+                    of {{ $vocabularyProgress['total'] }} words.
+                </p>
+            @else
+                <p class="text-gray-600 mb-6">Great job practicing all the words.</p>
+            @endif
+
+            @include('partials.vocabulary-progress-strip', [
+                'vocabularyProgress' => $vocabularyProgress ?? null,
+                'words' => $words ?? collect(),
+            ])
+
+            <div class="mt-6">
             @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson, 'fallbackLabel' => 'Back to Lesson'])
+            </div>
         </div>
     </div>
 </div>
@@ -520,11 +542,54 @@ function finishVocabularyStep() {
     document.getElementById('vocab-complete').classList.remove('hidden');
 }
 
+function updateVocabularyProgressChip({ skipped = false } = {}) {
+    const chip = document.querySelector(`[data-vocab-word-id="${voiceUploadConfig.vocabularyId}"]`);
+    if (!chip) {
+        return;
+    }
+
+    const wordLabel = chip.dataset.wordLabel || chip.textContent.trim();
+    const attempt = window.talmaVocabPronunciation.lastAttempt;
+    let status = 'needs_practice';
+
+    if (skipped) {
+        status = 'skipped';
+    } else if (!speechFeedbackConfig.enabled || attempt?.pass === true) {
+        status = 'learned';
+    }
+
+    chip.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border';
+
+    if (status === 'learned') {
+        chip.classList.add('border-green-300', 'bg-green-50', 'text-green-800');
+        chip.innerHTML = `<i class="fas fa-check text-[10px]" aria-hidden="true"></i> ${wordLabel}`;
+    } else if (status === 'needs_practice') {
+        chip.classList.add('border-amber-200', 'bg-amber-50', 'text-amber-800');
+        chip.innerHTML = `<i class="fas fa-redo text-[10px]" aria-hidden="true"></i> ${wordLabel}`;
+    } else {
+        chip.classList.add('border-gray-200', 'bg-gray-50', 'text-gray-600');
+        chip.textContent = wordLabel;
+    }
+
+    if (status === 'learned' && chip.dataset.countedLearned !== 'true') {
+        chip.dataset.countedLearned = 'true';
+        const learnedEl = document.getElementById('vocab-learned-count');
+        if (learnedEl) {
+            learnedEl.textContent = String((parseInt(learnedEl.textContent, 10) || 0) + 1);
+        }
+        const completeLearnedEl = document.getElementById('vocab-complete-learned-count');
+        if (completeLearnedEl && learnedEl) {
+            completeLearnedEl.textContent = learnedEl.textContent;
+        }
+    }
+}
+
 nextWordBtn.addEventListener('click', async () => {
     nextWordBtn.disabled = true;
 
     try {
         await advanceVocabularyWord();
+        updateVocabularyProgressChip();
     } catch (error) {
         nextWordBtn.disabled = false;
         const message = error?.message || 'Could not save progress. Try again.';
@@ -555,6 +620,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
 
     try {
         await advanceVocabularyWord({ skipped: true });
+        updateVocabularyProgressChip({ skipped: true });
     } catch (error) {
         skipBtn.disabled = false;
         if (recordingStatus) {

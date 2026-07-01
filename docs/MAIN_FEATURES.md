@@ -38,6 +38,8 @@ Lessons can mix several kinds of practice. Not every lesson includes every type;
 
 Words appear with English text and often **translations** (for example Hebrew or Arabic labels where teachers added them). You typically see **an image per word** and can **hear the word spoken**. Teachers often build vocabulary lists by **importing a spreadsheet**, then the platform helps attach pictures and sounds—so what you see and hear is richer without slower manual setup.
 
+While you practice, you can see **your word-by-word progress** in the lesson: which words you **got it** on, which need **try again**, and which you skipped. The lesson hub shows the same summary on the vocabulary preview cards.
+
 ### Sentence prompts (“Practice Pal” style speaking)
 
 You get a question or sentence pattern with **picture choices**. You tap answers and hear prompts read aloud. The activity encourages forming simple sentences that sound natural—similar to guided oral practice in class.
@@ -90,7 +92,7 @@ You experience the result as a polished lesson—not as “empty boxes waiting f
 
 ## Progress and participation
 
-The app can remember **how you interact** with lessons and activities—so teachers and programs can see engagement over time. From your side, it feels like normal browsing and playing; no special steps are required unless your teacher asks you to sign in.
+The app can remember **how you interact** with lessons and activities—so teachers and programs can see engagement over time. From your side, you can also see **vocabulary progress within a lesson**: a count of words mastered and badges on each word (got it, try again, or skipped). Progress is tied to your current browser session on that device. No special steps are required unless your teacher asks you to sign in.
 
 ---
 

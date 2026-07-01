@@ -478,6 +478,105 @@ class GuidedLessonFlowTest extends TestCase
         $this->assertCount(1, $this->flowService->learnedVocabularyIds($this->lesson, $sessionId));
     }
 
+    public function test_vocabulary_progress_summary_counts_learned_and_needs_practice(): void
+    {
+        $sessionId = 'vocab-progress-summary';
+        $words = $this->lesson->vocabulary()->orderBy('sort_order')->get();
+
+        ActivityEvent::create([
+            'session_id' => $sessionId,
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'vocabulary',
+            'activity_id' => $words[0]->id,
+            'status' => 'completed',
+            'meta' => ['pronunciation_pass' => true, 'source' => 'pronunciation_check'],
+        ]);
+
+        ActivityEvent::create([
+            'session_id' => $sessionId,
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'vocabulary',
+            'activity_id' => $words[1]->id,
+            'status' => 'completed',
+            'meta' => ['pronunciation_pass' => false, 'source' => 'pronunciation_check'],
+        ]);
+
+        $this->lesson->load('vocabulary');
+
+        $summary = $this->flowService->vocabularyProgressSummary($this->lesson, $sessionId);
+
+        $this->assertSame(2, $summary['total']);
+        $this->assertSame(1, $summary['learned']);
+        $this->assertSame(2, $summary['visited']);
+        $this->assertSame('learned', $summary['statuses'][$words[0]->id]);
+        $this->assertSame('needs_practice', $summary['statuses'][$words[1]->id]);
+    }
+
+    public function test_guided_vocabulary_shows_word_progress_strip(): void
+    {
+        $sessionId = 'guided-vocab-progress-strip';
+        $words = $this->lesson->vocabulary()->orderBy('sort_order')->get();
+
+        ActivityEvent::create([
+            'session_id' => $sessionId,
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'vocabulary',
+            'activity_id' => $words[0]->id,
+            'status' => 'completed',
+            'meta' => ['pronunciation_pass' => true, 'source' => 'pronunciation_check'],
+        ]);
+
+        $user = User::create([
+            'name' => 'Progress Student',
+            'email' => 'progress-strip@example.com',
+            'password' => bcrypt('password123'),
+            'role' => 'student',
+            'is_active' => true,
+            'age' => 10,
+            'gender' => 'female',
+            'native_language' => 'hebrew',
+            'voice_recording_consented_at' => now(),
+        ]);
+
+        $this->organization->users()->attach($user->id, ['role' => 'student']);
+
+        $response = $this->actingAs($user, 'admin')
+            ->withCookie('talma_session_id', $sessionId)
+            ->get(route('org.student.guided.vocabulary', [
+                'organization' => $this->organization,
+                'lesson' => $this->lesson,
+            ]));
+
+        $response->assertOk();
+        $response->assertSee('id="vocab-progress-summary"', false);
+        $response->assertSee('id="vocab-learned-count"', false);
+        $response->assertSee('of 2 mastered', false);
+        $response->assertSee($words[1]->english_word);
+    }
+
+    public function test_lesson_page_shows_vocabulary_word_progress(): void
+    {
+        $sessionId = 'lesson-vocab-progress';
+        $word = $this->lesson->vocabulary()->orderBy('sort_order')->first();
+
+        ActivityEvent::create([
+            'session_id' => $sessionId,
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'vocabulary',
+            'activity_id' => $word->id,
+            'status' => 'completed',
+            'meta' => ['pronunciation_pass' => true, 'source' => 'pronunciation_check'],
+        ]);
+
+        $response = $this->withCookie('talma_session_id', $sessionId)
+            ->get(route('lessons.show', $this->lesson->slug));
+
+        $response->assertOk();
+        $response->assertSee('lesson-vocabulary-preview', false);
+        $response->assertSee('of 2 words mastered', false);
+        $response->assertSee('Got it');
+    }
+
     public function test_prompts_play_shows_next_step_when_guided(): void
     {
         $response = $this->get(route('prompts.play', $this->lesson));

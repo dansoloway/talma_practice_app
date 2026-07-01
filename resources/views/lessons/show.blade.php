@@ -88,7 +88,7 @@
                 : route('guided.vocabulary', ['lesson' => $lesson]);
         @endphp
 
-        @include('partials.lesson-vocabulary-preview', ['lesson' => $lesson])
+        @include('partials.lesson-vocabulary-preview', ['lesson' => $lesson, 'vocabularyProgress' => $vocabularyProgress ?? null])
 
         @if(!empty($isGuided) && $lesson->vocabulary->where('is_active', true)->isNotEmpty())
             <div class="mb-6 flex flex-wrap items-center gap-3">
