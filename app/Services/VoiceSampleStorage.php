@@ -184,9 +184,28 @@ class VoiceSampleStorage
 
     private function ffmpegAvailable(): bool
     {
-        $process = new Process(['ffmpeg', '-version']);
-        $process->run();
+        if (! $this->canRunProcesses()) {
+            return false;
+        }
 
-        return $process->isSuccessful();
+        try {
+            $process = new Process(['ffmpeg', '-version']);
+            $process->run();
+
+            return $process->isSuccessful();
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    private function canRunProcesses(): bool
+    {
+        if (! function_exists('proc_open')) {
+            return false;
+        }
+
+        $disabled = array_filter(array_map('trim', explode(',', (string) ini_get('disable_functions'))));
+
+        return ! in_array('proc_open', $disabled, true);
     }
 }
