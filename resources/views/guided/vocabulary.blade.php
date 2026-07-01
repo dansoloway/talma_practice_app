@@ -711,7 +711,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             target: speechFeedbackConfig.targetText,
             lang: speechFeedbackConfig.lang,
             maxSeconds: speechFeedbackConfig.maxSeconds,
-            recordAudio: false,
+            recordAudio: voiceUploadConfig.enabled,
             onRequestingMic: () => {
                 speechBtn.disabled = true;
                 if (recordBtnEl) {

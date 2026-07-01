@@ -72,10 +72,19 @@
         button.disabled = false;
     }
 
+    function resolvePlaybackRate(options) {
+        const rate = options && typeof options.playbackRate === 'number'
+            ? options.playbackRate
+            : 1;
+
+        return Math.min(4, Math.max(0.25, rate));
+    }
+
     const TalmaAudio = {
         audio: new Audio(),
         currentButton: null,
         currentUrl: null,
+        currentPlaybackRate: 1,
 
         resetButton(button) {
             resetButton(button);
@@ -88,6 +97,7 @@
         stop() {
             this.audio.pause();
             this.audio.currentTime = 0;
+            this.audio.playbackRate = 1;
 
             if (this.currentButton) {
                 resetButton(this.currentButton);
@@ -95,14 +105,16 @@
 
             this.currentButton = null;
             this.currentUrl = null;
+            this.currentPlaybackRate = 1;
         },
 
-        play(url, button) {
+        play(url, button, options) {
             if (!url) {
                 return;
             }
 
             const normalizedUrl = normalizeUrl(url);
+            const playbackRate = resolvePlaybackRate(options);
 
             if (this.currentButton && this.currentButton !== button) {
                 resetButton(this.currentButton);
@@ -110,12 +122,14 @@
 
             this.currentUrl = normalizedUrl;
             this.currentButton = button || null;
+            this.currentPlaybackRate = playbackRate;
 
             if (normalizeUrl(this.audio.src) !== normalizedUrl) {
                 this.audio.src = url;
             }
 
             this.audio.currentTime = 0;
+            this.audio.playbackRate = playbackRate;
 
             if (button) {
                 if (!button.dataset.talmaAudioIcon) {
@@ -136,12 +150,13 @@
             });
         },
 
-        toggle(url, button) {
+        toggle(url, button, options) {
             if (!url) {
                 return;
             }
 
             const normalizedUrl = normalizeUrl(url);
+            const playbackRate = resolvePlaybackRate(options);
             const isSame = this.currentUrl === normalizedUrl && this.currentButton === button;
 
             if (isSame && !this.audio.paused && !this.audio.ended) {
@@ -151,6 +166,7 @@
             }
 
             if (isSame && this.audio.paused && this.audio.currentTime > 0 && !this.audio.ended) {
+                this.audio.playbackRate = this.currentPlaybackRate;
                 setPlayingState(button);
                 this.audio.play().catch((err) => {
                     if (err && err.name === 'AbortError') {
@@ -162,7 +178,7 @@
                 return;
             }
 
-            this.play(url, button);
+            this.play(url, button, { playbackRate: playbackRate });
         },
 
         handleClick(event) {

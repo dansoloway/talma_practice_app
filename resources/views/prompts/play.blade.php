@@ -309,12 +309,21 @@ function loadPrompt(index) {
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="bg-white rounded-xl p-6 border border-gray-200">
                         <h5 class="font-semibold text-gray-700 mb-3">Example</h5>
-                        <button type="button" class="talma-audio-btn w-full px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm" 
-                                id="play-model-btn" 
-                                data-talma-audio-manual
-                                onclick="playModelAudio()">
-                            <i class="fas fa-play mr-2 talma-audio-icon"></i> Play Example
-                        </button>
+                        <div class="flex flex-col gap-2">
+                            <button type="button" class="talma-audio-btn w-full px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm" 
+                                    id="play-model-btn" 
+                                    data-talma-audio-manual
+                                    onclick="playModelAudio(false)">
+                                <i class="fas fa-play mr-2 talma-audio-icon"></i> Play Example
+                            </button>
+                            <button type="button" class="talma-audio-btn w-full px-4 py-3 bg-blue-100 text-blue-800 font-semibold rounded-xl hover:bg-blue-200 active:scale-95 transition-all duration-200 shadow-sm border border-blue-200" 
+                                    id="play-model-slow-btn" 
+                                    data-talma-audio-manual
+                                    onclick="playModelAudio(true)"
+                                    title="Play the example at 75% speed">
+                                <i class="fas fa-tachometer-alt mr-2 talma-audio-icon"></i> Play Slow
+                            </button>
+                        </div>
                         <div id="model-status" class="mt-3 text-sm text-gray-600"></div>
                     </div>
                     
@@ -862,19 +871,27 @@ async function uploadVoiceSample(blob, context) {
     return response.json();
 }
 
+const MODEL_AUDIO_SLOW_RATE = 0.75;
+
 // Play model audio (pre-generated sentence audio)
-function playModelAudio() {
+function playModelAudio(slow) {
     const statusDiv = document.getElementById('model-status');
     const playBtn = document.getElementById('play-model-btn');
-    
+    const slowBtn = document.getElementById('play-model-slow-btn');
+    const activeBtn = slow ? slowBtn : playBtn;
+
     if (!window.currentSentenceAudioPath) {
         statusDiv.textContent = 'No audio available - audio may still be generating';
         return;
     }
 
-    TalmaAudio.toggle(window.currentSentenceAudioPath, playBtn);
-    statusDiv.textContent = TalmaAudio.currentButton === playBtn && !TalmaAudio.audio.paused
-        ? 'Playing model audio...'
+    TalmaAudio.toggle(window.currentSentenceAudioPath, activeBtn, {
+        playbackRate: slow ? MODEL_AUDIO_SLOW_RATE : 1,
+    });
+
+    const isPlaying = TalmaAudio.currentButton === activeBtn && !TalmaAudio.audio.paused;
+    statusDiv.textContent = isPlaying
+        ? (slow ? 'Playing slow example...' : 'Playing example...')
         : '';
 }
 

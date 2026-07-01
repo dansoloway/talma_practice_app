@@ -667,7 +667,7 @@ class GuidedLessonFlowTest extends TestCase
         $this->assertNotFalse($speechScriptPos);
         $this->assertNotFalse($initPos);
         $this->assertLessThan($initPos, $speechScriptPos);
-        $this->assertStringContainsString('recordAudio: false', $html);
+        $this->assertStringContainsString('recordAudio: voiceUploadConfig.enabled', $html);
     }
 
     public function test_guided_vocabulary_exposes_release_microphone_helper(): void
