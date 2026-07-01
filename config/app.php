@@ -21,6 +21,10 @@ return [
     'recording_max_seconds' => env('RECORDING_MAX_SECONDS', 20),
     'speech_feedback_enabled' => env('SPEECH_FEEDBACK_ENABLED', true),
     'voice_waiver_text' => env('VOICE_WAIVER_TEXT', 'I agree that my voice recordings may be saved anonymously to help improve voice recognition tools.'),
+    'voice_sample_viewer_emails' => array_values(array_filter(array_map(
+        'strtolower',
+        explode(',', env('VOICE_SAMPLE_VIEWER_EMAILS', ''))
+    ))),
     'practice_session_cookie' => env('PRACTICE_SESSION_COOKIE', 'talma_session_id'),
 
     'maintenance' => [

@@ -35,6 +35,7 @@
 <body class="bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen">
     @php
         $org = $currentOrganization ?? null;
+        $canViewVoiceSamples = \App\Support\VoiceSampleViewerAccess::allows(auth('admin')->user());
         $analyticsUrl = $org ? route('org.admin.analytics', ['organization' => $org->slug]) : route('admin.analytics');
         $coursesUrl = $org ? route('org.admin.courses.index', ['organization' => $org->slug]) : route('admin.courses.index');
     @endphp
@@ -95,9 +96,14 @@
                             <a href="{{ route('admin.session-length') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
                                 <i class="fas fa-clock w-5 mr-2 text-gray-400"></i>Session Length
                             </a>
-                            <a href="{{ route('admin.openai-usage') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded-b-xl">
+                            <a href="{{ route('admin.openai-usage') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200{{ $canViewVoiceSamples ? '' : ' rounded-b-xl' }}">
                                 <i class="fas fa-dollar-sign w-5 mr-2 text-gray-400"></i>AI Usage & Cost
                             </a>
+                            @if($canViewVoiceSamples)
+                                <a href="{{ route('admin.voice-samples.index') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded-b-xl">
+                                    <i class="fas fa-microphone w-5 mr-2 text-gray-400"></i>Voice Samples
+                                </a>
+                            @endif
                             </div>
                         </div>
                     </div>
@@ -190,6 +196,11 @@
                 <a href="{{ route('admin.openai-usage') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">
                     <i class="fas fa-dollar-sign w-5 mr-2 text-gray-400"></i>AI Usage &amp; Cost
                 </a>
+                @if($canViewVoiceSamples)
+                    <a href="{{ route('admin.voice-samples.index') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">
+                        <i class="fas fa-microphone w-5 mr-2 text-gray-400"></i>Voice Samples
+                    </a>
+                @endif
 
                 @if(auth('admin')->user()?->role === 'admin')
                     <div class="border-t border-gray-200/60 my-2"></div>
