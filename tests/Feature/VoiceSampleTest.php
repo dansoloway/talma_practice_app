@@ -128,6 +128,7 @@ class VoiceSampleTest extends TestCase
             'gender' => 'male',
             'native_language' => 'arabic',
             'voice_recording_consent' => '1',
+            'terms_accepted' => '1',
         ]);
 
         $response->assertRedirect(route('org.student.index', $this->organization));

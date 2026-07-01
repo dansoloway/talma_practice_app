@@ -12,6 +12,8 @@ You pick a course, then browse **lessons** inside it. Each lesson brings togethe
 
 Some collections are open to anyone with the link. Others belong to a school or program that asks you to **sign in** first.
 
+**Privacy note:** Optional instant speech checks use your browser’s built-in speech recognition, which may be processed by your browser vendor. Optional voice **recordings** are a separate feature and only saved when your program has enabled that and you have consented.
+
 ---
 
 ## Multimodal learning (seeing, hearing, speaking)
@@ -22,6 +24,7 @@ Practice Pal is built around learning English through **more than reading alone*
 - **Pictures** — many vocabulary words and answer choices include images so meaning sticks visually.
 - **Audio you listen to** — words and sentences can be read aloud so you hear pronunciation and rhythm.
 - **Speaking practice** — in sentence activities you may **repeat or answer aloud**, sometimes with optional recording when your teacher or school has enabled it.
+- **Instant speech feedback** — in supported browsers (Chrome/Edge), you can tap **Check my pronunciation** after listening. The browser listens briefly and shows what it heard, with a gentle pass or try-again message. This stays on your device and is separate from optional recording uploads.
 
 Together, this supports learners who prefer visuals, listening, or saying things out loud—not only silent clicking.
 

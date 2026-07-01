@@ -109,6 +109,8 @@ class GuidedLessonController extends Controller
 
         $wordsCount = $words->count();
 
+        $speechFeedbackEnabled = (bool) config('app.speech_feedback_enabled', true);
+
         return view('guided.vocabulary', compact(
             'lesson',
             'org',
@@ -121,6 +123,7 @@ class GuidedLessonController extends Controller
             'voiceRecordingOffered',
             'voiceUploadEnabled',
             'voiceProfileBlockedReason',
+            'speechFeedbackEnabled',
             'guidedFlow',
             'continueUrl',
         ));

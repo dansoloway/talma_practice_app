@@ -78,6 +78,8 @@ class PromptController extends Controller
             && $voiceOrganization->collectsVoiceRecordings()
             && $voiceProfile !== null;
 
+        $speechFeedbackEnabled = (bool) config('app.speech_feedback_enabled', true);
+
         // Add full URLs for audio paths
         $lesson->prompts->each(function ($prompt) {
             if ($prompt->prompt_audio_path) {
@@ -94,7 +96,7 @@ class PromptController extends Controller
         });
 
         return view('prompts.play', array_merge(
-            compact('lesson', 'voiceOrganization', 'voiceUploadEnabled'),
+            compact('lesson', 'voiceOrganization', 'voiceUploadEnabled', 'speechFeedbackEnabled'),
             $this->guidedFlowViewData($request, $lesson, 'prompts')
         ));
     }

@@ -19,6 +19,7 @@ return [
     
     'allow_recording_upload' => env('PRIVACY_ALLOW_UPLOAD', false),
     'recording_max_seconds' => env('RECORDING_MAX_SECONDS', 20),
+    'speech_feedback_enabled' => env('SPEECH_FEEDBACK_ENABLED', true),
     'voice_waiver_text' => env('VOICE_WAIVER_TEXT', 'I agree that my voice recordings may be saved anonymously to help improve voice recognition tools.'),
     'practice_session_cookie' => env('PRACTICE_SESSION_COOKIE', 'talma_session_id'),
 

@@ -203,6 +203,7 @@
     </footer>
 
     <script src="{{ asset('js/talma-audio.js') }}"></script>
+    <script src="{{ asset('js/talma-speech.js') }}"></script>
     @stack('scripts')
 </body>
 </html>
