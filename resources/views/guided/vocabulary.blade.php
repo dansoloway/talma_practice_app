@@ -193,9 +193,6 @@ window.talmaVocabPronunciation = {
     isActive: false,
 };
 
-let pronunciationRecorder = null;
-let pronunciationChunks = [];
-let pronunciationRecordingStartedAt = null;
 let pendingPronunciationResult = null;
 
 function pickPronunciationRecorderMimeType() {
@@ -207,95 +204,7 @@ function pickPronunciationRecorderMimeType() {
     return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || '';
 }
 
-async function startPronunciationRecording() {
-    if (!voiceUploadConfig.enabled) {
-        return;
-    }
-
-    abortPronunciationRecording();
-
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mimeType = pickPronunciationRecorderMimeType();
-        pronunciationChunks = [];
-        pronunciationRecordingStartedAt = Date.now();
-        pronunciationRecorder = mimeType
-            ? new MediaRecorder(stream, { mimeType })
-            : new MediaRecorder(stream);
-        pronunciationRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                pronunciationChunks.push(event.data);
-            }
-        };
-        pronunciationRecorder.start(250);
-    } catch (error) {
-        console.warn('Pronunciation recording could not start', error);
-    }
-}
-
-function stopPronunciationRecording() {
-    return new Promise((resolve) => {
-        if (!pronunciationRecorder || pronunciationRecorder.state === 'inactive') {
-            resolve({ audioBlob: null, durationMs: null });
-            return;
-        }
-
-        const durationMs = pronunciationRecordingStartedAt
-            ? Date.now() - pronunciationRecordingStartedAt
-            : null;
-        const recorder = pronunciationRecorder;
-
-        recorder.onstop = () => {
-            if (recorder.stream) {
-                recorder.stream.getTracks().forEach((track) => track.stop());
-            }
-
-            const blob = pronunciationChunks.length > 0
-                ? new Blob(pronunciationChunks, { type: recorder.mimeType || 'audio/webm' })
-                : null;
-
-            pronunciationRecorder = null;
-            pronunciationChunks = [];
-            pronunciationRecordingStartedAt = null;
-            resolve({ audioBlob: blob, durationMs });
-        };
-
-        try {
-            if (typeof recorder.requestData === 'function') {
-                recorder.requestData();
-            }
-            recorder.stop();
-        } catch (error) {
-            resolve({ audioBlob: null, durationMs });
-        }
-    });
-}
-
-function abortPronunciationRecording() {
-    if (!pronunciationRecorder) {
-        return;
-    }
-
-    try {
-        if (pronunciationRecorder.state !== 'inactive') {
-            pronunciationRecorder.stop();
-        }
-    } catch (error) {
-        /* ignore */
-    }
-
-    if (pronunciationRecorder.stream) {
-        pronunciationRecorder.stream.getTracks().forEach((track) => track.stop());
-    }
-
-    pronunciationRecorder = null;
-    pronunciationChunks = [];
-    pronunciationRecordingStartedAt = null;
-}
-
-async function finalizePronunciationAttempt() {
-    const audio = await stopPronunciationRecording();
-
+function finalizePronunciationAttempt() {
     if (!pendingPronunciationResult) {
         return;
     }
@@ -304,8 +213,8 @@ async function finalizePronunciationAttempt() {
         pass: pendingPronunciationResult.pass === true,
         heard: pendingPronunciationResult.heard || '',
         ratio: typeof pendingPronunciationResult.ratio === 'number' ? pendingPronunciationResult.ratio : null,
-        audioBlob: audio.audioBlob,
-        durationMs: audio.durationMs,
+        audioBlob: pendingPronunciationResult.audioBlob || null,
+        durationMs: pendingPronunciationResult.durationMs || null,
     };
     pendingPronunciationResult = null;
 }
@@ -342,6 +251,10 @@ async function initializeRecording() {
     if (!navigator.mediaDevices?.getUserMedia) {
         setRecordingStatus('Recording is not supported in this browser. Try Chrome or Edge.');
         return false;
+    }
+
+    if (typeof TalmaSpeech !== 'undefined' && typeof TalmaSpeech.releaseMicrophoneAccess === 'function') {
+        TalmaSpeech.releaseMicrophoneAccess();
     }
 
     try {
@@ -715,11 +628,13 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             pass: result.pass === true,
             heard: result.heard || '',
             ratio: typeof result.ratio === 'number' ? result.ratio : null,
+            audioBlob: result.audioBlob || null,
+            durationMs: typeof result.durationMs === 'number' ? result.durationMs : null,
         };
     }
 
-    async function finishPronunciationCheck() {
-        await finalizePronunciationAttempt();
+    function finishPronunciationCheck() {
+        finalizePronunciationAttempt();
         setSpeechButtonListening(false);
         activeCheck = null;
     }
@@ -730,6 +645,9 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
         }
         if (error.code === 'not-allowed') {
             return 'Microphone access denied. Allow the microphone in your browser settings, then try again.';
+        }
+        if (error.code === 'network') {
+            return 'Speech check could not reach the browser service. Check your connection and try again.';
         }
         if (error.code === 'unsupported') {
             return 'Speech check is not supported in this browser. Try Chrome or Edge on desktop.';
@@ -744,7 +662,6 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
 
         if (activeCheck) {
             activeCheck.abort();
-            abortPronunciationRecording();
             pendingPronunciationResult = null;
             activeCheck = null;
         }
@@ -758,7 +675,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             target: speechFeedbackConfig.targetText,
             lang: speechFeedbackConfig.lang,
             maxSeconds: speechFeedbackConfig.maxSeconds,
-            recordAudio: false,
+            recordAudio: voiceUploadConfig.enabled,
             onRequestingMic: () => {
                 speechBtn.disabled = true;
                 if (recordBtnEl) {
@@ -771,7 +688,6 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             },
             onListening: () => {
                 setSpeechButtonListening(true);
-                startPronunciationRecording();
                 if (speechStatus) {
                     speechStatus.textContent = 'Listening... say the word now.';
                 }

@@ -650,6 +650,34 @@ class GuidedLessonFlowTest extends TestCase
         $this->assertTrue($this->flowService->isLessonComplete($this->lesson, $sessionId));
     }
 
+    public function test_guided_vocabulary_loads_speech_tools_after_talma_speech_script(): void
+    {
+        config(['app.speech_feedback_enabled' => true]);
+
+        $response = $this->get(route('guided.vocabulary', $this->lesson));
+
+        $response->assertOk();
+        $response->assertSee('Check my pronunciation');
+        $response->assertSee('id="speech-check-btn"', false);
+
+        $html = $response->getContent();
+        $speechScriptPos = strpos($html, 'talma-speech.js');
+        $initPos = strpos($html, 'initSpeechFeedback');
+
+        $this->assertNotFalse($speechScriptPos);
+        $this->assertNotFalse($initPos);
+        $this->assertLessThan($initPos, $speechScriptPos);
+        $this->assertStringContainsString('recordAudio: voiceUploadConfig.enabled', $html);
+    }
+
+    public function test_guided_vocabulary_exposes_release_microphone_helper(): void
+    {
+        $response = $this->get(route('guided.vocabulary', $this->lesson));
+
+        $response->assertOk();
+        $response->assertSee('TalmaSpeech.releaseMicrophoneAccess', false);
+    }
+
     private function completeAllGuidedSteps(string $sessionId): void
     {
         foreach ($this->lesson->vocabulary()->orderBy('sort_order')->pluck('id') as $vocabId) {

@@ -17,6 +17,17 @@
         return !!(global.navigator && navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function');
     }
 
+    function releaseMicrophoneAccess() {
+        if (!cachedMicStream) {
+            return;
+        }
+
+        cachedMicStream.getTracks().forEach(function (track) {
+            track.stop();
+        });
+        cachedMicStream = null;
+    }
+
     function requestMicrophoneAccess() {
         if (!hasGetUserMedia()) {
             return Promise.reject({
@@ -28,6 +39,8 @@
         if (cachedMicStream && cachedMicStream.active) {
             return Promise.resolve(cachedMicStream);
         }
+
+        releaseMicrophoneAccess();
 
         return navigator.mediaDevices.getUserMedia({ audio: true })
             .then(function (stream) {
@@ -461,7 +474,14 @@
 
     function checkPronunciation(options) {
         options = options || {};
-        var session = { aborted: false, listenHandle: null, audioRecorder: null, feedbackComplete: false, pendingEnd: false };
+        var session = {
+            aborted: false,
+            listenHandle: null,
+            audioRecorder: null,
+            resultDelivered: false,
+            recognitionEnded: false,
+            finished: false,
+        };
 
         if (!getRecognitionConstructor()) {
             if (typeof options.onUnsupported === 'function') {
@@ -501,16 +521,49 @@
         }
 
         function finishSession() {
-            session.feedbackComplete = true;
+            if (session.finished) {
+                return;
+            }
+
+            session.finished = true;
+            releaseMicrophoneAccess();
+
             if (typeof options.onEnd === 'function') {
                 options.onEnd();
             }
         }
 
-        function maybeFinishSession() {
-            if (session.pendingEnd) {
+        function markResultDelivered() {
+            session.resultDelivered = true;
+            if (session.recognitionEnded) {
                 finishSession();
             }
+        }
+
+        function markRecognitionEnded() {
+            session.recognitionEnded = true;
+
+            if (session.resultDelivered) {
+                finishSession();
+                return;
+            }
+
+            if (session.aborted) {
+                finishSession();
+                return;
+            }
+
+            stopAudioRecorder().then(function (audio) {
+                if (typeof options.onError === 'function') {
+                    options.onError({
+                        code: 'no-speech',
+                        message: 'No speech was detected.',
+                        audioBlob: audio.audioBlob,
+                        durationMs: audio.durationMs,
+                    });
+                }
+                markResultDelivered();
+            });
         }
 
         requestMicrophoneAccess()
@@ -537,7 +590,7 @@
                             if (typeof options.onFeedback === 'function') {
                                 options.onFeedback(attachAudioToResult(result, audio));
                             }
-                            maybeFinishSession();
+                            markResultDelivered();
                         });
                     },
                     onError: function (error) {
@@ -548,14 +601,11 @@
                                 payload.durationMs = audio.durationMs;
                                 options.onError(payload);
                             }
-                            maybeFinishSession();
+                            markResultDelivered();
                         });
                     },
                     onEnd: function () {
-                        session.pendingEnd = true;
-                        if (session.feedbackComplete) {
-                            finishSession();
-                        }
+                        markRecognitionEnded();
                     },
                 });
             })
@@ -565,6 +615,7 @@
                 }
 
                 abortAudioRecorder();
+                releaseMicrophoneAccess();
 
                 if (typeof options.onError === 'function') {
                     options.onError(error && error.code ? error : {
@@ -573,18 +624,20 @@
                     });
                 }
 
-                if (typeof options.onEnd === 'function') {
-                    options.onEnd();
-                }
+                finishSession();
             });
 
         return {
             abort: function () {
                 session.aborted = true;
                 abortAudioRecorder();
+                releaseMicrophoneAccess();
                 if (session.listenHandle) {
                     session.listenHandle.abort();
                 }
+                session.resultDelivered = true;
+                session.recognitionEnded = true;
+                finishSession();
             },
         };
     }
@@ -594,6 +647,7 @@
             return !!getRecognitionConstructor() && hasGetUserMedia();
         },
         requestMicrophoneAccess: requestMicrophoneAccess,
+        releaseMicrophoneAccess: releaseMicrophoneAccess,
         normalizeText: normalizeText,
         tokenize: tokenize,
         scoreTranscript: scoreTranscript,

@@ -45,7 +45,7 @@ class SecurityHeaders
                "img-src 'self' data: https:; " .
                "media-src 'self' blob:; " .
                "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; " .
-               "connect-src 'self' https://www.google.com https://*.google.com https://speech.googleapis.com; " .
+               "connect-src 'self' https://www.google.com https://*.google.com https://*.googleapis.com https://*.gstatic.com wss://www.google.com wss://*.google.com; " .
                "frame-ancestors 'none';";
         
         $response->headers->set('Content-Security-Policy', $csp, false);
