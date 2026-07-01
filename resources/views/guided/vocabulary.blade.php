@@ -177,7 +177,9 @@
         ? route('org.student.lesson', [$org, $lesson->slug])
         : route('lessons.show', $lesson->slug);
 @endphp
+@endsection
 
+@push('scripts')
 <script>
 const voiceUploadConfig = @json($voiceUploadConfigData);
 const speechFeedbackConfig = @json($speechFeedbackConfigData);
@@ -330,10 +332,24 @@ document.getElementById('play-model-btn')?.addEventListener('click', () => {
     @endif
 });
 
+function setRecordingStatus(message) {
+    if (recordingStatus) {
+        recordingStatus.textContent = message;
+    }
+}
+
 async function initializeRecording() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+        setRecordingStatus('Recording is not supported in this browser. Try Chrome or Edge.');
+        return false;
+    }
+
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        const mimeType = pickPronunciationRecorderMimeType();
+        mediaRecorder = mimeType
+            ? new MediaRecorder(stream, { mimeType })
+            : new MediaRecorder(stream);
 
         mediaRecorder.ondataavailable = (event) => {
             if (event.data.size > 0) recordedChunks.push(event.data);
@@ -348,27 +364,30 @@ async function initializeRecording() {
             nextWordBtn.disabled = false;
 
             if (voiceUploadConfig.enabled) {
-                recordingStatus.textContent = 'Uploading recording...';
+                setRecordingStatus('Uploading recording...');
                 try {
                     await uploadVoiceSample(recordedAudioBlob, {
                         recordingSource: 'manual_record',
                         durationMs: recordingStartedAt ? Date.now() - recordingStartedAt : null,
                     });
-                    recordingStatus.textContent = 'Recording saved!';
+                    setRecordingStatus('Recording saved!');
                 } catch (error) {
-                    recordingStatus.textContent = error?.message
+                    setRecordingStatus(error?.message
                         ? `${error.message} You can skip this word.`
-                        : 'Recording saved locally (upload failed).';
+                        : 'Recording saved locally (upload failed).');
                 }
             } else {
-                recordingStatus.textContent = 'Recording saved!';
+                setRecordingStatus('Recording saved!');
             }
         };
 
         return true;
     } catch (error) {
         console.error('Error accessing microphone:', error);
-        recordingStatus.textContent = 'Microphone is blocked. Check browser site permissions, then try again. You can skip this word.';
+        const denied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError';
+        setRecordingStatus(denied
+            ? 'Microphone access denied. Click the lock icon in the address bar, allow the microphone, then try again.'
+            : 'Microphone is blocked. Check browser site permissions, then try again. You can skip this word.');
         return false;
     }
 }
@@ -382,21 +401,30 @@ function releaseRecordingStream() {
 
 async function toggleRecording() {
     if (window.talmaVocabPronunciation.isActive) {
+        setRecordingStatus('Finish the pronunciation check first, then record.');
         return;
     }
 
     if (!isRecording) {
+        setRecordingStatus('Requesting microphone access…');
         if (!mediaRecorder) {
             const ok = await initializeRecording();
             if (!ok) return;
         }
         recordedChunks = [];
-        mediaRecorder.start();
+        try {
+            mediaRecorder.start(250);
+        } catch (error) {
+            console.error('Could not start recording:', error);
+            setRecordingStatus('Could not start recording. Try again or refresh the page.');
+            releaseRecordingStream();
+            return;
+        }
         isRecording = true;
         recordingStartedAt = Date.now();
         recordBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
         recordBtn.classList.add('ring-2', 'ring-red-400', 'ring-offset-2');
-        recordingStatus.textContent = 'Recording… say the word now.';
+        setRecordingStatus('Recording… say the word now.');
         playRecordingBtn.disabled = true;
         const speechBtn = document.getElementById('speech-check-btn');
         if (speechBtn) {
@@ -411,7 +439,7 @@ async function toggleRecording() {
         clearTimeout(recordingMaxTimeout);
         recordBtn.innerHTML = '<i class="fas fa-microphone"></i> Record';
         recordBtn.classList.remove('ring-2', 'ring-red-400', 'ring-offset-2');
-        recordingStatus.textContent = 'Processing…';
+        setRecordingStatus('Processing…');
         const speechBtn = document.getElementById('speech-check-btn');
         if (speechBtn && !window.talmaVocabPronunciation.isActive) {
             speechBtn.disabled = false;
@@ -426,7 +454,7 @@ playRecordingBtn?.addEventListener('click', () => {
     playbackAudio.src = URL.createObjectURL(recordedAudioBlob);
     playbackAudio.play().catch((error) => {
         console.error('Playback failed:', error);
-        recordingStatus.textContent = 'Could not play recording in this browser.';
+        setRecordingStatus('Could not play recording in this browser.');
     });
 });
 
@@ -636,13 +664,8 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
     }
 });
 
-</script>
-@endsection
-
-@push('scripts')
-<script>
 (function initSpeechFeedback() {
-    if (!speechFeedbackConfig.enabled || typeof TalmaSpeech === 'undefined') {
+    if (!speechFeedbackConfig.enabled) {
         return;
     }
 
@@ -657,10 +680,21 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
         return;
     }
 
+    if (typeof TalmaSpeech === 'undefined') {
+        speechBtn.disabled = true;
+        if (speechStatus) {
+            speechStatus.textContent = 'Speech tools failed to load. Refresh the page and try again.';
+        }
+        return;
+    }
+
     if (!TalmaSpeech.isSupported()) {
         speechBtn.disabled = true;
         if (unsupportedNote) {
             unsupportedNote.classList.remove('hidden');
+        }
+        if (speechStatus) {
+            speechStatus.textContent = 'Pronunciation check needs Chrome or Edge on a computer with a microphone.';
         }
         return;
     }
@@ -704,6 +738,10 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
     }
 
     speechBtn.addEventListener('click', () => {
+        if (speechStatus) {
+            speechStatus.textContent = '';
+        }
+
         if (activeCheck) {
             activeCheck.abort();
             abortPronunciationRecording();
@@ -763,6 +801,8 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
                     if (unsupportedNote) {
                         unsupportedNote.classList.remove('hidden');
                     }
+                } else {
+                    setSpeechButtonListening(false);
                 }
                 if (speechStatus) {
                     speechStatus.textContent = speechErrorMessage(error);
