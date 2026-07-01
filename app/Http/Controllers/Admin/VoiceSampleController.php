@@ -7,7 +7,6 @@ use App\Models\Organization;
 use App\Models\ParentStudent;
 use App\Models\VoiceSample;
 use App\Services\VoiceSamplePlayback;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -56,7 +55,7 @@ class VoiceSampleController extends Controller
         ]);
     }
 
-    public function audio(VoiceSample $voiceSample, VoiceSamplePlayback $playback): RedirectResponse|StreamedResponse
+    public function audio(VoiceSample $voiceSample, VoiceSamplePlayback $playback): StreamedResponse
     {
         return $playback->respond($voiceSample);
     }
