@@ -226,4 +226,28 @@ class AdminVoiceSampleViewerTest extends TestCase
             ->assertSee('My favorite color is red.')
             ->assertDontSee('Something completely different.');
     }
+
+    public function test_global_admin_can_delete_sample_and_s3_files(): void
+    {
+        Storage::disk('voice_training')->put($this->sample->metadata_s3_key, '{"target_text":"test"}');
+
+        $this->actingAs($this->otherAdmin(), 'admin')
+            ->delete(route('admin.voice-samples.destroy', $this->sample))
+            ->assertRedirect(route('admin.voice-samples.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('voice_samples', ['id' => $this->sample->id]);
+        Storage::disk('voice_training')->assertMissing($this->sample->s3_key);
+        Storage::disk('voice_training')->assertMissing($this->sample->metadata_s3_key);
+    }
+
+    public function test_teacher_cannot_delete_sample(): void
+    {
+        $this->actingAs($this->teacher(), 'admin')
+            ->delete(route('admin.voice-samples.destroy', $this->sample))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('voice_samples', ['id' => $this->sample->id]);
+        Storage::disk('voice_training')->assertExists($this->sample->s3_key);
+    }
 }

@@ -183,6 +183,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'admin.access'
     Route::middleware('voice-sample.viewer')->group(function () {
         Route::get('voice-samples', [\App\Http\Controllers\Admin\VoiceSampleController::class, 'index'])->name('voice-samples.index');
         Route::get('voice-samples/{voiceSample}/audio', [\App\Http\Controllers\Admin\VoiceSampleController::class, 'audio'])->name('voice-samples.audio');
+        Route::delete('voice-samples/{voiceSample}', [\App\Http\Controllers\Admin\VoiceSampleController::class, 'destroy'])->name('voice-samples.destroy');
     });
     
     // Lesson Tracker

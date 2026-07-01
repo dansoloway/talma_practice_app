@@ -8,6 +8,8 @@ use App\Models\Organization;
 use App\Models\ParentStudent;
 use App\Models\VoiceSample;
 use App\Services\VoiceSamplePlayback;
+use App\Services\VoiceSampleStorage;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -91,5 +93,23 @@ class VoiceSampleController extends Controller
     public function audio(VoiceSample $voiceSample, VoiceSamplePlayback $playback): Response
     {
         return $playback->respond($voiceSample);
+    }
+
+    public function destroy(VoiceSample $voiceSample, VoiceSampleStorage $storage): RedirectResponse
+    {
+        $storage->delete($voiceSample);
+
+        return redirect()
+            ->route('admin.voice-samples.index', request()->only([
+                'organization_id',
+                'search',
+                'gender',
+                'native_language',
+                'recording_source',
+                'date_from',
+                'date_to',
+                'page',
+            ]))
+            ->with('success', 'Recording deleted from storage.');
     }
 }

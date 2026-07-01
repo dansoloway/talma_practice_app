@@ -91,6 +91,21 @@ class VoiceSampleStorage
         return config('filesystems.voice_training_disk', 'voice_training');
     }
 
+    public function delete(VoiceSample $sample): void
+    {
+        $disk = Storage::disk($this->disk());
+
+        if ($sample->s3_key) {
+            $disk->delete($sample->s3_key);
+        }
+
+        if ($sample->metadata_s3_key) {
+            $disk->delete($sample->metadata_s3_key);
+        }
+
+        $sample->delete();
+    }
+
     /**
      * @return array{path: string, extension: string, content_type: string}
      */

@@ -143,6 +143,7 @@
                             <th class="text-left px-4 py-3 font-semibold text-gray-700">Profile</th>
                             <th class="text-left px-4 py-3 font-semibold text-gray-700">Duration</th>
                             <th class="text-left px-4 py-3 font-semibold text-gray-700">Audio</th>
+                            <th class="text-left px-4 py-3 font-semibold text-gray-700">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -186,6 +187,16 @@
                                     <audio controls preload="none" class="w-full max-w-xs h-8">
                                         <source src="{{ route('admin.voice-samples.audio', $sample) }}" type="{{ app(\App\Services\VoiceSamplePlayback::class)->contentType($sample) }}">
                                     </audio>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <form action="{{ route('admin.voice-samples.destroy', $sample) }}" method="POST" class="inline"
+                                          onsubmit="return confirm('Delete this recording from storage? This cannot be undone.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100">
+                                            Delete
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         @endforeach
