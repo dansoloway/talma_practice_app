@@ -336,8 +336,7 @@ function loadPrompt(index) {
                             <button type="button"
                                     id="check-pronunciation-btn"
                                     class="flex-1 min-w-[7rem] px-4 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                    onclick="checkRecordedPronunciation()"
-                                    disabled>
+                                    onclick="checkRecordedPronunciation()">
                                 <i class="fas fa-check-circle mr-2"></i> Check
                             </button>
                             ` : ''}
@@ -579,7 +578,10 @@ function setupPronunciationCheckUi() {
         if (unsupportedNote) {
             unsupportedNote.classList.remove('hidden');
         }
+        return;
     }
+
+    checkBtn.disabled = false;
 }
 
 function startRecordingSpeechCapture() {
@@ -607,31 +609,72 @@ function stopRecordingSpeechCapture() {
 }
 
 function checkRecordedPronunciation() {
-    if (!speechFeedbackConfig.enabled || typeof TalmaSpeech === 'undefined' || !currentRecordingContext || !recordedAudioBlob) {
+    if (!speechFeedbackConfig.enabled || typeof TalmaSpeech === 'undefined' || !currentRecordingContext) {
         return;
     }
 
     const speechFeedback = document.getElementById('speech-check-feedback');
     const statusDiv = document.getElementById('recording-status');
+    const checkBtn = document.getElementById('check-pronunciation-btn');
+    let activeCheck = null;
 
-    if (!recordingTranscript) {
-        if (statusDiv) {
-            statusDiv.textContent = 'We could not detect speech. Try recording again.';
-        }
-        return;
-    }
-
-    const result = TalmaSpeech.scoreTranscript(recordingTranscript, currentRecordingContext.targetText);
     if (speechFeedback) {
-        TalmaSpeech.renderFeedback(speechFeedback, result, {
-            pass: 'Great sentence!',
-            fail: 'Keep practicing — try again.',
-        });
-        speechFeedback.classList.remove('hidden');
+        speechFeedback.classList.add('hidden');
+        speechFeedback.innerHTML = '';
     }
-    if (statusDiv) {
-        statusDiv.textContent = '';
-    }
+
+    activeCheck = TalmaSpeech.checkPronunciation({
+        target: currentRecordingContext.targetText,
+        lang: speechFeedbackConfig.lang,
+        maxSeconds: speechFeedbackConfig.maxSeconds,
+        onRequestingMic: () => {
+            if (checkBtn) {
+                checkBtn.disabled = true;
+            }
+            if (statusDiv) {
+                statusDiv.textContent = 'Allow microphone access when your browser asks.';
+            }
+        },
+        onListening: () => {
+            if (checkBtn) {
+                checkBtn.disabled = true;
+                checkBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> Listening...';
+            }
+            if (statusDiv) {
+                statusDiv.textContent = 'Listening... say the sentence now.';
+            }
+        },
+        onFeedback: (result) => {
+            if (speechFeedback) {
+                TalmaSpeech.renderFeedback(speechFeedback, result, {
+                    pass: 'Great sentence!',
+                    fail: 'Keep practicing — try again.',
+                });
+                speechFeedback.classList.remove('hidden');
+            }
+            if (statusDiv) {
+                statusDiv.textContent = '';
+            }
+        },
+        onError: (error) => {
+            if (statusDiv) {
+                if (error.code === 'no-speech') {
+                    statusDiv.textContent = 'We did not hear anything. Try again.';
+                } else if (error.code === 'not-allowed') {
+                    statusDiv.textContent = 'Microphone access denied. Allow the microphone, then try again.';
+                } else {
+                    statusDiv.textContent = 'Could not check speech. Try again or use Chrome/Edge.';
+                }
+            }
+        },
+        onEnd: () => {
+            if (checkBtn) {
+                checkBtn.disabled = !TalmaSpeech.isSupported();
+                checkBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Check';
+            }
+            activeCheck = null;
+        },
+    });
 }
 
 // Reset recording state when new word is selected
@@ -666,7 +709,7 @@ function resetRecordingState() {
         speechFeedback.innerHTML = '';
     }
     if (checkBtn) {
-        checkBtn.disabled = true;
+        checkBtn.disabled = !speechFeedbackConfig.enabled || (typeof TalmaSpeech !== 'undefined' && !TalmaSpeech.isSupported());
     }
     
     // Reset recording button if it was in a recording state
@@ -694,11 +737,14 @@ async function initializeRecording() {
         };
         
         mediaRecorder.onstop = function() {
-            stopRecordingSpeechCapture();
+            if (mediaRecorder?.stream) {
+                mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+            }
+            mediaRecorder = null;
             recordedAudioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
             recordedChunks = [];
             
-            // Enable play and check buttons
+            // Enable play button
             document.getElementById('play-recording-btn').disabled = false;
             const checkBtn = document.getElementById('check-pronunciation-btn');
             if (checkBtn && speechFeedbackConfig.enabled && typeof TalmaSpeech !== 'undefined') {
@@ -746,7 +792,6 @@ async function toggleRecording() {
         }
         
         recordedChunks = [];
-        recordingTranscript = '';
         const checkBtn = document.getElementById('check-pronunciation-btn');
         if (checkBtn) {
             checkBtn.disabled = true;
@@ -763,7 +808,6 @@ async function toggleRecording() {
         recordBtn.innerHTML = '<i class="fas fa-stop mr-2"></i> Stop';
         recordBtn.classList.add('recording', 'ring-2', 'ring-red-400', 'ring-offset-2');
         statusDiv.textContent = 'Recording… say the sentence now.';
-        startRecordingSpeechCapture();
         
         if (recordingMaxTimeout) {
             clearTimeout(recordingMaxTimeout);
@@ -779,7 +823,6 @@ async function toggleRecording() {
         document.getElementById('play-recording-btn').disabled = true;
     } else {
         // Stop recording
-        stopRecordingSpeechCapture();
         mediaRecorder.stop();
         isRecording = false;
         if (recordingMaxTimeout) {
