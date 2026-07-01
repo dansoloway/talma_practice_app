@@ -81,6 +81,7 @@ class VoiceSampleStorage
             'metadata_s3_key' => $metadataKey,
             'duration_ms' => $durationMs,
             'mime_original' => $file->getMimeType(),
+            'recording_source' => $recordingSource,
             'recorded_at' => $now,
         ]);
     }

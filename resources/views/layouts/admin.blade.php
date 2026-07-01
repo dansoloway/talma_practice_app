@@ -101,7 +101,7 @@
                             </a>
                             @if($canViewVoiceSamples)
                                 <a href="{{ route('admin.voice-samples.index') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded-b-xl">
-                                    <i class="fas fa-microphone w-5 mr-2 text-gray-400"></i>Voice Samples
+                                    <i class="fas fa-microphone w-5 mr-2 text-gray-400"></i>Voice Dashboard
                                 </a>
                             @endif
                             </div>
@@ -198,7 +198,7 @@
                 </a>
                 @if($canViewVoiceSamples)
                     <a href="{{ route('admin.voice-samples.index') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">
-                        <i class="fas fa-microphone w-5 mr-2 text-gray-400"></i>Voice Samples
+                        <i class="fas fa-microphone w-5 mr-2 text-gray-400"></i>Voice Dashboard
                     </a>
                 @endif
 

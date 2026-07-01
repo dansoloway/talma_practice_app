@@ -12,6 +12,10 @@ class VoiceSampleViewerAccess
             return false;
         }
 
+        if ($user->isAdmin()) {
+            return true;
+        }
+
         $allowlist = config('app.voice_sample_viewer_emails', []);
 
         return in_array(strtolower($user->email), $allowlist, true);

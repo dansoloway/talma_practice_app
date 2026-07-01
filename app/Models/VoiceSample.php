@@ -25,6 +25,7 @@ class VoiceSample extends Model
         'metadata_s3_key',
         'duration_ms',
         'mime_original',
+        'recording_source',
         'recorded_at',
     ];
 

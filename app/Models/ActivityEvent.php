@@ -28,4 +28,9 @@ class ActivityEvent extends Model
     {
         return $this->belongsTo(Lesson::class);
     }
+
+    public function vocabulary()
+    {
+        return $this->belongsTo(Vocabulary::class, 'activity_id');
+    }
 }

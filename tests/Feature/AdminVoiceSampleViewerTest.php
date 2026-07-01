@@ -128,11 +128,20 @@ class AdminVoiceSampleViewerTest extends TestCase
             ->assertRedirect(route('admin.login.show'));
     }
 
-    public function test_non_allowlisted_admin_gets_forbidden(): void
+    public function test_global_admin_can_view_index_without_allowlist(): void
     {
         $this->actingAs($this->otherAdmin(), 'admin')
             ->get(route('admin.voice-samples.index'))
-            ->assertForbidden();
+            ->assertOk()
+            ->assertSee('Voice &amp; Pronunciation Dashboard', false)
+            ->assertSee('My favorite color is red.');
+    }
+
+    public function test_global_admin_can_stream_audio_without_allowlist(): void
+    {
+        $this->actingAs($this->otherAdmin(), 'admin')
+            ->get(route('admin.voice-samples.audio', $this->sample))
+            ->assertOk();
     }
 
     public function test_teacher_gets_forbidden(): void
@@ -147,7 +156,7 @@ class AdminVoiceSampleViewerTest extends TestCase
         $this->actingAs($this->allowlistedAdmin(), 'admin')
             ->get(route('admin.voice-samples.index'))
             ->assertOk()
-            ->assertSee('Voice Training Samples')
+            ->assertSee('Voice &amp; Pronunciation Dashboard', false)
             ->assertSee('My favorite color is red.');
     }
 
@@ -185,12 +194,16 @@ class AdminVoiceSampleViewerTest extends TestCase
             ->assertHeader('content-type', 'audio/webm');
     }
 
-    public function test_non_allowlisted_admin_cannot_stream_audio(): void
+    public function test_allowlisted_teacher_can_view(): void
     {
-        $this->actingAs($this->otherAdmin(), 'admin')
-            ->get(route('admin.voice-samples.audio', $this->sample))
-            ->assertForbidden();
+        $teacher = $this->teacher();
+        config(['app.voice_sample_viewer_emails' => [strtolower($teacher->email)]]);
+
+        $this->actingAs($teacher, 'admin')
+            ->get(route('admin.voice-samples.index'))
+            ->assertOk();
     }
+
 
     public function test_index_filters_by_target_text_search(): void
     {
