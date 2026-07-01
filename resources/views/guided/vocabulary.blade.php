@@ -169,6 +169,123 @@ window.talmaVocabPronunciation = {
     isActive: false,
 };
 
+let pronunciationRecorder = null;
+let pronunciationChunks = [];
+let pronunciationRecordingStartedAt = null;
+let pendingPronunciationResult = null;
+
+function pickPronunciationRecorderMimeType() {
+    if (typeof MediaRecorder === 'undefined') {
+        return '';
+    }
+
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
+    return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || '';
+}
+
+async function startPronunciationRecording() {
+    if (!voiceUploadConfig.enabled) {
+        return;
+    }
+
+    abortPronunciationRecording();
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mimeType = pickPronunciationRecorderMimeType();
+        pronunciationChunks = [];
+        pronunciationRecordingStartedAt = Date.now();
+        pronunciationRecorder = mimeType
+            ? new MediaRecorder(stream, { mimeType })
+            : new MediaRecorder(stream);
+        pronunciationRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                pronunciationChunks.push(event.data);
+            }
+        };
+        pronunciationRecorder.start(250);
+    } catch (error) {
+        console.warn('Pronunciation recording could not start', error);
+    }
+}
+
+function stopPronunciationRecording() {
+    return new Promise((resolve) => {
+        if (!pronunciationRecorder || pronunciationRecorder.state === 'inactive') {
+            resolve({ audioBlob: null, durationMs: null });
+            return;
+        }
+
+        const durationMs = pronunciationRecordingStartedAt
+            ? Date.now() - pronunciationRecordingStartedAt
+            : null;
+        const recorder = pronunciationRecorder;
+
+        recorder.onstop = () => {
+            if (recorder.stream) {
+                recorder.stream.getTracks().forEach((track) => track.stop());
+            }
+
+            const blob = pronunciationChunks.length > 0
+                ? new Blob(pronunciationChunks, { type: recorder.mimeType || 'audio/webm' })
+                : null;
+
+            pronunciationRecorder = null;
+            pronunciationChunks = [];
+            pronunciationRecordingStartedAt = null;
+            resolve({ audioBlob: blob, durationMs });
+        };
+
+        try {
+            if (typeof recorder.requestData === 'function') {
+                recorder.requestData();
+            }
+            recorder.stop();
+        } catch (error) {
+            resolve({ audioBlob: null, durationMs });
+        }
+    });
+}
+
+function abortPronunciationRecording() {
+    if (!pronunciationRecorder) {
+        return;
+    }
+
+    try {
+        if (pronunciationRecorder.state !== 'inactive') {
+            pronunciationRecorder.stop();
+        }
+    } catch (error) {
+        /* ignore */
+    }
+
+    if (pronunciationRecorder.stream) {
+        pronunciationRecorder.stream.getTracks().forEach((track) => track.stop());
+    }
+
+    pronunciationRecorder = null;
+    pronunciationChunks = [];
+    pronunciationRecordingStartedAt = null;
+}
+
+async function finalizePronunciationAttempt() {
+    const audio = await stopPronunciationRecording();
+
+    if (!pendingPronunciationResult) {
+        return;
+    }
+
+    window.talmaVocabPronunciation.lastAttempt = {
+        pass: pendingPronunciationResult.pass === true,
+        heard: pendingPronunciationResult.heard || '',
+        ratio: typeof pendingPronunciationResult.ratio === 'number' ? pendingPronunciationResult.ratio : null,
+        audioBlob: audio.audioBlob,
+        durationMs: audio.durationMs,
+    };
+    pendingPronunciationResult = null;
+}
+
 let mediaRecorder = null;
 let recordedChunks = [];
 let recordedAudioBlob = null;
@@ -342,12 +459,13 @@ function buildPronunciationMeta({ skipped = false } = {}) {
         source: 'pronunciation_check',
         skipped: false,
         audio_captured: !!(attempt?.audioBlob && attempt.audioBlob.size > 0),
+        audio_uploaded: false,
     };
 }
 
-async function logVocabProgress({ skipped = false } = {}) {
+async function logVocabProgress({ skipped = false, metaOverride = null } = {}) {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    const meta = buildPronunciationMeta({ skipped });
+    const meta = metaOverride ?? buildPronunciationMeta({ skipped });
     const payload = {
         lesson_id: voiceUploadConfig.lessonId,
         activity_type: 'vocabulary',
@@ -389,7 +507,12 @@ async function advanceVocabularyWord({ skipped = false } = {}) {
         }
     }
 
-    await logVocabProgress({ skipped });
+    const meta = buildPronunciationMeta({ skipped });
+    if (meta && !skipped && voiceUploadConfig.enabled && attempt?.audioBlob && attempt.audioBlob.size > 0) {
+        meta.audio_uploaded = true;
+    }
+
+    await logVocabProgress({ skipped, metaOverride: meta });
 }
 
 function finishVocabularyStep() {
@@ -488,13 +611,17 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
     }
 
     function storePronunciationAttempt(result) {
-        window.talmaVocabPronunciation.lastAttempt = {
+        pendingPronunciationResult = {
             pass: result.pass === true,
             heard: result.heard || '',
             ratio: typeof result.ratio === 'number' ? result.ratio : null,
-            audioBlob: result.audioBlob || null,
-            durationMs: result.durationMs || null,
         };
+    }
+
+    async function finishPronunciationCheck() {
+        await finalizePronunciationAttempt();
+        setSpeechButtonListening(false);
+        activeCheck = null;
     }
 
     function speechErrorMessage(error) {
@@ -513,6 +640,8 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
     speechBtn.addEventListener('click', () => {
         if (activeCheck) {
             activeCheck.abort();
+            abortPronunciationRecording();
+            pendingPronunciationResult = null;
             activeCheck = null;
         }
 
@@ -525,7 +654,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             target: speechFeedbackConfig.targetText,
             lang: speechFeedbackConfig.lang,
             maxSeconds: speechFeedbackConfig.maxSeconds,
-            recordAudio: voiceUploadConfig.enabled,
+            recordAudio: false,
             onRequestingMic: () => {
                 speechBtn.disabled = true;
                 if (recordBtnEl) {
@@ -538,6 +667,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             },
             onListening: () => {
                 setSpeechButtonListening(true);
+                startPronunciationRecording();
                 if (speechStatus) {
                     speechStatus.textContent = 'Listening... say the word now.';
                 }
@@ -556,23 +686,11 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
                 }
             },
             onError: (error) => {
-                if (error.heard) {
-                    storePronunciationAttempt({
-                        pass: false,
-                        heard: error.heard,
-                        ratio: 0,
-                        audioBlob: error.audioBlob || null,
-                        durationMs: error.durationMs || null,
-                    });
-                } else if (error.audioBlob) {
-                    storePronunciationAttempt({
-                        pass: false,
-                        heard: '',
-                        ratio: 0,
-                        audioBlob: error.audioBlob,
-                        durationMs: error.durationMs || null,
-                    });
-                }
+                storePronunciationAttempt({
+                    pass: false,
+                    heard: error.heard || '',
+                    ratio: 0,
+                });
 
                 if (error.code === 'unsupported') {
                     speechBtn.disabled = true;
@@ -585,8 +703,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
                 }
             },
             onEnd: () => {
-                setSpeechButtonListening(false);
-                activeCheck = null;
+                finishPronunciationCheck();
             },
         });
     });

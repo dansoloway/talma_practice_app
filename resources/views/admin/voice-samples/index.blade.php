@@ -247,8 +247,10 @@
                                     {{ $meta['heard'] ?? '—' }}
                                 </td>
                                 <td class="px-4 py-3 text-gray-600">
-                                    @if(! empty($meta['audio_captured']))
-                                        <span class="text-green-700">Yes</span>
+                                    @if(! empty($meta['audio_uploaded']))
+                                        <span class="text-green-700">Uploaded</span>
+                                    @elseif(! empty($meta['audio_captured']))
+                                        <span class="text-amber-700">Captured, not uploaded</span>
                                     @elseif(! empty($meta['skipped']))
                                         —
                                     @else
