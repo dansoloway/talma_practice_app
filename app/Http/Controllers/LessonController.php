@@ -140,7 +140,7 @@ class LessonController extends Controller
             $lesson->setRelation('vocabulary', $lesson->getVocabularyForGames());
         }
 
-        $practiceSessionId = $request->attributes->get('practice_session_id');
+        $practiceSessionId = $request->attributes->get('practice_learner_scope');
         $isGuided = $this->flowService->isGuided($lesson);
         $completionSummary = $this->flowService->completionSummary($lesson, $practiceSessionId);
         $isLessonComplete = $completionSummary['isComplete'];

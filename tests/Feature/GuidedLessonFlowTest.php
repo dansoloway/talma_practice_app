@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Vocabulary;
 use App\Models\VoiceSample;
 use App\Services\LessonFlowService;
+use App\Support\PracticeLearnerScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -256,14 +257,6 @@ class GuidedLessonFlowTest extends TestCase
         $sessionId = 'vocab-advance-session';
         $firstWord = $this->lesson->vocabulary()->orderBy('sort_order')->first();
 
-        ActivityEvent::create([
-            'session_id' => $sessionId,
-            'lesson_id' => $this->lesson->id,
-            'activity_type' => 'vocabulary',
-            'activity_id' => $firstWord->id,
-            'status' => 'completed',
-        ]);
-
         $user = User::create([
             'name' => 'Summer Student',
             'email' => 'vocab-advance@example.com',
@@ -277,6 +270,14 @@ class GuidedLessonFlowTest extends TestCase
         ]);
 
         $this->organization->users()->attach($user->id, ['role' => 'student']);
+
+        ActivityEvent::create([
+            'session_id' => PracticeLearnerScope::forUser($user, $sessionId),
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'vocabulary',
+            'activity_id' => $firstWord->id,
+            'status' => 'completed',
+        ]);
 
         $response = $this->actingAs($user, 'admin')
             ->withCookie('talma_session_id', $sessionId)
@@ -517,15 +518,6 @@ class GuidedLessonFlowTest extends TestCase
         $sessionId = 'guided-vocab-progress-strip';
         $words = $this->lesson->vocabulary()->orderBy('sort_order')->get();
 
-        ActivityEvent::create([
-            'session_id' => $sessionId,
-            'lesson_id' => $this->lesson->id,
-            'activity_type' => 'vocabulary',
-            'activity_id' => $words[0]->id,
-            'status' => 'completed',
-            'meta' => ['pronunciation_pass' => true, 'source' => 'pronunciation_check'],
-        ]);
-
         $user = User::create([
             'name' => 'Progress Student',
             'email' => 'progress-strip@example.com',
@@ -539,6 +531,15 @@ class GuidedLessonFlowTest extends TestCase
         ]);
 
         $this->organization->users()->attach($user->id, ['role' => 'student']);
+
+        ActivityEvent::create([
+            'session_id' => PracticeLearnerScope::forUser($user, $sessionId),
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'vocabulary',
+            'activity_id' => $words[0]->id,
+            'status' => 'completed',
+            'meta' => ['pronunciation_pass' => true, 'source' => 'pronunciation_check'],
+        ]);
 
         $response = $this->actingAs($user, 'admin')
             ->withCookie('talma_session_id', $sessionId)

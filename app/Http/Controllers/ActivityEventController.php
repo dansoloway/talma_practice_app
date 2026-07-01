@@ -25,7 +25,7 @@ class ActivityEventController extends Controller
         $location = $geolocationService->getLocationFromIp($ipAddress);
 
         $event = ActivityEvent::create([
-            'session_id' => $request->attributes->get('practice_session_id'),
+            'session_id' => $request->attributes->get('practice_learner_scope'),
             'device_type' => $this->detectDeviceType($request),
             'ip_address' => $ipAddress,
             'country' => $location['country'],

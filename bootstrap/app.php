@@ -40,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\TrackPracticeSession::class,
+            \App\Http\Middleware\AttachPracticeLearnerScope::class,
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
     })

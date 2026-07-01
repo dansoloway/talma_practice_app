@@ -92,7 +92,7 @@ You experience the result as a polished lesson—not as “empty boxes waiting f
 
 ## Progress and participation
 
-The app can remember **how you interact** with lessons and activities—so teachers and programs can see engagement over time. From your side, you can also see **vocabulary progress within a lesson**: a count of words mastered and badges on each word (got it, try again, or skipped). Progress is tied to your current browser session on that device. No special steps are required unless your teacher asks you to sign in.
+The app can remember **how you interact** with lessons and activities—so teachers and programs can see engagement over time. From your side, you can also see **vocabulary progress within a lesson**: a count of words mastered and badges on each word (got it, try again, or skipped). When you sign in (for example on Summer Practice Pal), progress follows your learner account or selected child; on open courses it is saved in your browser session on that device.
 
 ---
 

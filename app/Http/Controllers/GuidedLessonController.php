@@ -61,7 +61,7 @@ class GuidedLessonController extends Controller
             $org = $gate instanceof Organization ? $gate : null;
         }
 
-        $sessionId = $request->attributes->get('practice_session_id');
+        $sessionId = $request->attributes->get('practice_learner_scope');
         $words = $lesson->vocabulary->where('is_active', true)->sortBy('sort_order')->values();
 
         if ($words->isEmpty()) {

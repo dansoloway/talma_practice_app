@@ -9,6 +9,7 @@ use App\Models\Organization;
 use App\Services\CourseAccess;
 use App\Services\LessonProgressCalculator;
 use App\Services\LessonSessionGrouper;
+use App\Support\PracticeLearnerScope;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -149,7 +150,7 @@ class StudentController extends Controller
 
         $lessonGroups = LessonSessionGrouper::group($lessons);
 
-        $practiceSessionId = $request->cookie(config('app.practice_session_cookie', 'talma_session_id'));
+        $practiceSessionId = PracticeLearnerScope::resolve($request);
         $lessonProgress = app(LessonProgressCalculator::class)
             ->completionPercentsForLessons($lessons, $practiceSessionId);
 
@@ -213,7 +214,7 @@ class StudentController extends Controller
 
         $lessonGroups = LessonSessionGrouper::group($lessons);
 
-        $practiceSessionId = $request->cookie(config('app.practice_session_cookie', 'talma_session_id'));
+        $practiceSessionId = PracticeLearnerScope::resolve($request);
         $lessonProgress = app(LessonProgressCalculator::class)
             ->completionPercentsForLessons($lessons, $practiceSessionId);
 
