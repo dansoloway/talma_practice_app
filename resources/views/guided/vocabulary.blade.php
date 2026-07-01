@@ -220,8 +220,10 @@ function finalizePronunciationAttempt() {
 }
 
 let mediaRecorder = null;
+let mediaRecorderMimeType = 'audio/webm';
 let recordedChunks = [];
 let recordedAudioBlob = null;
+let playbackObjectUrl = null;
 let isRecording = false;
 let recordingStartedAt = null;
 let recordingMaxTimeout = null;
@@ -260,6 +262,7 @@ async function initializeRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const mimeType = pickPronunciationRecorderMimeType();
+        mediaRecorderMimeType = mimeType || 'audio/webm';
         mediaRecorder = mimeType
             ? new MediaRecorder(stream, { mimeType })
             : new MediaRecorder(stream);
@@ -269,9 +272,29 @@ async function initializeRecording() {
         };
 
         mediaRecorder.onstop = async () => {
-            releaseRecordingStream();
-            recordedAudioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
+            const blobType = mediaRecorder?.mimeType || mediaRecorderMimeType;
+            recordedAudioBlob = recordedChunks.length > 0
+                ? new Blob(recordedChunks, { type: blobType })
+                : null;
             recordedChunks = [];
+            releaseRecordingStream();
+
+            const durationMs = recordingStartedAt ? Date.now() - recordingStartedAt : null;
+            const tooShort = !recordedAudioBlob
+                || recordedAudioBlob.size < 2000
+                || (durationMs !== null && durationMs < 400);
+
+            if (tooShort) {
+                recordedAudioBlob = null;
+                if (playbackObjectUrl) {
+                    URL.revokeObjectURL(playbackObjectUrl);
+                    playbackObjectUrl = null;
+                }
+                playRecordingBtn.disabled = true;
+                setRecordingStatus('Recording was too short or empty. Hold Record a little longer and try again.');
+                return;
+            }
+
             playRecordingBtn.disabled = false;
             hasRecordedThisWord = true;
             nextWordBtn.disabled = false;
@@ -281,7 +304,7 @@ async function initializeRecording() {
                 try {
                     await uploadVoiceSample(recordedAudioBlob, {
                         recordingSource: 'manual_record',
-                        durationMs: recordingStartedAt ? Date.now() - recordingStartedAt : null,
+                        durationMs,
                     });
                     setRecordingStatus('Recording saved!');
                 } catch (error) {
@@ -347,6 +370,9 @@ async function toggleRecording() {
             if (isRecording) toggleRecording();
         }, voiceUploadConfig.maxSeconds * 1000);
     } else {
+        if (typeof mediaRecorder.requestData === 'function') {
+            mediaRecorder.requestData();
+        }
         mediaRecorder.stop();
         isRecording = false;
         clearTimeout(recordingMaxTimeout);
@@ -364,7 +390,11 @@ recordBtn?.addEventListener('click', toggleRecording);
 
 playRecordingBtn?.addEventListener('click', () => {
     if (!recordedAudioBlob) return;
-    playbackAudio.src = URL.createObjectURL(recordedAudioBlob);
+    if (playbackObjectUrl) {
+        URL.revokeObjectURL(playbackObjectUrl);
+    }
+    playbackObjectUrl = URL.createObjectURL(recordedAudioBlob);
+    playbackAudio.src = playbackObjectUrl;
     playbackAudio.play().catch((error) => {
         console.error('Playback failed:', error);
         setRecordingStatus('Could not play recording in this browser.');
@@ -660,6 +690,9 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             speechStatus.textContent = '';
         }
 
+        speechBtn.disabled = true;
+        speechBtn.innerHTML = '<i class="fas fa-microphone-alt" aria-hidden="true"></i> Starting...';
+
         if (activeCheck) {
             activeCheck.abort();
             pendingPronunciationResult = null;
@@ -675,7 +708,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             target: speechFeedbackConfig.targetText,
             lang: speechFeedbackConfig.lang,
             maxSeconds: speechFeedbackConfig.maxSeconds,
-            recordAudio: voiceUploadConfig.enabled,
+            recordAudio: false,
             onRequestingMic: () => {
                 speechBtn.disabled = true;
                 if (recordBtnEl) {
@@ -710,6 +743,8 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
                     pass: false,
                     heard: error.heard || '',
                     ratio: 0,
+                    audioBlob: error.audioBlob || null,
+                    durationMs: error.durationMs || null,
                 });
 
                 if (error.code === 'unsupported') {
@@ -717,8 +752,6 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
                     if (unsupportedNote) {
                         unsupportedNote.classList.remove('hidden');
                     }
-                } else {
-                    setSpeechButtonListening(false);
                 }
                 if (speechStatus) {
                     speechStatus.textContent = speechErrorMessage(error);

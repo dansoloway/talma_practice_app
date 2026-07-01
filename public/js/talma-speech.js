@@ -385,7 +385,6 @@
                 if (typeof options.onError === 'function') {
                     options.onError({ code: 'no-speech', message: 'No speech was detected.' });
                 }
-                finish();
                 return;
             }
 
@@ -393,7 +392,6 @@
             if (typeof options.onResult === 'function') {
                 options.onResult(transcript, scoreTranscript(transcript, options.target || ''));
             }
-            finish();
         };
 
         recognition.onerror = function (event) {
@@ -407,7 +405,6 @@
                     message: event.message || 'Speech recognition failed.',
                 });
             }
-            finish();
         };
 
         recognition.onend = finish;
@@ -553,17 +550,33 @@
                 return;
             }
 
-            stopAudioRecorder().then(function (audio) {
-                if (typeof options.onError === 'function') {
-                    options.onError({
-                        code: 'no-speech',
-                        message: 'No speech was detected.',
-                        audioBlob: audio.audioBlob,
-                        durationMs: audio.durationMs,
-                    });
+            global.setTimeout(function () {
+                if (session.finished || session.resultDelivered) {
+                    if (session.resultDelivered) {
+                        finishSession();
+                    }
+                    return;
                 }
-                markResultDelivered();
-            });
+
+                stopAudioRecorder().then(function (audio) {
+                    if (session.finished || session.resultDelivered) {
+                        if (session.resultDelivered) {
+                            finishSession();
+                        }
+                        return;
+                    }
+
+                    if (typeof options.onError === 'function') {
+                        options.onError({
+                            code: 'no-speech',
+                            message: 'No speech was detected.',
+                            audioBlob: audio.audioBlob,
+                            durationMs: audio.durationMs,
+                        });
+                    }
+                    markResultDelivered();
+                });
+            }, 250);
         }
 
         requestMicrophoneAccess()

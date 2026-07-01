@@ -101,8 +101,9 @@ class VoiceSampleTest extends TestCase
     private function fakeRecording(): UploadedFile
     {
         $wavHeader = "RIFF\x24\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00\x40\x1f\x00\x00\x80\x3e\x00\x00\x02\x00\x10\x00data\x00\x00\x00\x00";
+        $content = $wavHeader.str_repeat("\0", 3000);
 
-        return UploadedFile::fake()->createWithContent('recording.wav', $wavHeader);
+        return UploadedFile::fake()->createWithContent('recording.wav', $content);
     }
 
     public function test_registration_requires_age_gender_and_consent_when_org_collects_voice(): void
@@ -232,6 +233,25 @@ class VoiceSampleTest extends TestCase
         $this->assertSame('female', $metadata['gender']);
         $this->assertSame('hebrew', $metadata['native_language']);
         $this->assertArrayNotHasKey('user_id', $metadata);
+    }
+
+    public function test_voice_sample_upload_rejects_empty_recording(): void
+    {
+        $user = $this->createConsentedStudent();
+        $tiny = UploadedFile::fake()->createWithContent('recording.webm', str_repeat("\0", 100));
+
+        $response = $this->actingAs($user, 'admin')->postJson(route('voice-samples.store'), [
+            'organization_id' => $this->organization->id,
+            'lesson_id' => $this->lesson->id,
+            'prompt_id' => $this->prompt->id,
+            'option_id' => $this->option->id,
+            'generated_sentence' => 'My favorite color is red.',
+            'recording' => $tiny,
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson(['error' => 'Recording was too short or empty. Please try again.']);
+        $this->assertSame(0, VoiceSample::count());
     }
 
     public function test_parent_upload_uses_selected_child_profile(): void

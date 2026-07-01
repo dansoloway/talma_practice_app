@@ -77,6 +77,10 @@ class VoiceSampleController extends Controller
         }
 
         $file = $request->file('recording');
+        if ($file->getSize() < 2000) {
+            return response()->json(['error' => 'Recording was too short or empty. Please try again.'], 422);
+        }
+
         $allowedMimes = ['audio/webm', 'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/x-wav', 'video/webm'];
         if (! FileUploadSecurity::validateFileContent($file, $allowedMimes)) {
             return response()->json(['error' => 'Invalid file type.'], 422);
