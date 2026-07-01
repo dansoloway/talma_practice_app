@@ -251,6 +251,46 @@ class GuidedLessonFlowTest extends TestCase
         $response->assertSee('id="record-btn"', false);
     }
 
+    public function test_guided_vocabulary_advances_after_first_word_marked_complete(): void
+    {
+        $sessionId = 'vocab-advance-session';
+        $firstWord = $this->lesson->vocabulary()->orderBy('sort_order')->first();
+
+        ActivityEvent::create([
+            'session_id' => $sessionId,
+            'lesson_id' => $this->lesson->id,
+            'activity_type' => 'vocabulary',
+            'activity_id' => $firstWord->id,
+            'status' => 'completed',
+        ]);
+
+        $user = User::create([
+            'name' => 'Summer Student',
+            'email' => 'vocab-advance@example.com',
+            'password' => bcrypt('password123'),
+            'role' => 'student',
+            'is_active' => true,
+            'age' => 10,
+            'gender' => 'female',
+            'native_language' => 'hebrew',
+            'voice_recording_consented_at' => now(),
+        ]);
+
+        $this->organization->users()->attach($user->id, ['role' => 'student']);
+
+        $response = $this->actingAs($user, 'admin')
+            ->withCookie('talma_session_id', $sessionId)
+            ->get(route('org.student.guided.vocabulary', [
+                'organization' => $this->organization,
+                'lesson' => $this->lesson,
+            ]));
+
+        $response->assertOk();
+        $response->assertSee('goodbye');
+        $response->assertSee('Word 2 of 2');
+        $response->assertDontSee('Word 1 of 2');
+    }
+
     public function test_vocabulary_voice_upload_accepts_vocabulary_id(): void
     {
         config(['app.allow_recording_upload' => true]);

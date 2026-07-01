@@ -216,8 +216,6 @@ async function initializeRecording() {
             } else {
                 recordingStatus.textContent = 'Recording saved!';
             }
-
-            await logVocabComplete();
         };
 
         return true;
@@ -301,8 +299,9 @@ async function uploadVoiceSample(blob) {
 
 async function logVocabComplete() {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    await fetch(activityEventEndpoint, {
+    const response = await fetch(activityEventEndpoint, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -315,6 +314,10 @@ async function logVocabComplete() {
             status: 'completed',
         }),
     });
+
+    if (!response.ok) {
+        throw new Error('Could not save vocabulary progress.');
+    }
 }
 
 function finishVocabularyStep() {
@@ -323,8 +326,21 @@ function finishVocabularyStep() {
 }
 
 nextWordBtn.addEventListener('click', async () => {
-    if (! voiceUploadConfig.enabled) {
+    nextWordBtn.disabled = true;
+
+    try {
         await logVocabComplete();
+    } catch (error) {
+        nextWordBtn.disabled = false;
+        const message = error?.message || 'Could not save progress. Try again.';
+        if (recordingStatus) {
+            recordingStatus.textContent = message;
+        }
+        const speechStatus = document.getElementById('speech-check-status');
+        if (speechStatus) {
+            speechStatus.textContent = message;
+        }
+        return;
     }
 
     if (isLastWord) {
@@ -339,7 +355,19 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
         return;
     }
 
-    await logVocabComplete();
+    const skipBtn = document.getElementById('skip-word-btn');
+    skipBtn.disabled = true;
+
+    try {
+        await logVocabComplete();
+    } catch (error) {
+        skipBtn.disabled = false;
+        if (recordingStatus) {
+            recordingStatus.textContent = error?.message || 'Could not save progress. Try again.';
+        }
+        return;
+    }
+
     if (isLastWord) {
         finishVocabularyStep();
     } else {
