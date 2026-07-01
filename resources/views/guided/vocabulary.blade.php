@@ -213,6 +213,7 @@ const lessonShowUrl = @json($lessonShowUrl);
 window.talmaVocabPronunciation = {
     lastAttempt: null,
     isActive: false,
+    recordingUploaded: false,
 };
 
 let pendingPronunciationResult = null;
@@ -336,11 +337,12 @@ async function initializeRecording() {
             playRecordingBtn.disabled = false;
             hasRecordedThisWord = true;
             nextWordBtn.disabled = false;
+            rememberManualRecordingAttempt(recordedAudioBlob, durationMs);
 
             if (voiceUploadConfig.enabled) {
                 setRecordingStatus('Uploading recording...', 'neutral');
                 try {
-                    await uploadVoiceSample(recordedAudioBlob, {
+                    await persistMicRecording(recordedAudioBlob, {
                         recordingSource: 'manual_record',
                         durationMs,
                     });
@@ -373,58 +375,70 @@ function releaseRecordingStream() {
     mediaRecorder = null;
 }
 
-async function toggleRecording() {
-    if (window.talmaVocabPronunciation.isActive) {
-        setRecordingStatus('Finish the pronunciation check first, then try again.', 'warning');
+async function startManualRecording() {
+    if (window.talmaVocabPronunciation.isActive || isRecording) {
         return;
     }
 
-    if (!isRecording) {
-        setRecordingStatus('Requesting microphone access…', 'neutral');
-        if (!mediaRecorder) {
-            const ok = await initializeRecording();
-            if (!ok) return;
+    setRecordingStatus('Requesting microphone access…', 'neutral');
+    if (!mediaRecorder) {
+        const ok = await initializeRecording();
+        if (!ok) return;
+    }
+
+    recordedChunks = [];
+    try {
+        mediaRecorder.start(250);
+    } catch (error) {
+        console.error('Could not start recording:', error);
+        setRecordingStatus('Could not start recording. Try again or refresh the page.', 'error');
+        releaseRecordingStream();
+        return;
+    }
+
+    isRecording = true;
+    recordingStartedAt = Date.now();
+    recordBtn.disabled = true;
+    recordBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> Listening...';
+    recordBtn.classList.add('ring-2', 'ring-red-400', 'ring-offset-2');
+    setRecordingStatus('Listening… say the word now.', 'neutral');
+    playRecordingBtn.disabled = true;
+
+    const speechBtn = document.getElementById('speech-check-btn');
+    if (speechBtn) {
+        speechBtn.disabled = true;
+    }
+
+    recordingMaxTimeout = setTimeout(() => {
+        if (isRecording) {
+            finishManualRecording();
         }
-        recordedChunks = [];
-        try {
-            mediaRecorder.start(250);
-        } catch (error) {
-            console.error('Could not start recording:', error);
-            setRecordingStatus('Could not start recording. Try again or refresh the page.', 'error');
-            releaseRecordingStream();
-            return;
-        }
-        isRecording = true;
-        recordingStartedAt = Date.now();
-        recordBtn.innerHTML = '<i class="fas fa-stop" aria-hidden="true"></i> Stop';
-        recordBtn.classList.add('ring-2', 'ring-red-400', 'ring-offset-2');
-        setRecordingStatus('Listening… say the word now.', 'neutral');
-        playRecordingBtn.disabled = true;
-        const speechBtn = document.getElementById('speech-check-btn');
-        if (speechBtn) {
-            speechBtn.disabled = true;
-        }
-        recordingMaxTimeout = setTimeout(() => {
-            if (isRecording) toggleRecording();
-        }, voiceUploadConfig.maxSeconds * 1000);
-    } else {
-        if (typeof mediaRecorder.requestData === 'function') {
-            mediaRecorder.requestData();
-        }
-        mediaRecorder.stop();
-        isRecording = false;
-        clearTimeout(recordingMaxTimeout);
-        recordBtn.innerHTML = MIC_IDLE_LABEL;
-        recordBtn.classList.remove('ring-2', 'ring-red-400', 'ring-offset-2');
-        setRecordingStatus('Processing…', 'neutral');
-        const speechBtn = document.getElementById('speech-check-btn');
-        if (speechBtn && !window.talmaVocabPronunciation.isActive) {
-            speechBtn.disabled = false;
-        }
+    }, voiceUploadConfig.maxSeconds * 1000);
+}
+
+function finishManualRecording() {
+    if (!isRecording || !mediaRecorder) {
+        return;
+    }
+
+    if (typeof mediaRecorder.requestData === 'function') {
+        mediaRecorder.requestData();
+    }
+    mediaRecorder.stop();
+    isRecording = false;
+    clearTimeout(recordingMaxTimeout);
+    recordBtn.disabled = false;
+    recordBtn.innerHTML = MIC_IDLE_LABEL;
+    recordBtn.classList.remove('ring-2', 'ring-red-400', 'ring-offset-2');
+    setRecordingStatus('Processing…', 'neutral');
+
+    const speechBtn = document.getElementById('speech-check-btn');
+    if (speechBtn && !window.talmaVocabPronunciation.isActive) {
+        speechBtn.disabled = false;
     }
 }
 
-recordBtn?.addEventListener('click', toggleRecording);
+recordBtn?.addEventListener('click', startManualRecording);
 
 playRecordingBtn?.addEventListener('click', () => {
     const blob = recordedAudioBlob || window.talmaVocabPronunciation.lastAttempt?.audioBlob;
@@ -466,6 +480,31 @@ async function uploadVoiceSample(blob, options = {}) {
     }
 
     return response.json();
+}
+
+async function persistMicRecording(blob, options = {}) {
+    if (!voiceUploadConfig.enabled || !blob || blob.size < 2000) {
+        return false;
+    }
+
+    if (window.talmaVocabPronunciation.recordingUploaded) {
+        return true;
+    }
+
+    await uploadVoiceSample(blob, options);
+    window.talmaVocabPronunciation.recordingUploaded = true;
+    return true;
+}
+
+function rememberManualRecordingAttempt(blob, durationMs) {
+    pendingPronunciationResult = {
+        pass: true,
+        heard: '',
+        ratio: null,
+        audioBlob: blob,
+        durationMs: durationMs,
+    };
+    finalizePronunciationAttempt();
 }
 
 function buildPronunciationMeta({ skipped = false } = {}) {
@@ -530,8 +569,8 @@ async function advanceVocabularyWord({ skipped = false } = {}) {
 
     if (!skipped && voiceUploadConfig.enabled && attempt?.audioBlob && attempt.audioBlob.size > 0) {
         try {
-            await uploadVoiceSample(attempt.audioBlob, {
-                recordingSource: 'pronunciation_check',
+            await persistMicRecording(attempt.audioBlob, {
+                recordingSource: speechFeedbackConfig.enabled ? 'pronunciation_check' : 'manual_record',
                 durationMs: attempt.durationMs,
             });
         } catch (error) {
@@ -733,6 +772,28 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
         }
     }
 
+    async function uploadSpeechRecording(result) {
+        if (!voiceUploadConfig.enabled || !result?.audioBlob || result.audioBlob.size < 2000) {
+            return;
+        }
+
+        const heard = result.heard ? ` We heard “${result.heard}”.` : '';
+        const baseMessage = result.pass
+            ? `Nice work!${heard}`
+            : `Almost — try again.${heard}`;
+
+        try {
+            setPronunciationStatus(`${baseMessage} Saving recording…`, result.pass ? 'success' : 'warning');
+            await persistMicRecording(result.audioBlob, {
+                recordingSource: 'pronunciation_check',
+                durationMs: result.durationMs,
+            });
+            setPronunciationStatus(`${baseMessage} Recording saved!`, result.pass ? 'success' : 'warning');
+        } catch (error) {
+            setPronunciationStatus(`${baseMessage} ${error?.message || 'Recording upload failed.'} You can try again or skip.`, 'error');
+        }
+    }
+
     speechBtn.addEventListener('click', () => {
         setPronunciationStatus('', 'neutral');
 
@@ -770,6 +831,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             onFeedback: (result) => {
                 storePronunciationAttempt(result);
                 showInlineSpeechFeedback(result);
+                uploadSpeechRecording(result);
             },
             onError: (error) => {
                 storePronunciationAttempt({
