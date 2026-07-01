@@ -477,6 +477,7 @@
             audioRecorder: null,
             resultDelivered: false,
             recognitionEnded: false,
+            recognitionEventReceived: false,
             finished: false,
         };
 
@@ -551,7 +552,7 @@
             }
 
             global.setTimeout(function () {
-                if (session.finished || session.resultDelivered) {
+                if (session.finished || session.resultDelivered || session.recognitionEventReceived) {
                     if (session.resultDelivered) {
                         finishSession();
                     }
@@ -559,7 +560,7 @@
                 }
 
                 stopAudioRecorder().then(function (audio) {
-                    if (session.finished || session.resultDelivered) {
+                    if (session.finished || session.resultDelivered || session.recognitionEventReceived) {
                         if (session.resultDelivered) {
                             finishSession();
                         }
@@ -576,7 +577,53 @@
                     }
                     markResultDelivered();
                 });
-            }, 250);
+            }, 750);
+        }
+
+        function beginListening() {
+            if (session.aborted) {
+                return;
+            }
+
+            if (typeof options.onListening === 'function') {
+                options.onListening();
+            }
+
+            session.listenHandle = listen({
+                lang: options.lang || 'en-US',
+                maxSeconds: options.maxSeconds || 10,
+                target: options.target || '',
+                onResult: function (transcript, result) {
+                    session.recognitionEventReceived = true;
+                    stopAudioRecorder().then(function (audio) {
+                        if (typeof options.onFeedback === 'function') {
+                            options.onFeedback(attachAudioToResult(result, audio));
+                        }
+                        markResultDelivered();
+                    });
+                },
+                onError: function (error) {
+                    if (error && error.code === 'aborted') {
+                        session.recognitionEventReceived = true;
+                        markResultDelivered();
+                        return;
+                    }
+
+                    session.recognitionEventReceived = true;
+                    stopAudioRecorder().then(function (audio) {
+                        if (typeof options.onError === 'function') {
+                            var payload = Object.assign({}, error);
+                            payload.audioBlob = audio.audioBlob;
+                            payload.durationMs = audio.durationMs;
+                            options.onError(payload);
+                        }
+                        markResultDelivered();
+                    });
+                },
+                onEnd: function () {
+                    markRecognitionEnded();
+                },
+            });
         }
 
         requestMicrophoneAccess()
@@ -588,39 +635,16 @@
                 if (options.recordAudio && stream) {
                     session.audioRecorder = createAudioRecorder(stream);
                     session.audioRecorder.start();
+                    beginListening();
+                    return;
                 }
 
-                if (typeof options.onListening === 'function') {
-                    options.onListening();
-                }
+                // Release the permission probe stream so Web Speech API can capture audio.
+                releaseMicrophoneAccess();
 
-                session.listenHandle = listen({
-                    lang: options.lang || 'en-US',
-                    maxSeconds: options.maxSeconds || 10,
-                    target: options.target || '',
-                    onResult: function (transcript, result) {
-                        stopAudioRecorder().then(function (audio) {
-                            if (typeof options.onFeedback === 'function') {
-                                options.onFeedback(attachAudioToResult(result, audio));
-                            }
-                            markResultDelivered();
-                        });
-                    },
-                    onError: function (error) {
-                        stopAudioRecorder().then(function (audio) {
-                            if (typeof options.onError === 'function') {
-                                var payload = Object.assign({}, error);
-                                payload.audioBlob = audio.audioBlob;
-                                payload.durationMs = audio.durationMs;
-                                options.onError(payload);
-                            }
-                            markResultDelivered();
-                        });
-                    },
-                    onEnd: function () {
-                        markRecognitionEnded();
-                    },
-                });
+                return new Promise(function (resolve) {
+                    global.setTimeout(resolve, 100);
+                }).then(beginListening);
             })
             .catch(function (error) {
                 if (session.aborted) {

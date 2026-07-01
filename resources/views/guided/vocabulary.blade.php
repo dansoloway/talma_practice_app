@@ -671,7 +671,10 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
 
     function speechErrorMessage(error) {
         if (error.code === 'no-speech') {
-            return 'We did not hear anything. Try again.';
+            return 'We did not hear anything. Speak clearly when you see Listening, then try again.';
+        }
+        if (error.code === 'audio-capture' || error.code === 'mic-unavailable') {
+            return 'Microphone is busy. Refresh the page, then try Check my pronunciation again.';
         }
         if (error.code === 'not-allowed') {
             return 'Microphone access denied. Allow the microphone in your browser settings, then try again.';
