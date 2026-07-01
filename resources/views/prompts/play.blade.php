@@ -320,30 +320,32 @@ function loadPrompt(index) {
                     
                     <div class="bg-white rounded-xl p-6 border border-gray-200">
                         <h5 class="font-semibold text-gray-700 mb-3">You</h5>
-                        <div class="flex gap-3">
-                            <button class="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:scale-95 transition-all duration-200 shadow-sm" 
+                        <div class="flex gap-3 flex-wrap">
+                            <button class="flex-1 min-w-[7rem] px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:scale-95 transition-all duration-200 shadow-sm" 
                                     id="record-btn" 
                                     onclick="toggleRecording()">
                                 <i class="fas fa-microphone mr-2"></i> Record
                             </button>
-                            <button class="flex-1 px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                            <button class="flex-1 min-w-[7rem] px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
                                     id="play-recording-btn" 
                                     onclick="playRecording()" 
                                     disabled>
                                 <i class="fas fa-play mr-2"></i> Play
                             </button>
+                            ${speechFeedbackConfig.enabled ? `
+                            <button type="button"
+                                    id="check-pronunciation-btn"
+                                    class="flex-1 min-w-[7rem] px-4 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onclick="checkRecordedPronunciation()"
+                                    disabled>
+                                <i class="fas fa-check-circle mr-2"></i> Check
+                            </button>
+                            ` : ''}
                         </div>
                         ${speechFeedbackConfig.enabled ? `
-                            <button type="button"
-                                    id="speech-check-btn"
-                                    class="w-full mt-3 px-4 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                    onclick="checkSentencePronunciation()">
-                                <i class="fas fa-microphone-alt mr-2"></i> Check my pronunciation
-                            </button>
-                            <p id="speech-check-status" class="mt-3 text-sm text-gray-600"></p>
                             <div id="speech-check-feedback" class="hidden mt-3"></div>
                             <p id="speech-unsupported-note" class="hidden text-xs text-gray-500 mt-2">
-                                Instant speech check works best in Chrome or Edge on desktop.
+                                Pronunciation check works best in Chrome or Edge on desktop.
                             </p>
                         ` : ''}
                         <div id="recording-status" class="mt-3 text-sm text-gray-600"></div>
@@ -456,7 +458,7 @@ function handleWordSelection(optionIndex, selectedWord) {
         audioControls.classList.remove('hidden');
     }
 
-    setupSpeechCheckUi();
+    setupPronunciationCheckUi();
     
     // Enable next/finish button
     if (currentPromptIndex === prompts.length - 1) {
@@ -561,116 +563,75 @@ let recordedAudioBlob = null;
 let currentRecordingContext = null;
 let recordingStartedAt = null;
 let recordingMaxTimeout = null;
-let activeSpeechCheck = null;
+let activeSpeechListen = null;
+let recordingTranscript = '';
 
-function setupSpeechCheckUi() {
-    const speechBtn = document.getElementById('speech-check-btn');
+function setupPronunciationCheckUi() {
+    const checkBtn = document.getElementById('check-pronunciation-btn');
     const unsupportedNote = document.getElementById('speech-unsupported-note');
 
-    if (!speechFeedbackConfig.enabled || !speechBtn || typeof TalmaSpeech === 'undefined') {
+    if (!speechFeedbackConfig.enabled || !checkBtn || typeof TalmaSpeech === 'undefined') {
         return;
     }
 
     if (!TalmaSpeech.isSupported()) {
-        speechBtn.disabled = true;
+        checkBtn.disabled = true;
         if (unsupportedNote) {
             unsupportedNote.classList.remove('hidden');
         }
     }
 }
 
-function speechErrorMessage(error) {
-    if (error.code === 'no-speech') {
-        return 'We did not hear anything. Try again.';
-    }
-    if (error.code === 'not-allowed') {
-        return 'Microphone access denied. Allow the microphone in your browser settings, then try again.';
-    }
-    if (error.code === 'unsupported') {
-        return 'Speech check is not supported in this browser. Try Chrome or Edge on desktop.';
-    }
-    return 'Could not check speech. Try again or use Chrome/Edge.';
-}
-
-function checkSentencePronunciation() {
-    if (!speechFeedbackConfig.enabled || typeof TalmaSpeech === 'undefined' || !currentRecordingContext) {
+function startRecordingSpeechCapture() {
+    if (!speechFeedbackConfig.enabled || typeof TalmaSpeech === 'undefined' || !TalmaSpeech.isSupported() || !currentRecordingContext) {
         return;
     }
 
-    const speechBtn = document.getElementById('speech-check-btn');
-    const speechStatus = document.getElementById('speech-check-status');
-    const speechFeedback = document.getElementById('speech-check-feedback');
-
-    if (activeSpeechCheck) {
-        activeSpeechCheck.abort();
-        activeSpeechCheck = null;
-    }
-
-    if (speechFeedback) {
-        speechFeedback.classList.add('hidden');
-    }
-    if (speechBtn) {
-        speechBtn.disabled = true;
-        speechBtn.innerHTML = '<i class="fas fa-microphone-alt mr-2"></i> Allow microphone...';
-    }
-    if (speechStatus) {
-        speechStatus.textContent = 'Allow microphone access when your browser asks.';
-    }
-
-    activeSpeechCheck = TalmaSpeech.checkPronunciation({
+    recordingTranscript = '';
+    activeSpeechListen = TalmaSpeech.listen({
         target: currentRecordingContext.targetText,
         lang: speechFeedbackConfig.lang,
         maxSeconds: speechFeedbackConfig.maxSeconds,
-        onRequestingMic: () => {
-            if (speechBtn) {
-                speechBtn.disabled = true;
-                speechBtn.innerHTML = '<i class="fas fa-microphone-alt mr-2"></i> Allow microphone...';
-            }
-            if (speechStatus) {
-                speechStatus.textContent = 'Allow microphone access when your browser asks.';
-            }
+        onResult: (transcript) => {
+            recordingTranscript = transcript;
         },
-        onListening: () => {
-            if (speechBtn) {
-                speechBtn.disabled = true;
-                speechBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> Listening...';
-            }
-            if (speechStatus) {
-                speechStatus.textContent = 'Listening... say the sentence now.';
-            }
-        },
-        onFeedback: (result) => {
-            if (speechFeedback) {
-                TalmaSpeech.renderFeedback(speechFeedback, result, {
-                    pass: 'Great sentence!',
-                    fail: 'Keep practicing — try again.',
-                });
-                speechFeedback.classList.remove('hidden');
-            }
-            if (speechStatus) {
-                speechStatus.textContent = '';
-            }
-        },
-        onError: (error) => {
-            if (speechStatus) {
-                speechStatus.textContent = speechErrorMessage(error);
-            }
-            if (error.code === 'unsupported' && speechBtn) {
-                speechBtn.disabled = true;
-                const unsupportedNote = document.getElementById('speech-unsupported-note');
-                if (unsupportedNote) {
-                    unsupportedNote.classList.remove('hidden');
-                }
-            }
-        },
-        onEnd: () => {
-            if (speechBtn) {
-                speechBtn.disabled = false;
-                speechBtn.innerHTML = '<i class="fas fa-microphone-alt mr-2"></i> Check my pronunciation';
-            }
-            activeSpeechCheck = null;
-        },
+        onError: () => {},
     });
+}
+
+function stopRecordingSpeechCapture() {
+    if (activeSpeechListen) {
+        activeSpeechListen.abort();
+        activeSpeechListen = null;
+    }
+}
+
+function checkRecordedPronunciation() {
+    if (!speechFeedbackConfig.enabled || typeof TalmaSpeech === 'undefined' || !currentRecordingContext || !recordedAudioBlob) {
+        return;
+    }
+
+    const speechFeedback = document.getElementById('speech-check-feedback');
+    const statusDiv = document.getElementById('recording-status');
+
+    if (!recordingTranscript) {
+        if (statusDiv) {
+            statusDiv.textContent = 'We could not detect speech. Try recording again.';
+        }
+        return;
+    }
+
+    const result = TalmaSpeech.scoreTranscript(recordingTranscript, currentRecordingContext.targetText);
+    if (speechFeedback) {
+        TalmaSpeech.renderFeedback(speechFeedback, result, {
+            pass: 'Great sentence!',
+            fail: 'Keep practicing — try again.',
+        });
+        speechFeedback.classList.remove('hidden');
+    }
+    if (statusDiv) {
+        statusDiv.textContent = '';
+    }
 }
 
 // Reset recording state when new word is selected
@@ -694,25 +655,18 @@ function resetRecordingState() {
         recordingStatus.textContent = '';
     }
 
-    if (activeSpeechCheck) {
-        activeSpeechCheck.abort();
-        activeSpeechCheck = null;
-    }
+    stopRecordingSpeechCapture();
+    recordingTranscript = '';
 
-    const speechStatus = document.getElementById('speech-check-status');
     const speechFeedback = document.getElementById('speech-check-feedback');
-    const speechBtn = document.getElementById('speech-check-btn');
+    const checkBtn = document.getElementById('check-pronunciation-btn');
 
-    if (speechStatus) {
-        speechStatus.textContent = '';
-    }
     if (speechFeedback) {
         speechFeedback.classList.add('hidden');
         speechFeedback.innerHTML = '';
     }
-    if (speechBtn) {
-        speechBtn.disabled = false;
-        speechBtn.innerHTML = '<i class="fas fa-microphone-alt mr-2"></i> Check my pronunciation';
+    if (checkBtn) {
+        checkBtn.disabled = true;
     }
     
     // Reset recording button if it was in a recording state
@@ -740,11 +694,22 @@ async function initializeRecording() {
         };
         
         mediaRecorder.onstop = function() {
+            stopRecordingSpeechCapture();
             recordedAudioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
             recordedChunks = [];
             
-            // Enable play button
+            // Enable play and check buttons
             document.getElementById('play-recording-btn').disabled = false;
+            const checkBtn = document.getElementById('check-pronunciation-btn');
+            if (checkBtn && speechFeedbackConfig.enabled && typeof TalmaSpeech !== 'undefined') {
+                checkBtn.disabled = !TalmaSpeech.isSupported();
+            }
+            const speechFeedback = document.getElementById('speech-check-feedback');
+            if (speechFeedback) {
+                speechFeedback.classList.add('hidden');
+                speechFeedback.innerHTML = '';
+            }
+
             const statusDiv = document.getElementById('recording-status');
             if (voiceUploadConfig.enabled && currentRecordingContext) {
                 statusDiv.textContent = 'Uploading recording...';
@@ -781,13 +746,24 @@ async function toggleRecording() {
         }
         
         recordedChunks = [];
+        recordingTranscript = '';
+        const checkBtn = document.getElementById('check-pronunciation-btn');
+        if (checkBtn) {
+            checkBtn.disabled = true;
+        }
+        const speechFeedback = document.getElementById('speech-check-feedback');
+        if (speechFeedback) {
+            speechFeedback.classList.add('hidden');
+        }
+
         mediaRecorder.start();
         isRecording = true;
         recordingStartedAt = Date.now();
         
-        recordBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
-        recordBtn.classList.add('recording');
-        statusDiv.textContent = 'Recording...';
+        recordBtn.innerHTML = '<i class="fas fa-stop mr-2"></i> Stop';
+        recordBtn.classList.add('recording', 'ring-2', 'ring-red-400', 'ring-offset-2');
+        statusDiv.textContent = 'Recording… say the sentence now.';
+        startRecordingSpeechCapture();
         
         if (recordingMaxTimeout) {
             clearTimeout(recordingMaxTimeout);
@@ -803,6 +779,7 @@ async function toggleRecording() {
         document.getElementById('play-recording-btn').disabled = true;
     } else {
         // Stop recording
+        stopRecordingSpeechCapture();
         mediaRecorder.stop();
         isRecording = false;
         if (recordingMaxTimeout) {
@@ -810,9 +787,9 @@ async function toggleRecording() {
             recordingMaxTimeout = null;
         }
         
-        recordBtn.innerHTML = '<i class="fas fa-microphone"></i> Record';
-        recordBtn.classList.remove('recording');
-        statusDiv.textContent = 'Processing...';
+        recordBtn.innerHTML = '<i class="fas fa-microphone mr-2"></i> Record';
+        recordBtn.classList.remove('recording', 'ring-2', 'ring-red-400', 'ring-offset-2');
+        statusDiv.textContent = 'Processing…';
     }
 }
 
