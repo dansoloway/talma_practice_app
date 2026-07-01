@@ -22,13 +22,58 @@
     @stack('styles')
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
+    @php
+        $authUser = auth('admin')->user();
+        $isOrgStudentPortal = isset($currentOrganization) && $authUser && ($authUser->isStudent() || $authUser->isParent());
+        $selectedStudent = ($authUser && session('selected_student_id'))
+            ? \App\Models\ParentStudent::find(session('selected_student_id'))
+            : null;
+        $studentHomeUrl = isset($currentOrganization)
+            ? route('org.student.index', $currentOrganization)
+            : route('lessons.index');
+    @endphp
     <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200/60 shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center">
-                <a href="{{ route('lessons.index') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="TALMA Practice Pal home">
+                <a href="{{ $isOrgStudentPortal ? $studentHomeUrl : route('lessons.index') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="TALMA Practice Pal home">
                     <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="h-9 w-auto">
                 </a>
+                @if($isOrgStudentPortal)
+                    <span class="hidden sm:inline ml-3 text-sm font-medium text-gray-600 border-l border-gray-200 pl-3">{{ $currentOrganization->display_name }}</span>
+                @endif
             </div>
+
+            @if($isOrgStudentPortal)
+                <div class="flex items-center gap-2">
+                    <div class="relative" id="student-account-menu">
+                        <button type="button" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200" id="student-account-toggle" aria-label="Account" aria-expanded="false" aria-haspopup="true">
+                            <i class="fas fa-user-circle text-2xl text-gray-500"></i>
+                        </button>
+                        <div class="hidden absolute top-full right-0 pt-1 z-50" id="student-account-dropdown">
+                            <div class="bg-white rounded-xl border border-gray-200/60 shadow-lg py-1 min-w-[220px]">
+                                <div class="px-4 py-2.5 text-sm text-gray-800 font-medium">
+                                    {{ $authUser->name }}
+                                </div>
+                                @if($authUser->isParent() && $selectedStudent && $currentOrganization->usesParentSignup())
+                                    <div class="px-4 pb-2 text-xs text-gray-500">
+                                        Practicing as {{ $selectedStudent->display_name }}
+                                    </div>
+                                    <a href="{{ route('org.student.select-child', $currentOrganization) }}" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
+                                        <i class="fas fa-exchange-alt mr-2 text-gray-400"></i>Switch child
+                                    </a>
+                                @endif
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <form method="POST" action="{{ route('org.student.logout', $currentOrganization) }}">
+                                    @csrf
+                                    <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-200 rounded-b-xl">
+                                        <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>Log out
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @else
             <button class="md:hidden p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200" id="nav-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars text-xl"></i>
             </button>
@@ -73,15 +118,15 @@
                 
                 @if(auth('admin')->check())
                     @php
-                        $selectedStudent = session('selected_student_id') ? \App\Models\ParentStudent::find(session('selected_student_id')) : null;
+                        $legacySelectedStudent = session('selected_student_id') ? \App\Models\ParentStudent::find(session('selected_student_id')) : null;
                     @endphp
-                    @if($selectedStudent && isset($currentOrganization) && $currentOrganization->usesParentSignup())
+                    @if($legacySelectedStudent && isset($currentOrganization) && $currentOrganization->usesParentSignup())
                         <a href="{{ route('org.student.select-child', $currentOrganization) }}" class="px-3 py-2 text-sm text-blue-700 bg-blue-50 font-medium rounded-lg hover:bg-blue-100 transition-all duration-200">
-                            Practicing as: {{ $selectedStudent->display_name }}
+                            Practicing as: {{ $legacySelectedStudent->display_name }}
                         </a>
                     @endif
                     <span class="px-3 py-2 text-gray-600 text-sm border-l border-gray-200/60 ml-2 pl-4">{{ auth('admin')->user()->name }} ({{ ucfirst(auth('admin')->user()->role) }})</span>
-                    @if(isset($currentOrganization) && auth('admin')->user()->canAccessStudentPortal())
+                    @if(isset($currentOrganization) && auth('admin')->user()->canAccessStudentPortal() && ! auth('admin')->user()->isStudent() && ! auth('admin')->user()->isParent())
                         <form method="POST" action="{{ route('org.student.logout', $currentOrganization) }}" class="inline">
                             @csrf
                             <button type="submit" class="px-3 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-200">Logout</button>
@@ -93,8 +138,10 @@
                     <a href="{{ route('admin.dashboard') }}" class="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200">Login</a>
                 @endif
             </div>
+            @endif
         </nav>
-        <!-- Mobile menu -->
+        <!-- Mobile menu (legacy / admin nav only) -->
+        @unless($isOrgStudentPortal)
         <div class="hidden md:hidden border-t border-gray-200/60 bg-white/95 backdrop-blur-sm" id="mobile-nav">
             <div class="container mx-auto px-4 py-4 flex flex-col gap-2">
                 <a href="{{ route('lessons.index') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Lessons</a>
@@ -115,7 +162,7 @@
                     <div class="border-t border-gray-200/60 my-2 pt-2">
                         <span class="text-gray-600 text-sm px-3">{{ auth('admin')->user()->name }} ({{ ucfirst(auth('admin')->user()->role) }})</span>
                     </div>
-                    @if(isset($currentOrganization) && auth('admin')->user()->canAccessStudentPortal())
+                    @if(isset($currentOrganization) && auth('admin')->user()->canAccessStudentPortal() && ! auth('admin')->user()->isStudent() && ! auth('admin')->user()->isParent())
                         <form method="POST" action="{{ route('org.student.logout', $currentOrganization) }}" class="px-3">
                             @csrf
                             <button type="submit" class="text-gray-700 hover:text-red-600 font-medium py-2">Logout</button>
@@ -128,6 +175,7 @@
                 @endif
             </div>
         </div>
+        @endunless
     </header>
     
     <script>
@@ -146,6 +194,26 @@
                 } else {
                     icon.classList.remove('fa-times');
                     icon.classList.add('fa-bars');
+                }
+            });
+        }
+
+        const accountToggle = document.getElementById('student-account-toggle');
+        const accountDropdown = document.getElementById('student-account-dropdown');
+        const accountMenu = document.getElementById('student-account-menu');
+
+        if (accountToggle && accountDropdown && accountMenu) {
+            accountToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isOpen = !accountDropdown.classList.contains('hidden');
+                accountDropdown.classList.toggle('hidden');
+                accountToggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!accountMenu.contains(e.target)) {
+                    accountDropdown.classList.add('hidden');
+                    accountToggle.setAttribute('aria-expanded', 'false');
                 }
             });
         }
