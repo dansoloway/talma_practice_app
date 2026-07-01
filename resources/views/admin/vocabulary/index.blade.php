@@ -146,8 +146,8 @@
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Model</label>
                     <select id="tts-model" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
-                        <option value="eleven_flash_v2" selected>Flash v2 (Recommended - Fast, English only, cost-effective)</option>
-                        <option value="eleven_monolingual_v1">Monolingual v1 (English only, fast)</option>
+                        <option value="eleven_flash_v2">Flash v2 (Fast, English only, cost-effective)</option>
+                        <option value="eleven_monolingual_v1" selected>Monolingual v1 (English only, fast)</option>
                         <option value="eleven_multilingual_v2">Multilingual v2 (Supports multiple languages, best quality)</option>
                         <option value="eleven_turbo_v2_5">Turbo v2.5 (Ultra-fast, low latency)</option>
                         <option value="eleven_flash_v2_5">Flash v2.5 (Fastest, batch processing)</option>
@@ -508,7 +508,7 @@ function loadTtsSettings() {
         style: 0.0,
         speed: 0.92,
         use_speaker_boost: true,
-        model: 'eleven_flash_v2'
+        model: 'eleven_monolingual_v1'
     };
 }
 

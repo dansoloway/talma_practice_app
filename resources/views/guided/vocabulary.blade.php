@@ -3,9 +3,12 @@
 @section('title', 'Vocabulary - ' . $lesson->title)
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-6 md:py-8">
-    <div class="container mx-auto px-4 max-w-2xl">
-        <div class="mb-6">
+@php
+    $micPracticeEnabled = ($speechFeedbackEnabled ?? false) || ($voiceUploadEnabled ?? false);
+@endphp
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-4 md:py-6">
+    <div class="container mx-auto px-4 max-w-5xl">
+        <div class="mb-4">
             <a href="{{ isset($org) && $org ? route('org.student.lesson', [$org, $lesson->slug]) : route('lessons.show', $lesson->slug) }}"
                class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 group">
                 <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
@@ -14,119 +17,138 @@
         </div>
 
         @if(!empty($guidedFlow))
-            <p class="text-xs text-gray-500 mb-4">Step {{ $guidedFlow['currentIndex'] }} of {{ $guidedFlow['totalSteps'] }}</p>
+            <p class="text-xs text-gray-500 mb-3 lg:hidden">Step {{ $guidedFlow['currentIndex'] }} of {{ $guidedFlow['totalSteps'] }}</p>
         @endif
 
-        @include('partials.vocabulary-progress-strip', [
-            'vocabularyProgress' => $vocabularyProgress ?? null,
-            'words' => $words ?? collect(),
-            'currentWordId' => $currentWord->id ?? null,
-        ])
+        <div class="mb-3 lg:hidden">
+            @include('partials.vocabulary-progress-strip', [
+                'vocabularyProgress' => $vocabularyProgress ?? null,
+                'words' => $words ?? collect(),
+                'currentWordId' => $currentWord->id ?? null,
+            ])
+        </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 text-center" id="vocab-step">
-            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-                Vocabulary · Word {{ $wordIndex + 1 }} of {{ $wordsCount }}
-            </p>
-
-            @if($currentWord->image_url)
-                <img src="{{ $currentWord->image_url }}"
-                     alt="{{ $currentWord->english_word }}"
-                     class="mx-auto max-h-48 rounded-xl object-cover mb-4">
-            @endif
-
-            <h1 class="text-3xl font-bold text-gray-900 mb-3">{{ $currentWord->english_word }}</h1>
-
-            @if($currentWord->hebrew_translation || $currentWord->arabic_translation)
-                <div class="flex flex-wrap justify-center gap-2 mb-4">
-                    @if($currentWord->hebrew_translation)
-                        <span class="text-sm font-medium px-3 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-100">
-                            {{ $currentWord->hebrew_translation }}
-                        </span>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-5 lg:p-6 flex flex-col lg:min-h-[min(720px,calc(100vh-8rem))]" id="vocab-step">
+            <div class="flex flex-col lg:grid lg:grid-cols-2 lg:gap-8 lg:flex-1 lg:min-h-0">
+                {{-- Left column: word + progress --}}
+                <div class="text-center lg:text-left">
+                    @if(!empty($guidedFlow))
+                        <p class="hidden lg:block text-xs text-gray-500 mb-2">Step {{ $guidedFlow['currentIndex'] }} of {{ $guidedFlow['totalSteps'] }}</p>
                     @endif
-                    @if($currentWord->arabic_translation)
-                        <span class="text-sm font-medium px-3 py-1 rounded-lg bg-green-50 text-green-800 border border-green-100">
-                            {{ $currentWord->arabic_translation }}
-                        </span>
+
+                    <div class="hidden lg:block mb-3">
+                        @include('partials.vocabulary-progress-strip', [
+                            'vocabularyProgress' => $vocabularyProgress ?? null,
+                            'words' => $words ?? collect(),
+                            'currentWordId' => $currentWord->id ?? null,
+                        ])
+                    </div>
+
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                        Vocabulary · Word {{ $wordIndex + 1 }} of {{ $wordsCount }}
+                    </p>
+
+                    @if($currentWord->image_url)
+                        <img src="{{ $currentWord->image_url }}"
+                             alt="{{ $currentWord->english_word }}"
+                             class="mx-auto lg:mx-0 max-h-40 lg:max-h-44 rounded-xl object-cover mb-3">
+                    @endif
+
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $currentWord->english_word }}</h1>
+
+                    @if($currentWord->hebrew_translation || $currentWord->arabic_translation)
+                        <div class="flex flex-wrap justify-center lg:justify-start gap-2 mb-3">
+                            @if($currentWord->hebrew_translation)
+                                <span class="text-sm font-medium px-3 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-100">
+                                    {{ $currentWord->hebrew_translation }}
+                                </span>
+                            @endif
+                            @if($currentWord->arabic_translation)
+                                <span class="text-sm font-medium px-3 py-1 rounded-lg bg-green-50 text-green-800 border border-green-100">
+                                    {{ $currentWord->arabic_translation }}
+                                </span>
+                            @endif
+                        </div>
+                    @endif
+
+                    @if($currentWord->word_audio_url)
+                        <button type="button" id="play-model-btn"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 hover:bg-blue-50 hover:border-blue-200 transition-colors">
+                            <i class="fas fa-volume-up" aria-hidden="true"></i>
+                            Listen
+                        </button>
                     @endif
                 </div>
-            @endif
 
-            @if($currentWord->word_audio_url)
-                <button type="button" id="play-model-btn"
-                        class="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 hover:bg-blue-50 hover:border-blue-200 transition-colors">
-                    <i class="fas fa-volume-up" aria-hidden="true"></i>
-                    Listen
-                </button>
-            @endif
-
-            @if($speechFeedbackEnabled ?? false)
-            <div class="border-t border-gray-100 pt-6" id="speech-feedback-section">
-                <p class="text-sm text-gray-600 mb-4">Say the word aloud and get instant feedback</p>
-                <button type="button" id="speech-check-btn"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
-                        aria-label="Check my pronunciation">
-                    <i class="fas fa-microphone-alt" aria-hidden="true"></i>
-                    Check my pronunciation
-                </button>
-                <p id="speech-check-status" class="text-sm text-gray-500 min-h-[1.25rem] mt-3"></p>
-                <div id="speech-check-feedback" class="hidden mt-3"></div>
-                <p id="speech-unsupported-note" class="hidden text-xs text-gray-500 mt-2">
-                    Pronunciation check works best in Chrome or Edge on desktop.
-                </p>
-            </div>
-            @endif
-
-            @if($voiceUploadEnabled ?? false)
-            <div class="border-t border-gray-100 pt-6">
-                <p class="text-sm text-gray-600 mb-4">Record yourself saying the word</p>
-                <div class="flex flex-wrap justify-center gap-3 mb-3">
-                    <button type="button" id="record-btn"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-microphone" aria-hidden="true"></i>
-                        Record
-                    </button>
-                    <button type="button" id="play-recording-btn" disabled
-                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50">
-                        <i class="fas fa-play" aria-hidden="true"></i>
-                        Play back
-                    </button>
-                </div>
-                <p id="recording-status" class="text-sm text-gray-500 min-h-[1.25rem]"></p>
-            </div>
-            @elseif(!empty($voiceRecordingOffered))
-            <div class="border-t border-gray-100 pt-6">
-                <p class="text-sm text-gray-600 mb-3">Record yourself saying the word</p>
-                @if(($voiceProfileBlockedReason ?? null) === 'select_child' && isset($org) && $org)
-                    <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
-                        Choose who is practicing to save recordings.
-                        <a href="{{ route('org.student.select-child', $org) }}" class="font-semibold underline underline-offset-2">Select a child</a>
-                    </p>
-                @elseif(($voiceProfileBlockedReason ?? null) === 'profile_incomplete' && isset($org) && $org)
-                    <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
-                        Complete your learner profile to save recordings.
-                        <a href="{{ route('org.student.complete-voice-profile', $org) }}" class="font-semibold underline underline-offset-2">Complete profile</a>
-                    </p>
-                @else
-                    <p class="text-sm text-gray-500 mb-4">Recording will be available once your learner profile is complete.</p>
-                @endif
-            </div>
-            @elseif(!($speechFeedbackEnabled ?? false))
-            <p class="text-sm text-gray-500 mb-6">Tap listen, then continue when you are ready.</p>
-            @endif
-
-            <div class="mt-8 flex flex-col sm:flex-row justify-center gap-3">
-                <button type="button" id="next-word-btn"
-                        class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors">
-                    @if($isLastWord)
-                        Continue
+                {{-- Right column: practice + navigation --}}
+                <div class="flex flex-col mt-4 pt-4 border-t border-gray-100 lg:mt-0 lg:pt-0 lg:border-t-0 lg:min-h-0 lg:flex-1">
+                    @if($micPracticeEnabled)
+                    <div class="text-center lg:text-left flex-1" id="speech-feedback-section">
+                        <p class="text-sm text-gray-600 mb-3">Say the word aloud and get instant feedback</p>
+                        <div class="flex items-center justify-center lg:justify-start gap-2">
+                            @if($speechFeedbackEnabled ?? false)
+                            <button type="button" id="speech-check-btn"
+                                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                    aria-label="Tap to say the word">
+                                <i class="fas fa-microphone" aria-hidden="true"></i>
+                                Tap to say the word
+                            </button>
+                            @else
+                            <button type="button" id="record-btn"
+                                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                    aria-label="Tap to say the word">
+                                <i class="fas fa-microphone" aria-hidden="true"></i>
+                                Tap to say the word
+                            </button>
+                            @endif
+                            <button type="button" id="play-recording-btn" disabled
+                                    class="inline-flex items-center justify-center w-11 h-11 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    aria-label="Play back your recording">
+                                <i class="fas fa-play text-sm" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <p id="speech-check-status" class="text-sm text-gray-500 min-h-[1.25rem] mt-2" role="status"></p>
+                        <div id="speech-check-feedback" class="hidden" aria-hidden="true"></div>
+                        <p id="speech-unsupported-note" class="hidden text-xs text-gray-500 mt-1">
+                            Pronunciation check works best in Chrome or Edge on desktop.
+                        </p>
+                    </div>
+                    @elseif(!empty($voiceRecordingOffered))
+                    <div class="text-center lg:text-left flex-1">
+                        <p class="text-sm text-gray-600 mb-2">Say the word aloud to practice</p>
+                        @if(($voiceProfileBlockedReason ?? null) === 'select_child' && isset($org) && $org)
+                            <p class="text-sm text-amber-700">
+                                Choose who is practicing to save recordings.
+                                <a href="{{ route('org.student.select-child', $org) }}" class="font-semibold underline underline-offset-2">Select a child</a>
+                            </p>
+                        @elseif(($voiceProfileBlockedReason ?? null) === 'profile_incomplete' && isset($org) && $org)
+                            <p class="text-sm text-amber-700">
+                                Complete your learner profile to save recordings.
+                                <a href="{{ route('org.student.complete-voice-profile', $org) }}" class="font-semibold underline underline-offset-2">Complete profile</a>
+                            </p>
+                        @else
+                            <p class="text-sm text-gray-500">Recording will be available once your learner profile is complete.</p>
+                        @endif
+                    </div>
                     @else
-                        Next word
+                    <p class="text-sm text-gray-500 flex-1 text-center lg:text-left">Tap listen, then continue when you are ready.</p>
                     @endif
-                </button>
-                <button type="button" id="skip-word-btn"
-                        class="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2">
-                    Skip word
-                </button>
+
+                    <div class="mt-auto pt-4 flex flex-col sm:flex-row justify-center lg:justify-start gap-3 border-t border-gray-100 lg:border-t-0">
+                        <button type="button" id="next-word-btn"
+                                class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors">
+                            @if($isLastWord)
+                                Continue
+                            @else
+                                Next word
+                            @endif
+                        </button>
+                        <button type="button" id="skip-word-btn"
+                                class="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 sm:self-center">
+                            Skip word
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -231,10 +253,32 @@ let hasRecordedThisWord = false;
 
 const recordBtn = document.getElementById('record-btn');
 const playRecordingBtn = document.getElementById('play-recording-btn');
-const recordingStatus = document.getElementById('recording-status');
+const pronunciationStatus = document.getElementById('speech-check-status');
 const nextWordBtn = document.getElementById('next-word-btn');
 const playbackAudio = document.getElementById('playback-audio');
 const modelAudio = document.getElementById('model-audio');
+
+const MIC_IDLE_LABEL = '<i class="fas fa-microphone" aria-hidden="true"></i> Tap to say the word';
+
+function setPronunciationStatus(message, tone = 'neutral') {
+    if (!pronunciationStatus) {
+        return;
+    }
+
+    pronunciationStatus.textContent = message;
+    pronunciationStatus.classList.remove('text-gray-500', 'text-green-600', 'text-amber-600', 'text-red-600');
+    const toneClasses = {
+        neutral: 'text-gray-500',
+        success: 'text-green-600',
+        warning: 'text-amber-600',
+        error: 'text-red-600',
+    };
+    pronunciationStatus.classList.add(toneClasses[tone] || toneClasses.neutral);
+}
+
+function setRecordingStatus(message, tone = 'neutral') {
+    setPronunciationStatus(message, tone);
+}
 
 document.getElementById('play-model-btn')?.addEventListener('click', () => {
     @if($currentWord->word_audio_url)
@@ -243,15 +287,9 @@ document.getElementById('play-model-btn')?.addEventListener('click', () => {
     @endif
 });
 
-function setRecordingStatus(message) {
-    if (recordingStatus) {
-        recordingStatus.textContent = message;
-    }
-}
-
 async function initializeRecording() {
     if (!navigator.mediaDevices?.getUserMedia) {
-        setRecordingStatus('Recording is not supported in this browser. Try Chrome or Edge.');
+        setRecordingStatus('Recording is not supported in this browser. Try Chrome or Edge.', 'error');
         return false;
     }
 
@@ -291,7 +329,7 @@ async function initializeRecording() {
                     playbackObjectUrl = null;
                 }
                 playRecordingBtn.disabled = true;
-                setRecordingStatus('Recording was too short or empty. Hold Record a little longer and try again.');
+                setRecordingStatus('No speech detected. Hold the button a little longer and try again.', 'error');
                 return;
             }
 
@@ -300,20 +338,20 @@ async function initializeRecording() {
             nextWordBtn.disabled = false;
 
             if (voiceUploadConfig.enabled) {
-                setRecordingStatus('Uploading recording...');
+                setRecordingStatus('Uploading recording...', 'neutral');
                 try {
                     await uploadVoiceSample(recordedAudioBlob, {
                         recordingSource: 'manual_record',
                         durationMs,
                     });
-                    setRecordingStatus('Recording saved!');
+                    setRecordingStatus('Recording saved!', 'success');
                 } catch (error) {
                     setRecordingStatus(error?.message
                         ? `${error.message} You can skip this word.`
-                        : 'Recording saved locally (upload failed).');
+                        : 'Recording saved locally (upload failed).', 'warning');
                 }
             } else {
-                setRecordingStatus('Recording saved!');
+                setRecordingStatus('Recording saved!', 'success');
             }
         };
 
@@ -322,8 +360,8 @@ async function initializeRecording() {
         console.error('Error accessing microphone:', error);
         const denied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError';
         setRecordingStatus(denied
-            ? 'Microphone access denied. Click the lock icon in the address bar, allow the microphone, then try again.'
-            : 'Microphone is blocked. Check browser site permissions, then try again. You can skip this word.');
+            ? 'Microphone permission denied. Allow the microphone in your browser settings, then try again.'
+            : 'Microphone is blocked. Check browser site permissions, then try again. You can skip this word.', 'error');
         return false;
     }
 }
@@ -337,12 +375,12 @@ function releaseRecordingStream() {
 
 async function toggleRecording() {
     if (window.talmaVocabPronunciation.isActive) {
-        setRecordingStatus('Finish the pronunciation check first, then record.');
+        setRecordingStatus('Finish the pronunciation check first, then try again.', 'warning');
         return;
     }
 
     if (!isRecording) {
-        setRecordingStatus('Requesting microphone access…');
+        setRecordingStatus('Requesting microphone access…', 'neutral');
         if (!mediaRecorder) {
             const ok = await initializeRecording();
             if (!ok) return;
@@ -352,15 +390,15 @@ async function toggleRecording() {
             mediaRecorder.start(250);
         } catch (error) {
             console.error('Could not start recording:', error);
-            setRecordingStatus('Could not start recording. Try again or refresh the page.');
+            setRecordingStatus('Could not start recording. Try again or refresh the page.', 'error');
             releaseRecordingStream();
             return;
         }
         isRecording = true;
         recordingStartedAt = Date.now();
-        recordBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
+        recordBtn.innerHTML = '<i class="fas fa-stop" aria-hidden="true"></i> Stop';
         recordBtn.classList.add('ring-2', 'ring-red-400', 'ring-offset-2');
-        setRecordingStatus('Recording… say the word now.');
+        setRecordingStatus('Listening… say the word now.', 'neutral');
         playRecordingBtn.disabled = true;
         const speechBtn = document.getElementById('speech-check-btn');
         if (speechBtn) {
@@ -376,9 +414,9 @@ async function toggleRecording() {
         mediaRecorder.stop();
         isRecording = false;
         clearTimeout(recordingMaxTimeout);
-        recordBtn.innerHTML = '<i class="fas fa-microphone"></i> Record';
+        recordBtn.innerHTML = MIC_IDLE_LABEL;
         recordBtn.classList.remove('ring-2', 'ring-red-400', 'ring-offset-2');
-        setRecordingStatus('Processing…');
+        setRecordingStatus('Processing…', 'neutral');
         const speechBtn = document.getElementById('speech-check-btn');
         if (speechBtn && !window.talmaVocabPronunciation.isActive) {
             speechBtn.disabled = false;
@@ -389,15 +427,16 @@ async function toggleRecording() {
 recordBtn?.addEventListener('click', toggleRecording);
 
 playRecordingBtn?.addEventListener('click', () => {
-    if (!recordedAudioBlob) return;
+    const blob = recordedAudioBlob || window.talmaVocabPronunciation.lastAttempt?.audioBlob;
+    if (!blob) return;
     if (playbackObjectUrl) {
         URL.revokeObjectURL(playbackObjectUrl);
     }
-    playbackObjectUrl = URL.createObjectURL(recordedAudioBlob);
+    playbackObjectUrl = URL.createObjectURL(blob);
     playbackAudio.src = playbackObjectUrl;
     playbackAudio.play().catch((error) => {
         console.error('Playback failed:', error);
-        setRecordingStatus('Could not play recording in this browser.');
+        setRecordingStatus('Could not play recording in this browser.', 'error');
     });
 });
 
@@ -514,12 +553,11 @@ function finishVocabularyStep() {
 }
 
 function updateVocabularyProgressChip({ skipped = false } = {}) {
-    const chip = document.querySelector(`[data-vocab-word-id="${voiceUploadConfig.vocabularyId}"]`);
-    if (!chip) {
+    const chips = document.querySelectorAll(`[data-vocab-word-id="${voiceUploadConfig.vocabularyId}"]`);
+    if (!chips.length) {
         return;
     }
 
-    const wordLabel = chip.dataset.wordLabel || chip.textContent.trim();
     const attempt = window.talmaVocabPronunciation.lastAttempt;
     let status = 'needs_practice';
 
@@ -529,21 +567,27 @@ function updateVocabularyProgressChip({ skipped = false } = {}) {
         status = 'learned';
     }
 
-    chip.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border';
+    const alreadyCountedLearned = Array.from(chips).some((chip) => chip.dataset.countedLearned === 'true');
 
-    if (status === 'learned') {
-        chip.classList.add('border-green-300', 'bg-green-50', 'text-green-800');
-        chip.innerHTML = `<i class="fas fa-check text-[10px]" aria-hidden="true"></i> ${wordLabel}`;
-    } else if (status === 'needs_practice') {
-        chip.classList.add('border-amber-200', 'bg-amber-50', 'text-amber-800');
-        chip.innerHTML = `<i class="fas fa-redo text-[10px]" aria-hidden="true"></i> ${wordLabel}`;
-    } else {
-        chip.classList.add('border-gray-200', 'bg-gray-50', 'text-gray-600');
-        chip.textContent = wordLabel;
-    }
+    chips.forEach((chip) => {
+        const wordLabel = chip.dataset.wordLabel || chip.textContent.trim();
 
-    if (status === 'learned' && chip.dataset.countedLearned !== 'true') {
-        chip.dataset.countedLearned = 'true';
+        chip.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border';
+
+        if (status === 'learned') {
+            chip.classList.add('border-green-300', 'bg-green-50', 'text-green-800');
+            chip.innerHTML = `<i class="fas fa-check text-[10px]" aria-hidden="true"></i> ${wordLabel}`;
+            chip.dataset.countedLearned = 'true';
+        } else if (status === 'needs_practice') {
+            chip.classList.add('border-amber-200', 'bg-amber-50', 'text-amber-800');
+            chip.innerHTML = `<i class="fas fa-redo text-[10px]" aria-hidden="true"></i> ${wordLabel}`;
+        } else {
+            chip.classList.add('border-gray-200', 'bg-gray-50', 'text-gray-600');
+            chip.textContent = wordLabel;
+        }
+    });
+
+    if (status === 'learned' && !alreadyCountedLearned) {
         const learnedEl = document.getElementById('vocab-learned-count');
         if (learnedEl) {
             learnedEl.textContent = String((parseInt(learnedEl.textContent, 10) || 0) + 1);
@@ -564,13 +608,7 @@ nextWordBtn.addEventListener('click', async () => {
     } catch (error) {
         nextWordBtn.disabled = false;
         const message = error?.message || 'Could not save progress. Try again.';
-        if (recordingStatus) {
-            recordingStatus.textContent = message;
-        }
-        const speechStatus = document.getElementById('speech-check-status');
-        if (speechStatus) {
-            speechStatus.textContent = message;
-        }
+        setPronunciationStatus(message, 'error');
         return;
     }
 
@@ -594,9 +632,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
         updateVocabularyProgressChip({ skipped: true });
     } catch (error) {
         skipBtn.disabled = false;
-        if (recordingStatus) {
-            recordingStatus.textContent = error?.message || 'Could not save progress. Try again.';
-        }
+        setPronunciationStatus(error?.message || 'Could not save progress. Try again.', 'error');
         return;
     }
 
@@ -613,7 +649,6 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
     }
 
     const speechBtn = document.getElementById('speech-check-btn');
-    const speechStatus = document.getElementById('speech-check-status');
     const speechFeedback = document.getElementById('speech-check-feedback');
     const unsupportedNote = document.getElementById('speech-unsupported-note');
     const recordBtnEl = document.getElementById('record-btn');
@@ -625,9 +660,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
 
     if (typeof TalmaSpeech === 'undefined') {
         speechBtn.disabled = true;
-        if (speechStatus) {
-            speechStatus.textContent = 'Speech tools failed to load. Refresh the page and try again.';
-        }
+        setPronunciationStatus('Speech tools failed to load. Refresh the page and try again.', 'error');
         return;
     }
 
@@ -636,9 +669,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
         if (unsupportedNote) {
             unsupportedNote.classList.remove('hidden');
         }
-        if (speechStatus) {
-            speechStatus.textContent = 'Pronunciation check needs Chrome or Edge on a computer with a microphone.';
-        }
+        setPronunciationStatus('Pronunciation check needs Chrome or Edge on a computer with a microphone.', 'warning');
         return;
     }
 
@@ -650,7 +681,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
         }
         speechBtn.innerHTML = listening
             ? '<i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> Listening...'
-            : '<i class="fas fa-microphone-alt" aria-hidden="true"></i> Check my pronunciation';
+            : MIC_IDLE_LABEL;
     }
 
     function storePronunciationAttempt(result) {
@@ -671,13 +702,13 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
 
     function speechErrorMessage(error) {
         if (error.code === 'no-speech') {
-            return 'We did not hear anything. Speak clearly when you see Listening, then try again.';
+            return 'No speech detected. Speak clearly when you see Listening, then try again.';
         }
         if (error.code === 'audio-capture' || error.code === 'mic-unavailable') {
-            return 'Microphone is busy. Refresh the page, then try Check my pronunciation again.';
+            return 'Microphone is busy. Refresh the page, then try again.';
         }
         if (error.code === 'not-allowed') {
-            return 'Microphone access denied. Allow the microphone in your browser settings, then try again.';
+            return 'Microphone permission denied. Allow the microphone in your browser settings, then try again.';
         }
         if (error.code === 'network') {
             return 'Speech check could not reach the browser service. Check your connection and try again.';
@@ -688,13 +719,25 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
         return 'Could not check speech. Try again or use Chrome/Edge.';
     }
 
-    speechBtn.addEventListener('click', () => {
-        if (speechStatus) {
-            speechStatus.textContent = '';
+    function showInlineSpeechFeedback(result) {
+        const heard = result.heard ? ` We heard “${result.heard}”.` : '';
+        if (result.pass) {
+            setPronunciationStatus(`Nice work!${heard}`, 'success');
+        } else {
+            setPronunciationStatus(`Almost — try again.${heard}`, 'warning');
         }
 
+        if (playRecordingBtn && result.audioBlob && result.audioBlob.size > 0) {
+            recordedAudioBlob = result.audioBlob;
+            playRecordingBtn.disabled = false;
+        }
+    }
+
+    speechBtn.addEventListener('click', () => {
+        setPronunciationStatus('', 'neutral');
+
         speechBtn.disabled = true;
-        speechBtn.innerHTML = '<i class="fas fa-microphone-alt" aria-hidden="true"></i> Starting...';
+        speechBtn.innerHTML = '<i class="fas fa-microphone" aria-hidden="true"></i> Starting...';
 
         if (activeCheck) {
             activeCheck.abort();
@@ -717,29 +760,16 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
                 if (recordBtnEl) {
                     recordBtnEl.disabled = true;
                 }
-                speechBtn.innerHTML = '<i class="fas fa-microphone-alt" aria-hidden="true"></i> Allow microphone...';
-                if (speechStatus) {
-                    speechStatus.textContent = 'Allow microphone access when your browser asks.';
-                }
+                speechBtn.innerHTML = '<i class="fas fa-microphone" aria-hidden="true"></i> Allow microphone...';
+                setPronunciationStatus('Allow microphone access when your browser asks.', 'neutral');
             },
             onListening: () => {
                 setSpeechButtonListening(true);
-                if (speechStatus) {
-                    speechStatus.textContent = 'Listening... say the word now.';
-                }
+                setPronunciationStatus('Listening… say the word now.', 'neutral');
             },
             onFeedback: (result) => {
                 storePronunciationAttempt(result);
-                if (speechFeedback) {
-                    TalmaSpeech.renderFeedback(speechFeedback, result, {
-                        pass: 'Nice work!',
-                        fail: 'Almost — try again.',
-                    });
-                    speechFeedback.classList.remove('hidden');
-                }
-                if (speechStatus) {
-                    speechStatus.textContent = '';
-                }
+                showInlineSpeechFeedback(result);
             },
             onError: (error) => {
                 storePronunciationAttempt({
@@ -756,9 +786,13 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
                         unsupportedNote.classList.remove('hidden');
                     }
                 }
-                if (speechStatus) {
-                    speechStatus.textContent = speechErrorMessage(error);
+
+                if (playRecordingBtn && error.audioBlob && error.audioBlob.size > 0) {
+                    recordedAudioBlob = error.audioBlob;
+                    playRecordingBtn.disabled = false;
                 }
+
+                setPronunciationStatus(speechErrorMessage(error), 'error');
             },
             onEnd: () => {
                 finishPronunciationCheck();

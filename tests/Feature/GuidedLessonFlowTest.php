@@ -218,8 +218,8 @@ class GuidedLessonFlowTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('hello');
-        $response->assertSee('Record yourself saying the word');
-        $response->assertSee('id="record-btn"', false);
+        $response->assertSee('Tap to say the word');
+        $response->assertSee('id="speech-check-btn"', false);
     }
 
     public function test_org_scoped_guided_vocabulary_route_loads_for_authenticated_member(): void
@@ -248,8 +248,8 @@ class GuidedLessonFlowTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('hello');
-        $response->assertSee('Record yourself saying the word');
-        $response->assertSee('id="record-btn"', false);
+        $response->assertSee('Tap to say the word');
+        $response->assertSee('id="speech-check-btn"', false);
     }
 
     public function test_guided_vocabulary_advances_after_first_word_marked_complete(): void
@@ -657,7 +657,7 @@ class GuidedLessonFlowTest extends TestCase
         $response = $this->get(route('guided.vocabulary', $this->lesson));
 
         $response->assertOk();
-        $response->assertSee('Check my pronunciation');
+        $response->assertSee('Tap to say the word');
         $response->assertSee('id="speech-check-btn"', false);
 
         $html = $response->getContent();

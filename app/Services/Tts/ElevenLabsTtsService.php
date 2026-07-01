@@ -78,7 +78,7 @@ class ElevenLabsTtsService
                 "https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}",
                 [
                     'text' => $text,
-                    'model_id' => env('ELEVENLABS_MODEL', 'eleven_flash_v2'), // Optimized for English-only, fast, cost-effective
+                    'model_id' => config('tts.default_model_id'),
                     'voice_settings' => $settings,
                 ]
             );
@@ -156,7 +156,7 @@ class ElevenLabsTtsService
             'use_speaker_boost' => $useSpeakerBoost,
         ]);
 
-        $model = $customSettings['model'] ?? env('ELEVENLABS_MODEL', 'eleven_flash_v2'); // Optimized for English-only
+        $model = $customSettings['model'] ?? config('tts.default_model_id');
 
         try {
             $response = Http::withHeaders([

@@ -11,8 +11,8 @@ return [
     |
     */
 
-    // Default model (eleven_flash_v2 for English-only, fast, cost-effective)
-    'default_model_id' => env('ELEVENLABS_MODEL', 'eleven_flash_v2'),
+    // Default model (eleven_monolingual_v1 — English only, fast)
+    'default_model_id' => env('ELEVENLABS_MODEL', 'eleven_monolingual_v1'),
 
     // Default voice ID (Adam voice)
     'default_voice_id' => env('ELEVENLABS_DEFAULT_VOICE_ID', 'pNInz6obpgDQGcFmaJgB'),
