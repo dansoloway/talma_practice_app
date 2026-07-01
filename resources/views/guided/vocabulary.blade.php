@@ -28,8 +28,8 @@
             ])
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-5 lg:p-6 flex flex-col lg:min-h-[min(720px,calc(100vh-8rem))]" id="vocab-step">
-            <div class="flex flex-col lg:grid lg:grid-cols-2 lg:gap-8 lg:flex-1 lg:min-h-0">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-5 lg:p-6" id="vocab-step">
+            <div class="flex flex-col lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
                 {{-- Left column: word + progress --}}
                 <div class="text-center lg:text-left">
                     @if(!empty($guidedFlow))
@@ -80,10 +80,10 @@
                     @endif
                 </div>
 
-                {{-- Right column: practice + navigation --}}
-                <div class="flex flex-col mt-4 pt-4 border-t border-gray-100 lg:mt-0 lg:pt-0 lg:border-t-0 lg:min-h-0 lg:flex-1">
+                {{-- Right column: practice --}}
+                <div class="mt-4 pt-4 border-t border-gray-100 lg:mt-0 lg:pt-0 lg:border-t-0">
                     @if($micPracticeEnabled)
-                    <div class="text-center lg:text-left flex-1" id="speech-feedback-section">
+                    <div class="text-center lg:text-left" id="speech-feedback-section">
                         <p class="text-sm text-gray-600 mb-3">Say the word aloud and get instant feedback</p>
                         <div class="flex items-center justify-center lg:justify-start gap-2">
                             @if($speechFeedbackEnabled ?? false)
@@ -114,7 +114,7 @@
                         </p>
                     </div>
                     @elseif(!empty($voiceRecordingOffered))
-                    <div class="text-center lg:text-left flex-1">
+                    <div class="text-center lg:text-left">
                         <p class="text-sm text-gray-600 mb-2">Say the word aloud to practice</p>
                         @if(($voiceProfileBlockedReason ?? null) === 'select_child' && isset($org) && $org)
                             <p class="text-sm text-amber-700">
@@ -131,24 +131,24 @@
                         @endif
                     </div>
                     @else
-                    <p class="text-sm text-gray-500 flex-1 text-center lg:text-left">Tap listen, then continue when you are ready.</p>
+                    <p class="text-sm text-gray-500 text-center lg:text-left">Tap listen, then continue when you are ready.</p>
                     @endif
-
-                    <div class="mt-auto pt-4 flex flex-col sm:flex-row justify-center lg:justify-start gap-3 border-t border-gray-100 lg:border-t-0">
-                        <button type="button" id="next-word-btn"
-                                class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors">
-                            @if($isLastWord)
-                                Continue
-                            @else
-                                Next word
-                            @endif
-                        </button>
-                        <button type="button" id="skip-word-btn"
-                                class="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 sm:self-center">
-                            Skip word
-                        </button>
-                    </div>
                 </div>
+            </div>
+
+            <div class="mt-5 pt-4 flex flex-col sm:flex-row justify-center lg:justify-start gap-3 border-t border-gray-100">
+                <button type="button" id="next-word-btn"
+                        class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors">
+                    @if($isLastWord)
+                        Continue
+                    @else
+                        Next word
+                    @endif
+                </button>
+                <button type="button" id="skip-word-btn"
+                        class="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 sm:self-center">
+                    Skip word
+                </button>
             </div>
         </div>
 
