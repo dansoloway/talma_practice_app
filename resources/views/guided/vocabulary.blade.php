@@ -591,6 +591,55 @@ function finishVocabularyStep() {
     document.getElementById('vocab-complete').classList.remove('hidden');
 }
 
+const VOCAB_SEGMENT_COLORS = {
+    learned: 'bg-green-500',
+    needs_practice: 'bg-amber-400',
+    skipped: 'bg-gray-300',
+    not_started: 'bg-gray-200',
+};
+
+function updateVocabularyProgressBarSegment(wordId, status) {
+    document.querySelectorAll(`[data-vocab-progress-segment="${wordId}"]`).forEach((segment) => {
+        segment.className = `vocab-progress-segment flex-1 min-w-[0.35rem] rounded-full transition-colors duration-300 ${VOCAB_SEGMENT_COLORS[status] || VOCAB_SEGMENT_COLORS.not_started}`;
+    });
+}
+
+function setVocabularyLearnedCount(count) {
+    document.querySelectorAll('.vocab-learned-count').forEach((el) => {
+        el.textContent = String(count);
+    });
+
+    document.querySelectorAll('.vocab-progress-bar').forEach((bar) => {
+        bar.setAttribute('aria-valuenow', String(count));
+        const max = bar.getAttribute('aria-valuemax') || '0';
+        bar.setAttribute('aria-label', `Vocabulary progress: ${count} of ${max} words mastered`);
+    });
+
+    const completeLearnedEl = document.getElementById('vocab-complete-learned-count');
+    if (completeLearnedEl) {
+        completeLearnedEl.textContent = String(count);
+    }
+}
+
+function updateVocabularyVisitedSummary() {
+    const total = document.querySelector('.vocab-progress-bar')?.getAttribute('aria-valuemax');
+    if (!total) {
+        return;
+    }
+
+    const visited = document.querySelectorAll('[data-vocab-progress-segment].bg-green-500, [data-vocab-progress-segment].bg-amber-400, [data-vocab-progress-segment].bg-gray-300').length;
+    const learned = parseInt(document.querySelector('.vocab-learned-count')?.textContent || '0', 10) || 0;
+
+    document.querySelectorAll('.vocab-visited-summary').forEach((el) => {
+        if (visited > 0 && learned < parseInt(total, 10)) {
+            el.textContent = `${visited} of ${total} words practiced`;
+            el.classList.remove('hidden');
+        } else {
+            el.classList.add('hidden');
+        }
+    });
+}
+
 function updateVocabularyProgressChip({ skipped = false } = {}) {
     const chips = document.querySelectorAll(`[data-vocab-word-id="${voiceUploadConfig.vocabularyId}"]`);
     if (!chips.length) {
@@ -626,16 +675,15 @@ function updateVocabularyProgressChip({ skipped = false } = {}) {
         }
     });
 
+    updateVocabularyProgressBarSegment(voiceUploadConfig.vocabularyId, status);
+
     if (status === 'learned' && !alreadyCountedLearned) {
-        const learnedEl = document.getElementById('vocab-learned-count');
-        if (learnedEl) {
-            learnedEl.textContent = String((parseInt(learnedEl.textContent, 10) || 0) + 1);
-        }
-        const completeLearnedEl = document.getElementById('vocab-complete-learned-count');
-        if (completeLearnedEl && learnedEl) {
-            completeLearnedEl.textContent = learnedEl.textContent;
-        }
+        const learnedEl = document.querySelector('.vocab-learned-count');
+        const nextCount = (parseInt(learnedEl?.textContent || '0', 10) || 0) + 1;
+        setVocabularyLearnedCount(nextCount);
     }
+
+    updateVocabularyVisitedSummary();
 }
 
 nextWordBtn.addEventListener('click', async () => {

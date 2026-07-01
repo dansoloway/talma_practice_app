@@ -6,14 +6,47 @@
 
 @if($progress && ($progress['total'] ?? 0) > 0)
     <div class="mb-4">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <p class="text-sm font-medium text-gray-700" id="vocab-progress-summary">
-                Your words:
-                <span class="text-green-700" id="vocab-learned-count">{{ $progress['learned'] }}</span>
-                <span class="text-gray-500">of {{ $progress['total'] }} mastered</span>
-            </p>
+        <div class="mb-3">
+            <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2">
+                <p class="text-sm font-medium text-gray-800" id="vocab-progress-summary">Lesson progress</p>
+                <p class="text-sm text-gray-600">
+                    <span class="text-green-700 font-semibold vocab-learned-count">{{ $progress['learned'] }}</span>
+                    <span class="text-gray-500"> / {{ $progress['total'] }} mastered</span>
+                </p>
+            </div>
+
+            <div class="vocab-progress-bar flex gap-1 h-3 rounded-full bg-gray-100 p-0.5"
+                 role="progressbar"
+                 aria-valuemin="0"
+                 aria-valuemax="{{ $progress['total'] }}"
+                 aria-valuenow="{{ $progress['learned'] }}"
+                 aria-label="Vocabulary progress: {{ $progress['learned'] }} of {{ $progress['total'] }} words mastered">
+                @foreach($words as $word)
+                    @php
+                        $status = $progress['statuses'][$word->id] ?? 'not_started';
+                        $isCurrent = $currentWordId && $word->id === $currentWordId;
+                        $segmentClass = match (true) {
+                            $status === 'learned' => 'bg-green-500',
+                            $status === 'needs_practice' => 'bg-amber-400',
+                            $status === 'skipped' => 'bg-gray-300',
+                            $isCurrent => 'bg-blue-400',
+                            default => 'bg-gray-200',
+                        };
+                    @endphp
+                    <div @class([
+                        'vocab-progress-segment flex-1 min-w-[0.35rem] rounded-full transition-colors duration-300',
+                        $segmentClass,
+                        'ring-2 ring-blue-500 ring-offset-1' => $isCurrent && $status !== 'learned',
+                    ])
+                         data-vocab-progress-segment="{{ $word->id }}"
+                         title="{{ $word->english_word }}"></div>
+                @endforeach
+            </div>
+
             @if(($progress['visited'] ?? 0) > 0 && ($progress['learned'] ?? 0) < ($progress['total'] ?? 0))
-                <p class="text-xs text-gray-500">{{ $progress['visited'] }} practiced so far</p>
+                <p class="text-xs text-gray-500 mt-1.5 vocab-visited-summary">{{ $progress['visited'] }} of {{ $progress['total'] }} words practiced</p>
+            @else
+                <p class="text-xs text-gray-500 mt-1.5 vocab-visited-summary hidden"></p>
             @endif
         </div>
 

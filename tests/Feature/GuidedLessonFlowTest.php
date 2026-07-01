@@ -550,8 +550,9 @@ class GuidedLessonFlowTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('id="vocab-progress-summary"', false);
-        $response->assertSee('id="vocab-learned-count"', false);
-        $response->assertSee('of 2 mastered', false);
+        $response->assertSee('vocab-progress-bar', false);
+        $response->assertSee('vocab-learned-count', false);
+        $response->assertSee('/ 2 mastered', false);
         $response->assertSee($words[1]->english_word);
     }
 
