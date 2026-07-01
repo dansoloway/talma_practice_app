@@ -164,6 +164,11 @@ const continueUrl = @json($continueUrl);
 const isLastWord = @json($isLastWord);
 const lessonShowUrl = @json($lessonShowUrl);
 
+window.talmaVocabPronunciation = {
+    lastAttempt: null,
+    isActive: false,
+};
+
 let mediaRecorder = null;
 let recordedChunks = [];
 let recordedAudioBlob = null;
@@ -206,7 +211,10 @@ async function initializeRecording() {
             if (voiceUploadConfig.enabled) {
                 recordingStatus.textContent = 'Uploading recording...';
                 try {
-                    await uploadVoiceSample(recordedAudioBlob);
+                    await uploadVoiceSample(recordedAudioBlob, {
+                        recordingSource: 'manual_record',
+                        durationMs: recordingStartedAt ? Date.now() - recordingStartedAt : null,
+                    });
                     recordingStatus.textContent = 'Recording saved!';
                 } catch (error) {
                     recordingStatus.textContent = error?.message
@@ -234,6 +242,10 @@ function releaseRecordingStream() {
 }
 
 async function toggleRecording() {
+    if (window.talmaVocabPronunciation.isActive) {
+        return;
+    }
+
     if (!isRecording) {
         if (!mediaRecorder) {
             const ok = await initializeRecording();
@@ -247,6 +259,10 @@ async function toggleRecording() {
         recordBtn.classList.add('ring-2', 'ring-red-400', 'ring-offset-2');
         recordingStatus.textContent = 'Recording… say the word now.';
         playRecordingBtn.disabled = true;
+        const speechBtn = document.getElementById('speech-check-btn');
+        if (speechBtn) {
+            speechBtn.disabled = true;
+        }
         recordingMaxTimeout = setTimeout(() => {
             if (isRecording) toggleRecording();
         }, voiceUploadConfig.maxSeconds * 1000);
@@ -257,6 +273,10 @@ async function toggleRecording() {
         recordBtn.innerHTML = '<i class="fas fa-microphone"></i> Record';
         recordBtn.classList.remove('ring-2', 'ring-red-400', 'ring-offset-2');
         recordingStatus.textContent = 'Processing…';
+        const speechBtn = document.getElementById('speech-check-btn');
+        if (speechBtn && !window.talmaVocabPronunciation.isActive) {
+            speechBtn.disabled = false;
+        }
     }
 }
 
@@ -271,7 +291,7 @@ playRecordingBtn?.addEventListener('click', () => {
     });
 });
 
-async function uploadVoiceSample(blob) {
+async function uploadVoiceSample(blob, options = {}) {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     const formData = new FormData();
     formData.append('organization_id', voiceUploadConfig.organizationId);
@@ -279,8 +299,10 @@ async function uploadVoiceSample(blob) {
     formData.append('vocabulary_id', voiceUploadConfig.vocabularyId);
     formData.append('generated_sentence', voiceUploadConfig.targetText);
     formData.append('recording', blob, 'recording.webm');
-    if (recordingStartedAt) {
-        formData.append('duration_ms', String(Date.now() - recordingStartedAt));
+    formData.append('recording_source', options.recordingSource || 'manual_record');
+    const durationMs = options.durationMs ?? (recordingStartedAt ? Date.now() - recordingStartedAt : null);
+    if (durationMs) {
+        formData.append('duration_ms', String(durationMs));
     }
 
     const response = await fetch(voiceUploadConfig.endpoint, {
@@ -297,8 +319,44 @@ async function uploadVoiceSample(blob) {
     return response.json();
 }
 
-async function logVocabComplete() {
+function buildPronunciationMeta({ skipped = false } = {}) {
+    if (!speechFeedbackConfig.enabled) {
+        return null;
+    }
+
+    if (skipped) {
+        return {
+            pronunciation_pass: false,
+            skipped: true,
+            source: 'pronunciation_check',
+        };
+    }
+
+    const attempt = window.talmaVocabPronunciation.lastAttempt;
+
+    return {
+        pronunciation_pass: attempt?.pass === true,
+        heard: attempt?.heard || null,
+        ratio: typeof attempt?.ratio === 'number' ? attempt.ratio : null,
+        source: 'pronunciation_check',
+        skipped: false,
+    };
+}
+
+async function logVocabProgress({ skipped = false } = {}) {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const meta = buildPronunciationMeta({ skipped });
+    const payload = {
+        lesson_id: voiceUploadConfig.lessonId,
+        activity_type: 'vocabulary',
+        activity_id: voiceUploadConfig.vocabularyId,
+        status: 'completed',
+    };
+
+    if (meta) {
+        payload.meta = meta;
+    }
+
     const response = await fetch(activityEventEndpoint, {
         method: 'POST',
         credentials: 'same-origin',
@@ -307,17 +365,29 @@ async function logVocabComplete() {
             'Accept': 'application/json',
             ...(token ? { 'X-CSRF-TOKEN': token } : {}),
         },
-        body: JSON.stringify({
-            lesson_id: voiceUploadConfig.lessonId,
-            activity_type: 'vocabulary',
-            activity_id: voiceUploadConfig.vocabularyId,
-            status: 'completed',
-        }),
+        body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
         throw new Error('Could not save vocabulary progress.');
     }
+}
+
+async function advanceVocabularyWord({ skipped = false } = {}) {
+    const attempt = window.talmaVocabPronunciation.lastAttempt;
+
+    if (!skipped && voiceUploadConfig.enabled && attempt?.audioBlob) {
+        try {
+            await uploadVoiceSample(attempt.audioBlob, {
+                recordingSource: 'pronunciation_check',
+                durationMs: attempt.durationMs,
+            });
+        } catch (error) {
+            throw new Error(error?.message || 'Could not upload pronunciation recording.');
+        }
+    }
+
+    await logVocabProgress({ skipped });
 }
 
 function finishVocabularyStep() {
@@ -329,7 +399,7 @@ nextWordBtn.addEventListener('click', async () => {
     nextWordBtn.disabled = true;
 
     try {
-        await logVocabComplete();
+        await advanceVocabularyWord();
     } catch (error) {
         nextWordBtn.disabled = false;
         const message = error?.message || 'Could not save progress. Try again.';
@@ -359,7 +429,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
     skipBtn.disabled = true;
 
     try {
-        await logVocabComplete();
+        await advanceVocabularyWord({ skipped: true });
     } catch (error) {
         skipBtn.disabled = false;
         if (recordingStatus) {
@@ -389,6 +459,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
     const speechStatus = document.getElementById('speech-check-status');
     const speechFeedback = document.getElementById('speech-check-feedback');
     const unsupportedNote = document.getElementById('speech-unsupported-note');
+    const recordBtnEl = document.getElementById('record-btn');
     let activeCheck = null;
 
     if (!speechBtn) {
@@ -404,10 +475,24 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
     }
 
     function setSpeechButtonListening(listening) {
+        window.talmaVocabPronunciation.isActive = listening;
         speechBtn.disabled = listening;
+        if (recordBtnEl) {
+            recordBtnEl.disabled = listening;
+        }
         speechBtn.innerHTML = listening
             ? '<i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> Listening...'
             : '<i class="fas fa-microphone-alt" aria-hidden="true"></i> Check my pronunciation';
+    }
+
+    function storePronunciationAttempt(result) {
+        window.talmaVocabPronunciation.lastAttempt = {
+            pass: result.pass === true,
+            heard: result.heard || '',
+            ratio: typeof result.ratio === 'number' ? result.ratio : null,
+            audioBlob: result.audioBlob || null,
+            durationMs: result.durationMs || null,
+        };
     }
 
     function speechErrorMessage(error) {
@@ -438,8 +523,12 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             target: speechFeedbackConfig.targetText,
             lang: speechFeedbackConfig.lang,
             maxSeconds: speechFeedbackConfig.maxSeconds,
+            recordAudio: voiceUploadConfig.enabled,
             onRequestingMic: () => {
                 speechBtn.disabled = true;
+                if (recordBtnEl) {
+                    recordBtnEl.disabled = true;
+                }
                 speechBtn.innerHTML = '<i class="fas fa-microphone-alt" aria-hidden="true"></i> Allow microphone...';
                 if (speechStatus) {
                     speechStatus.textContent = 'Allow microphone access when your browser asks.';
@@ -452,6 +541,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
                 }
             },
             onFeedback: (result) => {
+                storePronunciationAttempt(result);
                 if (speechFeedback) {
                     TalmaSpeech.renderFeedback(speechFeedback, result, {
                         pass: 'Nice work!',
@@ -464,6 +554,24 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
                 }
             },
             onError: (error) => {
+                if (error.heard) {
+                    storePronunciationAttempt({
+                        pass: false,
+                        heard: error.heard,
+                        ratio: 0,
+                        audioBlob: error.audioBlob || null,
+                        durationMs: error.durationMs || null,
+                    });
+                } else if (error.audioBlob) {
+                    storePronunciationAttempt({
+                        pass: false,
+                        heard: '',
+                        ratio: 0,
+                        audioBlob: error.audioBlob,
+                        durationMs: error.durationMs || null,
+                    });
+                }
+
                 if (error.code === 'unsupported') {
                     speechBtn.disabled = true;
                     if (unsupportedNote) {

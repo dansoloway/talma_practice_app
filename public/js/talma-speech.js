@@ -121,6 +121,96 @@
         return -1;
     }
 
+    function hasMediaRecorder() {
+        return typeof global.MediaRecorder !== 'undefined';
+    }
+
+    function createAudioRecorder(stream) {
+        var recorder = null;
+        var chunks = [];
+        var startedAt = null;
+
+        return {
+            start: function () {
+                if (!hasMediaRecorder() || !stream) {
+                    return false;
+                }
+
+                try {
+                    chunks = [];
+                    startedAt = Date.now();
+                    recorder = new MediaRecorder(stream);
+                    recorder.ondataavailable = function (event) {
+                        if (event.data && event.data.size > 0) {
+                            chunks.push(event.data);
+                        }
+                    };
+                    recorder.start();
+                    return true;
+                } catch (e) {
+                    recorder = null;
+                    chunks = [];
+                    startedAt = null;
+                    return false;
+                }
+            },
+            stop: function () {
+                return new Promise(function (resolve) {
+                    if (!recorder || recorder.state === 'inactive') {
+                        resolve({ audioBlob: null, durationMs: null });
+                        return;
+                    }
+
+                    var durationMs = startedAt ? Date.now() - startedAt : null;
+
+                    recorder.onstop = function () {
+                        var blob = chunks.length > 0
+                            ? new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
+                            : null;
+                        chunks = [];
+                        recorder = null;
+                        startedAt = null;
+                        resolve({ audioBlob: blob, durationMs: durationMs });
+                    };
+
+                    try {
+                        recorder.stop();
+                    } catch (e) {
+                        resolve({ audioBlob: null, durationMs: durationMs });
+                    }
+                });
+            },
+            abort: function () {
+                if (!recorder) {
+                    return Promise.resolve({ audioBlob: null, durationMs: null });
+                }
+
+                try {
+                    if (recorder.state !== 'inactive') {
+                        recorder.stop();
+                    }
+                } catch (e) {
+                    /* ignore */
+                }
+
+                chunks = [];
+                recorder = null;
+                startedAt = null;
+                return Promise.resolve({ audioBlob: null, durationMs: null });
+            },
+        };
+    }
+
+    function attachAudioToResult(result, audio) {
+        if (!result || !audio) {
+            return result;
+        }
+
+        result.audioBlob = audio.audioBlob || null;
+        result.durationMs = audio.durationMs || null;
+        return result;
+    }
+
     function scoreTranscript(transcript, target, passRatio) {
         passRatio = typeof passRatio === 'number' ? passRatio : PASS_RATIO;
 
@@ -315,7 +405,7 @@
 
     function checkPronunciation(options) {
         options = options || {};
-        var session = { aborted: false, listenHandle: null };
+        var session = { aborted: false, listenHandle: null, audioRecorder: null };
 
         if (!getRecognitionConstructor()) {
             if (typeof options.onUnsupported === 'function') {
@@ -334,10 +424,35 @@
             options.onRequestingMic();
         }
 
+        function stopAudioRecorder() {
+            if (!session.audioRecorder) {
+                return Promise.resolve({ audioBlob: null, durationMs: null });
+            }
+
+            var recorder = session.audioRecorder;
+            session.audioRecorder = null;
+            return recorder.stop();
+        }
+
+        function abortAudioRecorder() {
+            if (!session.audioRecorder) {
+                return Promise.resolve();
+            }
+
+            var recorder = session.audioRecorder;
+            session.audioRecorder = null;
+            return recorder.abort();
+        }
+
         requestMicrophoneAccess()
-            .then(function () {
+            .then(function (stream) {
                 if (session.aborted) {
                     return;
+                }
+
+                if (options.recordAudio && stream) {
+                    session.audioRecorder = createAudioRecorder(stream);
+                    session.audioRecorder.start();
                 }
 
                 if (typeof options.onListening === 'function') {
@@ -349,14 +464,21 @@
                     maxSeconds: options.maxSeconds || 10,
                     target: options.target || '',
                     onResult: function (transcript, result) {
-                        if (typeof options.onFeedback === 'function') {
-                            options.onFeedback(result);
-                        }
+                        stopAudioRecorder().then(function (audio) {
+                            if (typeof options.onFeedback === 'function') {
+                                options.onFeedback(attachAudioToResult(result, audio));
+                            }
+                        });
                     },
                     onError: function (error) {
-                        if (typeof options.onError === 'function') {
-                            options.onError(error);
-                        }
+                        stopAudioRecorder().then(function (audio) {
+                            if (typeof options.onError === 'function') {
+                                var payload = Object.assign({}, error);
+                                payload.audioBlob = audio.audioBlob;
+                                payload.durationMs = audio.durationMs;
+                                options.onError(payload);
+                            }
+                        });
                     },
                     onEnd: options.onEnd,
                 });
@@ -365,6 +487,8 @@
                 if (session.aborted) {
                     return;
                 }
+
+                abortAudioRecorder();
 
                 if (typeof options.onError === 'function') {
                     options.onError(error && error.code ? error : {
@@ -381,6 +505,7 @@
         return {
             abort: function () {
                 session.aborted = true;
+                abortAudioRecorder();
                 if (session.listenHandle) {
                     session.listenHandle.abort();
                 }

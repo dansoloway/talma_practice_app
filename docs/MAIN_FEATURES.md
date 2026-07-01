@@ -24,7 +24,7 @@ Practice Pal is built around learning English through **more than reading alone*
 - **Pictures** — many vocabulary words and answer choices include images so meaning sticks visually.
 - **Audio you listen to** — words and sentences can be read aloud so you hear pronunciation and rhythm.
 - **Speaking practice** — in sentence activities you may **repeat or answer aloud**, sometimes with optional recording when your teacher or school has enabled it.
-- **Instant speech feedback** — in supported browsers (Chrome/Edge), you can tap **Check my pronunciation** after listening. The browser listens briefly and shows what it heard, with a gentle pass or try-again message. This stays on your device and is separate from optional recording uploads.
+- **Instant speech feedback** — in supported browsers (Chrome/Edge), you can tap **Check my pronunciation** after listening. The browser listens briefly and shows what it heard, with a gentle pass or try-again message. This stays on your device and is separate from optional recording uploads. When your program has voice collection enabled, the last pronunciation-check attempt may also be saved when you tap **Next word**, and progress reflects whether that last check passed.
 
 Together, this supports learners who prefer visuals, listening, or saying things out loud—not only silent clicking.
 

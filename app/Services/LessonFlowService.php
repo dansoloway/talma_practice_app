@@ -445,9 +445,11 @@ class LessonFlowService
     }
 
     /**
+     * Words the learner has advanced past (Next or Skip).
+     *
      * @return Collection<int, int>
      */
-    public function completedVocabularyIds(Lesson $lesson, ?string $practiceSessionId): Collection
+    public function visitedVocabularyIds(Lesson $lesson, ?string $practiceSessionId): Collection
     {
         if (! $practiceSessionId) {
             return collect();
@@ -464,6 +466,46 @@ class LessonFlowService
             ->values();
     }
 
+    /**
+     * Words marked learned (pronunciation pass, or legacy events without pronunciation meta).
+     *
+     * @return Collection<int, int>
+     */
+    public function learnedVocabularyIds(Lesson $lesson, ?string $practiceSessionId): Collection
+    {
+        if (! $practiceSessionId) {
+            return collect();
+        }
+
+        return ActivityEvent::query()
+            ->where('session_id', $practiceSessionId)
+            ->where('lesson_id', $lesson->id)
+            ->where('activity_type', 'vocabulary')
+            ->where('status', 'completed')
+            ->whereNotNull('activity_id')
+            ->get()
+            ->filter(function (ActivityEvent $event) {
+                $meta = $event->meta ?? [];
+
+                if (! array_key_exists('pronunciation_pass', $meta)) {
+                    return true;
+                }
+
+                return ($meta['pronunciation_pass'] ?? false) === true;
+            })
+            ->pluck('activity_id')
+            ->unique()
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, int>
+     */
+    public function completedVocabularyIds(Lesson $lesson, ?string $practiceSessionId): Collection
+    {
+        return $this->visitedVocabularyIds($lesson, $practiceSessionId);
+    }
+
     public function isVocabularyStepComplete(Lesson $lesson, ?string $practiceSessionId): bool
     {
         $wordIds = $lesson->vocabulary->where('is_active', true)->pluck('id');
@@ -472,18 +514,18 @@ class LessonFlowService
             return true;
         }
 
-        $completed = $this->completedVocabularyIds($lesson, $practiceSessionId);
+        $visited = $this->visitedVocabularyIds($lesson, $practiceSessionId);
 
-        return $wordIds->every(fn ($id) => $completed->contains($id));
+        return $wordIds->every(fn ($id) => $visited->contains($id));
     }
 
     public function firstIncompleteVocabulary(Lesson $lesson, ?string $practiceSessionId)
     {
-        $completed = $this->completedVocabularyIds($lesson, $practiceSessionId);
+        $visited = $this->visitedVocabularyIds($lesson, $practiceSessionId);
 
         return $lesson->vocabulary
             ->where('is_active', true)
             ->sortBy('sort_order')
-            ->first(fn ($vocab) => ! $completed->contains($vocab->id));
+            ->first(fn ($vocab) => ! $visited->contains($vocab->id));
     }
 }

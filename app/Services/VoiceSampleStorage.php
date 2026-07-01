@@ -24,6 +24,7 @@ class VoiceSampleStorage
         ?int $optionId = null,
         ?int $vocabularyId = null,
         ?int $durationMs = null,
+        string $recordingSource = 'manual_record',
     ): VoiceSample {
         $uuid = (string) Str::uuid();
         $now = now();
@@ -56,6 +57,7 @@ class VoiceSampleStorage
             'vocabulary_id' => $vocabularyId,
             'recorded_at' => $now->toIso8601String(),
             'duration_ms' => $durationMs,
+            'recording_source' => $recordingSource,
         ];
 
         $metadataKey = "{$prefix}/{$uuid}.json";

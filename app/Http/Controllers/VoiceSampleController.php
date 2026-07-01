@@ -43,6 +43,7 @@ class VoiceSampleController extends Controller
             'generated_sentence' => 'required|string|max:255',
             'recording' => 'required|file|max:10240|mimetypes:audio/webm,video/webm,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/m4a,audio/x-m4a',
             'duration_ms' => 'nullable|integer|min:0|max:120000',
+            'recording_source' => 'nullable|string|in:pronunciation_check,manual_record',
         ]);
 
         if ($validator->fails()) {
@@ -94,6 +95,7 @@ class VoiceSampleController extends Controller
                 optionId: $isVocabulary ? null : $request->integer('option_id'),
                 vocabularyId: $isVocabulary ? $request->integer('vocabulary_id') : null,
                 durationMs: $request->integer('duration_ms') ?: null,
+                recordingSource: $request->input('recording_source', 'manual_record'),
             );
         } catch (\Throwable $e) {
             report($e);
