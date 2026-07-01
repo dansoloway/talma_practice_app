@@ -9,7 +9,7 @@ use App\Models\VoiceSample;
 use App\Services\VoiceSamplePlayback;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class VoiceSampleController extends Controller
 {
@@ -55,7 +55,7 @@ class VoiceSampleController extends Controller
         ]);
     }
 
-    public function audio(VoiceSample $voiceSample, VoiceSamplePlayback $playback): StreamedResponse
+    public function audio(VoiceSample $voiceSample, VoiceSamplePlayback $playback): Response
     {
         return $playback->respond($voiceSample);
     }

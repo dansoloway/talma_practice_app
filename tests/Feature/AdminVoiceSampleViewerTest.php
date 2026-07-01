@@ -157,7 +157,32 @@ class AdminVoiceSampleViewerTest extends TestCase
             ->get(route('admin.voice-samples.audio', $this->sample));
 
         $response->assertOk();
-        $this->assertStringContainsString('fake-audio-bytes', $response->streamedContent());
+        $response->assertHeader('content-type', 'audio/mpeg');
+        $this->assertStringContainsString('fake-audio-bytes', $response->getContent());
+    }
+
+    public function test_webm_samples_use_audio_webm_content_type(): void
+    {
+        Storage::disk('voice_training')->put('voice-training/viewer-org/2026/07/sample.webm', 'webm-bytes');
+
+        $webmSample = VoiceSample::create([
+            'organization_id' => $this->organization->id,
+            'lesson_id' => $this->lesson->id,
+            'prompt_id' => $this->sample->prompt_id,
+            'option_id' => $this->sample->option_id,
+            'target_text' => 'Hello world.',
+            'age' => 10,
+            'gender' => 'female',
+            'native_language' => 'hebrew',
+            's3_key' => 'voice-training/viewer-org/2026/07/sample.webm',
+            'mime_original' => 'video/webm',
+            'recorded_at' => now(),
+        ]);
+
+        $this->actingAs($this->allowlistedAdmin(), 'admin')
+            ->get(route('admin.voice-samples.audio', $webmSample))
+            ->assertOk()
+            ->assertHeader('content-type', 'audio/webm');
     }
 
     public function test_non_allowlisted_admin_cannot_stream_audio(): void

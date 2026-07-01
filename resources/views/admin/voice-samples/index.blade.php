@@ -120,7 +120,7 @@
                                 </td>
                                 <td class="px-4 py-3 min-w-[220px]">
                                     <audio controls preload="none" class="w-full max-w-xs h-8">
-                                        <source src="{{ route('admin.voice-samples.audio', $sample) }}" type="audio/mpeg">
+                                        <source src="{{ route('admin.voice-samples.audio', $sample) }}" type="{{ app(\App\Services\VoiceSamplePlayback::class)->contentType($sample) }}">
                                     </audio>
                                 </td>
                             </tr>
