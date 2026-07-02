@@ -113,9 +113,11 @@ data/summer-vocab-a1.csv
 data/summer-prompts-a1.csv
 data/summer-vocab-a2.csv
 data/summer-prompts-a2.csv
+data/summer-vocab-b1.csv
+data/summer-prompts-b1.csv
 ```
 
-Pre-A1, A1, and A2 CSV imports use **legacy lesson slugs** (by day number) so `--force` replaces existing production lessons instead of creating duplicates. On `--force`, duplicate lessons outside the validated 15-day set are **permanently deleted**.
+Pre-A1, A1, A2, and B1 CSV imports use **legacy lesson slugs** (by day number) so `--force` replaces existing production lessons instead of creating duplicates. On `--force`, duplicate lessons outside the validated 15-day set are **permanently deleted**.
 
 To remove leftover inactive lessons from an earlier import:
 
@@ -158,6 +160,18 @@ php artisan talma:import-summer-practice-pal \
 
 php artisan talma:import-summer-practice-pal \
   --cefr=A1 \
+  --force \
+  --strict
+
+# 4c. Dry-run / apply B1 (same pattern)
+php artisan talma:import-summer-practice-pal \
+  --cefr=B1 \
+  --force \
+  --strict \
+  --dry-run
+
+php artisan talma:import-summer-practice-pal \
+  --cefr=B1 \
   --force \
   --strict
 
