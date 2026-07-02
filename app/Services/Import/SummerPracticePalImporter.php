@@ -833,7 +833,7 @@ class SummerPracticePalImporter
 
     private function usesLegacyLessonSlugs(string $cefr, SummerImportOptions $options): bool
     {
-        if (!in_array($cefr, ['Pre-A1', 'A2'], true)) {
+        if (!in_array($cefr, ['Pre-A1', 'A1', 'A2'], true)) {
             return false;
         }
 
@@ -848,6 +848,7 @@ class SummerPracticePalImporter
 
         return match ($cefr) {
             'Pre-A1' => SummerPreA1LegacyTopics::forDay($dayNumber) ?? $csvTopic,
+            'A1' => SummerA1LegacyTopics::forDay($dayNumber) ?? $csvTopic,
             'A2' => SummerA2LegacyTopics::forDay($dayNumber) ?? $csvTopic,
             default => $csvTopic,
         };

@@ -100,9 +100,9 @@ Entries include timestamps, level (`INFO`, `LESSON`, `WARN`, `ERROR`, `DONE`), a
 
 The XLSX `cleaned vocab` sheet imported activity titles and sentences for some levels (especially A2). Use **per-CEFR vocab CSV files** with 5–10 **single words** per lesson instead.
 
-Expected vocab CSV columns: `CEFR Level`, `Day Number`, `Day / Topic`, `Vocabulary Word`
+Expected vocab CSV columns: `CEFR Level`, `Grade Band`, `Day Number`, `Day / Topic`, `Vocabulary Word`, `Definition`
 
-Expected prompts CSV columns: `CEFR Level`, `Day Number`, `Day / Topic`, `Question` (must contain `{blank}`), `Answer`
+Expected prompts CSV columns: `CEFR Level`, `Grade Band`, `Day Number`, `Day / Topic`, `Question` (must contain `{blank}`), `Answer`
 
 Convention paths (auto-detected when present):
 
@@ -110,11 +110,12 @@ Convention paths (auto-detected when present):
 data/summer-vocab-pre-a1.csv
 data/summer-prompts-pre-a1.csv
 data/summer-vocab-a1.csv
+data/summer-prompts-a1.csv
 data/summer-vocab-a2.csv
 data/summer-prompts-a2.csv
 ```
 
-Pre-A1 and A2 CSV imports use **legacy lesson slugs** (by day number) so `--force` replaces existing production lessons instead of creating duplicates. On `--force`, duplicate lessons outside the validated 15-day set are **permanently deleted**.
+Pre-A1, A1, and A2 CSV imports use **legacy lesson slugs** (by day number) so `--force` replaces existing production lessons instead of creating duplicates. On `--force`, duplicate lessons outside the validated 15-day set are **permanently deleted**.
 
 To remove leftover inactive lessons from an earlier import:
 
@@ -147,6 +148,18 @@ php artisan talma:import-summer-practice-pal \
   --force \
   --strict \
   --dry-run
+
+# 4b. Dry-run / apply A1 (same pattern)
+php artisan talma:import-summer-practice-pal \
+  --cefr=A1 \
+  --force \
+  --strict \
+  --dry-run
+
+php artisan talma:import-summer-practice-pal \
+  --cefr=A1 \
+  --force \
+  --strict
 
 # 5. Audit lesson word counts and missing prompts (all CEFR levels)
 php artisan talma:summer-practice-pal-audit --summary --source

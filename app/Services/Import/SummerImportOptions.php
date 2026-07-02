@@ -74,6 +74,8 @@ class SummerImportOptions
             ];
         } elseif ($cefrFilter === 'Pre-A1') {
             $candidates = [base_path('data/summer-prompts-pre-a1.csv')];
+        } elseif ($cefrFilter === 'A1') {
+            $candidates = [base_path('data/summer-prompts-a1.csv')];
         }
 
         foreach ($candidates as $path) {
