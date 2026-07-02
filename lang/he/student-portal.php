@@ -72,6 +72,10 @@ return [
         'status_got_it' => 'הבנתי',
         'status_try_again' => 'נסו שוב',
         'status_skipped' => 'דילגו',
+        'progress_heading' => 'התקדמות בשיעור',
+        'progress_count' => ':learned / :total נלמדו',
+        'words_practiced' => ':visited מתוך :total מילים תורגלו',
+        'progress_aria' => 'התקדמות באוצר מילים: :learned מתוך :total מילים נלמדו',
     ],
 
     'units' => [
@@ -182,6 +186,8 @@ return [
         'previous_word' => 'מילה קודמת',
         'vocabulary_complete' => 'אוצר המילים הושלם!',
         'mastered_words' => 'שלטתם ב-:learned מתוך :total מילים.',
+        'words_practiced' => ':visited מתוך :total מילים תורגלו',
+        'progress_aria' => 'התקדמות באוצר מילים: :learned מתוך :total מילים נלמדו',
         'practice_all_words' => 'עבודה יפה על כל המילים.',
         'vocabulary_word_of' => 'אוצר מילים · מילה :current מתוך :total',
         'step_of' => 'שלב :current מתוך :total',

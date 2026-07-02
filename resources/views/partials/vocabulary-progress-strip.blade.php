@@ -8,10 +8,12 @@
     <div class="mb-4">
         <div class="mb-3">
             <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2">
-                <p class="text-sm font-medium text-gray-800" id="vocab-progress-summary">Lesson progress</p>
+                <p class="text-sm font-medium text-gray-800" id="vocab-progress-summary">{{ __('student-portal.vocabulary_preview.progress_heading') }}</p>
                 <p class="text-sm text-gray-600">
-                    <span class="text-green-700 font-semibold vocab-learned-count">{{ $progress['learned'] }}</span>
-                    <span class="text-gray-500"> / {{ $progress['total'] }} mastered</span>
+                    {{ __('student-portal.vocabulary_preview.progress_count', [
+                        'learned' => $progress['learned'],
+                        'total' => $progress['total'],
+                    ]) }}
                 </p>
             </div>
 
@@ -20,7 +22,10 @@
                  aria-valuemin="0"
                  aria-valuemax="{{ $progress['total'] }}"
                  aria-valuenow="{{ $progress['learned'] }}"
-                 aria-label="Vocabulary progress: {{ $progress['learned'] }} of {{ $progress['total'] }} words mastered">
+                 aria-label="{{ __('student-portal.vocabulary_preview.progress_aria', [
+                     'learned' => $progress['learned'],
+                     'total' => $progress['total'],
+                 ]) }}">
                 @foreach($words as $word)
                     @php
                         $status = $progress['statuses'][$word->id] ?? 'not_started';
@@ -44,14 +49,17 @@
             </div>
 
             @if(($progress['visited'] ?? 0) > 0 && ($progress['learned'] ?? 0) < ($progress['total'] ?? 0))
-                <p class="text-xs text-gray-500 mt-1.5 vocab-visited-summary">{{ $progress['visited'] }} of {{ $progress['total'] }} words practiced</p>
+                <p class="text-xs text-gray-500 mt-1.5 vocab-visited-summary">{{ __('student-portal.vocabulary_preview.words_practiced', [
+                    'visited' => $progress['visited'],
+                    'total' => $progress['total'],
+                ]) }}</p>
             @else
                 <p class="text-xs text-gray-500 mt-1.5 vocab-visited-summary hidden"></p>
             @endif
         </div>
 
         @if($words->isNotEmpty())
-            <div class="flex flex-wrap gap-1.5">
+            <div class="flex flex-wrap gap-1.5 student-learning-ltr" dir="ltr" lang="en">
                 @foreach($words as $word)
                     @php
                         $status = $progress['statuses'][$word->id] ?? 'not_started';

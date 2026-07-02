@@ -319,7 +319,7 @@
             ])
         </div>
         <h1 class="game-title">{{ __('student-portal.games.sentence_builder') }}</h1>
-        <p class="game-subtitle">{{ $lesson->title }}</p>
+        <p class="game-subtitle student-learning-ltr student-learning-ltr--text-start" dir="ltr" lang="en">{{ $lesson->title }}</p>
     </div>
 
     @if($questions->count() > 0)
@@ -479,7 +479,7 @@ function renderQuestion(question) {
         <div class="question-number">${gameT('question_of', { current: currentQuestionIndex + 1, total: questions.length })}</div>
         <div class="explanation-text">${question.explanation}</div>
         
-        <div class="sentence-builder-area">
+        <div class="sentence-builder-area student-learning-ltr" dir="ltr" lang="en">
             <div class="sentence-slots" id="sentence-slots">
                 ${correctSentence.map((_, i) => `
                     <div class="sentence-slot" data-slot-index="${i}">

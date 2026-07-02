@@ -72,6 +72,10 @@ return [
         'status_got_it' => 'فهمت',
         'status_try_again' => 'حاول مرة أخرى',
         'status_skipped' => 'تم التخطي',
+        'progress_heading' => 'تقدم الدرس',
+        'progress_count' => ':learned / :total متقنة',
+        'words_practiced' => ':visited من :total كلمات تم التمرين عليها',
+        'progress_aria' => 'تقدم المفردات: :learned من :total كلمات متقنة',
     ],
 
     'units' => [
@@ -182,6 +186,8 @@ return [
         'previous_word' => 'الكلمة السابقة',
         'vocabulary_complete' => 'اكتملت المفردات!',
         'mastered_words' => 'أتقنت :learned من :total كلمات.',
+        'words_practiced' => ':visited من :total كلمات تم التمرين عليها',
+        'progress_aria' => 'تقدم المفردات: :learned من :total كلمات متقنة',
         'practice_all_words' => 'عمل رائع على جميع الكلمات.',
         'vocabulary_word_of' => 'المفردات · الكلمة :current من :total',
         'step_of' => 'الخطوة :current من :total',

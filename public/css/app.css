@@ -3409,3 +3409,20 @@ a:focus {
     direction: rtl;
     text-align: right;
 }
+
+/* Student games: English learning content on RTL locales (he/ar) */
+.student-learning-ltr {
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+.student-learning-ltr--text-start {
+    text-align: left;
+}
+
+.student-learning-ltr input,
+.student-learning-ltr select,
+.student-learning-ltr textarea {
+    direction: ltr;
+    text-align: left;
+}

@@ -37,7 +37,7 @@
             ])
         </div>
         <h1 class="game-title">{{ $trueFalseGame->title }}</h1>
-        <p class="game-subtitle">{{ $lesson->title }} • <span class="badge badge-{{ $trueFalseGame->game_version === 'easy' ? 'success' : ($trueFalseGame->game_version === 'medium' ? 'warning' : 'danger') }}">{{ ucfirst($trueFalseGame->game_version) }}</span></p>
+        <p class="game-subtitle"><span class="student-learning-ltr student-learning-ltr--text-start" dir="ltr" lang="en">{{ $lesson->title }}</span> • <span class="badge badge-{{ $trueFalseGame->game_version === 'easy' ? 'success' : ($trueFalseGame->game_version === 'medium' ? 'warning' : 'danger') }}">{{ ucfirst($trueFalseGame->game_version) }}</span></p>
     </div>
 
     @if($questions->count() > 0)
@@ -186,7 +186,7 @@ function loadQuestion(index) {
                 </button>
             </div>
             
-            <div class="question-text hidden" id="question-text">
+            <div class="question-text hidden student-learning-ltr student-learning-ltr--text-start" id="question-text" dir="ltr" lang="en">
                 <p>${question.statement}</p>
             </div>
             
@@ -199,7 +199,7 @@ function loadQuestion(index) {
                 </button>
             </div>
             
-            <div class="explanation hidden" id="explanation">
+            <div class="explanation hidden student-learning-ltr student-learning-ltr--text-start" id="explanation" dir="ltr" lang="en">
                 <div class="explanation-content" id="explanation-content"></div>
             </div>
         </div>

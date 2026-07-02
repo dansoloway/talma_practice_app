@@ -113,14 +113,39 @@ class GuidedLessonFlowTest extends TestCase
         $response->assertDontSee('All activities', false);
     }
 
-    public function test_guided_lesson_page_shows_start_and_escape_hatch(): void
+    public function test_guided_lesson_page_shows_start_before_vocabulary(): void
     {
         $response = $this->get(route('lessons.show', $this->lesson->slug));
 
         $response->assertOk();
         $response->assertSee('Start: Learn the Words');
-        $response->assertSee('All activities');
+        $response->assertDontSee('All activities', false);
+        $response->assertDontSee('id="activities-section"', false);
+    }
+
+    public function test_guided_lesson_page_shows_continue_and_activity_map_after_vocabulary(): void
+    {
+        $sessionId = 'lesson-after-vocab-map';
+        foreach ($this->lesson->vocabulary()->orderBy('sort_order')->pluck('id') as $id) {
+            ActivityEvent::create([
+                'session_id' => $sessionId,
+                'lesson_id' => $this->lesson->id,
+                'activity_type' => 'vocabulary',
+                'activity_id' => $id,
+                'status' => 'completed',
+            ]);
+        }
+
+        $response = $this->withCookie('talma_session_id', $sessionId)
+            ->get(route('lessons.show', $this->lesson->slug));
+
+        $response->assertOk();
+        $response->assertSee('Continue', false);
+        $response->assertDontSee('Continue:', false);
+        $response->assertDontSee('Start: Learn the Words', false);
         $response->assertSee('id="activities-section"', false);
+        $response->assertSee('Activities ·', false);
+        $response->assertSee('Done', false);
     }
 
     public function test_flow_service_expands_steps_and_skips_missing_types(): void
@@ -627,6 +652,24 @@ class GuidedLessonFlowTest extends TestCase
         $response->assertSee('lesson-vocabulary-preview', false);
         $response->assertSee('of 2 words mastered', false);
         $response->assertSee('Got it');
+    }
+
+    public function test_lesson_page_uses_hebrew_locale_and_single_translation_language(): void
+    {
+        $words = $this->lesson->vocabulary()->orderBy('sort_order')->get();
+        $words[0]->update(['hebrew_translation' => 'שלום', 'arabic_translation' => 'مرحبا']);
+        $words[1]->update(['hebrew_translation' => 'להתראות', 'arabic_translation' => 'مع السلامة']);
+
+        $response = $this->withSession(['signup_locale' => 'he'])
+            ->get(route('lessons.show', $this->lesson->slug));
+
+        $response->assertOk();
+        $response->assertSee('אוצר מילים · 2', false);
+        $response->assertSee('התחלה: לימוד המילים', false);
+        $response->assertSee('שלום', false);
+        $response->assertDontSee('مرحبا', false);
+        $response->assertDontSee('data-lang="hebrew"', false);
+        $response->assertDontSee('data-lang="arabic"', false);
     }
 
     public function test_prompts_play_shows_next_step_when_guided(): void

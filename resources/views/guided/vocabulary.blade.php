@@ -51,16 +51,22 @@
                              class="mx-auto lg:mx-0 max-h-40 lg:max-h-44 rounded-xl object-cover mb-3">
                     @endif
 
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $currentWord->english_word }}</h1>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2 student-learning-ltr" dir="ltr" lang="en">{{ $currentWord->english_word }}</h1>
 
-                    @if($currentWord->hebrew_translation || $currentWord->arabic_translation)
+                    @php
+                        $vocabLocale = app()->getLocale();
+                        $showHebrewTranslation = $vocabLocale === 'he' && $currentWord->hebrew_translation;
+                        $showArabicTranslation = $vocabLocale === 'ar' && $currentWord->arabic_translation;
+                    @endphp
+
+                    @if($showHebrewTranslation || $showArabicTranslation)
                         <div class="flex flex-wrap justify-center lg:justify-start gap-2 mb-3">
-                            @if($currentWord->hebrew_translation)
+                            @if($showHebrewTranslation)
                                 <span class="text-sm font-medium px-3 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-100">
                                     {{ $currentWord->hebrew_translation }}
                                 </span>
                             @endif
-                            @if($currentWord->arabic_translation)
+                            @if($showArabicTranslation)
                                 <span class="text-sm font-medium px-3 py-1 rounded-lg bg-green-50 text-green-800 border border-green-100">
                                     {{ $currentWord->arabic_translation }}
                                 </span>
@@ -677,7 +683,7 @@ function setVocabularyLearnedCount(count) {
     document.querySelectorAll('.vocab-progress-bar').forEach((bar) => {
         bar.setAttribute('aria-valuenow', String(count));
         const max = bar.getAttribute('aria-valuemax') || '0';
-        bar.setAttribute('aria-label', `Vocabulary progress: ${count} of ${max} words mastered`);
+        bar.setAttribute('aria-label', gameT('progress_aria', { learned: count, total: max }));
     });
 
     const completeMessageEl = document.getElementById('vocab-complete-message');
@@ -698,7 +704,7 @@ function updateVocabularyVisitedSummary() {
 
     document.querySelectorAll('.vocab-visited-summary').forEach((el) => {
         if (visited > 0 && learned < parseInt(total, 10)) {
-            el.textContent = `${visited} of ${total} words practiced`;
+            el.textContent = gameT('words_practiced', { visited, total });
             el.classList.remove('hidden');
         } else {
             el.classList.add('hidden');

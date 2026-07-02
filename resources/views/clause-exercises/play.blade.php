@@ -35,12 +35,12 @@
                 'activityEditLabel' => 'Edit Exercise',
             ])
         </div>
-        <h1 class="game-title">{{ $clauseExercise->title }}</h1>
-        <p class="game-subtitle">{{ $lesson->title }}</p>
+        <h1 class="game-title student-learning-ltr student-learning-ltr--text-start" dir="ltr" lang="en">{{ $clauseExercise->title }}</h1>
+        <p class="game-subtitle student-learning-ltr student-learning-ltr--text-start" dir="ltr" lang="en">{{ $lesson->title }}</p>
     </div>
 
     <div class="exercise-content">
-        <div class="paragraph-container" id="paragraph-container">
+        <div class="paragraph-container student-learning-ltr student-learning-ltr--text-start" id="paragraph-container" dir="ltr" lang="en">
             <!-- Paragraph with blanks will be rendered here -->
         </div>
 
@@ -50,7 +50,7 @@
             <p style="font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: 1rem;">
                 {{ __('student-portal.games.listen_vocabulary_hint') }}
             </p>
-            <div class="vocabulary-grid" id="vocabulary-grid">
+            <div class="vocabulary-grid student-learning-ltr" id="vocabulary-grid" dir="ltr" lang="en">
                 <!-- Vocabulary words will be rendered here -->
             </div>
         </div>

@@ -170,6 +170,9 @@ class LessonController extends Controller
             ? $this->flowService->vocabularyProgressSummary($lesson, $practiceSessionId)
             : null;
 
+        $vocabularyStepComplete = $isGuided
+            && $this->flowService->isVocabularyStepComplete($lesson, $practiceSessionId);
+
         return view('lessons.show', compact(
             'lesson',
             'org',
@@ -184,6 +187,7 @@ class LessonController extends Controller
             'completedStepKeys',
             'lessonProgress',
             'vocabularyProgress',
+            'vocabularyStepComplete',
         ));
     }
 }

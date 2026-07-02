@@ -36,9 +36,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Student Homepage (legacy - uses Default org)
-Route::get('/', [StudentController::class, 'index'])->name('student.index');
-Route::get('/lessons', [StudentController::class, 'index'])->name('lessons.index');
-Route::get('/courses/{course:slug}', [StudentController::class, 'course'])->name('student.course');
+Route::middleware(['signup.locale'])->group(function () {
+    Route::get('/', [StudentController::class, 'index'])->name('student.index');
+    Route::get('/lessons', [StudentController::class, 'index'])->name('lessons.index');
+    Route::get('/courses/{course:slug}', [StudentController::class, 'course'])->name('student.course');
+    Route::get('/lessons/{slug}', [LessonController::class, 'show'])->name('lessons.show');
+});
 
 // Org-scoped student auth (public — no student.org.access middleware)
 Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'signup.locale'])->group(function () {
@@ -68,8 +71,6 @@ Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'upda
     ->middleware('auth:admin')
     ->name('student.grade.update-order');
 
-// Individual Lessons
-Route::get('/lessons/{slug}', [LessonController::class, 'show'])->name('lessons.show');
 Route::middleware(['signup.locale'])->group(function () {
 Route::get('/lessons/{lesson}/guided/vocabulary', [GuidedLessonController::class, 'vocabulary'])->name('guided.vocabulary');
 });

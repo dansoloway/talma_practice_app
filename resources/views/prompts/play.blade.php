@@ -18,7 +18,7 @@
             </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
                 <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{{ __('student-portal.games.sentence_completion') }}</h1>
-                <p class="text-gray-600 font-medium">{{ $lesson->title }}</p>
+                <p class="text-gray-600 font-medium student-learning-ltr student-learning-ltr--text-start" dir="ltr" lang="en">{{ $lesson->title }}</p>
             </div>
         </div>
 
@@ -249,11 +249,11 @@ function loadPrompt(index) {
     
     // Create the prompt HTML
     const promptHtml = `
-        <div class="mb-8">
+        <div class="mb-8 student-learning-ltr student-learning-ltr--text-start" dir="ltr" lang="en">
             <div class="flex items-center gap-4 mb-6">
                 <h3 class="text-xl md:text-2xl font-bold text-gray-800 flex-1">${prompt.prompt_text}</h3>
                 ${prompt.prompt_audio_path ? `
-                    <button type="button" class="talma-audio-btn w-12 h-12 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm" 
+                    <button type="button" class="talma-audio-btn w-12 h-12 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 flex items-center justify-center shadow-sm flex-shrink-0" 
                             data-audio-url="${prompt.prompt_audio_path}" 
                             data-talma-audio-icon="volume-up"
                             data-talma-audio-manual
@@ -270,7 +270,7 @@ function loadPrompt(index) {
         
         <div class="mb-6">
             <h4 class="text-lg font-semibold text-gray-800 mb-4">${gameT('choose_correct_word')}</h4>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 student-learning-ltr" dir="ltr" lang="en">
                 ${prompt.options.map((option, optionIndex) => `
                     <div class="option-card bg-white rounded-xl border-2 border-gray-200 p-4 cursor-pointer hover:border-blue-400 hover:shadow-md hover:-translate-y-1 transition-all duration-200 draggable" 
                          data-option-id="${option.id}" 
@@ -295,7 +295,7 @@ function loadPrompt(index) {
             </div>
         </div>
         
-        <div id="sentence-result" class="mb-6">
+        <div id="sentence-result" class="mb-6 student-learning-ltr student-learning-ltr--text-start" dir="ltr" lang="en">
             <div id="completed-sentence" class="text-lg md:text-xl font-semibold text-gray-800"></div>
         </div>
         

@@ -117,4 +117,13 @@ class SignupLocale
 
         return $trimmed !== '' ? $trimmed : $fallback;
     }
+
+    public static function flowStepLabel(\App\DataTransferObjects\LessonFlowStep $step, string $lessonTitle): string
+    {
+        if (in_array($step->type, ['vocabulary', 'prompts', 'matching', 'flashcard', 'spelling', 'clause_exercise', 'true_false'], true)) {
+            return self::activityLabel($step->type);
+        }
+
+        return self::normalizeActivityTitle($step->type, $step->label, $lessonTitle);
+    }
 }

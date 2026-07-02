@@ -72,6 +72,10 @@ return [
         'status_got_it' => 'Got it',
         'status_try_again' => 'Try again',
         'status_skipped' => 'Skipped',
+        'progress_heading' => 'Lesson progress',
+        'progress_count' => ':learned / :total mastered',
+        'words_practiced' => ':visited of :total words practiced',
+        'progress_aria' => 'Vocabulary progress: :learned of :total words mastered',
     ],
 
     'units' => [
@@ -182,6 +186,8 @@ return [
         'previous_word' => 'Previous word',
         'vocabulary_complete' => 'Vocabulary complete!',
         'mastered_words' => 'You mastered :learned of :total words.',
+        'words_practiced' => ':visited of :total words practiced',
+        'progress_aria' => 'Vocabulary progress: :learned of :total words mastered',
         'practice_all_words' => 'Great job practicing all the words.',
         'vocabulary_word_of' => 'Vocabulary · Word :current of :total',
         'step_of' => 'Step :current of :total',

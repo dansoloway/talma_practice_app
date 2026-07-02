@@ -87,7 +87,7 @@
                                     {{ $card['content'] }}
                                 </div>
                             @else
-                                <div class="card-word w-full h-full flex items-center justify-center font-bold text-gray-800 text-base md:text-lg px-3 py-2 text-center">
+                                <div class="card-word student-learning-ltr w-full h-full flex items-center justify-center font-bold text-gray-800 text-base md:text-lg px-3 py-2 text-center" dir="ltr" lang="en">
                                     {{ $card['content'] }}
                                 </div>
                                 @if($card['audio_path'] && $mode !== 'image' && $mode !== 'audio')

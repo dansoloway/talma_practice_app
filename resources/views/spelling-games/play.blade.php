@@ -37,7 +37,7 @@
             ])
         </div>
         <h1 class="game-title">{{ __('student-portal.games.spelling_practice') }}</h1>
-        <p class="game-subtitle">{{ $lesson->title }}</p>
+        <p class="game-subtitle student-learning-ltr student-learning-ltr--text-start" dir="ltr" lang="en">{{ $lesson->title }}</p>
     </div>
 
     @if($vocabulary->count() > 0)
@@ -191,7 +191,7 @@ function loadWord(index) {
 
     // Render word
     const wordHtml = `
-        <div class="word-card">
+        <div class="word-card student-learning-ltr" dir="ltr" lang="en">
             <div class="word-audio-section">
                 <button type="button" class="big-play-btn talma-audio-btn" id="play-audio-btn" data-audio-url="${word.word_audio_path || ''}" data-talma-audio-icon="volume-up">
                     <i class="fas fa-volume-up talma-audio-icon"></i>

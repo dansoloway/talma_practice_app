@@ -5,6 +5,10 @@
     $hasArabic = $vocabItems->contains(fn ($v) => ! empty($v->arabic_translation));
     $statuses = $vocabularyProgress['statuses'] ?? [];
     $hasProgress = ! empty($vocabularyProgress) && ($vocabularyProgress['visited'] ?? 0) > 0;
+    $locale = app()->getLocale();
+    $showHebrewTranslations = $locale === 'he' && $hasHebrew;
+    $showArabicTranslations = $locale === 'ar' && $hasArabic;
+    $showTranslationToggle = $locale === 'en' && ($hasHebrew || $hasArabic);
 @endphp
 
 @if($vocabItems->isNotEmpty())
@@ -23,7 +27,7 @@
                     </p>
                 @endif
             </div>
-            @if($hasHebrew || $hasArabic)
+            @if($showTranslationToggle)
                 <div class="flex flex-wrap gap-2">
                     @if($hasHebrew)
                         <button type="button"
@@ -89,18 +93,27 @@
                             </button>
                         @endif
 
-                        <div class="text-sm font-semibold text-gray-900 leading-tight">{{ $vocab->english_word }}</div>
+                        <div class="text-sm font-semibold text-gray-900 leading-tight student-learning-ltr" dir="ltr" lang="en">{{ $vocab->english_word }}</div>
 
-                        @if($vocab->hebrew_translation)
-                            <div class="lesson-vocab-translation lesson-vocab-translation-hebrew hidden text-xs font-medium px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-100">
+                        @if($showHebrewTranslations && $vocab->hebrew_translation)
+                            <div class="lesson-vocab-translation lesson-vocab-translation-hebrew text-xs font-medium px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-100">
                                 {{ $vocab->hebrew_translation }}
                             </div>
-                        @endif
-
-                        @if($vocab->arabic_translation)
-                            <div class="lesson-vocab-translation lesson-vocab-translation-arabic hidden text-xs font-medium px-2 py-0.5 rounded-md bg-green-50 text-green-800 border border-green-100">
+                        @elseif($showArabicTranslations && $vocab->arabic_translation)
+                            <div class="lesson-vocab-translation lesson-vocab-translation-arabic text-xs font-medium px-2 py-0.5 rounded-md bg-green-50 text-green-800 border border-green-100">
                                 {{ $vocab->arabic_translation }}
                             </div>
+                        @elseif($showTranslationToggle)
+                            @if($vocab->hebrew_translation)
+                                <div class="lesson-vocab-translation lesson-vocab-translation-hebrew hidden text-xs font-medium px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-100">
+                                    {{ $vocab->hebrew_translation }}
+                                </div>
+                            @endif
+                            @if($vocab->arabic_translation)
+                                <div class="lesson-vocab-translation lesson-vocab-translation-arabic hidden text-xs font-medium px-2 py-0.5 rounded-md bg-green-50 text-green-800 border border-green-100">
+                                    {{ $vocab->arabic_translation }}
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>

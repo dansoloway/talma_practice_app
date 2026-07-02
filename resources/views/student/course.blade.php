@@ -15,6 +15,7 @@
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-6">
     <div class="container mx-auto px-4 max-w-6xl">
+        @include('partials.student-game-locale-bar')
         <header class="flex items-center gap-4 mb-5 min-h-[40px]">
             <a href="{{ $backUrl }}"
                class="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium shrink-0 transition-colors duration-200">

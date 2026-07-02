@@ -9,6 +9,7 @@
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
     <div class="container mx-auto px-4 max-w-5xl">
+        @include('partials.student-game-locale-bar')
         <!-- Back Link + admin toolbar -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
             <a href="{{ isset($org) && $org && $lesson->course ? route('org.student.course', [$org, $lesson->course]) : ($lesson->course ? route('student.course', $lesson->course->slug) : route('lessons.index')) }}"
@@ -114,12 +115,20 @@
                 @endif
 
                 @if($guidedStartUrl)
+                    @php
+                        $nextStep = $resumeStep ?? $startStep;
+                        $nextStepLabel = $nextStep
+                            ? SignupLocale::flowStepLabel($nextStep, $lesson->title)
+                            : __('student-portal.lesson.lesson_fallback');
+                    @endphp
                     <a href="{{ $guidedStartUrl }}"
                        class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
-                        @if(!empty($guidedProgress['completed']))
-                            {{ __('student-portal.lesson.continue') }}: {{ $resumeStep?->label ?? $startStep?->label }}
+                        @if(!empty($vocabularyStepComplete))
+                            {{ __('student-portal.lesson.continue') }}
+                        @elseif(!empty($guidedProgress['completed']))
+                            {{ __('student-portal.lesson.continue') }}: {{ $nextStepLabel }}
                         @else
-                            {{ __('student-portal.lesson.start') }}: {{ $startStep?->label ?? __('student-portal.lesson.lesson_fallback') }}
+                            {{ __('student-portal.lesson.start') }}: {{ $nextStepLabel }}
                         @endif
                         <i class="fas fa-arrow-right ml-2 text-sm" aria-hidden="true"></i>
                     </a>
@@ -264,24 +273,38 @@
                 'clause_exercise' => 'fa-file-lines',
                 'true_false' => 'fa-circle-check',
             ];
+
+            $mapActivities = $allActivities;
+            if (! empty($isGuided) && ! empty($flowSteps) && $flowSteps->isNotEmpty()) {
+                $mapActivities = $flowSteps->map(function ($step) {
+                    $type = $step->type;
+                    $id = match ($type) {
+                        'vocabulary' => 'vocabulary',
+                        'prompts' => 'prompts',
+                        default => $step->activityId,
+                    };
+
+                    return (object) [
+                        'id' => $id,
+                        'type' => $type,
+                        'title' => $step->label,
+                        'subdetail' => $step->subdetail,
+                        'sort_order' => $step->sortOrder,
+                        'is_active' => true,
+                    ];
+                });
+            }
+
+            $showActivityMap = empty($isGuided) || ! empty($isLessonComplete) || ! empty($vocabularyStepComplete);
         @endphp
 
-        @if($allActivities->count() > 0)
-            @if(!empty($isGuided) && empty($isLessonComplete))
-                <p class="mb-3">
-                    <button type="button" id="show-all-activities"
-                            class="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2">
-                        {{ __('student-portal.lesson.all_activities') }}
-                    </button>
-                </p>
-            @endif
-
-            <section class="mb-8 {{ !empty($isGuided) && empty($isLessonComplete) ? 'hidden' : '' }}" id="activities-section">
+        @if($mapActivities->count() > 0 && $showActivityMap)
+            <section class="mb-8" id="activities-section">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
-                    {{ __('student-portal.lesson.activities_heading', ['count' => $allActivities->count()]) }}
+                    {{ __('student-portal.lesson.activities_heading', ['count' => $mapActivities->count()]) }}
                 </p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    @foreach($allActivities as $activity)
+                    @foreach($mapActivities as $activity)
                         @php
                             $displayTitle = in_array($activity->type, ['vocabulary', 'prompts'], true)
                                 ? SignupLocale::activityLabel($activity->type)
@@ -365,11 +388,6 @@ function startActivity(type, id) {
             break;
     }
 }
-
-document.getElementById('show-all-activities')?.addEventListener('click', () => {
-    document.getElementById('activities-section')?.classList.remove('hidden');
-    document.getElementById('show-all-activities')?.classList.add('hidden');
-});
 
 document.getElementById('review-activities')?.addEventListener('click', () => {
     document.getElementById('activities-section')?.classList.remove('hidden');
