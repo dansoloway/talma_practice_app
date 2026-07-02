@@ -41,7 +41,7 @@ Route::get('/lessons', [StudentController::class, 'index'])->name('lessons.index
 Route::get('/courses/{course:slug}', [StudentController::class, 'course'])->name('student.course');
 
 // Org-scoped student auth (public — no student.org.access middleware)
-Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context'])->group(function () {
+Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'signup.locale'])->group(function () {
     Route::get('login', [StudentAuthController::class, 'showLogin'])->name('login');
     Route::post('login', [StudentAuthController::class, 'login'])->name('login.submit');
     Route::get('register', [StudentAuthController::class, 'showRegister'])->name('register');
@@ -50,14 +50,14 @@ Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.contex
 });
 
 // Org-scoped student routes (protected when org is restricted)
-Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'student.org.access', 'learner.selected'])->group(function () {
+Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'signup.locale', 'student.org.access', 'learner.selected'])->group(function () {
     Route::get('complete-voice-profile', [LearnerProfileController::class, 'showCompleteVoiceProfile'])->name('complete-voice-profile');
     Route::post('complete-voice-profile', [LearnerProfileController::class, 'storeCompleteVoiceProfile'])->name('complete-voice-profile.submit');
     Route::get('select-child', [StudentChildController::class, 'selectChild'])->name('select-child');
     Route::post('select-child', [StudentChildController::class, 'storeSelectedChild'])->name('select-child.submit');
 });
 
-Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'student.org.access', 'learner.selected', 'learner.voice-profile'])->group(function () {
+Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'signup.locale', 'student.org.access', 'learner.selected', 'learner.voice-profile'])->group(function () {
     Route::get('/', [StudentController::class, 'index'])->name('index');
     Route::get('courses/{course:slug}', [StudentController::class, 'course'])->name('course');
     Route::get('lessons/{lesson}/guided/vocabulary', [GuidedLessonController::class, 'vocabulary'])->name('guided.vocabulary');

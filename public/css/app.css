@@ -3396,3 +3396,16 @@ a:focus {
     background: #f0fdf4;
     color: #166534;
 }
+
+/* Parent signup: keep Latin, numeric, and email fields readable on RTL pages */
+.signup-field-ltr,
+.signup-field-ltr input,
+.signup-field-ltr select {
+    direction: ltr;
+    text-align: left;
+}
+
+.signup-field-rtl {
+    direction: rtl;
+    text-align: right;
+}

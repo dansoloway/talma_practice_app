@@ -16,7 +16,7 @@
             </h1>
             <p class="text-lg md:text-xl text-gray-600 font-medium">
                 @if(isset($currentOrganization))
-                    Choose a course to start practicing
+                    {{ __('student-portal.home.subtitle') }}
                 @else
                     Practice English with fun activities
                 @endif
@@ -50,7 +50,7 @@
         <!-- Course Selection by Organization -->
         <div class="mb-8">
             <h2 class="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-8">
-                Choose Your Course
+                {{ __('student-portal.home.choose_course') }}
             </h2>
             @forelse($orgsWithCourses as $row)
                 @php $org = $row['org']; $courses = $row['courses']; @endphp
@@ -80,7 +80,7 @@
                                     @endif
                                     <div class="flex items-center justify-between">
                                         <span class="text-sm text-gray-500">
-                                            {{ $course->lessons_count }} {{ $course->lessons_count === 1 ? 'lesson' : 'lessons' }}
+                                            {{ trans_choice('student-portal.home.lessons_count', $course->lessons_count, ['count' => $course->lessons_count]) }}
                                         </span>
                                         <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                             <i class="fas fa-chevron-right text-blue-500"></i>
@@ -94,8 +94,8 @@
             @empty
                 <div class="bg-white rounded-2xl border-2 border-gray-200 p-12 text-center shadow-sm">
                     <div class="text-6xl mb-4">📚</div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-3">No courses available yet</h3>
-                    <p class="text-gray-600">Please check back later for new courses!</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">{{ __('student-portal.home.no_courses') }}</h3>
+                    <p class="text-gray-600">{{ __('student-portal.home.check_back') }}</p>
                 </div>
             @endforelse
         </div>

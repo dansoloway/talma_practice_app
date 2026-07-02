@@ -9,9 +9,13 @@
 
 @php
     $inputId = $id ?? preg_replace('/[^a-zA-Z0-9_-]/', '-', $name);
+    $fieldClasses = trim($inputClass . ($dir === 'ltr' ? ' signup-field-ltr' : ''));
+    $toggleClass = str_contains($inputClass, 'rounded-lg')
+        ? 'px-3 py-2 rounded-lg'
+        : 'px-3 py-3 rounded-xl';
 @endphp
 
-<div class="relative">
+<div class="password-field flex gap-2 items-stretch {{ $dir === 'ltr' ? 'signup-field-ltr' : '' }}" @if($dir === 'ltr') dir="ltr" @endif>
     <input
         type="password"
         name="{{ $name }}"
@@ -19,11 +23,12 @@
         value="{{ $value }}"
         @if($required) required @endif
         dir="{{ $dir }}"
-        {{ $attributes->merge(['class' => trim($inputClass . ' pe-12')]) }}
+        @if($dir === 'ltr') lang="en" @endif
+        {{ $attributes->merge(['class' => trim('flex-1 min-w-0 ' . $fieldClasses)]) }}
     >
     <button
         type="button"
-        class="absolute end-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        class="shrink-0 border border-gray-300 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors {{ $toggleClass }}"
         onclick="togglePasswordField(this)"
         aria-label="{{ __('parent-signup.show_password') }}"
         data-show-label="{{ __('parent-signup.show_password') }}"

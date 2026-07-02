@@ -77,10 +77,23 @@ class GuidedLessonController extends Controller
             return redirect()->to($this->lessonShowUrl($lesson, $org));
         }
 
-        $currentWord = $this->flowService->firstIncompleteVocabulary($lesson, $sessionId) ?? $words->first();
+        $wordQuery = $request->query('word');
+        if ($wordQuery !== null && is_numeric($wordQuery)) {
+            $requestedIndex = max(0, min(((int) $wordQuery) - 1, $words->count() - 1));
+            $currentWord = $words[$requestedIndex];
+        } else {
+            $currentWord = $this->flowService->firstIncompleteVocabulary($lesson, $sessionId) ?? $words->first();
+        }
+
         $wordIndex = $words->search(fn ($w) => $w->id === $currentWord->id);
         $wordIndex = $wordIndex === false ? 0 : $wordIndex;
+        $isFirstWord = $wordIndex === 0;
         $isLastWord = $wordIndex === $words->count() - 1;
+
+        $vocabularyUrl = $org instanceof Organization
+            ? route('org.student.guided.vocabulary', ['organization' => $org, 'lesson' => $lesson])
+            : route('guided.vocabulary', ['lesson' => $lesson]);
+        $previousWordUrl = $isFirstWord ? null : $vocabularyUrl.'?word='.$wordIndex;
 
         $voiceOrganization = $this->resolveVoiceOrganization($lesson, $org);
         $user = auth('admin')->user();
@@ -119,8 +132,11 @@ class GuidedLessonController extends Controller
             'words',
             'currentWord',
             'wordIndex',
+            'isFirstWord',
             'isLastWord',
             'wordsCount',
+            'vocabularyUrl',
+            'previousWordUrl',
             'voiceOrganization',
             'voiceRecordingOffered',
             'voiceUploadEnabled',

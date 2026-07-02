@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.access' => \App\Http\Middleware\EnsureAdminAccess::class,
             'admin.only' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'org.context' => \App\Http\Middleware\OrgContext::class,
+            'signup.locale' => \App\Http\Middleware\ApplySignupLocale::class,
             'org.member' => \App\Http\Middleware\OrgMember::class,
             'student.org.access' => \App\Http\Middleware\StudentOrgAccess::class,
             'learner.selected' => \App\Http\Middleware\EnsureSelectedLearner::class,

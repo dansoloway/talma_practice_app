@@ -1,5 +1,14 @@
 <!DOCTYPE html>
-<html lang="@yield('html_lang', 'en')" dir="@yield('html_dir', 'ltr')">
+@php
+    use App\Support\SignupLocale;
+    $portalLocale = 'en';
+    $portalDir = 'ltr';
+    if (isset($currentOrganization) && $currentOrganization->usesParentSignup()) {
+        $portalLocale = app()->getLocale();
+        $portalDir = SignupLocale::isRtl($portalLocale) ? 'rtl' : 'ltr';
+    }
+@endphp
+<html lang="@yield('html_lang', $portalLocale)" dir="@yield('html_dir', $portalDir)">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -45,8 +54,11 @@
 
             @if($isOrgStudentPortal)
                 <div class="flex items-center gap-2">
+                    @if($currentOrganization->usesParentSignup())
+                        <x-signup-locale-switcher compact />
+                    @endif
                     <div class="relative" id="student-account-menu">
-                        <button type="button" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200" id="student-account-toggle" aria-label="Account" aria-expanded="false" aria-haspopup="true">
+                        <button type="button" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200" id="student-account-toggle" aria-label="{{ __('student-portal.nav.account') }}" aria-expanded="false" aria-haspopup="true">
                             <i class="fas fa-user-circle text-2xl text-gray-500"></i>
                         </button>
                         <div class="hidden absolute top-full right-0 pt-1 z-50" id="student-account-dropdown">
@@ -56,17 +68,17 @@
                                 </div>
                                 @if($authUser->isParent() && $selectedStudent && $currentOrganization->usesParentSignup())
                                     <div class="px-4 pb-2 text-xs text-gray-500">
-                                        Practicing as {{ $selectedStudent->display_name }}
+                                        {{ __('student-portal.nav.practicing_as', ['name' => $selectedStudent->display_name]) }}
                                     </div>
                                     <a href="{{ route('org.student.select-child', $currentOrganization) }}" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
-                                        <i class="fas fa-exchange-alt mr-2 text-gray-400"></i>Switch child
+                                        <i class="fas fa-exchange-alt mr-2 text-gray-400"></i>{{ __('student-portal.nav.switch_child') }}
                                     </a>
                                 @endif
                                 <div class="border-t border-gray-100 my-1"></div>
                                 <form method="POST" action="{{ route('org.student.logout', $currentOrganization) }}">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-200 rounded-b-xl">
-                                        <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>Log out
+                                        <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>{{ __('student-portal.nav.logout') }}
                                     </button>
                                 </form>
                             </div>

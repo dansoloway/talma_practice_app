@@ -47,4 +47,53 @@ class SignupLocale
 
         return in_array($locale, ['he', 'ar'], true);
     }
+
+    public static function gradeLabel(int $grade, ?string $locale = null): string
+    {
+        $locale = self::normalize($locale ?? app()->getLocale());
+        $key = "parent-signup.child.grade_options.{$grade}";
+        $label = trans($key, [], $locale);
+
+        if ($label !== $key) {
+            return $label;
+        }
+
+        return trans('parent-signup.child.grade_option', ['grade' => $grade], $locale);
+    }
+
+    public static function activityLabel(string $type, ?string $fallback = null): string
+    {
+        $key = "student-portal.activities.{$type}";
+        $label = trans($key);
+
+        if ($label !== $key) {
+            return $label;
+        }
+
+        return $fallback ?? $type;
+    }
+
+    public static function countLabel(string $unit, int $count): string
+    {
+        return trans_choice("student-portal.units.{$unit}", $count, ['count' => $count]);
+    }
+
+    public static function normalizeActivityTitle(string $type, string $title, string $lessonTitle, ?string $fallback = null): string
+    {
+        $fallback = $fallback ?? self::activityLabel($type);
+        $lessonTitleEscaped = preg_quote(trim($lessonTitle), '/');
+        $trimmed = trim($title);
+
+        $patterns = [
+            'matching' => '/^'.$lessonTitleEscaped.'\s+Matching\s+Game\s+\d+$/i',
+            'flashcard' => '/^'.$lessonTitleEscaped.'\s+Flashcards\s+\d+$/i',
+            'spelling' => '/^'.$lessonTitleEscaped.'\s+Spelling\s+Practice\s+\d+$/i',
+        ];
+
+        if (isset($patterns[$type]) && preg_match($patterns[$type], $trimmed)) {
+            return $fallback;
+        }
+
+        return $trimmed !== '' ? $trimmed : $fallback;
+    }
 }

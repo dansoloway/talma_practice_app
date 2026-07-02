@@ -60,15 +60,15 @@
                         @endif
                     </label>
                     <input type="text" id="email" name="email" required autofocus
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-                           value="{{ old('email') }}" dir="ltr">
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 signup-field-ltr"
+                           value="{{ old('email') }}" dir="ltr" lang="en">
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
                         {{ $usesSignupLocale ? __('parent-signup.login.password') : 'Password' }}
                     </label>
-                    <input type="password" id="password" name="password" required
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
+                    <input type="password" id="password" name="password" required dir="ltr" lang="en"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 signup-field-ltr">
                 </div>
                 <div>
                     <label class="flex items-center gap-3 cursor-pointer">

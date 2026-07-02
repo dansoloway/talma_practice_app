@@ -28,29 +28,29 @@
 
         <div class="flex items-center gap-3 text-gray-500">
             @if($wordCount > 0)
-                <span class="inline-flex items-center gap-1 text-xs font-medium" title="Words">
+                <span class="inline-flex items-center gap-1 text-xs font-medium" title="{{ __('student-portal.lesson_card.words') }}">
                     <i class="fas fa-book text-[11px] text-blue-500" aria-hidden="true"></i>
                     <span>{{ $wordCount }}</span>
                 </span>
             @endif
 
             @if($activityCount > 0)
-                <span class="inline-flex items-center gap-1 text-xs font-medium" title="Activities">
+                <span class="inline-flex items-center gap-1 text-xs font-medium" title="{{ __('student-portal.lesson_card.activities') }}">
                     <i class="fas fa-puzzle-piece text-[11px] text-violet-500" aria-hidden="true"></i>
                     <span>{{ $activityCount }}</span>
                 </span>
             @endif
 
             @if($isComplete)
-                <span class="inline-flex items-center gap-1 text-xs font-semibold text-green-600" title="Lesson complete">
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-green-600" title="{{ __('student-portal.lesson_card.lesson_complete') }}">
                     <i class="fas fa-circle-check text-[11px]" aria-hidden="true"></i>
-                    <span>Complete</span>
+                    <span>{{ __('student-portal.lesson_card.complete') }}</span>
                 </span>
             @endif
         </div>
     </div>
 
-    <div class="h-[3px] bg-gray-100" role="progressbar" aria-valuenow="{{ $completionPercent }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ $isComplete ? 'Lesson complete' : 'Lesson progress' }}">
+    <div class="h-[3px] bg-gray-100" role="progressbar" aria-valuenow="{{ $completionPercent }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ $isComplete ? __('student-portal.lesson_card.lesson_complete') : __('student-portal.lesson_card.lesson_progress') }}">
         <div class="h-full transition-all duration-300 {{ $isComplete ? 'bg-green-500' : ($lesson->is_review ? 'bg-purple-500' : 'bg-blue-500') }}"
              style="width: {{ $completionPercent }}%"></div>
     </div>

@@ -1,4 +1,5 @@
 @php
+    use App\Support\SignupLocale;
     $vocabItems = $lesson->vocabulary->where('is_active', true);
     $hasHebrew = $vocabItems->contains(fn ($v) => ! empty($v->hebrew_translation));
     $hasArabic = $vocabItems->contains(fn ($v) => ! empty($v->arabic_translation));
@@ -11,12 +12,14 @@
         <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Vocabulary · {{ $vocabItems->count() }} {{ Str::plural('word', $vocabItems->count()) }}
+                    {{ __('student-portal.vocabulary_preview.heading', ['count' => $vocabItems->count()]) }}
                 </p>
                 @if($hasProgress)
                     <p class="text-sm text-gray-700 mt-1">
-                        <span class="font-semibold text-green-700">{{ $vocabularyProgress['learned'] }}</span>
-                        of {{ $vocabularyProgress['total'] }} words mastered
+                        {{ __('student-portal.vocabulary_preview.mastered', [
+                            'learned' => $vocabularyProgress['learned'],
+                            'total' => $vocabularyProgress['total'],
+                        ]) }}
                     </p>
                 @endif
             </div>
@@ -42,12 +45,12 @@
 
         @if($hasProgress)
             <div class="flex flex-wrap gap-3 mb-4 text-xs text-gray-500">
-                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> Got it</span>
-                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Try again</span>
-                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-300"></span> Not yet / skipped</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> {{ __('student-portal.vocabulary_preview.got_it') }}</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> {{ __('student-portal.vocabulary_preview.try_again') }}</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-300"></span> {{ __('student-portal.vocabulary_preview.not_yet') }}</span>
             </div>
         @else
-            <p class="text-sm text-gray-600 mb-4">Listen to each word and review the pictures before you start the activities.</p>
+            <p class="text-sm text-gray-600 mb-4">{{ __('student-portal.vocabulary_preview.intro') }}</p>
         @endif
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -81,7 +84,7 @@
                                     class="lesson-vocab-audio-btn talma-audio-btn w-9 h-9 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center shadow-sm"
                                     data-audio-url="{{ $vocab->word_audio_url }}"
                                     data-talma-audio-icon="volume-up"
-                                    title="Listen to {{ $vocab->english_word }}">
+                                    title="{{ __('student-portal.vocabulary_preview.listen_to', ['word' => $vocab->english_word]) }}">
                                 <i class="fas fa-volume-up text-xs talma-audio-icon" aria-hidden="true"></i>
                             </button>
                         @endif

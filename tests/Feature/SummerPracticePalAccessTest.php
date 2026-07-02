@@ -51,7 +51,14 @@ class SummerPracticePalAccessTest extends TestCase
         $this->get(route('org.student.register', $org))
             ->assertOk()
             ->assertSee('רישום הורה / אפוטרופוס', false)
-            ->assertSee('togglePasswordField', false);
+            ->assertSee('togglePasswordField', false)
+            ->assertSee('name="email"', false)
+            ->assertSee('signup-field-ltr', false)
+            ->assertSee('name="hebrew_name"', false)
+            ->assertSee('signup-field-rtl', false)
+            ->assertSee('כיתה א׳', false)
+            ->assertSee('כיתה ב׳', false)
+            ->assertSee('כיתה ג׳', false);
     }
 
     public function test_parent_register_can_switch_to_english(): void
@@ -70,7 +77,9 @@ class SummerPracticePalAccessTest extends TestCase
         $this->get(route('org.student.login', $org))
             ->assertOk()
             ->assertSee('התחברו כדי לגשת לקורסים שלכם', false)
-            ->assertSee('עברית', false);
+            ->assertSee('עברית', false)
+            ->assertSee('id="password"', false)
+            ->assertSee('signup-field-ltr', false);
     }
 
     public function test_parent_login_can_switch_to_arabic(): void

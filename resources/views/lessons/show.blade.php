@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php
+    use App\Support\SignupLocale;
+@endphp
+
 @section('title', $lesson->title)
 
 @section('content')
@@ -10,7 +14,7 @@
             <a href="{{ isset($org) && $org && $lesson->course ? route('org.student.course', [$org, $lesson->course]) : ($lesson->course ? route('student.course', $lesson->course->slug) : route('lessons.index')) }}"
                class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 group">
                 <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
-                <span>{{ $lesson->course ? 'Back to ' . $lesson->course->title : 'Back to Lessons' }}</span>
+                <span>{{ $lesson->course ? __('student-portal.lesson.back_to_course', ['course' => $lesson->course->title]) : __('student-portal.lesson.back_to_lessons') }}</span>
             </a>
             @include('partials.admin-edit-lesson', ['lesson' => $lesson])
         </div>
@@ -26,9 +30,9 @@
             @endif
 
             @if($lesson->session_number && ! $lesson->is_review)
-                <p class="text-[13px] text-[var(--color-secondary)] mb-1">Day {{ $lesson->session_number }}</p>
+                <p class="text-[13px] text-[var(--color-secondary)] mb-1">{{ __('student-portal.lesson.day', ['number' => $lesson->session_number]) }}</p>
             @elseif($lesson->is_review)
-                <p class="text-[13px] text-[var(--color-secondary)] mb-1">Review</p>
+                <p class="text-[13px] text-[var(--color-secondary)] mb-1">{{ __('student-portal.lesson.review') }}</p>
             @endif
 
             <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3 tracking-tight">
@@ -39,12 +43,12 @@
                 <div class="flex flex-wrap gap-2">
                     @if($lesson->grade_level)
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-[var(--color-secondary)] border border-gray-300">
-                            Grade {{ $lesson->grade_level }}
+                            {{ __('student-portal.lesson.grade', ['level' => $lesson->grade_level]) }}
                         </span>
                     @endif
                     @if($lesson->session_number)
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-[var(--color-secondary)] border border-gray-300">
-                            Session {{ $lesson->session_number }}
+                            {{ __('student-portal.lesson.session', ['number' => $lesson->session_number]) }}
                         </span>
                     @endif
                     @if($lesson->course)
@@ -68,12 +72,12 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <p class="text-green-800 font-semibold flex items-center gap-2">
                         <i class="fas fa-circle-check text-green-600" aria-hidden="true"></i>
-                        You finished this lesson!
+                        {{ __('student-portal.lesson.finished') }}
                     </p>
                     @if($courseBackUrl)
                         <a href="{{ $courseBackUrl }}"
                            class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200">
-                            Back to course
+                            {{ __('student-portal.lesson.back_to_course_btn') }}
                             <i class="fas fa-arrow-right ml-2 text-xs" aria-hidden="true"></i>
                         </a>
                     @endif
@@ -82,7 +86,6 @@
         @endif
 
         @php
-            $vocabComplete = in_array('vocabulary:0', $completedStepKeys ?? [], true);
             $vocabGuidedUrl = isset($org) && $org
                 ? route('org.student.guided.vocabulary', ['organization' => $org, 'lesson' => $lesson])
                 : route('guided.vocabulary', ['lesson' => $lesson]);
@@ -90,32 +93,15 @@
 
         @include('partials.lesson-vocabulary-preview', ['lesson' => $lesson, 'vocabularyProgress' => $vocabularyProgress ?? null])
 
-        @if(!empty($isGuided) && $lesson->vocabulary->where('is_active', true)->isNotEmpty())
-            <div class="mb-6 flex flex-wrap items-center gap-3">
-                @if($vocabComplete)
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-green-700 bg-green-100 border border-green-200">
-                        <i class="fas fa-circle-check text-[10px]" aria-hidden="true"></i>
-                        Vocabulary practice complete
-                    </span>
-                @else
-                    <a href="{{ $vocabGuidedUrl }}"
-                       class="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
-                        <i class="fas fa-volume-up mr-2 text-xs" aria-hidden="true"></i>
-                        Practice vocabulary
-                    </a>
-                @endif
-            </div>
-        @endif
-
         @if(!empty($isGuided) && ($guidedStartUrl || !empty($isLessonComplete)))
             <section class="mb-8">
                 @if(!empty($guidedProgress) && $guidedProgress['total'] > 0)
                     <div class="mb-3">
                         <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
                             @if(!empty($isLessonComplete))
-                                <span class="font-medium text-green-700">Complete · 100%</span>
+                                <span class="font-medium text-green-700">{{ __('student-portal.lesson.complete_percent') }}</span>
                             @elseif($guidedProgress['completed'] < $guidedProgress['total'])
-                                <span>Step {{ $guidedProgress['completed'] + 1 }} of {{ $guidedProgress['total'] }}</span>
+                                <span>{{ __('student-portal.lesson.step_of', ['current' => $guidedProgress['completed'] + 1, 'total' => $guidedProgress['total']]) }}</span>
                             @endif
                             @if(empty($isLessonComplete))
                                 <span>{{ $guidedProgress['percent'] }}%</span>
@@ -131,16 +117,16 @@
                     <a href="{{ $guidedStartUrl }}"
                        class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
                         @if(!empty($guidedProgress['completed']))
-                            Continue: {{ $resumeStep?->label ?? $startStep?->label }}
+                            {{ __('student-portal.lesson.continue') }}: {{ $resumeStep?->label ?? $startStep?->label }}
                         @else
-                            Start: {{ $startStep?->label ?? 'lesson' }}
+                            {{ __('student-portal.lesson.start') }}: {{ $startStep?->label ?? __('student-portal.lesson.lesson_fallback') }}
                         @endif
                         <i class="fas fa-arrow-right ml-2 text-sm" aria-hidden="true"></i>
                     </a>
                 @elseif(!empty($isLessonComplete))
                     <button type="button" id="review-activities"
                             class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
-                        Review activities
+                        {{ __('student-portal.lesson.review_activities') }}
                         <i class="fas fa-list ml-2 text-sm" aria-hidden="true"></i>
                     </button>
                 @endif
@@ -150,9 +136,9 @@
                 <div class="mb-3">
                     <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
                         @if(!empty($isLessonComplete))
-                            <span class="font-medium text-green-700">Complete · 100%</span>
+                            <span class="font-medium text-green-700">{{ __('student-portal.lesson.complete_percent') }}</span>
                         @else
-                            <span>{{ $lessonProgress['completed'] }} of {{ $lessonProgress['total'] }} activities</span>
+                            <span>{{ __('student-portal.lesson.activities_of', ['completed' => $lessonProgress['completed'], 'total' => $lessonProgress['total']]) }}</span>
                             <span>{{ $lessonProgress['percent'] }}%</span>
                         @endif
                     </div>
@@ -171,8 +157,8 @@
                 $allActivities->push((object) [
                     'id' => 'vocabulary',
                     'type' => 'vocabulary',
-                    'title' => 'Learn the Words',
-                    'subdetail' => $wordCount . ' ' . Str::plural('word', $wordCount),
+                    'title' => SignupLocale::activityLabel('vocabulary'),
+                    'subdetail' => SignupLocale::countLabel('word', $wordCount),
                     'sort_order' => -1,
                     'is_active' => true,
                     'model' => null,
@@ -186,8 +172,8 @@
                 $allActivities->push((object)[
                     'id' => 'prompts',
                     'type' => 'prompts',
-                    'title' => 'Sentence Completion',
-                    'subdetail' => $activePrompts->count() . ' ' . Str::plural('question', $activePrompts->count()),
+                    'title' => SignupLocale::activityLabel('prompts'),
+                    'subdetail' => SignupLocale::countLabel('question', $activePrompts->count()),
                     'sort_order' => $minSortOrder,
                     'is_active' => $activePrompts->count() > 0,
                     'model' => $lesson->prompts,
@@ -256,7 +242,7 @@
                             'id' => $game->id,
                             'type' => 'true_false',
                             'title' => $game->title,
-                            'subdetail' => $approvedCount . ' ' . Str::plural('question', $approvedCount),
+                            'subdetail' => SignupLocale::countLabel('question', $approvedCount),
                             'sort_order' => $game->sort_order ?? 999,
                             'is_active' => $game->is_active ?? true,
                             'model' => $game,
@@ -285,46 +271,28 @@
                 <p class="mb-3">
                     <button type="button" id="show-all-activities"
                             class="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2">
-                        All activities
+                        {{ __('student-portal.lesson.all_activities') }}
                     </button>
                 </p>
             @endif
 
             <section class="mb-8 {{ !empty($isGuided) && empty($isLessonComplete) ? 'hidden' : '' }}" id="activities-section">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
-                    Activities · {{ $allActivities->count() }}
+                    {{ __('student-portal.lesson.activities_heading', ['count' => $allActivities->count()]) }}
                 </p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     @foreach($allActivities as $activity)
                         @php
-                            $displayTitle = $activity->title;
+                            $displayTitle = in_array($activity->type, ['vocabulary', 'prompts'], true)
+                                ? SignupLocale::activityLabel($activity->type)
+                                : SignupLocale::normalizeActivityTitle($activity->type, $activity->title, $lesson->title);
                             $subdetail = $activity->subdetail ?? null;
-                            $lessonTitleEscaped = preg_quote(trim($lesson->title), '/');
                             $activityKey = match ($activity->type) {
                                 'prompts' => 'prompts:0',
                                 'vocabulary' => 'vocabulary:0',
                                 default => $activity->type . ':' . $activity->id,
                             };
                             $isActivityDone = in_array($activityKey, $completedStepKeys ?? [], true);
-
-                            if ($activity->type === 'matching') {
-                                $pattern = '/^' . $lessonTitleEscaped . '\s+Matching\s+Game\s+\d+$/i';
-                                if (preg_match($pattern, trim($activity->title))) {
-                                    $displayTitle = 'Matching Game';
-                                }
-                            } elseif ($activity->type === 'flashcard') {
-                                $pattern = '/^' . $lessonTitleEscaped . '\s+Flashcards\s+\d+$/i';
-                                if (preg_match($pattern, trim($activity->title))) {
-                                    $displayTitle = 'Flashcards';
-                                }
-                            } elseif ($activity->type === 'spelling') {
-                                $pattern = '/^' . $lessonTitleEscaped . '\s+Spelling\s+Practice\s+\d+$/i';
-                                if (preg_match($pattern, trim($activity->title))) {
-                                    $displayTitle = 'Spelling Practice';
-                                }
-                            } elseif ($activity->type === 'prompts') {
-                                $displayTitle = 'Sentence Completion';
-                            }
                         @endphp
                         <button type="button"
                                 class="group w-full text-left flex items-center gap-3 rounded-lg border py-[10px] px-3 transition-colors duration-200 {{ $isActivityDone ? 'border-green-200 bg-green-50/40 hover:border-green-300' : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/40' }}"
@@ -339,7 +307,7 @@
                                 @if($subdetail || $isActivityDone)
                                     <span class="block text-xs mt-0.5 {{ $isActivityDone ? 'text-green-600' : 'text-[var(--color-secondary)]' }}">
                                         @if($isActivityDone)
-                                            Done
+                                            {{ __('student-portal.lesson.done') }}
                                         @elseif($subdetail)
                                             {{ $subdetail }}
                                         @endif

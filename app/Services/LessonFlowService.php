@@ -6,6 +6,7 @@ use App\DataTransferObjects\LessonFlowStep;
 use App\Models\ActivityEvent;
 use App\Models\Lesson;
 use App\Models\Organization;
+use App\Support\SignupLocale;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -96,10 +97,10 @@ class LessonFlowService
             match ($type) {
                 'vocabulary' => $this->appendVocabularySteps($lesson, $steps, $order),
                 'prompts' => $this->appendPromptsStep($lesson, $steps, $order),
-                'matching' => $this->appendGameSteps($lesson, 'matchingGames', 'matching', 'Matching Game', $steps, $order),
-                'flashcard' => $this->appendGameSteps($lesson, 'flashcardGames', 'flashcard', 'Flashcards', $steps, $order),
-                'spelling' => $this->appendGameSteps($lesson, 'spellingGames', 'spelling', 'Spelling Practice', $steps, $order),
-                'clause_exercise' => $this->appendGameSteps($lesson, 'clauseExercises', 'clause_exercise', 'Clause Exercise', $steps, $order),
+                'matching' => $this->appendGameSteps($lesson, 'matchingGames', 'matching', SignupLocale::activityLabel('matching'), $steps, $order),
+                'flashcard' => $this->appendGameSteps($lesson, 'flashcardGames', 'flashcard', SignupLocale::activityLabel('flashcard'), $steps, $order),
+                'spelling' => $this->appendGameSteps($lesson, 'spellingGames', 'spelling', SignupLocale::activityLabel('spelling'), $steps, $order),
+                'clause_exercise' => $this->appendGameSteps($lesson, 'clauseExercises', 'clause_exercise', SignupLocale::activityLabel('clause_exercise'), $steps, $order),
                 'true_false' => $this->appendTrueFalseSteps($lesson, $steps, $order),
                 default => null,
             };
@@ -357,8 +358,8 @@ class LessonFlowService
         $steps->push(new LessonFlowStep(
             type: 'vocabulary',
             activityId: null,
-            label: 'Learn the Words',
-            subdetail: $count . ' ' . Str::plural('word', $count),
+            label: SignupLocale::activityLabel('vocabulary'),
+            subdetail: SignupLocale::countLabel('word', $count),
             sortOrder: $order++,
         ));
     }
@@ -374,8 +375,8 @@ class LessonFlowService
         $steps->push(new LessonFlowStep(
             type: 'prompts',
             activityId: null,
-            label: 'Sentence Completion',
-            subdetail: $activeCount . ' ' . Str::plural('question', $activeCount),
+            label: SignupLocale::activityLabel('prompts'),
+            subdetail: SignupLocale::countLabel('question', $activeCount),
             sortOrder: $order++,
         ));
     }
@@ -419,8 +420,8 @@ class LessonFlowService
             $steps->push(new LessonFlowStep(
                 type: 'true_false',
                 activityId: $game->id,
-                label: $this->displayTitle($lesson, 'true_false', $game->title, 'True/False'),
-                subdetail: $approvedCount . ' ' . Str::plural('question', $approvedCount),
+                label: $this->displayTitle($lesson, 'true_false', $game->title, SignupLocale::activityLabel('true_false')),
+                subdetail: SignupLocale::countLabel('question', $approvedCount),
                 sortOrder: $order++,
             ));
         }
@@ -428,20 +429,7 @@ class LessonFlowService
 
     private function displayTitle(Lesson $lesson, string $type, string $title, string $fallback): string
     {
-        $lessonTitleEscaped = preg_quote(trim($lesson->title), '/');
-        $trimmed = trim($title);
-
-        $patterns = [
-            'matching' => '/^' . $lessonTitleEscaped . '\s+Matching\s+Game\s+\d+$/i',
-            'flashcard' => '/^' . $lessonTitleEscaped . '\s+Flashcards\s+\d+$/i',
-            'spelling' => '/^' . $lessonTitleEscaped . '\s+Spelling\s+Practice\s+\d+$/i',
-        ];
-
-        if (isset($patterns[$type]) && preg_match($patterns[$type], $trimmed)) {
-            return $fallback;
-        }
-
-        return $trimmed !== '' ? $trimmed : $fallback;
+        return SignupLocale::normalizeActivityTitle($type, $title, $lesson->title, $fallback);
     }
 
     /**

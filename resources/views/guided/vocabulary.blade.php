@@ -85,7 +85,7 @@
                     @if($micPracticeEnabled)
                     <div class="text-center lg:text-left" id="speech-feedback-section">
                         <p class="text-sm text-gray-600 mb-3">Say the word aloud and get instant feedback</p>
-                        <div class="flex items-center justify-center lg:justify-start gap-2">
+                        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2">
                             @if($speechFeedbackEnabled ?? false)
                             <button type="button" id="speech-check-btn"
                                     class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
@@ -106,7 +106,25 @@
                                     aria-label="Play back your recording">
                                 <i class="fas fa-play text-sm" aria-hidden="true"></i>
                             </button>
+                            <button type="button" id="next-word-btn"
+                                    disabled
+                                    class="hidden inline-flex items-center px-6 py-2.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                @if($isLastWord)
+                                    Continue
+                                @else
+                                    Next word
+                                @endif
+                            </button>
                         </div>
+                        @if($previousWordUrl)
+                            <div class="mt-2 flex justify-center lg:justify-start">
+                                <a href="{{ $previousWordUrl }}"
+                                   class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors">
+                                    <i class="fas fa-arrow-left text-xs" aria-hidden="true"></i>
+                                    Previous word
+                                </a>
+                            </div>
+                        @endif
                         <p id="speech-check-status" class="text-sm text-gray-500 min-h-[1.25rem] mt-2" role="status"></p>
                         <div id="speech-check-feedback" class="hidden" aria-hidden="true"></div>
                         <p id="speech-unsupported-note" class="hidden text-xs text-gray-500 mt-1">
@@ -137,14 +155,23 @@
             </div>
 
             <div class="mt-5 pt-4 flex flex-col sm:flex-row justify-center lg:justify-start gap-3 border-t border-gray-100">
-                <button type="button" id="next-word-btn"
-                        class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors">
-                    @if($isLastWord)
-                        Continue
-                    @else
-                        Next word
+                @unless($micPracticeEnabled)
+                    <button type="button" id="next-word-btn"
+                            class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors">
+                        @if($isLastWord)
+                            Continue
+                        @else
+                            Next word
+                        @endif
+                    </button>
+                    @if($previousWordUrl)
+                        <a href="{{ $previousWordUrl }}"
+                           class="inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors sm:self-center">
+                            <i class="fas fa-arrow-left text-xs" aria-hidden="true"></i>
+                            Previous word
+                        </a>
                     @endif
-                </button>
+                @endunless
                 <button type="button" id="skip-word-btn"
                         class="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 sm:self-center">
                     Skip word
@@ -209,6 +236,7 @@ const activityEventEndpoint = @json(route('activity-events.store'));
 const continueUrl = @json($continueUrl);
 const isLastWord = @json($isLastWord);
 const lessonShowUrl = @json($lessonShowUrl);
+const micPracticeRequired = @json($micPracticeEnabled);
 
 window.talmaVocabPronunciation = {
     lastAttempt: null,
@@ -240,6 +268,7 @@ function finalizePronunciationAttempt() {
         durationMs: pendingPronunciationResult.durationMs || null,
     };
     pendingPronunciationResult = null;
+    registerWordAttempt(window.talmaVocabPronunciation.lastAttempt);
 }
 
 let mediaRecorder = null;
@@ -250,7 +279,7 @@ let playbackObjectUrl = null;
 let isRecording = false;
 let recordingStartedAt = null;
 let recordingMaxTimeout = null;
-let hasRecordedThisWord = false;
+let hasAttemptedThisWord = false;
 
 const recordBtn = document.getElementById('record-btn');
 const playRecordingBtn = document.getElementById('play-recording-btn');
@@ -260,6 +289,43 @@ const playbackAudio = document.getElementById('playback-audio');
 const modelAudio = document.getElementById('model-audio');
 
 const MIC_IDLE_LABEL = '<i class="fas fa-microphone" aria-hidden="true"></i> Tap to say the word';
+
+function updateNextWordButtonState() {
+    if (!nextWordBtn) {
+        return;
+    }
+
+    if (!micPracticeRequired) {
+        nextWordBtn.disabled = false;
+        nextWordBtn.classList.remove('hidden');
+        return;
+    }
+
+    if (hasAttemptedThisWord) {
+        nextWordBtn.classList.remove('hidden');
+        nextWordBtn.disabled = false;
+    } else {
+        nextWordBtn.classList.add('hidden');
+        nextWordBtn.disabled = true;
+    }
+}
+
+function registerWordAttempt(attempt) {
+    if (!micPracticeRequired || hasAttemptedThisWord) {
+        return;
+    }
+
+    const hasSpeech = !!(attempt && (
+        (typeof attempt.heard === 'string' && attempt.heard.trim() !== '') ||
+        (attempt.audioBlob && attempt.audioBlob.size >= 2000) ||
+        (typeof attempt.durationMs === 'number' && attempt.durationMs >= 400 && attempt.audioBlob && attempt.audioBlob.size > 0)
+    ));
+
+    if (hasSpeech) {
+        hasAttemptedThisWord = true;
+        updateNextWordButtonState();
+    }
+}
 
 function setPronunciationStatus(message, tone = 'neutral') {
     if (!pronunciationStatus) {
@@ -335,8 +401,11 @@ async function initializeRecording() {
             }
 
             playRecordingBtn.disabled = false;
-            hasRecordedThisWord = true;
-            nextWordBtn.disabled = false;
+            registerWordAttempt({
+                audioBlob: recordedAudioBlob,
+                durationMs,
+            });
+
             rememberManualRecordingAttempt(recordedAudioBlob, durationMs);
 
             if (voiceUploadConfig.enabled) {
@@ -687,6 +756,11 @@ function updateVocabularyProgressChip({ skipped = false } = {}) {
 }
 
 nextWordBtn.addEventListener('click', async () => {
+    if (micPracticeRequired && !hasAttemptedThisWord) {
+        setPronunciationStatus('Tap the microphone and say the word before continuing.', 'warning');
+        return;
+    }
+
     nextWordBtn.disabled = true;
 
     try {
@@ -694,6 +768,7 @@ nextWordBtn.addEventListener('click', async () => {
         updateVocabularyProgressChip();
     } catch (error) {
         nextWordBtn.disabled = false;
+        updateNextWordButtonState();
         const message = error?.message || 'Could not save progress. Try again.';
         setPronunciationStatus(message, 'error');
         return;
@@ -878,6 +953,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             },
             onFeedback: (result) => {
                 storePronunciationAttempt(result);
+                registerWordAttempt(result);
                 showInlineSpeechFeedback(result);
                 uploadSpeechRecording(result);
             },
@@ -889,6 +965,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
                     audioBlob: error.audioBlob || null,
                     durationMs: error.durationMs || null,
                 });
+                registerWordAttempt(error);
 
                 if (error.code === 'unsupported') {
                     speechBtn.disabled = true;
@@ -910,5 +987,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
         });
     });
 })();
+
+updateNextWordButtonState();
 </script>
 @endpush

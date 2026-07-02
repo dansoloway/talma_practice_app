@@ -1,7 +1,7 @@
 @push('scripts')
 <script>
 function togglePasswordField(button) {
-    var wrapper = button.closest('.relative');
+    var wrapper = button.closest('.password-field');
     if (!wrapper) return;
     var input = wrapper.querySelector('input[type="password"], input[type="text"]');
     var icon = button.querySelector('i');

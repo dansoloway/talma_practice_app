@@ -39,19 +39,23 @@
                     <h2 class="text-lg font-semibold text-gray-800">{{ __('parent-signup.parent_section') }}</h2>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">{{ __('parent-signup.hebrew_name') }}</label>
-                        <input type="text" name="hebrew_name" value="{{ old('hebrew_name') }}" required class="w-full px-4 py-3 border border-gray-300 rounded-xl">
+                        <input type="text" name="hebrew_name" value="{{ old('hebrew_name') }}" required
+                               @if($isRtl) dir="rtl" class="w-full px-4 py-3 border border-gray-300 rounded-xl signup-field-rtl" @else class="w-full px-4 py-3 border border-gray-300 rounded-xl" @endif>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">{{ __('parent-signup.english_name') }}</label>
-                        <input type="text" name="name" value="{{ old('name') }}" required dir="ltr" class="w-full px-4 py-3 border border-gray-300 rounded-xl">
+                        <input type="text" name="name" value="{{ old('name') }}" required dir="ltr" lang="en"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl signup-field-ltr">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">{{ __('parent-signup.id_number') }}</label>
-                        <input type="text" name="id_number" value="{{ old('id_number') }}" required dir="ltr" class="w-full px-4 py-3 border border-gray-300 rounded-xl">
+                        <input type="text" name="id_number" value="{{ old('id_number') }}" required dir="ltr" lang="en" inputmode="numeric"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl signup-field-ltr">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">{{ __('parent-signup.email') }}</label>
-                        <input type="email" name="email" value="{{ old('email') }}" required dir="ltr" class="w-full px-4 py-3 border border-gray-300 rounded-xl">
+                        <input type="email" name="email" value="{{ old('email') }}" required dir="ltr" lang="en"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl signup-field-ltr">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">{{ __('parent-signup.password') }}</label>
@@ -64,13 +68,16 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">{{ __('parent-signup.phone') }}</label>
-                        <div class="flex gap-2">
-                            <select name="phone_prefix" required dir="ltr" class="w-28 px-3 py-3 border border-gray-300 rounded-xl">
+                        <div class="flex gap-2 signup-field-ltr" dir="ltr">
+                            <select name="phone_prefix" required dir="ltr" lang="en"
+                                    class="w-28 px-3 py-3 border border-gray-300 rounded-xl signup-field-ltr">
                                 @foreach(['050','051','052','053','054','055','056','057','058','059','072','073','074','075','076','077','078','079'] as $p)
                                     <option value="{{ $p }}" {{ old('phone_prefix', '050') == $p ? 'selected' : '' }}>{{ $p }}</option>
                                 @endforeach
                             </select>
-                            <input type="tel" name="phone_rest" value="{{ old('phone_rest') }}" required inputmode="numeric" maxlength="7" dir="ltr" class="flex-1 px-4 py-3 border border-gray-300 rounded-xl" placeholder="{{ __('parent-signup.phone_placeholder') }}" oninput="this.value=this.value.replace(/\D/g,'')">
+                            <input type="tel" name="phone_rest" value="{{ old('phone_rest') }}" required inputmode="numeric" maxlength="7" dir="ltr" lang="en"
+                                   class="flex-1 px-4 py-3 border border-gray-300 rounded-xl signup-field-ltr"
+                                   placeholder="{{ __('parent-signup.phone_placeholder') }}" oninput="this.value=this.value.replace(/\D/g,'')">
                         </div>
                     </div>
                     @if($cities->isNotEmpty())

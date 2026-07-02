@@ -220,6 +220,7 @@ class GuidedLessonFlowTest extends TestCase
         $response->assertSee('hello');
         $response->assertSee('Tap to say the word');
         $response->assertSee('id="speech-check-btn"', false);
+        $this->assertMatchesRegularExpression('/id="next-word-btn"[^>]*class="[^"]*\bhidden\b/', $response->getContent());
     }
 
     public function test_org_scoped_guided_vocabulary_route_loads_for_authenticated_member(): void
@@ -290,6 +291,47 @@ class GuidedLessonFlowTest extends TestCase
         $response->assertSee('goodbye');
         $response->assertSee('Word 2 of 2');
         $response->assertDontSee('Word 1 of 2');
+    }
+
+    public function test_guided_vocabulary_can_open_specific_word_and_go_back(): void
+    {
+        $user = User::create([
+            'name' => 'Summer Student',
+            'email' => 'vocab-nav@example.com',
+            'password' => bcrypt('password123'),
+            'role' => 'student',
+            'is_active' => true,
+            'age' => 10,
+            'gender' => 'female',
+            'native_language' => 'hebrew',
+            'voice_recording_consented_at' => now(),
+        ]);
+
+        $this->organization->users()->attach($user->id, ['role' => 'student']);
+
+        $secondWordUrl = route('org.student.guided.vocabulary', [
+            'organization' => $this->organization,
+            'lesson' => $this->lesson,
+            'word' => 2,
+        ]);
+
+        $response = $this->actingAs($user, 'admin')->get($secondWordUrl);
+
+        $response->assertOk();
+        $response->assertSee('goodbye');
+        $response->assertSee('Word 2 of 2');
+        $response->assertSee('Previous word', false);
+        $response->assertSee('?word=1', false);
+
+        $firstWordResponse = $this->actingAs($user, 'admin')->get(route('org.student.guided.vocabulary', [
+            'organization' => $this->organization,
+            'lesson' => $this->lesson,
+            'word' => 1,
+        ]));
+
+        $firstWordResponse->assertOk();
+        $firstWordResponse->assertSee('hello');
+        $firstWordResponse->assertDontSee('Previous word', false);
     }
 
     public function test_vocabulary_voice_upload_accepts_vocabulary_id(): void
