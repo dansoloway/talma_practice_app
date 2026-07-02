@@ -45,7 +45,17 @@ class StudentController extends Controller
             return ['org' => $org, 'courses' => $courses];
         })->filter(fn ($row) => $row['courses']->isNotEmpty());
 
-        return view('student.index', ['orgsWithCourses' => $orgsWithCourses]);
+        $summerPracticePalOrg = $organization === null
+            ? Organization::query()
+                ->where('slug', Organization::SUMMER_PRACTICE_PAL_SLUG)
+                ->where('is_active', true)
+                ->first()
+            : null;
+
+        return view('student.index', [
+            'orgsWithCourses' => $orgsWithCourses,
+            'summerPracticePalOrg' => $summerPracticePalOrg,
+        ]);
     }
 
     /**

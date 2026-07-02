@@ -28,6 +28,25 @@
             @endif
         </div>
 
+        @if(!isset($currentOrganization) && ($summerPracticePalOrg ?? null))
+            <div class="mb-10 max-w-2xl mx-auto bg-white rounded-2xl border-2 border-purple-200 shadow-sm p-6 md:p-8 text-center">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ $summerPracticePalOrg->display_name }}</h2>
+                <p class="text-gray-600 mb-6">
+                    Summer English practice for families. Sign in or create an account to get started.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-3">
+                    <a href="{{ route('org.student.login', $summerPracticePalOrg) }}"
+                       class="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors">
+                        Sign in
+                    </a>
+                    <a href="{{ route('org.student.register', $summerPracticePalOrg) }}"
+                       class="inline-flex items-center justify-center px-6 py-3 bg-white text-purple-700 font-semibold rounded-xl border-2 border-purple-200 hover:bg-purple-50 transition-colors">
+                        Create account
+                    </a>
+                </div>
+            </div>
+        @endif
+
         <!-- Course Selection by Organization -->
         <div class="mb-8">
             <h2 class="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-8">

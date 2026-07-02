@@ -30,6 +30,25 @@ class StudentFlowTest extends TestCase
         $response->assertSee('Choose Your Course');
     }
 
+    public function test_homepage_shows_summer_practice_pal_auth_links_when_org_exists(): void
+    {
+        Organization::create([
+            'name' => 'Summer Practice Pal',
+            'slug' => Organization::SUMMER_PRACTICE_PAL_SLUG,
+            'access_mode' => 'restricted',
+            'allow_self_registration' => true,
+            'registration_type' => Organization::REGISTRATION_TYPE_PARENT_SIGNUP,
+            'is_active' => true,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk()
+            ->assertSee('Summer English practice for families')
+            ->assertSee(route('org.student.login', Organization::SUMMER_PRACTICE_PAL_SLUG), false)
+            ->assertSee(route('org.student.register', Organization::SUMMER_PRACTICE_PAL_SLUG), false);
+    }
+
     public function test_lessons_index_loads(): void
     {
         $response = $this->get(route('lessons.index'));
