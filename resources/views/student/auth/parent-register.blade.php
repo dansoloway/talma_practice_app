@@ -132,7 +132,7 @@
 
             <p class="mt-6 text-center text-gray-600">
                 {{ __('parent-signup.already_have') }}
-                <a href="{{ route('org.student.login', $organization) }}" class="text-blue-600 hover:text-blue-700 font-medium">{{ __('parent-signup.sign_in') }}</a>
+                <a href="{{ route('org.student.login', ['organization' => $organization, 'lang' => $locale]) }}" class="text-blue-600 hover:text-blue-700 font-medium">{{ __('parent-signup.sign_in') }}</a>
             </p>
         </div>
     </div>

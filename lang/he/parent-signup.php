@@ -81,4 +81,23 @@ return [
     ],
 
     'welcome' => 'ברוכים הבאים! החשבון שלכם נוצר.',
+
+    'login' => [
+        'page_title' => 'התחברות — :org',
+        'subtitle' => 'התחברו כדי לגשת לקורסים שלכם',
+        'email_or_phone' => 'דוא"ל או טלפון',
+        'email' => 'דוא"ל',
+        'password' => 'סיסמה',
+        'remember_me' => 'זכור אותי',
+        'submit' => 'התחברות',
+        'no_account' => 'אין לכם חשבון?',
+        'create_one' => 'יצירת חשבון',
+    ],
+
+    'login_errors' => [
+        'too_many_attempts' => 'יותר מדי ניסיונות התחברות. נסו שוב בעוד :minutes דקות.',
+        'invalid_credentials' => 'פרטי ההתחברות שגויים.',
+        'cannot_access_portal' => 'לחשבון זה אין גישה לפורטל התלמידים.',
+        'no_program_access' => 'אין לכם גישה לתוכנית זו.',
+    ],
 ];

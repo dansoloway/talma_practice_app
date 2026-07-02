@@ -6,7 +6,7 @@ use App\Models\Organization;
 use App\Models\TermsAndCondition;
 use App\Models\User;
 use App\Services\LearnerSessionService;
-use App\Helpers\PhoneRules;
+use App\Support\SignupLocale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -30,17 +30,27 @@ class StudentAuthController extends Controller
             }
         }
 
+        if ($organization->usesParentSignup()) {
+            SignupLocale::apply(request());
+        }
+
         return view('student.auth.login', compact('organization'));
     }
 
     public function login(Request $request, Organization $organization)
     {
+        if ($organization->usesParentSignup()) {
+            SignupLocale::apply($request);
+        }
+
         $key = 'student-login:'.$organization->slug.':'.$request->ip();
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
             throw ValidationException::withMessages([
-                'email' => ['Too many login attempts. Please try again in '.ceil($seconds / 60).' minutes.'],
+                'email' => [__('parent-signup.login_errors.too_many_attempts', [
+                    'minutes' => (int) ceil($seconds / 60),
+                ])],
             ]);
         }
 
@@ -57,7 +67,7 @@ class StudentAuthController extends Controller
 
             return back()
                 ->withInput($request->only('email'))
-                ->withErrors(['email' => 'Invalid credentials.']);
+                ->withErrors(['email' => __('parent-signup.login_errors.invalid_credentials')]);
         }
 
         if (! $loginUser->is_active || ! $loginUser->canAccessStudentPortal()) {
@@ -65,7 +75,7 @@ class StudentAuthController extends Controller
 
             return back()
                 ->withInput($request->only('email'))
-                ->withErrors(['email' => 'This account cannot access the student portal.']);
+                ->withErrors(['email' => __('parent-signup.login_errors.cannot_access_portal')]);
         }
 
         if (! $loginUser->isAdmin() && ! $loginUser->isMemberOfOrg($organization->id)) {
@@ -73,7 +83,7 @@ class StudentAuthController extends Controller
 
             return back()
                 ->withInput($request->only('email'))
-                ->withErrors(['email' => 'You do not have access to this program.']);
+                ->withErrors(['email' => __('parent-signup.login_errors.no_program_access')]);
         }
 
         Auth::guard('admin')->login($loginUser, $request->boolean('remember'));

@@ -81,4 +81,23 @@ return [
     ],
 
     'welcome' => 'Welcome! Your account has been created.',
+
+    'login' => [
+        'page_title' => 'Sign in — :org',
+        'subtitle' => 'Sign in to access your courses',
+        'email_or_phone' => 'Email or phone',
+        'email' => 'Email',
+        'password' => 'Password',
+        'remember_me' => 'Remember me',
+        'submit' => 'Sign In',
+        'no_account' => 'Don\'t have an account?',
+        'create_one' => 'Create one',
+    ],
+
+    'login_errors' => [
+        'too_many_attempts' => 'Too many login attempts. Please try again in :minutes minutes.',
+        'invalid_credentials' => 'Invalid credentials.',
+        'cannot_access_portal' => 'This account cannot access the student portal.',
+        'no_program_access' => 'You do not have access to this program.',
+    ],
 ];

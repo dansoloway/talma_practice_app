@@ -1,14 +1,36 @@
 @extends('layouts.app')
 
-@section('title', 'Login — ' . $organization->display_name)
+@php
+    use App\Support\SignupLocale;
+    $usesSignupLocale = $organization->usesParentSignup();
+    $locale = $usesSignupLocale ? app()->getLocale() : 'en';
+    $isRtl = $usesSignupLocale && SignupLocale::isRtl($locale);
+@endphp
+
+@section('html_lang', $locale)
+@section('html_dir', $isRtl ? 'rtl' : 'ltr')
+
+@section('title', $usesSignupLocale
+    ? __('parent-signup.login.page_title', ['org' => $organization->display_name])
+    : 'Login — ' . $organization->display_name)
 
 @section('content')
 <div class="min-h-screen flex items-center justify-center py-12 px-4">
     <div class="w-full max-w-md">
         <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-xl p-8">
+            @if($usesSignupLocale)
+                <x-signup-locale-switcher />
+            @endif
+
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ $organization->display_name }}</h1>
-                <p class="text-gray-600">Sign in to access your courses</p>
+                <p class="text-gray-600">
+                    @if($usesSignupLocale)
+                        {{ __('parent-signup.login.subtitle') }}
+                    @else
+                        Sign in to access your courses
+                    @endif
+                </p>
             </div>
 
             @if(session('success'))
@@ -31,33 +53,47 @@
                 @csrf
                 <div>
                     <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
-                        {{ $organization->usesParentSignup() ? 'Email or phone' : 'Email' }}
+                        @if($organization->usesParentSignup())
+                            {{ __('parent-signup.login.email_or_phone') }}
+                        @else
+                            {{ $usesSignupLocale ? __('parent-signup.login.email') : 'Email' }}
+                        @endif
                     </label>
                     <input type="text" id="email" name="email" required autofocus
                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-                           value="{{ old('email') }}">
+                           value="{{ old('email') }}" dir="ltr">
                 </div>
                 <div>
-                    <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                    <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+                        {{ $usesSignupLocale ? __('parent-signup.login.password') : 'Password' }}
+                    </label>
                     <input type="password" id="password" name="password" required
-                           class="w-full px-4 py-3 border border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
                 </div>
                 <div>
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}
                                class="w-5 h-5 text-blue-600 border-gray-300 rounded">
-                        <span class="text-gray-700 font-medium">Remember me</span>
+                        <span class="text-gray-700 font-medium">
+                            {{ $usesSignupLocale ? __('parent-signup.login.remember_me') : 'Remember me' }}
+                        </span>
                     </label>
                 </div>
                 <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors">
-                    Sign In
+                    {{ $usesSignupLocale ? __('parent-signup.login.submit') : 'Sign In' }}
                 </button>
             </form>
 
             @if($organization->allow_self_registration)
                 <p class="mt-6 text-center text-gray-600">
-                    Don't have an account?
-                    <a href="{{ route('org.student.register', $organization) }}" class="text-blue-600 hover:text-blue-700 font-medium">Create one</a>
+                    @if($usesSignupLocale)
+                        {{ __('parent-signup.login.no_account') }}
+                        <a href="{{ route('org.student.register', ['organization' => $organization, 'lang' => $locale]) }}"
+                           class="text-blue-600 hover:text-blue-700 font-medium">{{ __('parent-signup.login.create_one') }}</a>
+                    @else
+                        Don't have an account?
+                        <a href="{{ route('org.student.register', $organization) }}" class="text-blue-600 hover:text-blue-700 font-medium">Create one</a>
+                    @endif
                 </p>
             @endif
         </div>

@@ -62,6 +62,26 @@ class SummerPracticePalAccessTest extends TestCase
             ->assertSee('Parent or guardian registration', false);
     }
 
+    public function test_parent_login_defaults_to_hebrew(): void
+    {
+        $org = $this->summerOrg();
+
+        $this->get(route('org.student.login', $org))
+            ->assertOk()
+            ->assertSee('התחברו כדי לגשת לקורסים שלכם', false)
+            ->assertSee('עברית', false);
+    }
+
+    public function test_parent_login_can_switch_to_arabic(): void
+    {
+        $org = $this->summerOrg();
+
+        $this->get(route('org.student.login', ['organization' => $org, 'lang' => 'ar']))
+            ->assertOk()
+            ->assertSee('سجّل الدخول للوصول إلى دوراتك', false)
+            ->assertSee('lang="ar"', false);
+    }
+
     public function test_parent_can_register_and_access_org_courses(): void
     {
         $org = $this->summerOrg();
