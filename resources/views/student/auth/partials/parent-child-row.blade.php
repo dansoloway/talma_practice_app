@@ -105,11 +105,11 @@
         </div>
         <div>
             <label class="block text-sm mb-1">{{ __('parent-signup.child.child_password') }}</label>
-            <input type="password" name="students[{{ $index }}][password]" dir="ltr" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            <x-password-input name="students[{{ $index }}][password]" input-class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
         </div>
         <div>
             <label class="block text-sm mb-1">{{ __('parent-signup.child.confirm_child_password') }}</label>
-            <input type="password" name="students[{{ $index }}][password_confirmation]" dir="ltr" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            <x-password-input name="students[{{ $index }}][password_confirmation]" input-class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
         </div>
     </div>
 </div>

@@ -31,6 +31,9 @@ return [
     'already_have' => 'כבר יש לכם חשבון?',
     'sign_in' => 'התחברות',
 
+    'show_password' => 'הצגת סיסמה',
+    'hide_password' => 'הסתרת סיסמה',
+
     'child' => [
         'label' => 'ילד/ה :number',
         'remove' => 'הסרה',

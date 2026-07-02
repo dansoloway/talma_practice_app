@@ -31,6 +31,9 @@ return [
     'already_have' => 'لديك حساب بالفعل؟',
     'sign_in' => 'تسجيل الدخول',
 
+    'show_password' => 'إظهار كلمة المرور',
+    'hide_password' => 'إخفاء كلمة المرور',
+
     'child' => [
         'label' => 'الطفل :number',
         'remove' => 'إزالة',

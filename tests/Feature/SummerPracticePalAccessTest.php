@@ -50,7 +50,8 @@ class SummerPracticePalAccessTest extends TestCase
 
         $this->get(route('org.student.register', $org))
             ->assertOk()
-            ->assertSee('רישום הורה / אפוטרופוס', false);
+            ->assertSee('רישום הורה / אפוטרופוס', false)
+            ->assertSee('togglePasswordField', false);
     }
 
     public function test_parent_register_can_switch_to_english(): void

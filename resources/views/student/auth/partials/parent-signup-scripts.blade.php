@@ -1,5 +1,21 @@
 @push('scripts')
 <script>
+function togglePasswordField(button) {
+    var wrapper = button.closest('.relative');
+    if (!wrapper) return;
+    var input = wrapper.querySelector('input[type="password"], input[type="text"]');
+    var icon = button.querySelector('i');
+    if (!input || !icon) return;
+
+    var showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    icon.classList.toggle('fa-eye', showing);
+    icon.classList.toggle('fa-eye-slash', !showing);
+    button.setAttribute('aria-label', showing
+        ? (button.dataset.showLabel || 'Show password')
+        : (button.dataset.hideLabel || 'Hide password'));
+}
+
 (function(){
     var section = document.getElementById('children-section');
     if(!section) return;

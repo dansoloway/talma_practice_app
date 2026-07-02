@@ -31,6 +31,9 @@ return [
     'already_have' => 'Already have an account?',
     'sign_in' => 'Sign in',
 
+    'show_password' => 'Show password',
+    'hide_password' => 'Hide password',
+
     'child' => [
         'label' => 'Child :number',
         'remove' => 'Remove',

@@ -55,12 +55,12 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">{{ __('parent-signup.password') }}</label>
-                        <input type="password" name="password" required dir="ltr" class="w-full px-4 py-3 border border-gray-300 rounded-xl">
+                        <x-password-input name="password" required />
                         <p class="mt-1 text-sm text-gray-500">{{ __('parent-signup.password_hint') }}</p>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">{{ __('parent-signup.confirm_password') }}</label>
-                        <input type="password" name="password_confirmation" required dir="ltr" class="w-full px-4 py-3 border border-gray-300 rounded-xl">
+                        <x-password-input name="password_confirmation" required />
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">{{ __('parent-signup.phone') }}</label>
