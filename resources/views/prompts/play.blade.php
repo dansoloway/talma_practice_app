@@ -5,14 +5,11 @@
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-6 md:py-8">
     <div class="container mx-auto px-4 max-w-4xl">
+        @include('partials.student-game-locale-bar')
         <!-- Game Header -->
         <div class="mb-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                <a href="{{ route('lessons.show', $lesson->slug) }}" 
-                   class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 group">
-                    <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
-                    <span>Back to Lesson</span>
-                </a>
+                @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null])
                 @include('partials.admin-edit-lesson', [
                     'lesson' => $lesson,
                     'activityEditUrl' => route('admin.lessons.prompts.index', $lesson),
@@ -20,7 +17,7 @@
                 ])
             </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Sentence Completion</h1>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{{ __('student-portal.games.sentence_completion') }}</h1>
                 <p class="text-gray-600 font-medium">{{ $lesson->title }}</p>
             </div>
         </div>
@@ -36,16 +33,16 @@
                 <button id="prev-btn" 
                         class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
                         disabled>
-                    Previous
+                    {{ __('student-portal.games.previous') }}
                 </button>
                 <button id="next-btn" 
                         class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed" 
                         disabled>
-                    Next
+                    {{ __('student-portal.games.next') }}
                 </button>
                 <button id="finish-btn" 
                         class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md hidden">
-                    Finish
+                    {{ __('student-portal.games.finish') }}
                 </button>
             </div>
 
@@ -53,10 +50,10 @@
             <div id="game-results" class="hidden bg-white rounded-2xl shadow-lg border border-gray-200 p-8 md:p-12 text-center">
                 <div class="mb-8">
                     <div class="text-6xl mb-4">🎉</div>
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">Great Job!</h2>
-                    <p class="text-lg text-gray-600 mb-8">You completed all the sentence completion questions!</p>
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">{{ __('student-portal.games.great_job') }}</h2>
+                    <p class="text-lg text-gray-600 mb-8">{{ __('student-portal.games.completed_all_prompts') }}</p>
                     <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200 inline-block">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Final Score</h3>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ __('student-portal.games.final_score') }}</h3>
                         <div class="text-4xl font-bold text-blue-600 mb-2" id="score-display">0/0</div>
                         <p class="text-lg text-gray-600" id="score-percentage">0%</p>
                     </div>
@@ -64,7 +61,7 @@
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
                     <button id="restart-btn" 
                             class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
-                        Try Again
+                        {{ __('student-portal.games.try_again') }}
                     </button>
                     @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson])
                 </div>
@@ -72,12 +69,9 @@
         @else
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
                 <div class="text-6xl mb-4">📝</div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-3">No Questions Available</h3>
-                <p class="text-gray-600 mb-6">This lesson doesn't have any sentence completion questions yet.</p>
-                <a href="{{ route('lessons.show', $lesson->slug) }}" 
-                   class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md">
-                    Back to Lesson
-                </a>
+                <h3 class="text-2xl font-bold text-gray-800 mb-3">{{ __('student-portal.games.no_questions') }}</h3>
+                <p class="text-gray-600 mb-6">{{ __('student-portal.games.no_questions_prompts') }}</p>
+                @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md'])
             </div>
         @endif
     </div>
@@ -100,6 +94,8 @@
         'lang' => 'en-US',
     ];
 @endphp
+
+@include('partials.student-game-i18n')
 
 <script>
 const lessonData = @json($lesson);
@@ -273,7 +269,7 @@ function loadPrompt(index) {
         </div>
         
         <div class="mb-6">
-            <h4 class="text-lg font-semibold text-gray-800 mb-4">Choose the correct word:</h4>
+            <h4 class="text-lg font-semibold text-gray-800 mb-4">${gameT('choose_correct_word')}</h4>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 ${prompt.options.map((option, optionIndex) => `
                     <div class="option-card bg-white rounded-xl border-2 border-gray-200 p-4 cursor-pointer hover:border-blue-400 hover:shadow-md hover:-translate-y-1 transition-all duration-200 draggable" 
@@ -305,16 +301,16 @@ function loadPrompt(index) {
         
         <div id="audio-controls" class="hidden bg-gray-50 rounded-xl p-6 border border-gray-200">
             <div>
-                <h4 class="text-lg font-semibold text-gray-800 mb-4">Listen & Practice</h4>
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">${gameT('listen_and_practice')}</h4>
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="bg-white rounded-xl p-6 border border-gray-200">
-                        <h5 class="font-semibold text-gray-700 mb-3">Example</h5>
+                        <h5 class="font-semibold text-gray-700 mb-3">${gameT('example')}</h5>
                         <div class="flex flex-col gap-2">
                             <button type="button" class="talma-audio-btn w-full px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm" 
                                     id="play-model-btn" 
                                     data-talma-audio-manual
                                     onclick="playModelAudio(false)">
-                                <i class="fas fa-play mr-2 talma-audio-icon"></i> Play Example
+                                <i class="fas fa-play mr-2 talma-audio-icon"></i> ${gameT('play')} ${gameT('example')}
                             </button>
                             <button type="button" class="talma-audio-btn w-full px-4 py-3 bg-blue-100 text-blue-800 font-semibold rounded-xl hover:bg-blue-200 active:scale-95 transition-all duration-200 shadow-sm border border-blue-200" 
                                     id="play-model-slow-btn" 
@@ -328,25 +324,25 @@ function loadPrompt(index) {
                     </div>
                     
                     <div class="bg-white rounded-xl p-6 border border-gray-200">
-                        <h5 class="font-semibold text-gray-700 mb-3">You</h5>
+                        <h5 class="font-semibold text-gray-700 mb-3">${gameT('you')}</h5>
                         <div class="flex gap-3 flex-wrap">
                             <button class="flex-1 min-w-[7rem] px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:scale-95 transition-all duration-200 shadow-sm" 
                                     id="record-btn" 
                                     onclick="toggleRecording()">
-                                <i class="fas fa-microphone mr-2"></i> Record
+                                <i class="fas fa-microphone mr-2"></i> ${gameT('record')}
                             </button>
                             <button class="flex-1 min-w-[7rem] px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
                                     id="play-recording-btn" 
                                     onclick="playRecording()" 
                                     disabled>
-                                <i class="fas fa-play mr-2"></i> Play
+                                <i class="fas fa-play mr-2"></i> ${gameT('play')}
                             </button>
                             ${speechFeedbackConfig.enabled ? `
                             <button type="button"
                                     id="check-pronunciation-btn"
                                     class="flex-1 min-w-[7rem] px-4 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                     onclick="checkRecordedPronunciation()">
-                                <i class="fas fa-check-circle mr-2"></i> Check
+                                <i class="fas fa-check-circle mr-2"></i> ${gameT('check')}
                             </button>
                             ` : ''}
                         </div>
@@ -492,9 +488,9 @@ function showAnswerFeedback(isCorrect, selectedOption) {
     
     // Add appropriate feedback message
     if (isCorrect === true) {
-        showFeedbackMessage('Correct! 🎉', 'success');
+        showFeedbackMessage(gameT('correct'), 'success');
     } else if (isCorrect === false) {
-        showFeedbackMessage('Try again! 💪', 'error');
+        showFeedbackMessage(gameT('try_again_short'), 'error');
     }
     // If isCorrect is null, no feedback is shown
 }
@@ -647,7 +643,7 @@ function checkRecordedPronunciation() {
         onListening: () => {
             if (checkBtn) {
                 checkBtn.disabled = true;
-                checkBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> Listening...';
+                checkBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> ' + gameT('listening');
             }
             if (statusDiv) {
                 statusDiv.textContent = 'Listening... say the sentence now.';
@@ -679,7 +675,7 @@ function checkRecordedPronunciation() {
         onEnd: () => {
             if (checkBtn) {
                 checkBtn.disabled = !TalmaSpeech.isSupported();
-                checkBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Check';
+                checkBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> ' + gameT('check');
             }
             activeCheck = null;
         },
@@ -700,7 +696,7 @@ function resetRecordingState() {
     
     if (playRecordingBtn) {
         playRecordingBtn.disabled = true;
-        playRecordingBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+        playRecordingBtn.innerHTML = '<i class="fas fa-play"></i> ' + gameT('play');
     }
     
     if (recordingStatus) {
@@ -724,7 +720,7 @@ function resetRecordingState() {
     // Reset recording button if it was in a recording state
     const recordBtn = document.getElementById('record-btn');
     if (recordBtn && isRecording) {
-        recordBtn.innerHTML = '<i class="fas fa-microphone"></i> Record';
+        recordBtn.innerHTML = '<i class="fas fa-microphone"></i> ' + gameT('record');
         recordBtn.classList.remove('recording');
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();

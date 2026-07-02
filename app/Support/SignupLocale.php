@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Organization;
 use Illuminate\Http\Request;
 
 class SignupLocale
@@ -39,6 +40,26 @@ class SignupLocale
         app()->setLocale($locale);
 
         return $locale;
+    }
+
+    public static function shouldApplyStudentLocale(?Request $request = null): bool
+    {
+        $request = $request ?? request();
+        $org = $request->attributes->get('currentOrganization');
+
+        if ($org instanceof Organization && $org->usesParentSignup()) {
+            return true;
+        }
+
+        return $request->session()->has('signup_locale');
+    }
+
+    /** @return array<string, mixed> */
+    public static function gameStrings(?string $locale = null): array
+    {
+        $locale = self::normalize($locale ?? app()->getLocale());
+
+        return trans('student-portal.games', [], $locale);
     }
 
     public static function isRtl(?string $locale = null): bool

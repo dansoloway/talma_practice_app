@@ -3,7 +3,7 @@
     use App\Support\SignupLocale;
     $portalLocale = 'en';
     $portalDir = 'ltr';
-    if (isset($currentOrganization) && $currentOrganization->usesParentSignup()) {
+    if (SignupLocale::shouldApplyStudentLocale()) {
         $portalLocale = app()->getLocale();
         $portalDir = SignupLocale::isRtl($portalLocale) ? 'rtl' : 'ltr';
     }
@@ -54,7 +54,7 @@
 
             @if($isOrgStudentPortal)
                 <div class="flex items-center gap-2">
-                    @if($currentOrganization->usesParentSignup())
+                    @if(SignupLocale::shouldApplyStudentLocale())
                         <x-signup-locale-switcher compact />
                     @endif
                     <div class="relative" id="student-account-menu">

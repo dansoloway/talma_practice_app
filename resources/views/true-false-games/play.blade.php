@@ -26,9 +26,10 @@
 </style>
 
 <div class="true-false-game-container">
+    @include('partials.student-game-locale-bar')
     <div class="game-header">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+            @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'back-link'])
             @include('partials.admin-edit-lesson', [
                 'lesson' => $lesson,
                 'activityEditUrl' => route('admin.lessons.true-false-games.show', [$lesson, $trueFalseGame]),
@@ -47,7 +48,7 @@
                     <div class="progress-fill" id="progress-fill"></div>
                 </div>
                 <div class="progress-text">
-                    Question <span id="current-question">1</span> of <span id="total-questions">{{ $questions->count() }}</span>
+                    <span id="progress-display">{{ __('student-portal.games.question_of', ['current' => 1, 'total' => $questions->count()]) }}</span>
                 </div>
             </div>
 
@@ -56,42 +57,44 @@
             </div>
 
             <div class="game-controls">
-                <button id="next-btn" class="btn btn-primary hidden">Next Question</button>
-                <button id="restart-btn" class="btn btn-secondary">Restart Game</button>
+                <button id="next-btn" class="btn btn-primary hidden">{{ __('student-portal.games.next_question') }}</button>
+                <button id="restart-btn" class="btn btn-secondary">{{ __('student-portal.games.restart') }}</button>
             </div>
         </div>
 
         <!-- Game Complete Screen -->
         <div class="game-complete hidden" id="game-complete">
             <div class="completion-content">
-                <h2>🎉 Game Complete!</h2>
-                <p id="completion-message">Great job practicing!</p>
+                <h2>🎉 {{ __('student-portal.games.game_complete') }}</h2>
+                <p id="completion-message">{{ __('student-portal.games.great_job_practicing') }}</p>
                 <div class="completion-stats">
                     <div class="stat">
                         <span class="stat-value" id="completion-score">0 / 0</span>
-                        <span class="stat-label">Correct</span>
+                        <span class="stat-label">{{ __('student-portal.games.correct_label') }}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-value" id="completion-accuracy">0%</span>
-                        <span class="stat-label">Accuracy</span>
+                        <span class="stat-label">{{ __('student-portal.games.accuracy') }}</span>
                     </div>
                 </div>
                 <div class="completion-actions">
-                    <button id="play-again-btn" class="btn btn-primary">Play Again</button>
+                    <button id="play-again-btn" class="btn btn-primary">{{ __('student-portal.games.play_again') }}</button>
                     @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson])
                 </div>
             </div>
         </div>
     @else
         <div class="empty-state">
-            <h3>No Questions Available</h3>
-            <p>This lesson doesn't have any True/False questions yet.</p>
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-primary">Back to Lesson</a>
+            <h3>{{ __('student-portal.games.no_questions') }}</h3>
+            <p>{{ __('student-portal.games.no_questions_true_false') }}</p>
+            @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'btn btn-primary'])
         </div>
     @endif
 </div>
 
 <audio id="game-audio" preload="auto"></audio>
+
+@include('partials.student-game-i18n')
 
 <script>
 const questions = @json($questions);
@@ -131,8 +134,7 @@ const gameScreen = document.getElementById('game-screen');
 const gameComplete = document.getElementById('game-complete');
 const questionContainer = document.getElementById('question-container');
 const progressFill = document.getElementById('progress-fill');
-const currentQuestionSpan = document.getElementById('current-question');
-const totalQuestionsSpan = document.getElementById('total-questions');
+const progressDisplay = document.getElementById('progress-display');
 const nextBtn = document.getElementById('next-btn');
 const restartBtn = document.getElementById('restart-btn');
 const playAgainBtn = document.getElementById('play-again-btn');
@@ -175,12 +177,12 @@ function loadQuestion(index) {
                 <button type="button" class="big-play-btn talma-audio-btn" id="play-audio-btn" data-audio-url="${question.audio_path || ''}" data-talma-audio-icon="volume-up">
                     <i class="fas fa-volume-up talma-audio-icon"></i>
                 </button>
-                <p class="audio-hint">Click to listen</p>
+                <p class="audio-hint">${gameT('click_to_listen')}</p>
             </div>
             
             <div class="show-text-section">
                 <button class="show-text-btn" id="show-text-btn">
-                    <i class="fas fa-eye"></i> Show Text
+                    <i class="fas fa-eye"></i> ${gameT('show_text')}
                 </button>
             </div>
             
@@ -190,10 +192,10 @@ function loadQuestion(index) {
             
             <div class="answer-buttons" id="answer-buttons">
                 <button class="answer-btn true-btn" data-answer="true">
-                    <i class="fas fa-check-circle"></i> True
+                    <i class="fas fa-check-circle"></i> ${gameT('true')}
                 </button>
                 <button class="answer-btn false-btn" data-answer="false">
-                    <i class="fas fa-times-circle"></i> False
+                    <i class="fas fa-times-circle"></i> ${gameT('false')}
                 </button>
             </div>
             
@@ -224,9 +226,9 @@ function setupQuestionEvents(question) {
         showTextBtn.addEventListener('click', function() {
             questionText.classList.toggle('hidden');
             if (questionText.classList.contains('hidden')) {
-                showTextBtn.innerHTML = '<i class="fas fa-eye"></i> Show Text';
+                showTextBtn.innerHTML = '<i class="fas fa-eye"></i> ' + gameT('show_text');
             } else {
-                showTextBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Text';
+                showTextBtn.innerHTML = '<i class="fas fa-eye-slash"></i> ' + gameT('hide_text');
             }
         });
     }
@@ -268,7 +270,7 @@ function setupQuestionEvents(question) {
             const explanationContent = document.getElementById('explanation-content');
             if (explanation && explanationContent) {
                 explanationContent.innerHTML = `
-                    <p><strong>${question.is_true ? 'True' : 'False'}</strong></p>
+                    <p><strong>${question.is_true ? gameT('true') : gameT('false')}</strong></p>
                     <p>${question.explanation}</p>
                 `;
                 explanation.classList.remove('hidden');
@@ -290,7 +292,7 @@ function setupQuestionEvents(question) {
 function showFeedback(type) {
     const feedback = document.createElement('div');
     feedback.className = `feedback feedback-${type}`;
-    feedback.textContent = type === 'correct' ? '✓ Correct!' : '✗ Incorrect';
+    feedback.textContent = type === 'correct' ? '✓ ' + gameT('correct') : '✗ ' + gameT('incorrect');
     questionContainer.appendChild(feedback);
     
     setTimeout(() => {
@@ -313,13 +315,13 @@ function endGame() {
     completionAccuracy.textContent = `${accuracy}%`;
 
     if (accuracy === 100) {
-        completionMessage.textContent = 'Perfect! You got every question right!';
+        completionMessage.textContent = gameT('completion_all_correct');
     } else if (accuracy >= 80) {
-        completionMessage.textContent = 'Great work! You\'re doing really well!';
+        completionMessage.textContent = gameT('good_job');
     } else if (accuracy >= 50) {
-        completionMessage.textContent = 'Nice effort! Keep practicing!';
+        completionMessage.textContent = gameT('keep_practicing');
     } else {
-        completionMessage.textContent = 'Good start! Try again to improve your score!';
+        completionMessage.textContent = gameT('great_job_practicing');
     }
     
     // Show completion screen
@@ -361,7 +363,12 @@ function restartGame() {
 function updateProgress() {
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
     progressFill.style.width = progress + '%';
-    currentQuestionSpan.textContent = currentQuestionIndex + 1;
+    if (progressDisplay) {
+        progressDisplay.textContent = gameT('question_of', {
+            current: currentQuestionIndex + 1,
+            total: questions.length,
+        });
+    }
 }
 </script>
 

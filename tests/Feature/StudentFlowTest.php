@@ -116,6 +116,28 @@ class StudentFlowTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_matching_game_play_shows_hebrew_instructions_with_locale(): void
+    {
+        $lesson = Lesson::where('is_active', true)->first();
+        if (! $lesson) {
+            $this->markTestSkipped('No active lesson');
+        }
+        $game = $lesson->matchingGames()->where('is_active', true)->first();
+        if (! $game) {
+            $game = MatchingGame::create([
+                'lesson_id' => $lesson->id,
+                'title' => 'Test Matching Game',
+                'vocabulary_ids' => [],
+                'is_active' => true,
+            ]);
+        }
+
+        $this->get(route('matching-games.play', [$lesson, $game, 'lang' => 'he']))
+            ->assertOk()
+            ->assertSee('חזרה לשיעור', false)
+            ->assertSee('עברית', false);
+    }
+
     public function test_game_play_hides_admin_edit_links_for_students(): void
     {
         $student = User::factory()->create(['role' => 'student']);

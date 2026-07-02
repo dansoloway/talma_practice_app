@@ -26,16 +26,17 @@
 </style>
 
 <div class="spelling-game-container">
+    @include('partials.student-game-locale-bar')
     <div class="game-header">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+            @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'back-link'])
             @include('partials.admin-edit-lesson', [
                 'lesson' => $lesson,
                 'activityEditUrl' => route('admin.lessons.spelling-games.edit', [$lesson, $spelling_game]),
                 'activityEditLabel' => 'Edit Game',
             ])
         </div>
-        <h1 class="game-title">Spelling Practice</h1>
+        <h1 class="game-title">{{ __('student-portal.games.spelling_practice') }}</h1>
         <p class="game-subtitle">{{ $lesson->title }}</p>
     </div>
 
@@ -47,7 +48,7 @@
                     <div class="progress-fill" id="progress-fill"></div>
                 </div>
                 <div class="progress-text">
-                    Word <span id="current-word">1</span> of <span id="total-words">{{ $vocabulary->count() }}</span>
+                    <span id="progress-display">{{ __('student-portal.games.word_of', ['current' => 1, 'total' => $vocabulary->count()]) }}</span>
                 </div>
             </div>
 
@@ -56,42 +57,44 @@
             </div>
 
             <div class="game-controls">
-                <button id="next-btn" class="btn btn-primary hidden">Next Word</button>
-                <button id="restart-btn" class="btn btn-secondary">Restart Game</button>
+                <button id="next-btn" class="btn btn-primary hidden">{{ __('student-portal.games.next_word') }}</button>
+                <button id="restart-btn" class="btn btn-secondary">{{ __('student-portal.games.restart') }}</button>
             </div>
         </div>
 
         <!-- Game Complete Screen -->
         <div class="game-complete hidden" id="game-complete">
             <div class="completion-content">
-                <h2>🎉 Game Complete!</h2>
-                <p id="completion-message">Great job practicing!</p>
+                <h2>🎉 {{ __('student-portal.games.game_complete') }}</h2>
+                <p id="completion-message">{{ __('student-portal.games.great_job_practicing') }}</p>
                 <div class="completion-stats">
                     <div class="stat">
                         <span class="stat-value" id="completion-score">0 / 0</span>
-                        <span class="stat-label">Correct</span>
+                        <span class="stat-label">{{ __('student-portal.games.correct_label') }}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-value" id="completion-accuracy">0%</span>
-                        <span class="stat-label">Accuracy</span>
+                        <span class="stat-label">{{ __('student-portal.games.accuracy') }}</span>
                     </div>
                 </div>
                 <div class="completion-actions">
-                    <button id="play-again-btn" class="btn btn-primary">Play Again</button>
+                    <button id="play-again-btn" class="btn btn-primary">{{ __('student-portal.games.play_again') }}</button>
                     @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson])
                 </div>
             </div>
         </div>
     @else
         <div class="empty-state">
-            <h3>No Words Available</h3>
-            <p>This spelling game doesn't have any vocabulary words yet.</p>
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-primary">Back to Lesson</a>
+            <h3>{{ __('student-portal.games.no_words_available') }}</h3>
+            <p>{{ __('student-portal.games.no_words_spelling') }}</p>
+            @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'btn btn-primary'])
         </div>
     @endif
 </div>
 
 <audio id="game-audio" preload="auto"></audio>
+
+@include('partials.student-game-i18n')
 
 <script>
 const vocabulary = @json($vocabulary);
@@ -132,8 +135,7 @@ const gameScreen = document.getElementById('game-screen');
 const gameComplete = document.getElementById('game-complete');
 const wordContainer = document.getElementById('word-container');
 const progressFill = document.getElementById('progress-fill');
-const currentWordSpan = document.getElementById('current-word');
-const totalWordsSpan = document.getElementById('total-words');
+const progressDisplay = document.getElementById('progress-display');
 const nextBtn = document.getElementById('next-btn');
 const restartBtn = document.getElementById('restart-btn');
 const playAgainBtn = document.getElementById('play-again-btn');
@@ -194,13 +196,13 @@ function loadWord(index) {
                 <button type="button" class="big-play-btn talma-audio-btn" id="play-audio-btn" data-audio-url="${word.word_audio_path || ''}" data-talma-audio-icon="volume-up">
                     <i class="fas fa-volume-up talma-audio-icon"></i>
                 </button>
-                <p class="audio-hint">Click to listen</p>
+                <p class="audio-hint">${gameT('click_to_listen')}</p>
             </div>
             
             ${word.image_path ? `
             <div class="hint-control-section">
                 <button class="show-image-btn" id="show-image-btn">
-                    <i class="fas fa-image"></i> Show Image
+                    <i class="fas fa-image"></i> ${gameT('show_image')}
                 </button>
             </div>
             <div class="word-image-section hidden" id="word-image-section">
@@ -210,7 +212,7 @@ function loadWord(index) {
             
             <div class="hint-control-section">
                 <button class="show-hint-btn" id="show-hint-btn">
-                    <i class="fas fa-lightbulb"></i> Show Hint
+                    <i class="fas fa-lightbulb"></i> ${gameT('show_hint')}
                 </button>
             </div>
             
@@ -226,7 +228,7 @@ function loadWord(index) {
                        autocorrect="off" 
                        autocapitalize="off" 
                        spellcheck="false"
-                       placeholder="Type the word...">
+                       placeholder="${gameT('type_the_word')}">
             </div>
             
             <div class="letter-feedback" id="letter-feedback"></div>
@@ -263,9 +265,9 @@ function setupWordEvents(word, hint) {
         showImageBtn.addEventListener('click', function() {
             imageSection.classList.toggle('hidden');
             if (imageSection.classList.contains('hidden')) {
-                showImageBtn.innerHTML = '<i class="fas fa-image"></i> Show Image';
+                showImageBtn.innerHTML = '<i class="fas fa-image"></i> ' + gameT('show_image');
             } else {
-                showImageBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Image';
+                showImageBtn.innerHTML = '<i class="fas fa-eye-slash"></i> ' + gameT('hide_image');
             }
         });
     }
@@ -277,9 +279,9 @@ function setupWordEvents(word, hint) {
         showHintBtn.addEventListener('click', function() {
             hintSection.classList.toggle('hidden');
             if (hintSection.classList.contains('hidden')) {
-                showHintBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Show Hint';
+                showHintBtn.innerHTML = '<i class="fas fa-lightbulb"></i> ' + gameT('show_hint');
             } else {
-                showHintBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Hint';
+                showHintBtn.innerHTML = '<i class="fas fa-eye-slash"></i> ' + gameT('hide_hint');
             }
         });
     }
@@ -360,15 +362,15 @@ function showAnswerFeedback(type, correctWord, userAnswer = null) {
     if (type === 'correct') {
         feedbackContent.innerHTML = `
             <div class="feedback-icon correct-icon">✓</div>
-            <p class="feedback-text">Correct! Well done!</p>
+            <p class="feedback-text">${gameT('correct')}</p>
             <p class="correct-word">${correctWord}</p>
         `;
     } else {
         feedbackContent.innerHTML = `
             <div class="feedback-icon incorrect-icon">✗</div>
-            <p class="feedback-text">Not quite. The correct spelling is:</p>
+            <p class="feedback-text">${gameT('spelling_not_quite_answer')}</p>
             <p class="correct-word">${correctWord}</p>
-            ${userAnswer ? `<p class="user-answer">You typed: ${userAnswer}</p>` : ''}
+            ${userAnswer ? `<p class="user-answer">${gameT('you_typed', { answer: userAnswer })}</p>` : ''}
         `;
     }
     
@@ -390,13 +392,13 @@ function endGame() {
     completionAccuracy.textContent = `${accuracy}%`;
 
     if (accuracy === 100) {
-        completionMessage.textContent = 'Perfect! You spelled every word correctly!';
+        completionMessage.textContent = gameT('perfect');
     } else if (accuracy >= 80) {
-        completionMessage.textContent = 'Great work! You\'re doing really well!';
+        completionMessage.textContent = gameT('good_job');
     } else if (accuracy >= 50) {
-        completionMessage.textContent = 'Nice effort! Keep practicing!';
+        completionMessage.textContent = gameT('keep_practicing');
     } else {
-        completionMessage.textContent = 'Good start! Try again to improve your score!';
+        completionMessage.textContent = gameT('great_job_practicing');
     }
     
     // Show completion screen
@@ -439,7 +441,12 @@ function restartGame() {
 function updateProgress() {
     const progress = ((currentWordIndex + 1) / vocabulary.length) * 100;
     progressFill.style.width = progress + '%';
-    currentWordSpan.textContent = currentWordIndex + 1;
+    if (progressDisplay) {
+        progressDisplay.textContent = gameT('word_of', {
+            current: currentWordIndex + 1,
+            total: vocabulary.length,
+        });
+    }
 }
 </script>
 

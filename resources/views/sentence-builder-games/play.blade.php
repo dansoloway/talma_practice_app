@@ -308,16 +308,17 @@
 </style>
 
 <div class="sentence-builder-container">
+    @include('partials.student-game-locale-bar')
     <div class="game-header">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+            @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'back-link'])
             @include('partials.admin-edit-lesson', [
                 'lesson' => $lesson,
                 'activityEditUrl' => route('admin.lessons.sentence-builder-games.show', [$lesson, $game]),
                 'activityEditLabel' => 'Edit Game',
             ])
         </div>
-        <h1 class="game-title">Sentence Builder</h1>
+        <h1 class="game-title">{{ __('student-portal.games.sentence_builder') }}</h1>
         <p class="game-subtitle">{{ $lesson->title }}</p>
     </div>
 
@@ -329,7 +330,7 @@
                     <div class="progress-fill" id="progress-fill"></div>
                 </div>
                 <div class="progress-text">
-                    Question <span id="current-question">1</span> of <span id="total-questions">{{ $questions->count() }}</span>
+                    <span id="progress-display">{{ __('student-portal.games.question_of', ['current' => 1, 'total' => $questions->count()]) }}</span>
                 </div>
             </div>
 
@@ -338,41 +339,43 @@
             </div>
 
             <div class="game-controls">
-                <button id="check-btn" class="btn btn-primary" disabled>Check Answer</button>
-                <button id="next-btn" class="btn btn-primary hidden">Next Question</button>
-                <button id="restart-btn" class="btn btn-secondary">Restart Game</button>
+                <button id="check-btn" class="btn btn-primary" disabled>{{ __('student-portal.games.check_answer') }}</button>
+                <button id="next-btn" class="btn btn-primary hidden">{{ __('student-portal.games.next_question') }}</button>
+                <button id="restart-btn" class="btn btn-secondary">{{ __('student-portal.games.restart') }}</button>
             </div>
         </div>
 
         <!-- Game Complete Screen -->
         <div class="game-complete hidden" id="game-complete">
             <div class="completion-content">
-                <h2>🎉 Game Complete!</h2>
-                <p id="completion-message">Great job building sentences!</p>
+                <h2>🎉 {{ __('student-portal.games.game_complete') }}</h2>
+                <p id="completion-message">{{ __('student-portal.games.sentence_builder_complete') }}</p>
                 <div class="completion-stats">
                     <div class="stat">
                         <span class="stat-value" id="completion-score">0 / 0</span>
-                        <span class="stat-label">Correct</span>
+                        <span class="stat-label">{{ __('student-portal.games.correct_label') }}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-value" id="completion-accuracy">0%</span>
-                        <span class="stat-label">Accuracy</span>
+                        <span class="stat-label">{{ __('student-portal.games.accuracy') }}</span>
                     </div>
                 </div>
                 <div class="completion-actions">
-                    <button id="play-again-btn" class="btn btn-primary">Play Again</button>
-                    <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-secondary">Back to Lesson</a>
+                    <button id="play-again-btn" class="btn btn-primary">{{ __('student-portal.games.play_again') }}</button>
+                    @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'btn btn-secondary'])
                 </div>
             </div>
         </div>
     @else
         <div class="empty-state">
-            <h3>No Questions Available</h3>
-            <p>This sentence builder game doesn't have any questions yet.</p>
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="btn btn-primary">Back to Lesson</a>
+            <h3>{{ __('student-portal.games.no_questions') }}</h3>
+            <p>{{ __('student-portal.games.no_questions_sentence_builder') }}</p>
+            @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'btn btn-primary'])
         </div>
     @endif
 </div>
+
+@include('partials.student-game-i18n')
 
 <script>
 const questions = @json($questionsData ?? []);
@@ -414,8 +417,7 @@ const gameScreen = document.getElementById('game-screen');
 const gameComplete = document.getElementById('game-complete');
 const questionContainer = document.getElementById('question-container');
 const progressFill = document.getElementById('progress-fill');
-const currentQuestionSpan = document.getElementById('current-question');
-const totalQuestionsSpan = document.getElementById('total-questions');
+const progressDisplay = document.getElementById('progress-display');
 const checkBtn = document.getElementById('check-btn');
 const nextBtn = document.getElementById('next-btn');
 const restartBtn = document.getElementById('restart-btn');
@@ -453,7 +455,12 @@ function loadQuestion(index) {
     // Update progress
     const progress = ((index + 1) / questions.length) * 100;
     progressFill.style.width = progress + '%';
-    currentQuestionSpan.textContent = index + 1;
+    if (progressDisplay) {
+        progressDisplay.textContent = gameT('question_of', {
+            current: index + 1,
+            total: questions.length,
+        });
+    }
     
     // Render question
     renderQuestion(question);
@@ -469,14 +476,14 @@ function renderQuestion(question) {
     const wordOptions = [...question.word_options].sort(() => Math.random() - 0.5); // Shuffle
     
     questionContainer.innerHTML = `
-        <div class="question-number">Question ${currentQuestionIndex + 1} of ${questions.length}</div>
+        <div class="question-number">${gameT('question_of', { current: currentQuestionIndex + 1, total: questions.length })}</div>
         <div class="explanation-text">${question.explanation}</div>
         
         <div class="sentence-builder-area">
             <div class="sentence-slots" id="sentence-slots">
                 ${correctSentence.map((_, i) => `
                     <div class="sentence-slot" data-slot-index="${i}">
-                        <span class="slot-placeholder">Drop word here</span>
+                        <span class="slot-placeholder">${gameT('drop_word_here')}</span>
                     </div>
                 `).join('')}
             </div>
@@ -617,7 +624,7 @@ function removeWordFromSlot(slot, slotIndex, word) {
     currentAnswer[slotIndex] = null;
     
     // Clear slot
-    slot.innerHTML = '<span class="slot-placeholder">Drop word here</span>';
+    slot.innerHTML = '<span class="slot-placeholder">' + gameT('drop_word_here') + '</span>';
     slot.classList.remove('filled', 'incorrect', 'correct');
     
     // Return word to options
@@ -650,7 +657,7 @@ function checkAnswer() {
     
     if (isCorrect) {
         feedbackMessage.classList.add('correct');
-        feedbackMessage.textContent = '✓ Correct! Great job!';
+        feedbackMessage.textContent = '✓ ' + gameT('correct_great_job');
         correctAnswers++;
         
         // Mark slots as correct
@@ -664,7 +671,7 @@ function checkAnswer() {
         });
     } else {
         feedbackMessage.classList.add('incorrect');
-        feedbackMessage.textContent = '✗ Not quite. Try again!';
+        feedbackMessage.textContent = '✗ ' + gameT('not_quite');
         
         // Mark incorrect slots
         userSentence.forEach((word, index) => {
@@ -718,13 +725,13 @@ function showCompletionScreen() {
     completionAccuracy.textContent = `${accuracy}%`;
     
     if (accuracy === 100) {
-        completionMessage.textContent = 'Perfect! You got all questions correct!';
+        completionMessage.textContent = gameT('completion_all_correct');
     } else if (accuracy >= 80) {
-        completionMessage.textContent = 'Excellent work!';
+        completionMessage.textContent = gameT('good_job');
     } else if (accuracy >= 60) {
-        completionMessage.textContent = 'Good job! Keep practicing!';
+        completionMessage.textContent = gameT('keep_practicing');
     } else {
-        completionMessage.textContent = 'Keep practicing to improve!';
+        completionMessage.textContent = gameT('great_job_practicing');
     }
     
     const duration = Math.round((Date.now() - gameStartTime) / 1000);

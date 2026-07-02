@@ -16,6 +16,20 @@ class ApplySignupLocale
 
         if ($org instanceof Organization && $org->usesParentSignup()) {
             SignupLocale::apply($request);
+
+            return $next($request);
+        }
+
+        if (! $org instanceof Organization) {
+            SignupLocale::apply($request);
+
+            return $next($request);
+        }
+
+        if ($request->session()->has('signup_locale')) {
+            $locale = SignupLocale::resolve($request);
+            $request->session()->put('signup_locale', $locale);
+            app()->setLocale($locale);
         }
 
         return $next($request);

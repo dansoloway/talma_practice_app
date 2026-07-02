@@ -70,9 +70,12 @@ Route::post('/grade/{gradeLevel}/update-order', [StudentController::class, 'upda
 
 // Individual Lessons
 Route::get('/lessons/{slug}', [LessonController::class, 'show'])->name('lessons.show');
+Route::middleware(['signup.locale'])->group(function () {
 Route::get('/lessons/{lesson}/guided/vocabulary', [GuidedLessonController::class, 'vocabulary'])->name('guided.vocabulary');
+});
 
 // Matching Games (public)
+Route::middleware(['signup.locale'])->group(function () {
 Route::get('/lessons/{lesson}/matching-games/{matching_game}/play', [App\Http\Controllers\Admin\MatchingGameController::class, 'play'])
     ->name('matching-games.play');
 
@@ -104,6 +107,7 @@ Route::get('/lessons/{lesson}/true-false-games/{trueFalseGame}/play', [App\Http\
 Route::get('/lessons/{lesson}/clause-exercises/{clauseExercise}/play', [App\Http\Controllers\Admin\ClauseExerciseController::class, 'play'])
     ->middleware('throttle:100,1')
     ->name('clause-exercises.play');
+});
 Route::get('/prompts/{promptId}/options/{optionId}/model', [PromptModelController::class, 'show'])
     ->middleware('throttle:100,1')
     ->name('prompts.model');

@@ -25,9 +25,10 @@
 }
 </style>
 <div class="clause-exercise-container">
+    @include('partials.student-game-locale-bar')
     <div class="game-header">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+            @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'back-link'])
             @include('partials.admin-edit-lesson', [
                 'lesson' => $lesson,
                 'activityEditUrl' => route('admin.lessons.clause-exercises.edit', [$lesson, $clauseExercise]),
@@ -45,9 +46,9 @@
 
         @if($vocabulary->count() > 0)
         <div class="vocabulary-bank" id="vocabulary-bank">
-            <h3>Vocabulary Reference</h3>
+            <h3>{{ __('student-portal.games.vocabulary_reference') }}</h3>
             <p style="font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: 1rem;">
-                Listen to the vocabulary words used in this exercise:
+                {{ __('student-portal.games.listen_vocabulary_hint') }}
             </p>
             <div class="vocabulary-grid" id="vocabulary-grid">
                 <!-- Vocabulary words will be rendered here -->
@@ -56,8 +57,8 @@
         @endif
 
         <div class="exercise-controls">
-            <button id="check-btn" class="btn btn-primary" disabled>Check Answers</button>
-            <button id="reset-btn" class="btn btn-secondary">Reset</button>
+            <button id="check-btn" class="btn btn-primary" disabled>{{ __('student-portal.games.check_answers') }}</button>
+            <button id="reset-btn" class="btn btn-secondary">{{ __('student-portal.games.reset') }}</button>
         </div>
 
         <div class="exercise-results" id="exercise-results" style="display: none;">
@@ -65,13 +66,15 @@
                 <h2 id="results-title"></h2>
                 <div class="score-display" id="score-display"></div>
                 <div class="results-actions">
-                    <button id="try-again-btn" class="btn btn-primary">Try Again</button>
+                    <button id="try-again-btn" class="btn btn-primary">{{ __('student-portal.games.try_again') }}</button>
                     @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson])
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@include('partials.student-game-i18n')
 
 <script>
 @php
@@ -525,9 +528,9 @@ function checkAnswers() {
     });
     
     document.getElementById('results-title').textContent = 
-        percentage === 100 ? 'Perfect! 🎉' : 
-        percentage >= 70 ? 'Good Job! 👍' : 
-        'Keep Practicing! 💪';
+        percentage === 100 ? gameT('perfect') : 
+        percentage >= 70 ? gameT('good_job') : 
+        gameT('keep_practicing');
     
     document.getElementById('score-display').innerHTML = `
         <div class="score-value">${correctCount}/${totalBlanks}</div>

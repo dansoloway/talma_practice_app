@@ -8,16 +8,13 @@
 @endphp
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-4 md:py-6">
     <div class="container mx-auto px-4 max-w-5xl">
+        @include('partials.student-game-locale-bar')
         <div class="mb-4">
-            <a href="{{ isset($org) && $org ? route('org.student.lesson', [$org, $lesson->slug]) : route('lessons.show', $lesson->slug) }}"
-               class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 group">
-                <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform duration-200"></i>
-                <span>Back to lesson</span>
-            </a>
+            @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 group'])
         </div>
 
         @if(!empty($guidedFlow))
-            <p class="text-xs text-gray-500 mb-3 lg:hidden">Step {{ $guidedFlow['currentIndex'] }} of {{ $guidedFlow['totalSteps'] }}</p>
+            <p class="text-xs text-gray-500 mb-3 lg:hidden">{{ __('student-portal.games.step_of', ['current' => $guidedFlow['currentIndex'], 'total' => $guidedFlow['totalSteps']]) }}</p>
         @endif
 
         <div class="mb-3 lg:hidden">
@@ -33,7 +30,7 @@
                 {{-- Left column: word + progress --}}
                 <div class="text-center lg:text-left">
                     @if(!empty($guidedFlow))
-                        <p class="hidden lg:block text-xs text-gray-500 mb-2">Step {{ $guidedFlow['currentIndex'] }} of {{ $guidedFlow['totalSteps'] }}</p>
+                        <p class="hidden lg:block text-xs text-gray-500 mb-2">{{ __('student-portal.games.step_of', ['current' => $guidedFlow['currentIndex'], 'total' => $guidedFlow['totalSteps']]) }}</p>
                     @endif
 
                     <div class="hidden lg:block mb-3">
@@ -45,7 +42,7 @@
                     </div>
 
                     <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-                        Vocabulary · Word {{ $wordIndex + 1 }} of {{ $wordsCount }}
+                        {{ __('student-portal.games.vocabulary_word_of', ['current' => $wordIndex + 1, 'total' => $wordsCount]) }}
                     </p>
 
                     @if($currentWord->image_url)
@@ -75,7 +72,7 @@
                         <button type="button" id="play-model-btn"
                                 class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 hover:bg-blue-50 hover:border-blue-200 transition-colors">
                             <i class="fas fa-volume-up" aria-hidden="true"></i>
-                            Listen
+                            {{ __('student-portal.games.listen') }}
                         </button>
                     @endif
                 </div>
@@ -84,35 +81,35 @@
                 <div class="mt-4 pt-4 border-t border-gray-100 lg:mt-0 lg:pt-0 lg:border-t-0">
                     @if($micPracticeEnabled)
                     <div class="text-center lg:text-left" id="speech-feedback-section">
-                        <p class="text-sm text-gray-600 mb-3">Say the word aloud and get instant feedback</p>
+                        <p class="text-sm text-gray-600 mb-3">{{ __('student-portal.games.say_word_feedback') }}</p>
                         <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2">
                             @if($speechFeedbackEnabled ?? false)
                             <button type="button" id="speech-check-btn"
                                     class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
-                                    aria-label="Tap to say the word">
+                                    aria-label="{{ __('student-portal.games.tap_to_say') }}">
                                 <i class="fas fa-microphone" aria-hidden="true"></i>
-                                Tap to say the word
+                                {{ __('student-portal.games.tap_to_say') }}
                             </button>
                             @else
                             <button type="button" id="record-btn"
                                     class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
-                                    aria-label="Tap to say the word">
+                                    aria-label="{{ __('student-portal.games.tap_to_say') }}">
                                 <i class="fas fa-microphone" aria-hidden="true"></i>
-                                Tap to say the word
+                                {{ __('student-portal.games.tap_to_say') }}
                             </button>
                             @endif
                             <button type="button" id="play-recording-btn" disabled
                                     class="inline-flex items-center justify-center w-11 h-11 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                    aria-label="Play back your recording">
+                                    aria-label="{{ __('student-portal.games.play_back_recording') }}">
                                 <i class="fas fa-play text-sm" aria-hidden="true"></i>
                             </button>
                             <button type="button" id="next-word-btn"
                                     disabled
                                     class="hidden inline-flex items-center px-6 py-2.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                 @if($isLastWord)
-                                    Continue
+                                    {{ __('student-portal.games.continue') }}
                                 @else
-                                    Next word
+                                    {{ __('student-portal.games.next_word') }}
                                 @endif
                             </button>
                         </div>
@@ -121,7 +118,7 @@
                                 <a href="{{ $previousWordUrl }}"
                                    class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors">
                                     <i class="fas fa-arrow-left text-xs" aria-hidden="true"></i>
-                                    Previous word
+                                    {{ __('student-portal.games.previous_word') }}
                                 </a>
                             </div>
                         @endif
@@ -133,7 +130,7 @@
                     </div>
                     @elseif(!empty($voiceRecordingOffered))
                     <div class="text-center lg:text-left">
-                        <p class="text-sm text-gray-600 mb-2">Say the word aloud to practice</p>
+                        <p class="text-sm text-gray-600 mb-2">{{ __('student-portal.games.say_word_practice') }}</p>
                         @if(($voiceProfileBlockedReason ?? null) === 'select_child' && isset($org) && $org)
                             <p class="text-sm text-amber-700">
                                 Choose who is practicing to save recordings.
@@ -149,7 +146,7 @@
                         @endif
                     </div>
                     @else
-                    <p class="text-sm text-gray-500 text-center lg:text-left">Tap listen, then continue when you are ready.</p>
+                    <p class="text-sm text-gray-500 text-center lg:text-left">{{ __('student-portal.games.tap_listen_continue') }}</p>
                     @endif
                 </div>
             </div>
@@ -159,36 +156,34 @@
                     <button type="button" id="next-word-btn"
                             class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors">
                         @if($isLastWord)
-                            Continue
+                            {{ __('student-portal.games.continue') }}
                         @else
-                            Next word
+                            {{ __('student-portal.games.next_word') }}
                         @endif
                     </button>
                     @if($previousWordUrl)
                         <a href="{{ $previousWordUrl }}"
                            class="inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors sm:self-center">
                             <i class="fas fa-arrow-left text-xs" aria-hidden="true"></i>
-                            Previous word
+                            {{ __('student-portal.games.previous_word') }}
                         </a>
                     @endif
                 @endunless
                 <button type="button" id="skip-word-btn"
                         class="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 sm:self-center">
-                    Skip word
+                    {{ __('student-portal.games.skip_word') }}
                 </button>
             </div>
         </div>
 
         <div id="vocab-complete" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
-            <h2 class="text-2xl font-bold text-gray-900 mb-3">Vocabulary complete!</h2>
+            <h2 class="text-2xl font-bold text-gray-900 mb-3">{{ __('student-portal.games.vocabulary_complete') }}</h2>
             @if(!empty($vocabularyProgress))
-                <p class="text-gray-700 mb-2">
-                    You mastered
-                    <span class="font-bold text-green-700" id="vocab-complete-learned-count">{{ $vocabularyProgress['learned'] }}</span>
-                    of {{ $vocabularyProgress['total'] }} words.
+                <p class="text-gray-700 mb-2" id="vocab-complete-message" data-total="{{ $vocabularyProgress['total'] }}">
+                    {{ __('student-portal.games.mastered_words', ['learned' => $vocabularyProgress['learned'], 'total' => $vocabularyProgress['total']]) }}
                 </p>
             @else
-                <p class="text-gray-600 mb-6">Great job practicing all the words.</p>
+                <p class="text-gray-600 mb-6">{{ __('student-portal.games.practice_all_words') }}</p>
             @endif
 
             @include('partials.vocabulary-progress-strip', [
@@ -197,7 +192,7 @@
             ])
 
             <div class="mt-6">
-            @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson, 'fallbackLabel' => 'Back to Lesson'])
+            @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson, 'fallbackLabel' => __('student-portal.games.back_to_lesson')])
             </div>
         </div>
     </div>
@@ -229,6 +224,7 @@
 @endsection
 
 @push('scripts')
+@include('partials.student-game-i18n')
 <script>
 const voiceUploadConfig = @json($voiceUploadConfigData);
 const speechFeedbackConfig = @json($speechFeedbackConfigData);
@@ -288,7 +284,7 @@ const nextWordBtn = document.getElementById('next-word-btn');
 const playbackAudio = document.getElementById('playback-audio');
 const modelAudio = document.getElementById('model-audio');
 
-const MIC_IDLE_LABEL = '<i class="fas fa-microphone" aria-hidden="true"></i> Tap to say the word';
+const MIC_IDLE_LABEL = '<i class="fas fa-microphone" aria-hidden="true"></i> ' + gameT('tap_to_say');
 
 function updateNextWordButtonState() {
     if (!nextWordBtn) {
@@ -468,7 +464,7 @@ async function startManualRecording() {
     isRecording = true;
     recordingStartedAt = Date.now();
     recordBtn.disabled = true;
-    recordBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> Listening...';
+    recordBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> ' + gameT('listening');
     recordBtn.classList.add('ring-2', 'ring-red-400', 'ring-offset-2');
     setRecordingStatus('Listening… say the word now.', 'neutral');
     playRecordingBtn.disabled = true;
@@ -684,9 +680,10 @@ function setVocabularyLearnedCount(count) {
         bar.setAttribute('aria-label', `Vocabulary progress: ${count} of ${max} words mastered`);
     });
 
-    const completeLearnedEl = document.getElementById('vocab-complete-learned-count');
-    if (completeLearnedEl) {
-        completeLearnedEl.textContent = String(count);
+    const completeMessageEl = document.getElementById('vocab-complete-message');
+    if (completeMessageEl) {
+        const total = document.querySelector('.vocab-progress-bar')?.getAttribute('aria-valuemax') || completeMessageEl.dataset.total || '0';
+        completeMessageEl.textContent = gameT('mastered_words', { learned: count, total });
     }
 }
 
@@ -842,7 +839,7 @@ document.getElementById('skip-word-btn').addEventListener('click', async () => {
             recordBtnEl.disabled = listening;
         }
         speechBtn.innerHTML = listening
-            ? '<i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> Listening...'
+            ? '<i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> ' + gameT('listening')
             : MIC_IDLE_LABEL;
     }
 

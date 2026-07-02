@@ -34,6 +34,8 @@ class GuidedLessonFlowTest extends TestCase
     {
         parent::setUp();
 
+        $this->withSession(['signup_locale' => 'en']);
+
         $this->flowService = app(LessonFlowService::class);
 
         $this->organization = Organization::create([
@@ -331,7 +333,15 @@ class GuidedLessonFlowTest extends TestCase
 
         $firstWordResponse->assertOk();
         $firstWordResponse->assertSee('hello');
-        $firstWordResponse->assertDontSee('Previous word', false);
+        $this->assertSame(1, substr_count($firstWordResponse->getContent(), 'Previous word'));
+    }
+
+    private function fakeRecording(): UploadedFile
+    {
+        $wavHeader = "RIFF\x24\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00\x40\x1f\x00\x00\x80\x3e\x00\x00\x02\x00\x10\x00data\x00\x00\x00\x00";
+        $content = $wavHeader.str_repeat("\0", 3000);
+
+        return UploadedFile::fake()->createWithContent('recording.wav', $content);
     }
 
     public function test_vocabulary_voice_upload_accepts_vocabulary_id(): void
@@ -354,14 +364,13 @@ class GuidedLessonFlowTest extends TestCase
         $this->organization->users()->attach($user->id, ['role' => 'student']);
 
         $vocab = $this->lesson->vocabulary()->first();
-        $wavHeader = "RIFF\x24\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00\x40\x1f\x00\x00\x80\x3e\x00\x00\x02\x00\x10\x00data\x00\x00\x00\x00";
 
         $response = $this->actingAs($user, 'admin')->postJson(route('voice-samples.store'), [
             'organization_id' => $this->organization->id,
             'lesson_id' => $this->lesson->id,
             'vocabulary_id' => $vocab->id,
             'generated_sentence' => 'hello',
-            'recording' => UploadedFile::fake()->createWithContent('recording.wav', $wavHeader),
+            'recording' => $this->fakeRecording(),
         ]);
 
         $response->assertCreated();
@@ -393,7 +402,6 @@ class GuidedLessonFlowTest extends TestCase
         $this->organization->users()->attach($user->id, ['role' => 'student']);
 
         $vocab = $this->lesson->vocabulary()->first();
-        $wavHeader = "RIFF\x24\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00\x40\x1f\x00\x00\x80\x3e\x00\x00\x02\x00\x10\x00data\x00\x00\x00\x00";
 
         $response = $this->actingAs($user, 'admin')->postJson(route('voice-samples.store'), [
             'organization_id' => $this->organization->id,
@@ -401,7 +409,7 @@ class GuidedLessonFlowTest extends TestCase
             'vocabulary_id' => $vocab->id,
             'generated_sentence' => 'hello',
             'recording_source' => 'pronunciation_check',
-            'recording' => UploadedFile::fake()->createWithContent('recording.wav', $wavHeader),
+            'recording' => $this->fakeRecording(),
         ]);
 
         $response->assertCreated();

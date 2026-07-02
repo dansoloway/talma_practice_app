@@ -148,9 +148,10 @@
 }
 </style>
 <div class="container">
+    @include('partials.student-game-locale-bar')
     <div class="game-header">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <a href="{{ route('lessons.show', $lesson->slug) }}" class="back-link">&larr; Back to Lesson</a>
+            @include('partials.student-lesson-back-link', ['lesson' => $lesson, 'org' => $org ?? null, 'linkClass' => 'back-link'])
             @include('partials.admin-edit-lesson', [
                 'lesson' => $lesson,
                 'activityEditUrl' => route('admin.lessons.flashcard-games.edit', [$lesson, $flashcardGame]),
@@ -158,7 +159,7 @@
             ])
         </div>
         <h1 class="page-title">{{ $flashcardGame->title }}</h1>
-        <p class="game-description">Practice vocabulary with interactive flashcards</p>
+        <p class="game-description">{{ __('student-portal.games.flashcard_practice_description') }}</p>
     </div>
 
     <div id="flashcard-app" class="flashcard-container">
@@ -167,7 +168,7 @@
             @if(isset($gameData['available_modes']) && count($gameData['available_modes']) > 1)
                 <div class="mode-selector-container">
                     <div class="mode-selector" id="mode-selector">
-                        <label for="mode-select">Practice with:</label>
+                        <label for="mode-select">{{ __('student-portal.games.practice_with') }}</label>
                         <select id="mode-select" onchange="changeMode(this.value)">
                             @foreach($gameData['available_modes'] as $modeKey => $modeLabel)
                                 <option value="{{ $modeKey }}" {{ $mode === $modeKey ? 'selected' : '' }}>
@@ -183,7 +184,7 @@
                     <div class="progress-fill" id="progress-fill"></div>
                 </div>
                 <div class="progress-text">
-                    <span id="current-card">1</span> of <span id="total-cards">{{ $gameData['cards_per_game'] }}</span>
+                    <span id="progress-display">{{ __('student-portal.games.card_of', ['current' => 1, 'total' => $gameData['cards_per_game']]) }}</span>
                 </div>
             </div>
 
@@ -197,28 +198,28 @@
             </div>
 
             <div class="game-controls">
-                <button id="next-btn" class="btn btn-primary hidden">Next Card</button>
-                <button id="restart-btn" class="btn btn-secondary">Restart Game</button>
+                <button id="next-btn" class="btn btn-primary hidden">{{ __('student-portal.games.next_card') }}</button>
+                <button id="restart-btn" class="btn btn-secondary">{{ __('student-portal.games.restart') }}</button>
             </div>
         </div>
 
         <!-- Game Complete Screen -->
         <div class="game-complete hidden" id="game-complete">
             <div class="completion-content">
-                <h2>🎉 Game Complete!</h2>
-                <p id="completion-message">Great job practicing your vocabulary!</p>
+                <h2>🎉 {{ __('student-portal.games.game_complete') }}</h2>
+                <p id="completion-message">{{ __('student-portal.games.great_job_practicing') }}</p>
                 <div class="completion-stats">
                     <div class="stat">
                         <span class="stat-value" id="completion-score">0 / 0</span>
-                        <span class="stat-label">Correct</span>
+                        <span class="stat-label">{{ __('student-portal.games.correct_label') }}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-value" id="completion-accuracy">0%</span>
-                        <span class="stat-label">Accuracy</span>
+                        <span class="stat-label">{{ __('student-portal.games.accuracy') }}</span>
                     </div>
                 </div>
                 <div class="completion-actions">
-                    <button id="play-again-btn" class="btn btn-primary">Play Again</button>
+                    <button id="play-again-btn" class="btn btn-primary">{{ __('student-portal.games.play_again') }}</button>
                     @include('partials.guided-flow-nav', ['guidedFlow' => $guidedFlow ?? null, 'lesson' => $lesson])
                 </div>
             </div>
@@ -227,6 +228,8 @@
 </div>
 
 <audio id="game-audio" preload="auto"></audio>
+
+@include('partials.student-game-i18n')
 
 <script>
 const flashcardActivityEndpoint = '{{ route('activity-events.store') }}';
@@ -269,8 +272,7 @@ const gameScreen = document.getElementById('game-screen');
 const gameComplete = document.getElementById('game-complete');
 const flashcard = document.getElementById('flashcard');
 const progressFill = document.getElementById('progress-fill');
-const currentCardSpan = document.getElementById('current-card');
-const totalCardsSpan = document.getElementById('total-cards');
+const progressDisplay = document.getElementById('progress-display');
 const nextBtn = document.getElementById('next-btn');
 const restartBtn = document.getElementById('restart-btn');
 const playAgainBtn = document.getElementById('play-again-btn');
@@ -370,10 +372,10 @@ function updateCardTypeSelector(card) {
     };
     
     const typeTitles = {
-        'image_to_word': 'Image to Word',
-        'image_to_audio': 'Image to Audio',
-        'audio_to_image': 'Audio to Image',
-        'audio_to_word': 'Audio to Word'
+        'image_to_word': gameT('flashcard_image_to_word'),
+        'image_to_audio': gameT('flashcard_image_to_audio'),
+        'audio_to_image': gameT('flashcard_audio_to_image'),
+        'audio_to_word': gameT('flashcard_audio_to_word')
     };
     
     // Create icon buttons for each available type
@@ -453,8 +455,8 @@ function showEmptyDeckError() {
     gameComplete.classList.add('hidden');
     flashcard.innerHTML = `
         <div class="card-content text-center py-8">
-            <p class="text-lg font-semibold text-gray-800 mb-2">No flashcards available</p>
-            <p class="text-sm text-gray-600">This game needs vocabulary with images or audio. Try another activity or come back later.</p>
+            <p class="text-lg font-semibold text-gray-800 mb-2">${gameT('no_flashcards')}</p>
+            <p class="text-sm text-gray-600">${gameT('no_flashcards_hint')}</p>
         </div>
     `;
 }
@@ -543,7 +545,7 @@ function generateCardHTML(card) {
                     <div class="card-image">
                         <img src="${card.image_path}" alt="${card.english_word}" />
                     </div>
-                    <div class="card-prompt">Choose the correct word:</div>
+                    <div class="card-prompt">${gameT('choose_correct_word')}</div>
                     <div class="word-options" id="word-options">
                         <!-- Options will be generated by JavaScript -->
                     </div>
@@ -555,7 +557,7 @@ function generateCardHTML(card) {
                     <div class="card-image">
                         <img src="${card.image_path}" alt="${card.english_word}" />
                     </div>
-                    <div class="card-prompt">Play each audio and choose the correct one:</div>
+                    <div class="card-prompt">${gameT('flashcard_choose_audio')}</div>
                     <div class="audio-options" id="audio-options">
                         <!-- Options will be generated by JavaScript -->
                     </div>
@@ -569,7 +571,7 @@ function generateCardHTML(card) {
                             <i class="fas fa-play"></i>
                         </button>
                     </div>
-                    <div class="card-prompt">Choose the correct image for this word:</div>
+                    <div class="card-prompt">${gameT('choose_correct_image')}</div>
                     <div class="image-options" id="image-options">
                         <!-- Options will be generated by JavaScript -->
                     </div>
@@ -583,7 +585,7 @@ function generateCardHTML(card) {
                             <i class="fas fa-volume-up"></i>
                         </button>
                     </div>
-                    <div class="card-prompt">Choose the correct ${currentMode === 'hebrew' ? 'Hebrew' : currentMode === 'arabic' ? 'Arabic' : 'word'}:</div>
+                    <div class="card-prompt">${gameT('choose_correct_for_word', { language: currentMode === 'hebrew' ? gameT('language_hebrew') : currentMode === 'arabic' ? gameT('language_arabic') : gameT('language_word') })}</div>
                     <div class="word-options" id="word-options">
                         <!-- Options will be generated by JavaScript -->
                     </div>
@@ -664,7 +666,7 @@ function generateOptions(correctCard) {
                 // Select button
                 const selectBtn = document.createElement('button');
                 selectBtn.className = 'audio-select-btn';
-                selectBtn.innerHTML = 'Select';
+                selectBtn.innerHTML = gameT('select');
                 selectBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     selectOption(audioItem);
@@ -797,7 +799,7 @@ function showFeedback(type) {
     } else {
         feedback.className = 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-6 py-4 rounded-xl font-bold text-xl z-10 bg-red-500 text-white shadow-lg';
     }
-    feedback.textContent = type === 'correct' ? '✓ Correct!' : '✗ Try again';
+    feedback.textContent = type === 'correct' ? '✓ ' + gameT('correct') : '✗ ' + gameT('try_again_short');
     flashcard.appendChild(feedback);
     
     setTimeout(() => {
@@ -823,13 +825,13 @@ function endGame() {
     completionAccuracy.textContent = `${accuracy}%`;
 
     if (accuracy === 100) {
-        completionMessage.textContent = 'Perfect! You nailed every card.';
+        completionMessage.textContent = gameT('perfect');
     } else if (accuracy >= 80) {
-        completionMessage.textContent = 'Great work! A little more practice will make it perfect.';
+        completionMessage.textContent = gameT('good_job');
     } else if (accuracy >= 50) {
-        completionMessage.textContent = 'Nice effort! Keep practicing to master these words.';
+        completionMessage.textContent = gameT('keep_practicing');
     } else {
-        completionMessage.textContent = 'Good start! Replay the game to boost your score.';
+        completionMessage.textContent = gameT('great_job_practicing');
     }
     
     // Show completion screen
@@ -864,7 +866,12 @@ function restartGame() {
 function updateProgress() {
     const progress = (currentCardIndex / gameCards.length) * 100;
     progressFill.style.width = progress + '%';
-    currentCardSpan.textContent = currentCardIndex + 1;
+    if (progressDisplay) {
+        progressDisplay.textContent = gameT('card_of', {
+            current: currentCardIndex + 1,
+            total: gameCards.length,
+        });
+    }
 }
 
 function playAudio(audioPath, button) {
