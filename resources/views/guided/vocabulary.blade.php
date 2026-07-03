@@ -4,7 +4,9 @@
 
 @section('content')
 @php
+    use App\Support\SignupLocale;
     $micPracticeEnabled = ($speechFeedbackEnabled ?? false) || ($voiceUploadEnabled ?? false);
+    $isRtl = SignupLocale::isRtl();
 @endphp
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-4 md:py-6">
     <div class="container mx-auto px-4 max-w-5xl">
@@ -14,7 +16,7 @@
         </div>
 
         @if(!empty($guidedFlow))
-            <p class="text-xs text-gray-500 mb-3 lg:hidden">{{ __('student-portal.games.step_of', ['current' => $guidedFlow['currentIndex'], 'total' => $guidedFlow['totalSteps']]) }}</p>
+            <p class="text-xs text-gray-500 mb-3 lg:hidden text-start">{{ __('student-portal.games.step_of', ['current' => $guidedFlow['currentIndex'], 'total' => $guidedFlow['totalSteps']]) }}</p>
         @endif
 
         <div class="mb-3 lg:hidden">
@@ -26,9 +28,12 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-5 lg:p-6" id="vocab-step">
-            <div class="flex flex-col lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
-                {{-- Left column: word + progress --}}
-                <div class="text-center lg:text-left">
+            <div @class([
+                'flex flex-col gap-6',
+                'lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start' => ! $isRtl,
+            ])>
+                {{-- Word column --}}
+                <div class="text-start">
                     @if(!empty($guidedFlow))
                         <p class="hidden lg:block text-xs text-gray-500 mb-2">{{ __('student-portal.games.step_of', ['current' => $guidedFlow['currentIndex'], 'total' => $guidedFlow['totalSteps']]) }}</p>
                     @endif
@@ -48,10 +53,10 @@
                     @if($currentWord->image_url)
                         <img src="{{ $currentWord->image_url }}"
                              alt="{{ $currentWord->english_word }}"
-                             class="mx-auto lg:mx-0 max-h-40 lg:max-h-44 rounded-xl object-cover mb-3">
+                             class="mx-auto max-h-40 lg:max-h-44 rounded-xl object-cover mb-3 {{ $isRtl ? '' : 'lg:ms-0 lg:me-auto' }}">
                     @endif
 
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2 student-learning-ltr" dir="ltr" lang="en">{{ $currentWord->english_word }}</h1>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2 student-learning-ltr text-center max-w-fit {{ $isRtl ? 'ms-auto me-auto' : 'lg:ms-0 lg:me-auto lg:text-start' }}" dir="ltr" lang="en">{{ $currentWord->english_word }}</h1>
 
                     @php
                         $vocabLocale = app()->getLocale();
@@ -60,7 +65,7 @@
                     @endphp
 
                     @if($showHebrewTranslation || $showArabicTranslation)
-                        <div class="flex flex-wrap justify-center lg:justify-start gap-2 mb-3">
+                        <div class="flex flex-wrap justify-start gap-2 mb-3">
                             @if($showHebrewTranslation)
                                 <span class="text-sm font-medium px-3 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-100">
                                     {{ $currentWord->hebrew_translation }}
@@ -83,12 +88,16 @@
                     @endif
                 </div>
 
-                {{-- Right column: practice --}}
-                <div class="mt-4 pt-4 border-t border-gray-100 lg:mt-0 lg:pt-0 lg:border-t-0">
+                {{-- Practice column --}}
+                <div @class([
+                    'text-start',
+                    'mt-4 pt-4 border-t border-gray-100 lg:mt-0 lg:pt-0 lg:border-t-0' => ! $isRtl,
+                    'pt-4 border-t border-gray-100' => $isRtl,
+                ])>
                     @if($micPracticeEnabled)
-                    <div class="text-center lg:text-left" id="speech-feedback-section">
+                    <div id="speech-feedback-section">
                         <p class="text-sm text-gray-600 mb-3">{{ __('student-portal.games.say_word_feedback') }}</p>
-                        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2">
+                        <div class="flex flex-wrap items-center justify-start gap-2">
                             @if($speechFeedbackEnabled ?? false)
                             <button type="button" id="speech-check-btn"
                                     class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
@@ -120,22 +129,22 @@
                             </button>
                         </div>
                         @if($previousWordUrl)
-                            <div class="mt-2 flex justify-center lg:justify-start">
+                            <div class="mt-2 flex justify-start">
                                 <a href="{{ $previousWordUrl }}"
                                    class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors">
-                                    <i class="fas fa-arrow-left text-xs" aria-hidden="true"></i>
+                                    <i class="fas {{ $isRtl ? 'fa-arrow-right' : 'fa-arrow-left' }} text-xs" aria-hidden="true"></i>
                                     {{ __('student-portal.games.previous_word') }}
                                 </a>
                             </div>
                         @endif
-                        <p id="speech-check-status" class="text-sm text-gray-500 min-h-[1.25rem] mt-2" role="status"></p>
+                        <p id="speech-check-status" class="text-sm text-gray-500 min-h-[1.25rem] mt-2 text-start" role="status"></p>
                         <div id="speech-check-feedback" class="hidden" aria-hidden="true"></div>
-                        <p id="speech-unsupported-note" class="hidden text-xs text-gray-500 mt-1">
+                        <p id="speech-unsupported-note" class="hidden text-xs text-gray-500 mt-1 text-start">
                             Pronunciation check works best in Chrome or Edge on desktop.
                         </p>
                     </div>
                     @elseif(!empty($voiceRecordingOffered))
-                    <div class="text-center lg:text-left">
+                    <div class="text-start">
                         <p class="text-sm text-gray-600 mb-2">{{ __('student-portal.games.say_word_practice') }}</p>
                         @if(($voiceProfileBlockedReason ?? null) === 'select_child' && isset($org) && $org)
                             <p class="text-sm text-amber-700">
@@ -152,12 +161,12 @@
                         @endif
                     </div>
                     @else
-                    <p class="text-sm text-gray-500 text-center lg:text-left">{{ __('student-portal.games.tap_listen_continue') }}</p>
+                    <p class="text-sm text-gray-500 text-start">{{ __('student-portal.games.tap_listen_continue') }}</p>
                     @endif
                 </div>
             </div>
 
-            <div class="mt-5 pt-4 flex flex-col sm:flex-row justify-center lg:justify-start gap-3 border-t border-gray-100">
+            <div class="mt-5 pt-4 flex flex-col sm:flex-row justify-start gap-3 border-t border-gray-100">
                 @unless($micPracticeEnabled)
                     <button type="button" id="next-word-btn"
                             class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors">
@@ -170,7 +179,7 @@
                     @if($previousWordUrl)
                         <a href="{{ $previousWordUrl }}"
                            class="inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors sm:self-center">
-                            <i class="fas fa-arrow-left text-xs" aria-hidden="true"></i>
+                            <i class="fas {{ $isRtl ? 'fa-arrow-right' : 'fa-arrow-left' }} text-xs" aria-hidden="true"></i>
                             {{ __('student-portal.games.previous_word') }}
                         </a>
                     @endif

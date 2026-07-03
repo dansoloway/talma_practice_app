@@ -3426,3 +3426,8 @@ a:focus {
     direction: ltr;
     text-align: left;
 }
+
+[dir="rtl"] #vocab-step .vocab-progress-bar,
+[dir="rtl"] #vocab-complete .vocab-progress-bar {
+    direction: ltr;
+}

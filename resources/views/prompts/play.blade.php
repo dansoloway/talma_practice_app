@@ -325,33 +325,32 @@ function loadPrompt(index) {
                     
                     <div class="bg-white rounded-xl p-6 border border-gray-200">
                         <h5 class="font-semibold text-gray-700 mb-3">${gameT('you')}</h5>
+                        ${speechFeedbackConfig.enabled ? `
+                        <button type="button"
+                                id="check-pronunciation-btn"
+                                class="w-full px-4 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                onclick="checkRecordedPronunciation()">
+                            <i class="fas fa-microphone mr-2"></i> ${gameT('tap_to_say')}
+                        </button>
+                        <div id="speech-check-feedback" class="hidden mt-3"></div>
+                        <p id="speech-unsupported-note" class="hidden text-xs text-gray-500 mt-2">
+                            Pronunciation check works best in Chrome or Edge on desktop.
+                        </p>
+                        ` : `
                         <div class="flex gap-3 flex-wrap">
-                            <button class="flex-1 min-w-[7rem] px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:scale-95 transition-all duration-200 shadow-sm" 
-                                    id="record-btn" 
+                            <button class="flex-1 min-w-[7rem] px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:scale-95 transition-all duration-200 shadow-sm"
+                                    id="record-btn"
                                     onclick="toggleRecording()">
                                 <i class="fas fa-microphone mr-2"></i> ${gameT('record')}
                             </button>
-                            <button class="flex-1 min-w-[7rem] px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
-                                    id="play-recording-btn" 
-                                    onclick="playRecording()" 
+                            <button class="flex-1 min-w-[7rem] px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    id="play-recording-btn"
+                                    onclick="playRecording()"
                                     disabled>
                                 <i class="fas fa-play mr-2"></i> ${gameT('play')}
                             </button>
-                            ${speechFeedbackConfig.enabled ? `
-                            <button type="button"
-                                    id="check-pronunciation-btn"
-                                    class="flex-1 min-w-[7rem] px-4 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 active:scale-95 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                    onclick="checkRecordedPronunciation()">
-                                <i class="fas fa-check-circle mr-2"></i> ${gameT('check')}
-                            </button>
-                            ` : ''}
                         </div>
-                        ${speechFeedbackConfig.enabled ? `
-                            <div id="speech-check-feedback" class="hidden mt-3"></div>
-                            <p id="speech-unsupported-note" class="hidden text-xs text-gray-500 mt-2">
-                                Pronunciation check works best in Chrome or Edge on desktop.
-                            </p>
-                        ` : ''}
+                        `}
                         <div id="recording-status" class="mt-3 text-sm text-gray-600"></div>
                     </div>
                 </div>
@@ -417,8 +416,22 @@ function handleWordSelection(optionIndex, selectedWord) {
         targetText: fullSentence,
     };
     
-    // Store the pre-generated sentence audio path
+    window.currentSentenceAudioContext = {
+        promptId: prompt.id,
+        optionId: displayOptionData.id,
+    };
+
+    // Store the pre-generated sentence audio path (may be resolved from legacy assets server-side)
     window.currentSentenceAudioPath = displayOptionData.sentence_audio_path;
+
+    if (!window.currentSentenceAudioPath) {
+        ensureSentenceAudioPath().then((path) => {
+            const statusDiv = document.getElementById('model-status');
+            if (path && statusDiv) {
+                statusDiv.textContent = '';
+            }
+        });
+    }
     
     // Update score if this is the first time answering this question
     if (!prompt.answered) {
@@ -569,6 +582,7 @@ let recordingStartedAt = null;
 let recordingMaxTimeout = null;
 let activeSpeechListen = null;
 let recordingTranscript = '';
+const micIdleLabel = () => '<i class="fas fa-microphone mr-2"></i> ' + gameT('tap_to_say');
 
 function setupPronunciationCheckUi() {
     const checkBtn = document.getElementById('check-pronunciation-btn');
@@ -675,7 +689,7 @@ function checkRecordedPronunciation() {
         onEnd: () => {
             if (checkBtn) {
                 checkBtn.disabled = !TalmaSpeech.isSupported();
-                checkBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> ' + gameT('check');
+                checkBtn.innerHTML = micIdleLabel();
             }
             activeCheck = null;
         },
@@ -715,6 +729,9 @@ function resetRecordingState() {
     }
     if (checkBtn) {
         checkBtn.disabled = !speechFeedbackConfig.enabled || (typeof TalmaSpeech !== 'undefined' && !TalmaSpeech.isSupported());
+        if (speechFeedbackConfig.enabled) {
+            checkBtn.innerHTML = micIdleLabel();
+        }
     }
     
     // Reset recording button if it was in a recording state
@@ -869,19 +886,53 @@ async function uploadVoiceSample(blob, context) {
 
 const MODEL_AUDIO_SLOW_RATE = 0.75;
 
+async function fetchModelAudioPath(promptId, optionId) {
+    try {
+        const response = await fetch(`/prompts/${promptId}/options/${optionId}/model`);
+        if (!response.ok) {
+            return null;
+        }
+
+        const data = await response.json();
+        return data.audio_url || null;
+    } catch (error) {
+        console.error('Failed to load model audio:', error);
+        return null;
+    }
+}
+
+async function ensureSentenceAudioPath() {
+    if (window.currentSentenceAudioPath) {
+        return window.currentSentenceAudioPath;
+    }
+
+    const context = window.currentSentenceAudioContext;
+    if (!context) {
+        return null;
+    }
+
+    const path = await fetchModelAudioPath(context.promptId, context.optionId);
+    if (path) {
+        window.currentSentenceAudioPath = path;
+    }
+
+    return path;
+}
+
 // Play model audio (pre-generated sentence audio)
-function playModelAudio(slow) {
+async function playModelAudio(slow) {
     const statusDiv = document.getElementById('model-status');
     const playBtn = document.getElementById('play-model-btn');
     const slowBtn = document.getElementById('play-model-slow-btn');
     const activeBtn = slow ? slowBtn : playBtn;
 
-    if (!window.currentSentenceAudioPath) {
+    const audioPath = await ensureSentenceAudioPath();
+    if (!audioPath) {
         statusDiv.textContent = 'No audio available - audio may still be generating';
         return;
     }
 
-    TalmaAudio.toggle(window.currentSentenceAudioPath, activeBtn, {
+    TalmaAudio.toggle(audioPath, activeBtn, {
         playbackRate: slow ? MODEL_AUDIO_SLOW_RATE : 1,
     });
 

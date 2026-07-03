@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\ProvidesGuidedFlowContext;
 use App\Models\Organization;
 use App\Models\Prompt;
 use App\Services\CourseAccess;
+use App\Services\Tts\OptionSentenceAudioResolver;
 use App\Services\VoiceSampleLearnerProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -80,17 +81,21 @@ class PromptController extends Controller
 
         $speechFeedbackEnabled = (bool) config('app.speech_feedback_enabled', true);
 
+        $sentenceAudioResolver = app(OptionSentenceAudioResolver::class);
+
         // Add full URLs for audio paths
-        $lesson->prompts->each(function ($prompt) {
+        $lesson->prompts->each(function ($prompt) use ($sentenceAudioResolver) {
             if ($prompt->prompt_audio_path) {
                 $prompt->prompt_audio_path = asset($prompt->prompt_audio_path);
             }
-            $prompt->options->each(function ($option) {
+            $prompt->options->each(function ($option) use ($sentenceAudioResolver) {
                 if ($option->word_audio_path) {
                     $option->word_audio_path = asset($option->word_audio_path);
                 }
-                if ($option->sentence_audio_path) {
-                    $option->sentence_audio_path = asset($option->sentence_audio_path);
+
+                $sentenceAudioUrl = $sentenceAudioResolver->resolveUrl($option);
+                if ($sentenceAudioUrl) {
+                    $option->sentence_audio_path = $sentenceAudioUrl;
                 }
             });
         });

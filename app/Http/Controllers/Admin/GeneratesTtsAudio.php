@@ -102,6 +102,34 @@ trait GeneratesTtsAudio
             }
         }
 
+        $legacyAsset = \App\Models\PromptOptionAsset::query()
+            ->where('prompt_id', $option->prompt_id)
+            ->where('option_id', $option->id)
+            ->first();
+
+        if ($legacyAsset?->audio_path) {
+            $legacyPath = public_path(ltrim($legacyAsset->audio_path, '/'));
+            if (file_exists($legacyPath)) {
+                $filename = "sentence_p{$prompt->id}_o{$option->id}.mp3";
+                $relativePath = "tts/sentences/{$filename}";
+                $newPath = storage_path("app/public/{$relativePath}");
+
+                $dir = dirname($newPath);
+                if (! file_exists($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+
+                if ($legacyPath !== $newPath) {
+                    copy($legacyPath, $newPath);
+                }
+
+                $option->update(['sentence_audio_path' => "/storage/{$relativePath}"]);
+                Log::info("Reused legacy sentence TTS asset: {$completeSentence}");
+
+                return;
+            }
+        }
+
         // Check if we already have TTS for this exact sentence from another option
         // This happens when the same word is used in the same template
         $existingOption = \App\Models\Option::whereHas('prompt', function($query) use ($prompt) {
