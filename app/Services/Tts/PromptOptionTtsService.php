@@ -28,13 +28,44 @@ class PromptOptionTtsService
             return false;
         }
 
+        $wordOk = $this->generateWordForOption($option);
+
+        return $this->generateSentenceForOption($option) && $wordOk;
+    }
+
+    public function generateWordForOption(Option $option): bool
+    {
+        if (!$this->enabled()) {
+            return false;
+        }
+
         try {
             $this->generateSingleWordTts($option);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('Prompt option word TTS generation failed', [
+                'option_id' => $option->id,
+                'label' => $option->label,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public function generateSentenceForOption(Option $option): bool
+    {
+        if (!$this->enabled()) {
+            return false;
+        }
+
+        try {
             $this->generateSingleSentenceTts($option);
 
             return true;
         } catch (\Throwable $e) {
-            Log::warning('Prompt option TTS generation failed', [
+            Log::warning('Prompt option sentence TTS generation failed', [
                 'option_id' => $option->id,
                 'label' => $option->label,
                 'error' => $e->getMessage(),

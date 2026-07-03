@@ -23,19 +23,20 @@ class SyncSentenceAudioPaths extends Command
         }
 
         $updated = 0;
-        $skipped = 0;
+        $alreadySet = 0;
+        $noAudioFound = 0;
 
-        $query->chunkById(100, function ($options) use ($resolver, &$updated, &$skipped) {
+        $query->chunkById(100, function ($options) use ($resolver, &$updated, &$alreadySet, &$noAudioFound) {
             foreach ($options as $option) {
                 if (filled($option->sentence_audio_path)) {
-                    $skipped++;
+                    $alreadySet++;
 
                     continue;
                 }
 
                 $resolvedPath = $resolver->resolveRelativePath($option);
                 if (! $resolvedPath) {
-                    $skipped++;
+                    $noAudioFound++;
 
                     continue;
                 }
@@ -45,7 +46,9 @@ class SyncSentenceAudioPaths extends Command
             }
         });
 
-        $this->info("Updated {$updated} option(s). Skipped {$skipped}.");
+        $this->info("Updated {$updated} option(s).");
+        $this->line("  Already had sentence_audio_path: {$alreadySet}");
+        $this->line("  No audio file found to sync: {$noAudioFound}");
 
         if ($lessonId = $this->option('lesson')) {
             $lesson = Lesson::find($lessonId);
@@ -55,6 +58,10 @@ class SyncSentenceAudioPaths extends Command
                     ->whereNull('sentence_audio_path')
                     ->count();
                 $this->comment("Lesson {$lesson->id} ({$lesson->title}): {$remaining} option(s) still missing sentence audio.");
+
+                if ($remaining > 0 && $noAudioFound > 0) {
+                    $this->comment('Generate missing audio with: php artisan tts:generate-prompt-audio --lesson='.$lessonId.' --sentences');
+                }
             }
         }
 
