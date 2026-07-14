@@ -81,8 +81,11 @@
 
                     @if($currentWord->word_audio_url)
                         <button type="button" id="play-model-btn"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 hover:bg-blue-50 hover:border-blue-200 transition-colors">
-                            <i class="fas fa-volume-up" aria-hidden="true"></i>
+                                class="talma-audio-btn inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-700 hover:bg-blue-50 hover:border-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-50 disabled:hover:border-gray-200"
+                                data-audio-url="{{ $currentWord->word_audio_url }}"
+                                data-talma-audio-icon="volume-up"
+                                aria-label="{{ __('student-portal.games.listen') }}">
+                            <i class="fas fa-volume-up talma-audio-icon" aria-hidden="true"></i>
                             {{ __('student-portal.games.listen') }}
                         </button>
                     @endif
@@ -213,7 +216,6 @@
     </div>
 </div>
 
-<audio id="model-audio" preload="auto"></audio>
 <audio id="playback-audio"></audio>
 
 @php
@@ -297,7 +299,6 @@ const playRecordingBtn = document.getElementById('play-recording-btn');
 const pronunciationStatus = document.getElementById('speech-check-status');
 const nextWordBtn = document.getElementById('next-word-btn');
 const playbackAudio = document.getElementById('playback-audio');
-const modelAudio = document.getElementById('model-audio');
 
 const MIC_IDLE_LABEL = '<i class="fas fa-microphone" aria-hidden="true"></i> ' + gameT('tap_to_say');
 
@@ -357,13 +358,6 @@ function setPronunciationStatus(message, tone = 'neutral') {
 function setRecordingStatus(message, tone = 'neutral') {
     setPronunciationStatus(message, tone);
 }
-
-document.getElementById('play-model-btn')?.addEventListener('click', () => {
-    @if($currentWord->word_audio_url)
-    modelAudio.src = @json($currentWord->word_audio_url);
-    modelAudio.play();
-    @endif
-});
 
 async function initializeRecording() {
     if (!navigator.mediaDevices?.getUserMedia) {

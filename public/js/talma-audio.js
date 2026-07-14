@@ -47,6 +47,52 @@
         button.disabled = false;
     }
 
+    function isRepeatable(button) {
+        return !!(button && button.dataset.talmaAudioRepeatable !== undefined);
+    }
+
+    function isButtonPlayed(button) {
+        return !!(button && (button.disabled || button.classList.contains('talma-audio-played')));
+    }
+
+    function markButtonPlayed(button) {
+        if (!button || isRepeatable(button)) {
+            return;
+        }
+
+        button.disabled = true;
+        button.classList.add('talma-audio-played');
+        button.setAttribute('aria-disabled', 'true');
+        button.classList.remove('talma-audio-playing');
+
+        const playIcon = button.querySelector('.play-icon, .talma-audio-play');
+        const pauseIcon = button.querySelector('.pause-icon, .talma-audio-pause');
+
+        if (playIcon && pauseIcon) {
+            playIcon.style.display = 'inline';
+            pauseIcon.style.display = 'none';
+        } else {
+            const icon = findIcon(button);
+            if (icon) {
+                icon.classList.remove('fa-pause', 'fa-spinner', 'fa-spin');
+                const restoreVolume = button.dataset.talmaAudioIcon === 'volume-up';
+                icon.classList.remove('fa-play');
+                icon.classList.add(restoreVolume ? 'fa-volume-up' : 'fa-play');
+            }
+        }
+    }
+
+    function releaseButton(button) {
+        if (!button) {
+            return;
+        }
+
+        button.disabled = false;
+        button.classList.remove('talma-audio-played');
+        button.removeAttribute('aria-disabled');
+        resetButton(button);
+    }
+
     function resetButton(button) {
         if (!button) {
             return;
@@ -150,7 +196,13 @@
             this._applyPlaybackRate(1);
 
             if (this.currentButton) {
-                resetButton(this.currentButton);
+                if (isRepeatable(this.currentButton)) {
+                    resetButton(this.currentButton);
+                } else if (!isButtonPlayed(this.currentButton)) {
+                    resetButton(this.currentButton);
+                } else {
+                    markButtonPlayed(this.currentButton);
+                }
             }
 
             this.currentButton = null;
@@ -163,11 +215,21 @@
                 return;
             }
 
+            if (button && isButtonPlayed(button) && !isRepeatable(button)) {
+                return;
+            }
+
             const normalizedUrl = normalizeUrl(url);
             const playbackRate = resolvePlaybackRate(options);
 
             if (this.currentButton && this.currentButton !== button) {
-                resetButton(this.currentButton);
+                if (isRepeatable(this.currentButton)) {
+                    resetButton(this.currentButton);
+                } else if (!isButtonPlayed(this.currentButton)) {
+                    resetButton(this.currentButton);
+                } else {
+                    markButtonPlayed(this.currentButton);
+                }
             }
 
             this.currentUrl = normalizedUrl;
@@ -194,7 +256,12 @@
                         button.dataset.talmaAudioIcon = 'volume-up';
                     }
                 }
-                setPlayingState(button);
+
+                if (isRepeatable(button)) {
+                    setPlayingState(button);
+                } else {
+                    markButtonPlayed(button);
+                }
             }
 
             this.audio.play().catch((err) => {
@@ -202,12 +269,24 @@
                     return;
                 }
                 console.error('Error playing audio:', err);
+                if (button && !isRepeatable(button)) {
+                    releaseButton(button);
+                }
                 this.stop();
             });
         },
 
         toggle(url, button, options) {
             if (!url) {
+                return;
+            }
+
+            if (button && isButtonPlayed(button) && !isRepeatable(button)) {
+                return;
+            }
+
+            if (!isRepeatable(button)) {
+                this.play(url, button, options);
                 return;
             }
 
@@ -252,6 +331,10 @@
                 return;
             }
 
+            if (isButtonPlayed(button) && !isRepeatable(button)) {
+                return;
+            }
+
             const url = getUrl(button);
             if (!url) {
                 return;
@@ -268,7 +351,11 @@
     TalmaAudio.audio.addEventListener('ended', () => {
         TalmaAudio._clearPlayingRateFix();
         if (TalmaAudio.currentButton) {
-            resetButton(TalmaAudio.currentButton);
+            if (isRepeatable(TalmaAudio.currentButton)) {
+                resetButton(TalmaAudio.currentButton);
+            } else {
+                markButtonPlayed(TalmaAudio.currentButton);
+            }
         }
         TalmaAudio.currentButton = null;
         TalmaAudio.currentUrl = null;

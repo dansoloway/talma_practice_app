@@ -3431,3 +3431,10 @@ a:focus {
 [dir="rtl"] #vocab-complete .vocab-progress-bar {
     direction: ltr;
 }
+
+.talma-audio-played,
+.talma-audio-btn:disabled,
+.btn-play-audio:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

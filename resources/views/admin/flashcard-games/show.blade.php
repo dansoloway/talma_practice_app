@@ -98,6 +98,7 @@
                                             class="btn btn-sm btn-outline-primary talma-audio-btn"
                                             data-audio-url="{{ $vocab->word_audio_url ?? asset('storage/' . $vocab->word_audio_path) }}"
                                             data-talma-audio-icon="volume-up"
+                                            data-talma-audio-repeatable
                                             title="Play audio">
                                             <i class="fas fa-volume-up talma-audio-icon"></i>
                                         </button>

@@ -228,6 +228,7 @@
                                             type="button" 
                                             class="btn-play-audio" 
                                             data-audio-url="{{ $item->word_audio_url }}"
+                                            data-talma-audio-repeatable
                                             data-word="{{ $item->english_word }}"
                                             title="Play audio for '{{ $item->english_word }}'"
                                         >
