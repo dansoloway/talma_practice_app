@@ -148,7 +148,10 @@ class SpellingGameController extends Controller
                     'id' => $vocab->id,
                     'english_word' => $vocab->english_word,
                     'image_path' => $vocab->image_url,
-                    'word_audio_path' => $vocab->word_audio_url,
+                    // Prefer the existence-checked URL; fall back to a constructed
+                    // public URL so listen still works when Storage::exists is stale.
+                    'word_audio_path' => $vocab->word_audio_url
+                        ?? $this->buildPublicAssetUrl($vocab->word_audio_path),
                 ];
             });
 
@@ -162,6 +165,21 @@ class SpellingGameController extends Controller
             compact('lesson', 'spelling_game', 'vocabulary'),
             $this->guidedFlowViewData($request, $lesson, 'spelling', $spelling_game->id)
         ));
+    }
+
+    /**
+     * Build a public /storage/... URL from a stored relative path.
+     */
+    private function buildPublicAssetUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        $normalized = ltrim($path, '/');
+        $normalized = preg_replace('#^storage/#', '', $normalized);
+
+        return asset('storage/'.$normalized);
     }
 
     /**

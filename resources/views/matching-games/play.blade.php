@@ -56,11 +56,11 @@
             </div>
         </div>
 
-        <!-- Game Area - Randomly positioned cards on desktop, grid on mobile -->
-        <div class="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-8 min-h-[500px] md:min-h-[600px] game-area-container" id="game-area">
+        <!-- Game Area - Responsive grid with content-sized cards -->
+        <div class="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-8 min-h-[300px] game-area-container" id="game-area">
             @if(isset($gameData['cards']) && count($gameData['cards']) > 0)
                 @foreach($gameData['cards'] as $index => $card)
-                    <div class="game-card absolute md:absolute cursor-pointer bg-white rounded-xl border-2 border-blue-500 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200" 
+                    <div class="game-card cursor-pointer bg-white rounded-xl border-2 border-blue-500 shadow-md hover:shadow-xl transition-all duration-200" 
                          data-card-id="{{ $card['id'] }}" 
                          data-vocab-id="{{ $card['vocab_id'] }}" 
                          data-type="{{ $card['type'] }}"
@@ -79,11 +79,11 @@
                             @elseif($card['type'] === 'image' && $card['content'])
                                 <img src="{{ $card['content'] }}" alt="{{ $card['word'] }}" class="w-full h-full object-cover rounded-lg">
                             @elseif($card['type'] === 'hebrew')
-                                <div class="card-translation hebrew w-full h-full bg-blue-100 text-blue-800 border-2 border-blue-300 rounded-lg flex items-center justify-center font-semibold text-base md:text-lg px-3 py-2">
+                                <div class="card-translation hebrew w-full h-full bg-blue-100 text-blue-800 border-2 border-blue-300 rounded-lg flex items-center justify-center font-semibold text-base md:text-lg px-3 py-2 text-center" dir="rtl" lang="he">
                                     {{ $card['content'] }}
                                 </div>
                             @elseif($card['type'] === 'arabic')
-                                <div class="card-translation arabic w-full h-full bg-green-100 text-green-800 border-2 border-green-300 rounded-lg flex items-center justify-center font-semibold text-base md:text-lg px-3 py-2">
+                                <div class="card-translation arabic w-full h-full bg-green-100 text-green-800 border-2 border-green-300 rounded-lg flex items-center justify-center font-semibold text-base md:text-lg px-3 py-2 text-center" dir="rtl" lang="ar">
                                     {{ $card['content'] }}
                                 </div>
                             @else
@@ -165,11 +165,29 @@
 /* Stats styling moved to Tailwind classes in HTML */
 
 #game-area {
-    position: relative;
+    --card-width: 100px;
+    --card-height: 90px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--card-width), 1fr));
+    gap: 0.75rem;
+    padding: 0.75rem;
+    align-content: start;
+    justify-items: stretch;
+    min-height: auto;
     overflow: visible;
 }
 
-/* Mobile: Grid layout - flexible columns that adapt to card count */
+.game-card {
+    position: relative;
+    width: 100%;
+    height: var(--card-height);
+    min-width: 0;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Mobile: compact header/stats */
 @media (max-width: 768px) {
     .min-h-screen {
         min-height: 100vh;
@@ -198,46 +216,18 @@
     }
     
     #game-area {
-        display: grid;
-        /* Use auto-fit to create as many columns as fit, minimum 90px each */
-        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
         gap: 0.5rem;
         padding: 0.75rem;
-        min-height: auto;
-        overflow: visible;
-        align-content: start;
-        justify-items: stretch;
-    }
-    
-    .game-card {
-        position: relative !important;
-        width: 100% !important;
-        height: 85px !important;
-        left: auto !important;
-        top: auto !important;
-        margin: 0;
-        min-width: 0; /* Allow cards to shrink if needed */
     }
     
     .game-card .card-content {
         padding: 0.5rem !important;
     }
     
-    /* Ensure cards maintain aspect ratio */
-    .game-card .card-content {
-        width: 100%;
-        height: 100%;
-    }
-    
     .game-card img {
         max-width: 100%;
         max-height: 100%;
         object-fit: cover;
-    }
-    
-    .card-word, .card-translation {
-        font-size: 0.75rem !important;
-        padding: 0.25rem !important;
     }
     
     .play-audio-strip {
@@ -259,42 +249,17 @@
         font-size: 0.625rem !important;
     }
     
-    /* Stats section */
     .bg-white\/80 {
         padding: 0.75rem !important;
-    }
-    
-    .text-2xl {
-        font-size: 1.25rem !important;
     }
     
     .text-sm {
         font-size: 0.75rem !important;
     }
-    
-    /* If we have an odd number of cards, the last row will have fewer cards - that's fine */
-    /* The grid will automatically center or left-align based on available space */
-}
-
-/* Desktop: Random positioning */
-@media (min-width: 769px) {
-    #game-area {
-        display: block;
-    }
-    
-    .game-card {
-        position: absolute;
-    }
-}
-
-.game-card {
-    cursor: pointer;
-    overflow: hidden;
-    transition: all 0.3s ease;
 }
 
 .game-card:hover {
-    z-index: 20 !important;
+    z-index: 10;
 }
 
 .game-card.matched {
@@ -319,11 +284,15 @@
 
 /* Card content styling handled by Tailwind classes */
 
-.card-word {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.card-word,
+.card-translation {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.2;
+    text-align: center;
     max-width: 100%;
+    overflow: visible;
 }
 
 /* Audio button styling handled by Tailwind classes */
@@ -369,89 +338,22 @@ class MatchingGame {
         this.mode = config.mode;
         
         this.init();
-        this.positionCardsRandomly();
 
         logActivityEvent('started', {
             mode: this.mode,
         });
     }
     
-    positionCardsRandomly() {
+    layoutCards() {
         const gameArea = document.getElementById('game-area');
         if (!gameArea) return;
-        
-        // Check if mobile - if so, let CSS grid handle positioning
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile) {
-            // On mobile, just set card sizes and let CSS grid handle layout
-            const cards = Array.from(this.cards);
-            cards.forEach((card) => {
-                // Remove any absolute positioning styles
-                card.style.left = 'auto';
-                card.style.top = 'auto';
-                card.style.width = '100%';
-                card.style.height = '90px';
-                card.style.zIndex = '10';
-            });
-            return;
-        }
-        
-        // Desktop: Random positioning
-        // Wait for layout to be ready
-        requestAnimationFrame(() => {
-            const areaRect = gameArea.getBoundingClientRect();
-            const areaWidth = areaRect.width - 40; // Padding
-            const areaHeight = areaRect.height - 40; // Padding
-            
-            const cardWidth = 120;
-            const cardHeight = 100;
-            
-            const cards = Array.from(this.cards);
-            const positions = [];
-            
-            // Generate random positions with collision detection
-            cards.forEach((card, index) => {
-                let attempts = 0;
-                let x, y;
-                let validPosition = false;
-                
-                while (!validPosition && attempts < 50) {
-                    x = Math.random() * (areaWidth - cardWidth);
-                    y = Math.random() * (areaHeight - cardHeight);
-                    
-                    // Check for collisions with existing positions
-                    validPosition = true;
-                    for (const pos of positions) {
-                        const distance = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
-                        if (distance < Math.max(cardWidth, cardHeight) * 1.2) {
-                            validPosition = false;
-                            break;
-                        }
-                    }
-                    
-                    attempts++;
-                }
-                
-                // If we couldn't find a good position, use a grid-like distribution with randomness
-                if (!validPosition) {
-                    const cols = Math.ceil(Math.sqrt(cards.length));
-                    const col = index % cols;
-                    const row = Math.floor(index / cols);
-                    const cellWidth = areaWidth / cols;
-                    const cellHeight = areaHeight / cols;
-                    x = col * cellWidth + Math.random() * (cellWidth * 0.3);
-                    y = row * cellHeight + Math.random() * (cellHeight * 0.3);
-                }
-                
-                positions.push({ x, y });
-                
-                // Set card size and position
-                card.style.width = cardWidth + 'px';
-                card.style.height = cardHeight + 'px';
-                card.style.left = x + 'px';
-                card.style.top = y + 'px';
-                card.style.zIndex = '10';
-            });
+
+        Array.from(this.cards).forEach((card) => {
+            card.style.left = '';
+            card.style.top = '';
+            card.style.position = '';
+            card.style.width = '100%';
+            card.style.zIndex = '';
         });
     }
     
@@ -575,95 +477,132 @@ class MatchingGame {
     }
 }
 
-// Function to dynamically adjust font size based on text length and card size
-function adjustCardTextSizes() {
-    const cardWords = document.querySelectorAll('.card-word, .card-translation');
-    
-    cardWords.forEach(element => {
-        const card = element.closest('.game-card');
-        if (!card) return;
-        
-        const cardContent = element.closest('.card-content');
-        if (!cardContent) return;
-        
-        // Get default font sizes
-        const isMobile = window.innerWidth <= 768;
-        const defaultSize = element.classList.contains('card-word') 
-            ? (isMobile ? 1.0 : 1.4) 
-            : (isMobile ? 0.9 : 1.2);
-        
-        // Reset to default first and prevent wrapping - keep words on single line
-        element.style.fontSize = defaultSize + 'rem';
-        element.style.whiteSpace = 'nowrap';
-        element.style.wordBreak = 'normal';
-        element.style.overflowWrap = 'normal';
-        element.style.textOverflow = 'ellipsis';
-        
-        // Reduce padding on mobile for longer words
-        const isMobileDevice = window.innerWidth <= 768;
-        const defaultPadding = isMobileDevice ? '0.4rem' : '1rem';
-        element.style.padding = defaultPadding;
-        
-        // Force reflow
-        void element.offsetWidth;
-        
-        // Get card dimensions
-        const contentRect = cardContent.getBoundingClientRect();
-        const availableWidth = contentRect.width - (parseFloat(getComputedStyle(element).paddingLeft) || 0) * 2;
-        const availableHeight = contentRect.height - (parseFloat(getComputedStyle(element).paddingTop) || 0) * 2;
-        
-        // Get current font size
-        let currentFontSize = parseFloat(getComputedStyle(element).fontSize);
-        const minFontSize = isMobile ? 0.4 : 0.6; // Lower minimum for mobile
-        
-        // Binary search for optimal font size that fits on single line
-        let minSize = minFontSize;
-        let maxSize = defaultSize;
-        let optimalSize = defaultSize;
-        
-        // Test if text fits at current size (single line, no wrap)
-        const testFit = (fontSize) => {
-            element.style.fontSize = fontSize + 'rem';
-            element.style.whiteSpace = 'nowrap';
-            void element.offsetWidth;
-            const elementRect = element.getBoundingClientRect();
-            return elementRect.width <= availableWidth * 0.95;
-        };
-        
-        // Binary search for best fit
-        for (let i = 0; i < 12; i++) { // Max 12 iterations for precision
-            const testSize = (minSize + maxSize) / 2;
-            if (testFit(testSize)) {
-                optimalSize = testSize;
-                minSize = testSize;
+function getCardTextMeasurer() {
+    let measurer = document.getElementById('card-text-measurer');
+    if (!measurer) {
+        measurer = document.createElement('div');
+        measurer.id = 'card-text-measurer';
+        document.body.appendChild(measurer);
+    }
+    return measurer;
+}
+
+function measureTextElement(element, fontRem, maxTextWidth, padding) {
+    const measurer = getCardTextMeasurer();
+    measurer.className = element.className;
+    measurer.style.cssText = [
+        'position:absolute',
+        'left:-9999px',
+        'top:-9999px',
+        'visibility:hidden',
+        'pointer-events:none',
+        `font-size:${fontRem}rem`,
+        'white-space:normal',
+        'word-break:break-word',
+        'overflow-wrap:break-word',
+        'line-height:1.2',
+        'text-align:center',
+        `max-width:${maxTextWidth}px`,
+        `padding:${padding}`,
+    ].join(';');
+    measurer.textContent = element.textContent.trim();
+
+    return {
+        width: measurer.offsetWidth,
+        height: measurer.offsetHeight,
+    };
+}
+
+function fitCardsToContent() {
+    const gameArea = document.getElementById('game-area');
+    if (!gameArea) return;
+
+    const textElements = gameArea.querySelectorAll('.card-word, .card-translation');
+    const cards = gameArea.querySelectorAll('.game-card');
+    if (cards.length === 0) return;
+
+    const isMobile = window.innerWidth <= 768;
+    const targetFontRem = isMobile ? 0.875 : 1;
+    const minFontRem = 0.75;
+    const minCardWidth = 100;
+    const minCardHeight = 72;
+    const maxCardWidth = 220;
+    const maxCardHeight = 120;
+    const contentPaddingX = isMobile ? 16 : 24;
+    const contentPaddingY = isMobile ? 16 : 24;
+    const textPadding = isMobile ? '0.25rem 0.5rem' : '0.5rem 0.75rem';
+    const maxTextWidth = maxCardWidth - contentPaddingX;
+
+    let optimalFontRem = targetFontRem;
+
+    const measureAll = (fontRem) => {
+        let maxWidth = minCardWidth;
+        let maxHeight = minCardHeight;
+        let allFit = true;
+
+        textElements.forEach((element) => {
+            const size = measureTextElement(element, fontRem, maxTextWidth, textPadding);
+            const cardWidth = size.width + contentPaddingX;
+            const cardHeight = size.height + contentPaddingY;
+
+            if (cardWidth > maxCardWidth || cardHeight > maxCardHeight) {
+                allFit = false;
+            }
+
+            maxWidth = Math.max(maxWidth, Math.min(cardWidth, maxCardWidth));
+            maxHeight = Math.max(maxHeight, Math.min(cardHeight, maxCardHeight));
+        });
+
+        return { maxWidth, maxHeight, allFit };
+    };
+
+    let { maxWidth, maxHeight, allFit } = measureAll(targetFontRem);
+
+    if (!allFit) {
+        let lo = minFontRem;
+        let hi = targetFontRem;
+        let best = minFontRem;
+
+        for (let i = 0; i < 12; i++) {
+            const mid = (lo + hi) / 2;
+            if (measureAll(mid).allFit) {
+                best = mid;
+                lo = mid;
             } else {
-                maxSize = testSize;
+                hi = mid;
             }
-            if (maxSize - minSize < 0.03) break; // Stop when close enough
+            if (hi - lo < 0.02) break;
         }
-        
-        // Apply optimal size
-        const finalSize = Math.max(minFontSize, optimalSize);
-        element.style.fontSize = finalSize + 'rem';
-        element.style.whiteSpace = 'nowrap';
-        void element.offsetWidth;
-        
-        // If text is still too long, reduce padding further and try again
-        const finalRect = element.getBoundingClientRect();
-        if (finalRect.width > availableWidth * 0.95 && isMobileDevice) {
-            // Reduce padding to minimum
-            element.style.padding = '0.2rem';
-            void element.offsetWidth;
-            const newAvailableWidth = cardContent.getBoundingClientRect().width - 0.4; // 0.2rem * 2
-            
-            // Recalculate with reduced padding
-            if (finalRect.width > newAvailableWidth * 0.95) {
-                const scaleFactor = (newAvailableWidth * 0.95) / finalRect.width;
-                const scaledSize = Math.max(minFontSize, finalSize * scaleFactor);
-                element.style.fontSize = scaledSize + 'rem';
-            }
-        }
+
+        optimalFontRem = best;
+        ({ maxWidth, maxHeight } = measureAll(optimalFontRem));
+    }
+
+    maxWidth = Math.max(minCardWidth, Math.min(maxWidth, maxCardWidth));
+    maxHeight = Math.max(minCardHeight, Math.min(maxHeight, maxCardHeight));
+
+    gameArea.style.setProperty('--card-width', maxWidth + 'px');
+    gameArea.style.setProperty('--card-height', maxHeight + 'px');
+
+    cards.forEach((card) => {
+        card.style.height = maxHeight + 'px';
     });
+
+    textElements.forEach((element) => {
+        element.style.fontSize = optimalFontRem + 'rem';
+        element.style.whiteSpace = 'normal';
+        element.style.wordBreak = 'break-word';
+        element.style.overflowWrap = 'break-word';
+        element.style.lineHeight = '1.2';
+        element.style.textOverflow = '';
+        element.style.overflow = 'visible';
+    });
+}
+
+function layoutMatchingGame() {
+    if (!matchingGameInstance) return;
+    matchingGameInstance.layoutCards();
+    fitCardsToContent();
 }
 
 // Start the game when page loads
@@ -673,15 +612,16 @@ document.addEventListener('DOMContentLoaded', function() {
     matchingGameInstance = new MatchingGame({
         mode: '{{ $mode }}',
     });
+
+    requestAnimationFrame(() => {
+        layoutMatchingGame();
+    });
     
-    // Reposition cards on window resize
     let resizeTimeout;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-            if (matchingGameInstance) {
-                matchingGameInstance.positionCardsRandomly();
-            }
+            layoutMatchingGame();
         }, 300);
     });
 });

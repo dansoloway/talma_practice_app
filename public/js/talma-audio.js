@@ -80,11 +80,16 @@
         return Math.min(4, Math.max(0.25, rate));
     }
 
+    function ratesMatch(a, b) {
+        return Math.abs(a - b) < 0.001;
+    }
+
     const TalmaAudio = {
         audio: new Audio(),
         currentButton: null,
         currentUrl: null,
         currentPlaybackRate: 1,
+        _onPlayingRateFix: null,
 
         resetButton(button) {
             resetButton(button);
@@ -94,10 +99,55 @@
             setPlayingState(button);
         },
 
+        _clearPlayingRateFix() {
+            if (this._onPlayingRateFix) {
+                this.audio.removeEventListener('playing', this._onPlayingRateFix);
+                this._onPlayingRateFix = null;
+            }
+        },
+
+        _applyPlaybackRate(rate) {
+            this.audio.playbackRate = rate;
+            this.audio.defaultPlaybackRate = rate;
+
+            // Keep natural pitch while slowing/speeding (Chrome, Safari, Firefox).
+            try {
+                this.audio.preservesPitch = true;
+            } catch (_) {
+                // Older browsers may not support preservesPitch.
+            }
+            try {
+                this.audio.mozPreservesPitch = true;
+            } catch (_) {
+                // Firefox legacy.
+            }
+            try {
+                this.audio.webkitPreservesPitch = true;
+            } catch (_) {
+                // Safari legacy.
+            }
+        },
+
+        _schedulePlayingRateFix(rate) {
+            this._clearPlayingRateFix();
+
+            const onPlaying = () => {
+                this._applyPlaybackRate(rate);
+                this.audio.removeEventListener('playing', onPlaying);
+                if (this._onPlayingRateFix === onPlaying) {
+                    this._onPlayingRateFix = null;
+                }
+            };
+
+            this._onPlayingRateFix = onPlaying;
+            this.audio.addEventListener('playing', onPlaying);
+        },
+
         stop() {
+            this._clearPlayingRateFix();
             this.audio.pause();
             this.audio.currentTime = 0;
-            this.audio.playbackRate = 1;
+            this._applyPlaybackRate(1);
 
             if (this.currentButton) {
                 resetButton(this.currentButton);
@@ -124,12 +174,18 @@
             this.currentButton = button || null;
             this.currentPlaybackRate = playbackRate;
 
+            // Pause first so rate changes apply reliably across browsers (esp. WebKit).
+            if (!this.audio.paused) {
+                this.audio.pause();
+            }
+
             if (normalizeUrl(this.audio.src) !== normalizedUrl) {
                 this.audio.src = url;
             }
 
             this.audio.currentTime = 0;
-            this.audio.playbackRate = playbackRate;
+            this._applyPlaybackRate(playbackRate);
+            this._schedulePlayingRateFix(playbackRate);
 
             if (button) {
                 if (!button.dataset.talmaAudioIcon) {
@@ -157,16 +213,21 @@
 
             const normalizedUrl = normalizeUrl(url);
             const playbackRate = resolvePlaybackRate(options);
-            const isSame = this.currentUrl === normalizedUrl && this.currentButton === button;
+            const isSameSession = this.currentUrl === normalizedUrl
+                && this.currentButton === button
+                && ratesMatch(this.currentPlaybackRate, playbackRate);
 
-            if (isSame && !this.audio.paused && !this.audio.ended) {
+            // Same button + same rate + playing → pause
+            if (isSameSession && !this.audio.paused && !this.audio.ended) {
                 this.audio.pause();
                 resetButton(button);
                 return;
             }
 
-            if (isSame && this.audio.paused && this.audio.currentTime > 0 && !this.audio.ended) {
-                this.audio.playbackRate = this.currentPlaybackRate;
+            // Same button + same rate + paused mid-track → resume
+            if (isSameSession && this.audio.paused && this.audio.currentTime > 0 && !this.audio.ended) {
+                this._applyPlaybackRate(this.currentPlaybackRate);
+                this._schedulePlayingRateFix(this.currentPlaybackRate);
                 setPlayingState(button);
                 this.audio.play().catch((err) => {
                     if (err && err.name === 'AbortError') {
@@ -178,6 +239,7 @@
                 return;
             }
 
+            // Different button and/or different rate → restart from beginning at requested rate
             this.play(url, button, { playbackRate: playbackRate });
         },
 
@@ -204,11 +266,14 @@
     };
 
     TalmaAudio.audio.addEventListener('ended', () => {
+        TalmaAudio._clearPlayingRateFix();
         if (TalmaAudio.currentButton) {
             resetButton(TalmaAudio.currentButton);
         }
         TalmaAudio.currentButton = null;
         TalmaAudio.currentUrl = null;
+        TalmaAudio.currentPlaybackRate = 1;
+        TalmaAudio._applyPlaybackRate(1);
     });
 
     TalmaAudio.audio.addEventListener('error', () => {

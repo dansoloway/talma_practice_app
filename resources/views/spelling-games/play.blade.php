@@ -193,10 +193,16 @@ function loadWord(index) {
     const wordHtml = `
         <div class="word-card student-learning-ltr" dir="ltr" lang="en">
             <div class="word-audio-section">
-                <button type="button" class="big-play-btn talma-audio-btn" id="play-audio-btn" data-audio-url="${word.word_audio_path || ''}" data-talma-audio-icon="volume-up">
+                <button type="button"
+                        class="big-play-btn talma-audio-btn"
+                        id="play-audio-btn"
+                        data-audio-url="${word.word_audio_path || ''}"
+                        data-talma-audio-manual
+                        data-talma-audio-icon="volume-up"
+                        aria-label="${gameT('click_to_listen')}">
                     <i class="fas fa-volume-up talma-audio-icon"></i>
                 </button>
-                <p class="audio-hint">${gameT('click_to_listen')}</p>
+                <p class="audio-hint" id="play-audio-hint">${gameT('click_to_listen')}</p>
             </div>
             
             ${word.image_path ? `
@@ -245,17 +251,55 @@ function loadWord(index) {
     setupWordEvents(word, hint);
 }
 
+function playWordAudio(audioPath, button) {
+    if (!audioPath) {
+        return;
+    }
+
+    if (typeof TalmaAudio !== 'undefined') {
+        if (button) {
+            TalmaAudio.toggle(audioPath, button);
+        } else {
+            TalmaAudio.play(audioPath);
+        }
+        return;
+    }
+
+    // Fallback if TalmaAudio is unavailable
+    const audio = document.getElementById('game-audio');
+    if (!audio) {
+        return;
+    }
+    audio.src = audioPath;
+    audio.playbackRate = 1;
+    audio.play().catch((error) => {
+        console.error('Error playing spelling audio:', error);
+    });
+}
+
 function setupWordEvents(word, hint) {
     const input = document.getElementById('spelling-input');
     const letterFeedback = document.getElementById('letter-feedback');
     const answerFeedback = document.getElementById('answer-feedback');
     const feedbackContent = document.getElementById('feedback-content');
     const playBtn = document.getElementById('play-audio-btn');
-    
-    if (playBtn && !word.word_audio_path) {
+    const playHint = document.getElementById('play-audio-hint');
+
+    if (playBtn && word.word_audio_path) {
+        playBtn.addEventListener('click', function (event) {
+            event.preventDefault();
+            playWordAudio(word.word_audio_path, this);
+        });
+        if (playHint) {
+            playHint.style.cursor = 'pointer';
+            playHint.addEventListener('click', function () {
+                playWordAudio(word.word_audio_path, playBtn);
+            });
+        }
+    } else if (playBtn && !word.word_audio_path) {
         playBtn.disabled = true;
         playBtn.classList.add('disabled');
-        playBtn.title = 'No audio available';
+        playBtn.title = gameT('no_audio');
     }
 
     // Show/Hide image button
