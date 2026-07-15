@@ -22,19 +22,19 @@
                     <span>➕ Add Words</span>
                     <span id="dropdown-arrow" style="transition: transform 0.2s;">▼</span>
                 </button>
-                <div id="add-words-menu" class="dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; margin-top: 0.5rem; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); min-width: 200px; z-index: 1000; overflow: hidden;">
-                    <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="dropdown-item" style="display: block; padding: 0.75rem 1rem; color: #1e293b; text-decoration: none; transition: background-color 0.2s; border-bottom: 1px solid #f1f5f9;">
+                <div id="add-words-menu" class="dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; margin-top: 0.5rem; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); min-width: 220px; z-index: 1000; overflow: hidden;">
+                    <button type="button" class="dropdown-item" onclick="scrollToBulkPaste()" style="display: block; width: 100%; padding: 0.75rem 1rem; text-align: left; background: none; border: none; color: #1e293b; cursor: pointer; transition: background-color 0.2s; border-bottom: 1px solid #f1f5f9;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">📋 Paste Words <span style="font-size: 0.75rem; color: #2563eb; font-weight: 700;">(Recommended)</span></div>
+                        <div style="font-size: 0.875rem; color: #64748b;">Paste multiple words, one per line</div>
+                    </button>
+                    <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="dropdown-item" style="display: block; padding: 0.75rem 1rem; color: #1e293b; text-decoration: none; transition: background-color 0.2s; border-bottom: 1px solid #f1f5f9;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">📤 Upload CSV</div>
+                        <div style="font-size: 0.875rem; color: #64748b;">Import words from a CSV file</div>
+                    </a>
+                    <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="dropdown-item" style="display: block; padding: 0.75rem 1rem; color: #1e293b; text-decoration: none; transition: background-color 0.2s;">
                         <div style="font-weight: 600; margin-bottom: 0.25rem;">➕ Add Single Word</div>
                         <div style="font-size: 0.875rem; color: #64748b;">Create one vocabulary word</div>
                     </a>
-                    <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="dropdown-item" style="display: block; padding: 0.75rem 1rem; color: #1e293b; text-decoration: none; transition: background-color 0.2s; border-bottom: 1px solid #f1f5f9;">
-                        <div style="font-weight: 600; margin-bottom: 0.25rem;">📤 Upload CSV</div>
-                        <div style="font-size: 0.875rem; color: #64748b;">Import words from CSV file</div>
-                    </a>
-                    <button type="button" class="dropdown-item" onclick="scrollToBulkPaste()" style="display: block; width: 100%; padding: 0.75rem 1rem; text-align: left; background: none; border: none; color: #1e293b; cursor: pointer; transition: background-color 0.2s;">
-                        <div style="font-weight: 600; margin-bottom: 0.25rem;">📋 Paste Words</div>
-                        <div style="font-size: 0.875rem; color: #64748b;">Paste multiple words (one per line)</div>
-                    </button>
                 </div>
             </div>
             
@@ -42,18 +42,23 @@
         </div>
     </div>
 
+    @php $isEmptyVocabulary = $vocabulary->count() === 0; @endphp
+
     <!-- Bulk Paste Section -->
-    <div class="bulk-paste-section" id="bulk-paste-section" style="background: white; border: 1px solid var(--color-border, #ddd); border-radius: 8px; margin-bottom: 2rem; overflow: hidden;">
-        <div style="padding: 1rem 1.5rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="toggleBulkPaste()">
+    <div class="bulk-paste-section" id="bulk-paste-section" style="background: white; border: {{ $isEmptyVocabulary ? '2px solid #3b82f6' : '1px solid var(--color-border, #ddd)' }}; border-radius: 8px; margin-bottom: 2rem; overflow: hidden; {{ $isEmptyVocabulary ? 'box-shadow: 0 4px 14px rgba(59, 130, 246, 0.12);' : '' }}">
+        <div style="padding: 1rem 1.5rem; background: {{ $isEmptyVocabulary ? '#eff6ff' : '#f8fafc' }}; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="toggleBulkPaste()">
             <div style="display: flex; align-items: center; justify-content: space-between;">
                 <h2 style="margin: 0; font-size: 1.25rem; color: var(--color-primary, #0024a7); display: flex; align-items: center; gap: 0.5rem;">
-                    <span id="bulk-paste-arrow" style="transition: transform 0.2s; display: inline-block;">▶</span>
+                    <span id="bulk-paste-arrow" style="transition: transform 0.2s; display: inline-block;">{{ $isEmptyVocabulary ? '▼' : '▶' }}</span>
                     <span>📋 Paste Words (One Per Line)</span>
+                    @if($isEmptyVocabulary)
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #1d4ed8; background: #dbeafe; padding: 0.15rem 0.5rem; border-radius: 999px;">Recommended</span>
+                    @endif
                 </h2>
-                <span style="color: #64748b; font-size: 0.875rem;">Click to expand</span>
+                <span style="color: #64748b; font-size: 0.875rem;">{{ $isEmptyVocabulary ? 'Start here' : 'Click to expand' }}</span>
             </div>
         </div>
-        <div id="bulk-paste-content" style="display: none; padding: 1.5rem;">
+        <div id="bulk-paste-content" style="display: {{ $isEmptyVocabulary ? 'block' : 'none' }}; padding: 1.5rem;">
             <form id="bulk-paste-form" action="{{ route('admin.lessons.vocabulary.bulk-store', $lesson) }}" method="POST">
                 @csrf
                 <div style="margin-bottom: 1rem;">
@@ -67,6 +72,10 @@
                         style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.95rem; resize: vertical;"
                     ></textarea>
                     <small style="display: block; margin-top: 0.5rem; color: #666;">Each line will be created as a separate vocabulary word. Empty lines will be ignored.</small>
+                    <p style="margin-top: 0.75rem; font-size: 0.875rem; color: #64748b;">
+                        Prefer a file?
+                        <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">Upload CSV instead</a>
+                    </p>
                 </div>
                 <div style="display: flex; gap: 1rem; align-items: center;">
                     <button type="submit" class="btn btn-primary" id="bulk-paste-btn">
@@ -287,8 +296,12 @@
     @else
         <div class="empty-state">
             <h3>No vocabulary yet</h3>
-            <p>This lesson doesn't have any vocabulary items yet. Add vocabulary words to help students learn.</p>
-            <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="btn btn-primary">Add First Vocabulary Item</a>
+            <p>Paste your word list above — one word per line. That's the fastest way to build a new lesson.</p>
+            <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem;">
+                <button type="button" class="btn btn-primary" onclick="scrollToBulkPaste()">Paste Words</button>
+                <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="btn btn-secondary">Upload CSV</a>
+                <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="btn">Add Single Word</a>
+            </div>
         </div>
     @endif
 </div>
@@ -936,6 +949,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const bulkStatus = document.getElementById('bulk-paste-status');
     const bulkTextarea = document.getElementById('bulk-words');
 
+    if (bulkTextarea && bulkTextarea.closest('#bulk-paste-content')?.style.display === 'block') {
+        bulkTextarea.focus();
+    }
+
     if (bulkForm) {
         bulkForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -1028,10 +1045,10 @@ function toggleBulkPaste() {
     
     if (isVisible) {
         content.style.display = 'none';
-        arrow.style.transform = 'rotate(0deg)';
+        arrow.textContent = '▶';
     } else {
         content.style.display = 'block';
-        arrow.style.transform = 'rotate(90deg)';
+        arrow.textContent = '▼';
     }
 }
 

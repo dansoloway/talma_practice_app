@@ -330,8 +330,8 @@ class LessonController extends Controller
         }
 
         return redirect()
-            ->route('admin.lessons.show', $lesson)
-            ->with('success', 'Lesson created successfully!');
+            ->route('admin.lessons.vocabulary.index', $lesson)
+            ->with('success', 'Lesson created! Paste your vocabulary words below to get started.');
     }
 
     /**

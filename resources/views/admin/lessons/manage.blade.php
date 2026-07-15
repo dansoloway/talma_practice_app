@@ -257,7 +257,7 @@
             </div>
             @if(!$lesson->is_review)
                 <div class="flex gap-3">
-                    <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">Edit Vocabulary</a>
+                    <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">{{ $lesson->vocabulary->count() > 0 ? 'Edit Vocabulary' : 'Add Vocabulary' }}</a>
                     <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200">Upload CSV</a>
                 </div>
             @else
@@ -282,8 +282,13 @@
             </div>
         @else
             <div class="text-center py-12">
-                <p class="text-gray-600 mb-4">No vocabulary items yet.</p>
-                <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">Add the first vocabulary item</a>
+                <p class="text-gray-600 mb-2">No vocabulary items yet.</p>
+                <p class="text-sm text-gray-500 mb-6">Paste your word list — one word per line — to get started quickly.</p>
+                <div class="flex flex-wrap gap-3 justify-center">
+                    <a href="{{ route('admin.lessons.vocabulary.index', $lesson) }}" class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md">Paste Words</a>
+                    <a href="{{ route('admin.lessons.vocabulary.csv.upload', $lesson) }}" class="inline-block px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200">Upload CSV</a>
+                    <a href="{{ route('admin.lessons.vocabulary.create', $lesson) }}" class="inline-block px-6 py-3 text-gray-600 font-semibold rounded-xl hover:bg-gray-100 transition-all duration-200 underline underline-offset-2">Add single word</a>
+                </div>
             </div>
         @endif
     </div>
