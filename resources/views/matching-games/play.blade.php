@@ -57,7 +57,7 @@
         </div>
 
         <!-- Game Area - Responsive grid with content-sized cards -->
-        <div class="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-8 min-h-[300px] game-area-container" id="game-area">
+        <div class="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-8 min-h-[300px] game-area-container{{ $mode === 'image' ? ' has-image-cards' : '' }}" id="game-area">
             @if(isset($gameData['cards']) && count($gameData['cards']) > 0)
                 @foreach($gameData['cards'] as $index => $card)
                     <div class="game-card cursor-pointer bg-white rounded-xl border-2 border-blue-500 shadow-md hover:shadow-xl transition-all duration-200" 
@@ -175,6 +175,22 @@
     justify-items: stretch;
     min-height: auto;
     overflow: visible;
+}
+
+#game-area.has-image-cards {
+    --card-height: var(--card-width);
+}
+
+#game-area.has-image-cards .game-card {
+    aspect-ratio: 1 / 1;
+    height: auto;
+}
+
+#game-area.has-image-cards .game-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
 }
 
 .game-card {
@@ -581,11 +597,18 @@ function fitCardsToContent() {
     maxWidth = Math.max(minCardWidth, Math.min(maxWidth, maxCardWidth));
     maxHeight = Math.max(minCardHeight, Math.min(maxHeight, maxCardHeight));
 
+    const hasImageCards = gameArea.classList.contains('has-image-cards');
+    if (hasImageCards) {
+        const size = Math.max(maxWidth, maxHeight);
+        maxWidth = size;
+        maxHeight = size;
+    }
+
     gameArea.style.setProperty('--card-width', maxWidth + 'px');
     gameArea.style.setProperty('--card-height', maxHeight + 'px');
 
     cards.forEach((card) => {
-        card.style.height = maxHeight + 'px';
+        card.style.height = hasImageCards ? 'auto' : maxHeight + 'px';
     });
 
     textElements.forEach((element) => {
