@@ -62,7 +62,7 @@ class ElevenLabsTtsService
     ): ?string {
         if (!$this->enabled()) {
             Log::warning('ELEVENLABS_API_KEY not found, skipping TTS generation');
-            return null;
+            throw new \RuntimeException('ELEVENLABS_API_KEY is not configured.');
         }
 
         $voiceId = $voiceId ?? $this->defaultVoiceId;
@@ -86,14 +86,27 @@ class ElevenLabsTtsService
             if ($response->successful()) {
                 Log::info("Generated TTS for text: '{$text}' (preset: {$preset})");
                 return $response->body();
-            } else {
-                Log::error("TTS API Error: " . $response->status() . " - " . $response->body());
-                return null;
             }
+
+            $errorMessage = $this->parseApiErrorMessage($response);
+            Log::error("TTS API Error: " . $response->status() . " - " . $response->body());
+            throw new \RuntimeException("ElevenLabs TTS failed ({$response->status()}): {$errorMessage}");
+        } catch (\RuntimeException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error("TTS generation exception: " . $e->getMessage());
-            return null;
+            throw new \RuntimeException('TTS generation failed: ' . $e->getMessage(), 0, $e);
         }
+    }
+
+    private function parseApiErrorMessage($response): string
+    {
+        $body = $response->json();
+        if (is_array($body) && isset($body['detail']['message'])) {
+            return $body['detail']['message'];
+        }
+
+        return is_string($response->body()) ? $response->body() : 'Unknown TTS API error';
     }
 
     /**
@@ -122,7 +135,7 @@ class ElevenLabsTtsService
     ): ?string {
         if (!$this->enabled()) {
             Log::warning('ELEVENLABS_API_KEY not found, skipping TTS generation');
-            return null;
+            throw new \RuntimeException('ELEVENLABS_API_KEY is not configured.');
         }
 
         $voiceId = $voiceId ?? $this->defaultVoiceId;
@@ -175,13 +188,16 @@ class ElevenLabsTtsService
             if ($response->successful()) {
                 Log::info("Generated TTS with custom settings for text: '{$text}'");
                 return $response->body();
-            } else {
-                Log::error("TTS API Error: " . $response->status() . " - " . $response->body());
-                return null;
             }
+
+            $errorMessage = $this->parseApiErrorMessage($response);
+            Log::error("TTS API Error: " . $response->status() . " - " . $response->body());
+            throw new \RuntimeException("ElevenLabs TTS failed ({$response->status()}): {$errorMessage}");
+        } catch (\RuntimeException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error("TTS generation exception: " . $e->getMessage());
-            return null;
+            throw new \RuntimeException('TTS generation failed: ' . $e->getMessage(), 0, $e);
         }
     }
 

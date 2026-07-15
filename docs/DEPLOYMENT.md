@@ -23,6 +23,7 @@ DB_PASSWORD=your-secure-password
 
 # Required API Keys
 ELEVENLABS_API_KEY=your-elevenlabs-api-key
+ELEVENLABS_MODEL=eleven_multilingual_v2
 
 # Admin Authentication
 ADMIN_PASSWORD=your-secure-admin-password

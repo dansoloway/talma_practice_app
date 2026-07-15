@@ -830,15 +830,14 @@ class VocabularyController extends Controller
     /**
      * Generate TTS audio for a vocabulary word
      */
-    private function generateVocabularyAudio(Vocabulary $vocabulary, ?array $customSettings = null)
+    private function generateVocabularyAudio(Vocabulary $vocabulary, ?array $customSettings = null): void
     {
         if (!$this->ttsService->enabled()) {
-            $errorMsg = 'ELEVENLABS_API_KEY not found, skipping audio generation for: ' . $vocabulary->english_word;
+            $errorMsg = 'ELEVENLABS_API_KEY not found. Set ELEVENLABS_API_KEY in .env and run php artisan config:clear.';
             \Log::warning($errorMsg);
-            // Also log to TTS log file
             $ttsLogFile = storage_path('logs/tts_generation.log');
             file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
-            return;
+            throw new \RuntimeException($errorMsg);
         }
 
         // Create dedicated TTS log file entry
@@ -866,18 +865,20 @@ class VocabularyController extends Controller
                 $successMsg = "Successfully generated and verified audio for: '{$vocabulary->english_word}' (path: {$result['path']}, size: {$result['size']} bytes)";
                 \Log::info($successMsg);
                 file_put_contents($ttsLogFile, "[" . now() . "] SUCCESS: {$successMsg}\n", FILE_APPEND);
-            } else {
-                $errorMsg = "TTS generation failed for '{$vocabulary->english_word}': Service returned null";
-                \Log::error($errorMsg);
-                file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
-                throw new \Exception($errorMsg);
+                return;
             }
+
+            $errorMsg = "TTS generation failed for '{$vocabulary->english_word}': Service returned null";
+            \Log::error($errorMsg);
+            file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
+            throw new \RuntimeException($errorMsg);
         } catch (\Exception $e) {
             $errorMsg = "Failed to generate audio for '{$vocabulary->english_word}': " . $e->getMessage();
             \Log::error($errorMsg);
             \Log::error("Stack trace: " . $e->getTraceAsString());
             file_put_contents($ttsLogFile, "[" . now() . "] ERROR: {$errorMsg}\n", FILE_APPEND);
             file_put_contents($ttsLogFile, "[" . now() . "] Stack trace: " . $e->getTraceAsString() . "\n", FILE_APPEND);
+            throw $e;
         }
     }
 

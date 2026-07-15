@@ -11,8 +11,8 @@ return [
     |
     */
 
-    // Default model (eleven_monolingual_v1 — English only, fast)
-    'default_model_id' => env('ELEVENLABS_MODEL', 'eleven_monolingual_v1'),
+    // Default model — eleven_monolingual_v1 was deprecated by ElevenLabs (2025+)
+    'default_model_id' => env('ELEVENLABS_MODEL', 'eleven_multilingual_v2'),
 
     // Default voice ID (Adam voice)
     'default_voice_id' => env('ELEVENLABS_DEFAULT_VOICE_ID', 'pNInz6obpgDQGcFmaJgB'),

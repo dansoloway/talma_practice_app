@@ -146,12 +146,12 @@
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Model</label>
                     <select id="tts-model" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
-                        <option value="eleven_flash_v2">Flash v2 (Fast, English only, cost-effective)</option>
-                        <option value="eleven_monolingual_v1" selected>Monolingual v1 (English only, fast)</option>
-                        <option value="eleven_multilingual_v2">Multilingual v2 (Supports multiple languages, best quality)</option>
-                        <option value="eleven_turbo_v2_5">Turbo v2.5 (Ultra-fast, low latency)</option>
+                        <option value="eleven_multilingual_v2" selected>Multilingual v2 (Recommended — English, best quality)</option>
                         <option value="eleven_flash_v2_5">Flash v2.5 (Fastest, batch processing)</option>
+                        <option value="eleven_turbo_v2_5">Turbo v2.5 (Ultra-fast, low latency)</option>
+                        <option value="eleven_flash_v2">Flash v2 (Fast, English only)</option>
                     </select>
+                    <p style="font-size: 0.8rem; color: #666; margin-top: 0.35rem;">Deprecated models (monolingual v1) are no longer supported by ElevenLabs.</p>
                 </div>
 
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
@@ -509,7 +509,7 @@ function loadTtsSettings() {
         style: 0.0,
         speed: 0.92,
         use_speaker_boost: true,
-        model: 'eleven_monolingual_v1'
+        model: 'eleven_multilingual_v2'
     };
 }
 
