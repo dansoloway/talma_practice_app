@@ -284,6 +284,7 @@
 
     <script src="{{ asset('js/talma-audio.js') }}"></script>
     <script src="{{ asset('js/talma-speech.js') }}"></script>
+    @stack('modals')
     @stack('scripts')
 </body>
 </html>
