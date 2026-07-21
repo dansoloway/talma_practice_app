@@ -33,30 +33,37 @@
 <body class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen">
     @php
         $authUser = auth('admin')->user();
-        $isOrgStudentPortal = isset($currentOrganization) && $authUser && ($authUser->isStudent() || $authUser->isParent());
+        $isOrgParentPortal = isset($currentOrganization) && $currentOrganization->usesParentSignup();
+        $isOrgStudentPortal = $isOrgParentPortal && $authUser && ($authUser->isStudent() || $authUser->isParent());
+        $isOrgParentPortalGuest = $isOrgParentPortal && ! $isOrgStudentPortal && request()->routeIs('org.student.login', 'org.student.register');
+        $showOrgPortalNav = $isOrgStudentPortal || $isOrgParentPortalGuest;
         $selectedStudent = ($authUser && session('selected_student_id'))
             ? \App\Models\ParentStudent::find(session('selected_student_id'))
             : null;
         $studentHomeUrl = isset($currentOrganization)
             ? route('org.student.index', $currentOrganization)
             : route('lessons.index');
+        $orgPortalHomeUrl = isset($currentOrganization)
+            ? ($isOrgStudentPortal ? $studentHomeUrl : route('org.student.login', $currentOrganization))
+            : route('lessons.index');
     @endphp
     <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200/60 shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center">
-                <a href="{{ $isOrgStudentPortal ? $studentHomeUrl : route('lessons.index') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="TALMA Practice Pal home">
+                <a href="{{ $showOrgPortalNav ? $orgPortalHomeUrl : route('lessons.index') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="TALMA Practice Pal home">
                     <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="h-9 w-auto">
                 </a>
-                @if($isOrgStudentPortal)
-                    <span class="hidden sm:inline ml-3 text-sm font-medium text-gray-600 border-l border-gray-200 pl-3">{{ $currentOrganization->display_name }}</span>
+                @if($showOrgPortalNav)
+                    <span class="hidden sm:inline ms-3 text-sm font-medium text-gray-600 border-s border-gray-200 ps-3">{{ $currentOrganization->display_name }}</span>
                 @endif
             </div>
 
-            @if($isOrgStudentPortal)
+            @if($showOrgPortalNav)
                 <div class="flex items-center gap-2">
                     @if(SignupLocale::shouldApplyStudentLocale())
                         <x-signup-locale-switcher compact />
                     @endif
+                    @if($isOrgStudentPortal)
                     <div class="relative" id="student-account-menu">
                         <button type="button" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200" id="student-account-toggle" aria-label="{{ __('student-portal.nav.account') }}" aria-expanded="false" aria-haspopup="true">
                             <i class="fas fa-user-circle text-2xl text-gray-500"></i>
@@ -84,6 +91,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                 </div>
             @else
             <button class="md:hidden p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200" id="nav-toggle" aria-label="Toggle navigation">
@@ -153,7 +161,7 @@
             @endif
         </nav>
         <!-- Mobile menu (legacy / admin nav only) -->
-        @unless($isOrgStudentPortal)
+        @unless($showOrgPortalNav)
         <div class="hidden md:hidden border-t border-gray-200/60 bg-white/95 backdrop-blur-sm" id="mobile-nav">
             <div class="container mx-auto px-4 py-4 flex flex-col gap-2">
                 <a href="{{ route('lessons.index') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">Lessons</a>

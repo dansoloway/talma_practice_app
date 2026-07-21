@@ -92,8 +92,33 @@ class SummerPracticePalAccessTest extends TestCase
             ->assertOk()
             ->assertSee('התחברו כדי לגשת לקורסים שלכם', false)
             ->assertSee('עברית', false)
+            ->assertDontSee('>Lessons<', false)
             ->assertSee('id="password"', false)
             ->assertSee('signup-field-ltr', false);
+    }
+
+    public function test_parent_login_ignores_legacy_english_session(): void
+    {
+        $org = $this->summerOrg();
+
+        $this->withSession(['signup_locale' => 'en'])
+            ->get(route('org.student.login', $org))
+            ->assertOk()
+            ->assertSee('התחברו כדי לגשת לקורסים שלכם', false)
+            ->assertSee('lang="he"', false);
+    }
+
+    public function test_parent_login_locale_persists_within_org(): void
+    {
+        $org = $this->summerOrg();
+
+        $this->get(route('org.student.login', ['organization' => $org, 'lang' => 'en']))
+            ->assertOk()
+            ->assertSee('Sign in to access your courses', false);
+
+        $this->get(route('org.student.register', $org))
+            ->assertOk()
+            ->assertSee('Parent or guardian registration', false);
     }
 
     public function test_parent_login_can_switch_to_arabic(): void

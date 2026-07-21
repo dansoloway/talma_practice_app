@@ -26,17 +26,45 @@ class SignupLocale
         return in_array($locale, self::SUPPORTED, true) ? $locale : self::DEFAULT;
     }
 
+    public static function sessionKey(?Organization $org = null): string
+    {
+        if ($org instanceof Organization && $org->usesParentSignup()) {
+            return 'signup_locale.'.$org->slug;
+        }
+
+        return 'signup_locale';
+    }
+
+    public static function organizationFromRequest(Request $request): ?Organization
+    {
+        $org = $request->attributes->get('currentOrganization');
+        if ($org instanceof Organization) {
+            return $org;
+        }
+
+        $routeOrg = $request->route('organization');
+        if ($routeOrg instanceof Organization) {
+            return $routeOrg;
+        }
+
+        return null;
+    }
+
     public static function resolve(Request $request): string
     {
-        $locale = $request->query('lang') ?? $request->session()->get('signup_locale', self::DEFAULT);
+        $org = self::organizationFromRequest($request);
+        $sessionKey = self::sessionKey($org);
+        $locale = $request->query('lang') ?? $request->session()->get($sessionKey, self::DEFAULT);
 
         return self::normalize($locale);
     }
 
     public static function apply(Request $request): string
     {
+        $org = self::organizationFromRequest($request);
+        $sessionKey = self::sessionKey($org);
         $locale = self::resolve($request);
-        $request->session()->put('signup_locale', $locale);
+        $request->session()->put($sessionKey, $locale);
         app()->setLocale($locale);
 
         return $locale;

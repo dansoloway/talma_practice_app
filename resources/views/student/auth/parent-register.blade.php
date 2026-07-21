@@ -15,8 +15,6 @@
 <div class="min-h-screen py-12 px-4">
     <div class="w-full max-w-2xl mx-auto">
         <div class="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-xl p-8">
-            <x-signup-locale-switcher />
-
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ __('parent-signup.heading', ['org' => $organization->display_name]) }}</h1>
                 <p class="text-gray-600">{{ __('parent-signup.subtitle') }}</p>
