@@ -55,9 +55,11 @@
             @forelse($orgsWithCourses as $row)
                 @php $org = $row['org']; $courses = $row['courses']; @endphp
                 <section class="mb-12">
+                    @unless(isset($currentOrganization))
                     <h3 class="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2">
                         {{ $org->display_name }}
                     </h3>
+                    @endunless
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         @foreach($courses as $course)
                             <a href="{{ route('org.student.course', [$org, $course]) }}" 
