@@ -67,7 +67,21 @@ class SummerPracticePalAccessTest extends TestCase
 
         $this->get(route('org.student.register', ['organization' => $org, 'lang' => 'en']))
             ->assertOk()
-            ->assertSee('Parent or guardian registration', false);
+            ->assertSee('Parent or guardian registration', false)
+            ->assertSee('I have read the privacy policy', false)
+            ->assertSee('privacyModalEn', false)
+            ->assertSee('English', false)
+            ->assertSee('עברית', false);
+    }
+
+    public function test_parent_register_shows_hebrew_privacy_read_checkbox(): void
+    {
+        $org = $this->summerOrg();
+
+        $this->get(route('org.student.register', $org))
+            ->assertOk()
+            ->assertSee('קראתי את מדיניות הפרטיות', false)
+            ->assertSee('privacyModalHe', false);
     }
 
     public function test_parent_login_defaults_to_hebrew(): void
@@ -114,6 +128,7 @@ class SummerPracticePalAccessTest extends TestCase
             'phone_prefix' => '050',
             'phone_rest' => '1234567',
             'terms_accepted' => '1',
+            'privacy_policy_read' => '1',
             'students' => [
                 [
                     'first_name' => 'דן',
@@ -136,6 +151,8 @@ class SummerPracticePalAccessTest extends TestCase
         $this->assertTrue($user->isParent());
         $this->assertTrue($user->isMemberOfOrg($org->id));
         $this->assertNotNull($user->terms_accepted_at);
+        $this->assertNotNull($user->privacy_policy_read_at);
+        $this->assertSame('1.0', $user->privacy_policy_version);
 
         $child = ParentStudent::where('parent_id', $user->id)->first();
         $this->assertNotNull($child);
@@ -165,6 +182,7 @@ class SummerPracticePalAccessTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'terms_accepted' => '1',
+            'privacy_policy_read' => '1',
         ]);
 
         $response->assertRedirect(route('org.student.index', $org));
@@ -173,6 +191,8 @@ class SummerPracticePalAccessTest extends TestCase
         $user = User::where('email', 'learner@example.com')->first();
         $this->assertTrue($user->isStudent());
         $this->assertNotNull($user->terms_accepted_at);
+        $this->assertNotNull($user->privacy_policy_read_at);
+        $this->assertSame('1.0', $user->privacy_policy_version);
     }
 
     public function test_restricted_only_course_requires_auth_on_legacy_route(): void
@@ -213,6 +233,7 @@ class SummerPracticePalAccessTest extends TestCase
             'phone_prefix' => '052',
             'phone_rest' => '7654321',
             'terms_accepted' => '1',
+            'privacy_policy_read' => '1',
             'students' => [
                 [
                     'first_name' => 'א',

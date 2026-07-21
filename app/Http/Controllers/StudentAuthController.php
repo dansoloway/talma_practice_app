@@ -130,8 +130,9 @@ class StudentAuthController extends Controller
         }
 
         $terms = TermsAndCondition::getStudentSignupTerms();
+        $privacyPolicy = TermsAndCondition::getPrivacyPolicy();
 
-        return view('student.auth.register', compact('organization', 'terms'));
+        return view('student.auth.register', compact('organization', 'terms', 'privacyPolicy'));
     }
 
     public function register(Request $request, Organization $organization)
@@ -149,7 +150,14 @@ class StudentAuthController extends Controller
         }
 
         $terms = TermsAndCondition::getStudentSignupTerms();
-        $termsRules = $terms ? ['terms_accepted' => ['required', 'accepted']] : [];
+        $privacyPolicy = TermsAndCondition::getPrivacyPolicy();
+        $consentRules = [];
+        if ($terms) {
+            $consentRules['terms_accepted'] = ['required', 'accepted'];
+        }
+        if ($privacyPolicy) {
+            $consentRules['privacy_policy_read'] = ['required', 'accepted'];
+        }
 
         $validated = $request->validate(array_merge([
             'name' => 'required|string|max:255',
@@ -159,7 +167,7 @@ class StudentAuthController extends Controller
             'gender' => [$organization->retain_voice_recordings ? 'required' : 'nullable', 'in:male,female'],
             'native_language' => [$organization->retain_voice_recordings ? 'required' : 'nullable', 'in:hebrew,arabic,english,other'],
             'voice_recording_consent' => [$organization->retain_voice_recordings ? 'accepted' : 'nullable'],
-        ], $termsRules));
+        ], $consentRules));
 
         $user = User::create([
             'name' => $validated['name'],
@@ -173,6 +181,8 @@ class StudentAuthController extends Controller
             'voice_recording_consented_at' => $organization->retain_voice_recordings ? now() : null,
             'terms_accepted_at' => $terms ? now() : null,
             'terms_version' => $terms?->version,
+            'privacy_policy_read_at' => $privacyPolicy ? now() : null,
+            'privacy_policy_version' => $privacyPolicy?->version,
         ]);
 
         $organization->users()->syncWithoutDetaching([

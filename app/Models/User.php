@@ -46,6 +46,8 @@ class User extends Authenticatable
         'voice_recording_consented_at',
         'terms_accepted_at',
         'terms_version',
+        'privacy_policy_read_at',
+        'privacy_policy_version',
         'remember_token',
     ];
 
@@ -72,6 +74,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'voice_recording_consented_at' => 'datetime',
             'terms_accepted_at' => 'datetime',
+            'privacy_policy_read_at' => 'datetime',
         ];
     }
 

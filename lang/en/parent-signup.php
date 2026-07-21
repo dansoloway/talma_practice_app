@@ -22,7 +22,12 @@ return [
     'add_child' => '+ Add child',
 
     'terms_prefix' => 'I agree to the',
-    'terms_link' => 'terms of use and privacy policy',
+    'terms_link' => 'terms of use',
+    'privacy_read_prefix' => 'I have read the privacy policy (',
+    'privacy_link_en' => 'English',
+    'privacy_link_he' => 'עברית',
+    'privacy_link_separator' => '|',
+    'privacy_read_suffix' => ')',
 
     'voice_waiver' => 'I agree that my voice recordings may be saved anonymously to help improve voice recognition tools.',
     'voice_applies_all' => 'This applies to every child on your account.',
@@ -66,7 +71,8 @@ return [
     ],
 
     'validation' => [
-        'terms_accepted' => 'Please check the box to accept the terms of use and privacy policy.',
+        'terms_accepted' => 'Please check the box to accept the terms of use.',
+        'privacy_policy_read' => 'Please confirm that you have read the privacy policy.',
         'phone_invalid' => 'Phone must be a valid Israeli number (starting with 0 or +972).',
         'phone_registered' => 'This phone number is already registered.',
         'child_password_required' => 'Password is required for separate child login.',

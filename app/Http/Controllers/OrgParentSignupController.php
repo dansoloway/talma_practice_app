@@ -34,9 +34,10 @@ class OrgParentSignupController extends Controller
         SignupLocale::apply(request());
 
         $terms = TermsAndCondition::getStudentSignupTerms();
+        $privacyPolicy = TermsAndCondition::getPrivacyPolicy();
         $cities = City::orderBy('name')->get();
 
-        return view('student.auth.parent-register', compact('organization', 'terms', 'cities'));
+        return view('student.auth.parent-register', compact('organization', 'terms', 'privacyPolicy', 'cities'));
     }
 
     public function register(Request $request, Organization $organization): RedirectResponse
@@ -48,7 +49,14 @@ class OrgParentSignupController extends Controller
         }
 
         $terms = TermsAndCondition::getStudentSignupTerms();
-        $termsRules = $terms ? ['terms_accepted' => ['required', 'accepted']] : [];
+        $privacyPolicy = TermsAndCondition::getPrivacyPolicy();
+        $consentRules = [];
+        if ($terms) {
+            $consentRules['terms_accepted'] = ['required', 'accepted'];
+        }
+        if ($privacyPolicy) {
+            $consentRules['privacy_policy_read'] = ['required', 'accepted'];
+        }
         $voiceRules = $organization->retain_voice_recordings
             ? ['voice_recording_consent' => ['required', 'accepted']]
             : [];
@@ -86,7 +94,7 @@ class OrgParentSignupController extends Controller
             'students.*.password' => ['nullable', 'confirmed', Password::min(8)],
             'students.*.phone_prefix' => ['nullable', 'string', 'max:5'],
             'students.*.phone_rest' => ['nullable', 'string', 'max:10'],
-        ], $termsRules, $voiceRules);
+        ], $consentRules, $voiceRules);
 
         $prefix = $request->input('phone_prefix', '');
         $rest = preg_replace('/\D/', '', (string) $request->input('phone_rest', ''));
@@ -107,6 +115,7 @@ class OrgParentSignupController extends Controller
 
         $validator = Validator::make($request->all(), $rules, [
             'terms_accepted.accepted' => __('parent-signup.validation.terms_accepted'),
+            'privacy_policy_read.accepted' => __('parent-signup.validation.privacy_policy_read'),
         ]);
         $validator->after(fn ($v) => $this->validateParentSignupIdentities($v, $request));
         $validated = $validator->validate();
@@ -114,6 +123,7 @@ class OrgParentSignupController extends Controller
         $normalizedPhone = PhoneRules::normalize($validated['phone_number']);
         $termsAcceptedAt = now();
         $termsVersion = $terms?->version;
+        $privacyPolicyVersion = $privacyPolicy?->version;
 
         DB::beginTransaction();
         try {
@@ -127,8 +137,10 @@ class OrgParentSignupController extends Controller
                 'password' => Hash::make($validated['password']),
                 'role' => User::ROLE_PARENT,
                 'is_active' => true,
-                'terms_accepted_at' => $termsAcceptedAt,
+                'terms_accepted_at' => $terms ? $termsAcceptedAt : null,
                 'terms_version' => $termsVersion,
+                'privacy_policy_read_at' => $privacyPolicy ? $termsAcceptedAt : null,
+                'privacy_policy_version' => $privacyPolicyVersion,
                 'voice_recording_consented_at' => ($organization->retain_voice_recordings && ! empty($validated['voice_recording_consent']))
                     ? $termsAcceptedAt
                     : null,
@@ -168,8 +180,10 @@ class OrgParentSignupController extends Controller
                     'gender' => $studentData['gender'] ?? null,
                     'native_language' => $studentData['native_language'] ?? null,
                     'login_type' => $studentData['login_type'],
-                    'terms_accepted_at' => $termsAcceptedAt,
+                    'terms_accepted_at' => $terms ? $termsAcceptedAt : null,
                     'terms_version' => $termsVersion,
+                    'privacy_policy_read_at' => $privacyPolicy ? $termsAcceptedAt : null,
+                    'privacy_policy_version' => $privacyPolicyVersion,
                 ];
 
                 if (($studentData['login_type'] ?? '') === 'separate') {

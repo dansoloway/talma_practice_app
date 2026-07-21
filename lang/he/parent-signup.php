@@ -22,7 +22,12 @@ return [
     'add_child' => '+ הוספת ילד',
 
     'terms_prefix' => 'אני מסכים/ה ל',
-    'terms_link' => 'תנאי השימוש ומדיניות הפרטיות',
+    'terms_link' => 'תנאי השימוש',
+    'privacy_read_prefix' => 'קראתי את מדיניות הפרטיות (',
+    'privacy_link_en' => 'English',
+    'privacy_link_he' => 'עברית',
+    'privacy_link_separator' => '|',
+    'privacy_read_suffix' => ')',
 
     'voice_waiver' => 'אני מסכים/ה שהקלטות הקול שלי יישמרו באופן אנונימי כדי לסייע בשיפור כלי זיהוי קול.',
     'voice_applies_all' => 'ההסכמה חלה על כל הילדים בחשבון.',
@@ -80,7 +85,8 @@ return [
     ],
 
     'validation' => [
-        'terms_accepted' => 'יש לסמן את תיבת ההסכמה לתנאי השימוש ומדיניות הפרטיות.',
+        'terms_accepted' => 'יש לסמן את תיבת ההסכמה לתנאי השימוש.',
+        'privacy_policy_read' => 'יש לאשר שקראתם את מדיניות הפרטיות.',
         'phone_invalid' => 'יש להזין מספר טלפון ישראלי תקין (החל מ-0 או +972).',
         'phone_registered' => 'מספר הטלפון הזה כבר רשום במערכת.',
         'child_password_required' => 'נדרשת סיסמה עבור התחברות נפרדת של הילד/ה.',

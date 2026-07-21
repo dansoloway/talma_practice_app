@@ -130,6 +130,7 @@ class VoiceSampleTest extends TestCase
             'native_language' => 'arabic',
             'voice_recording_consent' => '1',
             'terms_accepted' => '1',
+            'privacy_policy_read' => '1',
         ]);
 
         $response->assertRedirect(route('org.student.index', $this->organization));

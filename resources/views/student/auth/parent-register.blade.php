@@ -105,18 +105,11 @@
                     @endfor
                 </section>
 
-                @if($terms)
-                    <div class="border-t pt-4">
-                        <label class="flex items-start gap-3 cursor-pointer">
-                            <input type="checkbox" id="terms_accepted" name="terms_accepted" value="1" required class="mt-1 rounded border-gray-300 text-blue-600" {{ old('terms_accepted') ? 'checked' : '' }}>
-                            <span class="text-sm text-gray-700">
-                                {{ __('parent-signup.terms_prefix') }}
-                                <button type="button" onclick="openTermsModal()" class="text-blue-600 hover:underline font-medium">{{ __('parent-signup.terms_link') }}</button>
-                            </span>
-                        </label>
-                    </div>
-                    <x-terms-modal :terms="$terms" :locale="$locale" />
-                @endif
+                @include('student.auth.partials.signup-consent-checkboxes', [
+                    'terms' => $terms,
+                    'privacyPolicy' => $privacyPolicy,
+                    'locale' => $locale,
+                ])
 
                 @if($organization->retain_voice_recordings)
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">

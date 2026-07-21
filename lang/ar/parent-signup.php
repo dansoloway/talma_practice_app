@@ -22,7 +22,12 @@ return [
     'add_child' => '+ إضافة طفل',
 
     'terms_prefix' => 'أوافق على',
-    'terms_link' => 'شروط الاستخدام وسياسة الخصوصية',
+    'terms_link' => 'شروط الاستخدام',
+    'privacy_read_prefix' => 'قرأت سياسة الخصوصية (',
+    'privacy_link_en' => 'English',
+    'privacy_link_he' => 'עברית',
+    'privacy_link_separator' => '|',
+    'privacy_read_suffix' => ')',
 
     'voice_waiver' => 'أوافق على حفظ تسجيلات صوتي بشكل مجهول للمساعدة في تحسين أدوات التعرف على الصوت.',
     'voice_applies_all' => 'ينطبق هذا على كل الأطفال في حسابك.',
@@ -66,7 +71,8 @@ return [
     ],
 
     'validation' => [
-        'terms_accepted' => 'يرجى تحديد مربع الموافقة على شروط الاستخدام وسياسة الخصوصية.',
+        'terms_accepted' => 'يرجى تحديد مربع الموافقة على شروط الاستخدام.',
+        'privacy_policy_read' => 'يرجى تأكيد أنك قرأت سياسة الخصوصية.',
         'phone_invalid' => 'يجب إدخال رقم هاتف إسرائيلي صالح (يبدأ بـ 0 أو +972).',
         'phone_registered' => 'رقم الهاتف هذا مسجل بالفعل.',
         'child_password_required' => 'كلمة المرور مطلوبة لتسجيل دخول منفصل للطفل.',

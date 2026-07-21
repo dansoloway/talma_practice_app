@@ -45,6 +45,8 @@ class StudentProfileService
                 'voice_recording_consented_at' => $parent->voice_recording_consented_at,
                 'terms_accepted_at' => $data['terms_accepted_at'] ?? null,
                 'terms_version' => $data['terms_version'] ?? null,
+                'privacy_policy_read_at' => $data['privacy_policy_read_at'] ?? null,
+                'privacy_policy_version' => $data['privacy_policy_version'] ?? null,
             ]);
 
             $student->update(['user_id' => $childUser->id]);

@@ -31,9 +31,18 @@ class TermsAndCondition extends Model
             ->first();
     }
 
+    public const TYPE_STUDENT_SIGNUP = 'student_signup';
+
+    public const TYPE_PRIVACY_POLICY = 'privacy_policy';
+
     public static function getStudentSignupTerms(): ?self
     {
-        return self::getActiveByType('student_signup');
+        return self::getActiveByType(self::TYPE_STUDENT_SIGNUP);
+    }
+
+    public static function getPrivacyPolicy(): ?self
+    {
+        return self::getActiveByType(self::TYPE_PRIVACY_POLICY);
     }
 
     /**
