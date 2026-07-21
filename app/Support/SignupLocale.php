@@ -19,11 +19,28 @@ class SignupLocale
         'ar' => 'العربية',
     ];
 
-    public static function normalize(?string $locale): string
+    public static function normalize(mixed $locale): string
     {
-        $locale = strtolower((string) $locale);
+        if (is_array($locale)) {
+            $locale = $locale[0] ?? null;
+        }
+
+        $locale = strtolower((string) ($locale ?? ''));
 
         return in_array($locale, self::SUPPORTED, true) ? $locale : self::DEFAULT;
+    }
+
+    private static function stringOrNull(mixed $value): ?string
+    {
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_array($value) && isset($value[0]) && is_string($value[0])) {
+            return $value[0];
+        }
+
+        return null;
     }
 
     public static function sessionKey(?Organization $org = null): string
@@ -54,7 +71,9 @@ class SignupLocale
     {
         $org = self::organizationFromRequest($request);
         $sessionKey = self::sessionKey($org);
-        $locale = $request->query('lang') ?? $request->session()->get($sessionKey, self::DEFAULT);
+        $locale = self::stringOrNull($request->query('lang'))
+            ?? self::stringOrNull($request->session()->get($sessionKey))
+            ?? self::DEFAULT;
 
         return self::normalize($locale);
     }

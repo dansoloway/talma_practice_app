@@ -121,6 +121,18 @@ class SummerPracticePalAccessTest extends TestCase
             ->assertSee('Parent or guardian registration', false);
     }
 
+    public function test_signup_locale_handles_array_lang_query(): void
+    {
+        $org = $this->summerOrg();
+
+        $this->get(route('org.student.login', ['organization' => $org, 'lang' => ['he', 'en']]))
+            ->assertOk()
+            ->assertSee('התחברו כדי לגשת לקורסים שלכם', false);
+
+        $this->get('/lessons?lang[]=he')
+            ->assertOk();
+    }
+
     public function test_parent_login_can_switch_to_arabic(): void
     {
         $org = $this->summerOrg();
