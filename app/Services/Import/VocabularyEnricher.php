@@ -7,6 +7,7 @@ use App\Services\ImageGeneration\ImageGeneratorService;
 use App\Services\Translation\OpenAiTranslator;
 use App\Services\Tts\ElevenLabsTtsService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class VocabularyEnricher
 {
@@ -75,11 +76,11 @@ class VocabularyEnricher
             $result['images_ok'] = !empty($vocabulary->image_path) || !$options->generateImages;
         }
 
-        if ($options->generateTts && $this->ttsService->enabled()) {
+        if ($options->generateTts && $this->ttsService->enabled() && $this->vocabularyAudioMissing($vocabulary)) {
             try {
                 $resultPath = $this->ttsService->generateAndSaveVocabulary(
                     $vocabulary->english_word,
-                    $vocabulary->word_audio_path
+                    null
                 );
                 if ($resultPath !== null) {
                     $vocabulary->update(['word_audio_path' => $resultPath['path']]);
@@ -91,10 +92,22 @@ class VocabularyEnricher
                 $result['errors'][] = "TTS generation failed for '{$vocabulary->english_word}': {$e->getMessage()}";
                 Log::warning($result['errors'][array_key_last($result['errors'])]);
             }
-        } elseif (!$options->generateTts || !empty($vocabulary->word_audio_path)) {
-            $result['tts_ok'] = !empty($vocabulary->word_audio_path) || !$options->generateTts;
+        } elseif (!$options->generateTts || !$this->vocabularyAudioMissing($vocabulary)) {
+            $result['tts_ok'] = !$this->vocabularyAudioMissing($vocabulary) || !$options->generateTts;
         }
 
         return $result;
+    }
+
+    private function vocabularyAudioMissing(Vocabulary $vocabulary): bool
+    {
+        if (empty($vocabulary->word_audio_path)) {
+            return true;
+        }
+
+        $path = ltrim($vocabulary->word_audio_path, '/');
+        $path = preg_replace('#^storage/#', '', $path);
+
+        return !Storage::disk('public')->exists($path);
     }
 }
