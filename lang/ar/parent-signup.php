@@ -23,11 +23,8 @@ return [
 
     'terms_prefix' => 'أوافق على',
     'terms_link' => 'شروط الاستخدام',
-    'privacy_read_prefix' => 'قرأت سياسة الخصوصية (',
-    'privacy_link_en' => 'English',
-    'privacy_link_he' => 'עברית',
-    'privacy_link_separator' => '|',
-    'privacy_read_suffix' => ')',
+    'privacy_read_prefix' => 'قرأت ',
+    'privacy_link' => 'سياسة الخصوصية',
 
     'voice_waiver' => 'أوافق على حفظ تسجيلات صوتي بشكل مجهول للمساعدة في تحسين أدوات التعرف على الصوت.',
     'voice_applies_all' => 'ينطبق هذا على كل الأطفال في حسابك.',

@@ -23,11 +23,8 @@ return [
 
     'terms_prefix' => 'I agree to the',
     'terms_link' => 'terms of use',
-    'privacy_read_prefix' => 'I have read the privacy policy (',
-    'privacy_link_en' => 'English',
-    'privacy_link_he' => 'עברית',
-    'privacy_link_separator' => '|',
-    'privacy_read_suffix' => ')',
+    'privacy_read_prefix' => 'I have read the ',
+    'privacy_link' => 'privacy policy',
 
     'voice_waiver' => 'I agree that my voice recordings may be saved anonymously to help improve voice recognition tools.',
     'voice_applies_all' => 'This applies to every child on your account.',

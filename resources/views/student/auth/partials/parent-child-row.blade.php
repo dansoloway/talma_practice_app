@@ -106,9 +106,9 @@
             <input type="email" name="students[{{ $index }}][email]" value="{{ $s['email'] ?? '' }}" dir="ltr" lang="en"
                    class="w-full px-3 py-2 border border-gray-300 rounded-lg student-email-input signup-field-ltr">
         </div>
-        <div class="student-contact-phone flex gap-2 signup-field-ltr" dir="ltr" style="{{ ($s['contact_type'] ?? '') === 'phone' ? '' : 'display:none' }}">
+        <div class="student-contact-phone flex flex-col sm:flex-row gap-2 signup-field-ltr" dir="ltr" style="{{ ($s['contact_type'] ?? '') === 'phone' ? '' : 'display:none' }}">
             <select name="students[{{ $index }}][phone_prefix]" dir="ltr" lang="en"
-                    class="w-28 px-3 py-2 border border-gray-300 rounded-lg student-phone-prefix signup-field-ltr">
+                    class="w-full sm:w-28 px-3 py-2 border border-gray-300 rounded-lg student-phone-prefix signup-field-ltr">
                 @foreach(['050','051','052','053','054','055','056','057','058','059'] as $p)
                     <option value="{{ $p }}" {{ ($s['phone_prefix'] ?? '050') == $p ? 'selected' : '' }}>{{ $p }}</option>
                 @endforeach

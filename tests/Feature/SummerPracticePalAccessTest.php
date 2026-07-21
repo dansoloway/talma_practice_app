@@ -68,10 +68,11 @@ class SummerPracticePalAccessTest extends TestCase
         $this->get(route('org.student.register', ['organization' => $org, 'lang' => 'en']))
             ->assertOk()
             ->assertSee('Parent or guardian registration', false)
-            ->assertSee('I have read the privacy policy', false)
-            ->assertSee('privacyModalEn', false)
-            ->assertSee('English', false)
-            ->assertSee('עברית', false);
+            ->assertSee('I have read the ', false)
+            ->assertSee('privacy policy', false)
+            ->assertSee('privacyModal', false)
+            ->assertDontSee('privacyModalEn', false)
+            ->assertDontSee('privacyModalHe', false);
     }
 
     public function test_parent_register_shows_hebrew_privacy_read_checkbox(): void
@@ -80,8 +81,11 @@ class SummerPracticePalAccessTest extends TestCase
 
         $this->get(route('org.student.register', $org))
             ->assertOk()
-            ->assertSee('קראתי את מדיניות הפרטיות', false)
-            ->assertSee('privacyModalHe', false);
+            ->assertSee('קראתי את ', false)
+            ->assertSee('מדיניות הפרטיות', false)
+            ->assertSee('privacyModal', false)
+            ->assertDontSee('privacyModalHe', false)
+            ->assertDontSee('privacyModalEn', false);
     }
 
     public function test_parent_login_defaults_to_hebrew(): void

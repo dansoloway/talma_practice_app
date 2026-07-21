@@ -12,7 +12,7 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <p class="text-gray-600 mb-6">Manage terms of use and privacy policy documents shown on registration. Privacy policy has separate English and Hebrew modals on the signup form.</p>
+    <p class="text-gray-600 mb-6">Manage terms of use and privacy policy documents shown on registration. Each document uses the signup page language.</p>
 
     <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">

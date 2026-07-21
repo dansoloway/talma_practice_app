@@ -66,9 +66,9 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">{{ __('parent-signup.phone') }}</label>
-                        <div class="flex gap-2 signup-field-ltr" dir="ltr">
+                        <div class="flex flex-col sm:flex-row gap-2 signup-field-ltr" dir="ltr">
                             <select name="phone_prefix" required dir="ltr" lang="en"
-                                    class="w-28 px-3 py-3 border border-gray-300 rounded-xl signup-field-ltr">
+                                    class="w-full sm:w-28 px-3 py-3 border border-gray-300 rounded-xl signup-field-ltr">
                                 @foreach(['050','051','052','053','054','055','056','057','058','059','072','073','074','075','076','077','078','079'] as $p)
                                     <option value="{{ $p }}" {{ old('phone_prefix', '050') == $p ? 'selected' : '' }}>{{ $p }}</option>
                                 @endforeach

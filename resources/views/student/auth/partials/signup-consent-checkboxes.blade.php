@@ -21,14 +21,11 @@
                        {{ old('privacy_policy_read') ? 'checked' : '' }}>
                 <span class="text-sm text-gray-700">
                     {{ __('parent-signup.privacy_read_prefix') }}
-                    <button type="button" onclick="openLegalModal('privacyModalEn')" class="text-blue-600 hover:underline font-medium">{{ __('parent-signup.privacy_link_en') }}</button>
-                    <span class="text-gray-400">{{ __('parent-signup.privacy_link_separator') }}</span>
-                    <button type="button" onclick="openLegalModal('privacyModalHe')" class="text-blue-600 hover:underline font-medium">{{ __('parent-signup.privacy_link_he') }}</button>{{ __('parent-signup.privacy_read_suffix') }}
+                    <button type="button" onclick="openLegalModal('privacyModal')" class="text-blue-600 hover:underline font-medium">{{ __('parent-signup.privacy_link') }}</button>
                 </span>
             </label>
 
-            <x-legal-document-modal :document="$privacyPolicy" modal-id="privacyModalEn" fixed-locale="en" />
-            <x-legal-document-modal :document="$privacyPolicy" modal-id="privacyModalHe" fixed-locale="he" />
+            <x-legal-document-modal :document="$privacyPolicy" modal-id="privacyModal" :locale="$locale ?? null" />
         @endif
     </div>
 @endif

@@ -23,11 +23,8 @@ return [
 
     'terms_prefix' => 'אני מסכים/ה ל',
     'terms_link' => 'תנאי השימוש',
-    'privacy_read_prefix' => 'קראתי את מדיניות הפרטיות (',
-    'privacy_link_en' => 'English',
-    'privacy_link_he' => 'עברית',
-    'privacy_link_separator' => '|',
-    'privacy_read_suffix' => ')',
+    'privacy_read_prefix' => 'קראתי את ',
+    'privacy_link' => 'מדיניות הפרטיות',
 
     'voice_waiver' => 'אני מסכים/ה שהקלטות הקול שלי יישמרו באופן אנונימי כדי לסייע בשיפור כלי זיהוי קול.',
     'voice_applies_all' => 'ההסכמה חלה על כל הילדים בחשבון.',
