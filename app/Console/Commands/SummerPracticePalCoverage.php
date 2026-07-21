@@ -146,7 +146,7 @@ class SummerPracticePalCoverage extends Command
             fn (Vocabulary $v) => filled($v->hebrew_translation) && filled($v->arabic_translation)
         )->count();
         $withImage = $vocab->filter(fn (Vocabulary $v) => filled($v->image_path))->count();
-        $withVocabTts = $vocab->filter(fn (Vocabulary $v) => filled($v->word_audio_path))->count();
+        $withVocabTts = $vocab->filter(fn (Vocabulary $v) => $v->hasAudioFile())->count();
 
         $optionCount = $options->count();
         $withPromptOptionTts = $options->filter(

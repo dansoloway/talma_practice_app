@@ -78,7 +78,7 @@ class EnrichSummerPracticePal extends Command
         if ($options->dryRun) {
             $needsTrans = $vocabulary->filter(fn (Vocabulary $v) => empty($v->hebrew_translation) || empty($v->arabic_translation))->count();
             $needsImages = $vocabulary->filter(fn (Vocabulary $v) => empty($v->image_path))->count();
-            $needsTts = $vocabulary->filter(fn (Vocabulary $v) => empty($v->word_audio_path))->count();
+            $needsTts = $vocabulary->filter(fn (Vocabulary $v) => !$v->hasAudioFile())->count();
             $this->newLine();
             $this->table(['Field', 'Missing'], [
                 ['Translations', $needsTrans],
