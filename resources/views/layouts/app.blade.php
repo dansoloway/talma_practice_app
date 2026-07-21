@@ -48,7 +48,7 @@
         <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center">
                 <a href="{{ $showOrgPortalNav ? $orgPortalHomeUrl : route('student.index') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="TALMA Practice Pal home">
-                    <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="h-9 w-auto">
+                    <img src="{{ asset('talma-logo-new.svg') }}" alt="TALMA — English for Change" class="h-9 w-auto">
                 </a>
                 @if($showOrgPortalNav)
                     <span class="hidden sm:inline ms-3 text-sm font-medium text-gray-600 border-s border-gray-200 ps-3">{{ $currentOrganization->display_name }}</span>

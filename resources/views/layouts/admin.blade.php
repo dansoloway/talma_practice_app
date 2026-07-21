@@ -43,7 +43,7 @@
         <nav class="container mx-auto px-4 py-4 flex items-center gap-3">
             <div class="flex items-center">
                 <a href="{{ $analyticsUrl }}" class="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200" aria-label="Dashboard">
-                    <img src="{{ asset('logo.svg') }}" alt="TALMA Practice Pal" class="h-9 w-auto">
+                    <img src="{{ asset('talma-logo-new.svg') }}" alt="TALMA — English for Change" class="h-9 w-auto">
                 </a>
             </div>
             <div class="flex-1 flex items-center justify-end gap-2">
