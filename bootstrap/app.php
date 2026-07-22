@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'student.org.access' => \App\Http\Middleware\StudentOrgAccess::class,
             'learner.selected' => \App\Http\Middleware\EnsureSelectedLearner::class,
             'learner.voice-profile' => \App\Http\Middleware\EnsureLearnerVoiceProfile::class,
+            'learner.visit' => \App\Http\Middleware\TrackLearnerVisit::class,
             'voice-sample.viewer' => \App\Http\Middleware\EnsureVoiceSampleViewer::class,
         ]);
 

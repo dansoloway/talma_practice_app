@@ -14,6 +14,7 @@ use App\Http\Controllers\VoiceSampleController;
 use App\Http\Controllers\Admin\AdminLoginController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\SummerAnalyticsController;
 use App\Http\Controllers\Admin\LessonController as AdminLessonController;
 use App\Http\Controllers\Admin\LessonTrackerController;
 use App\Http\Controllers\Admin\PartController as AdminPartController;
@@ -53,14 +54,14 @@ Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.contex
 });
 
 // Org-scoped student routes (protected when org is restricted)
-Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'signup.locale', 'student.org.access', 'learner.selected'])->group(function () {
+Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'signup.locale', 'student.org.access', 'learner.selected', 'learner.visit'])->group(function () {
     Route::get('complete-voice-profile', [LearnerProfileController::class, 'showCompleteVoiceProfile'])->name('complete-voice-profile');
     Route::post('complete-voice-profile', [LearnerProfileController::class, 'storeCompleteVoiceProfile'])->name('complete-voice-profile.submit');
     Route::get('select-child', [StudentChildController::class, 'selectChild'])->name('select-child');
     Route::post('select-child', [StudentChildController::class, 'storeSelectedChild'])->name('select-child.submit');
 });
 
-Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'signup.locale', 'student.org.access', 'learner.selected', 'learner.voice-profile'])->group(function () {
+Route::prefix('o/{organization}')->name('org.student.')->middleware(['org.context', 'signup.locale', 'student.org.access', 'learner.selected', 'learner.voice-profile', 'learner.visit'])->group(function () {
     Route::get('/', [StudentController::class, 'index'])->name('index');
     Route::get('courses/{course:slug}', [StudentController::class, 'course'])->name('course');
     Route::get('lessons/{lesson}/guided/vocabulary', [GuidedLessonController::class, 'vocabulary'])->name('guided.vocabulary');
@@ -145,6 +146,10 @@ Route::post('/admin/password/reset', [\App\Http\Controllers\Admin\PasswordResetC
 Route::prefix('o/{organization}')->name('org.admin.')->middleware(['auth:admin', 'admin.access', 'org.context', 'org.member'])->group(function () {
     Route::get('admin', fn () => redirect()->route('org.admin.analytics', ['organization' => request()->route('organization')]))->name('dashboard');
     Route::get('admin/analytics', [DashboardController::class, 'index'])->name('analytics');
+    Route::get('admin/summer-analytics', [SummerAnalyticsController::class, 'index'])->name('summer-analytics');
+    Route::get('admin/summer-analytics/export/signups', [SummerAnalyticsController::class, 'exportSignups'])->name('summer-analytics.export-signups');
+    Route::get('admin/summer-analytics/export/logins', [SummerAnalyticsController::class, 'exportLogins'])->name('summer-analytics.export-logins');
+    Route::get('admin/summer-analytics/export/visits', [SummerAnalyticsController::class, 'exportVisits'])->name('summer-analytics.export-visits');
     Route::post('admin/courses/{course}/archive', [CourseController::class, 'archive'])->name('courses.archive');
     Route::post('admin/courses/{course}/unarchive', [CourseController::class, 'unarchive'])->name('courses.unarchive');
     Route::post('admin/courses/{course}/toggle-org-wide', [CourseController::class, 'toggleOrgWide'])->name('courses.toggle-org-wide');

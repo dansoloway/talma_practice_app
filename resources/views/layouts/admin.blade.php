@@ -93,6 +93,11 @@
                             <a href="{{ $analyticsUrl }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl transition-colors duration-200">
                                 <i class="fas fa-chart-line w-5 mr-2 text-gray-400"></i>Dashboard
                             </a>
+                            @if($org && $org->slug === \App\Models\Organization::SUMMER_PRACTICE_PAL_SLUG)
+                                <a href="{{ route('org.admin.summer-analytics', ['organization' => $org->slug]) }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
+                                    <i class="fas fa-sun w-5 mr-2 text-gray-400"></i>Summer Analytics
+                                </a>
+                            @endif
                             <a href="{{ route('admin.session-length') }}" class="block px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">
                                 <i class="fas fa-clock w-5 mr-2 text-gray-400"></i>Session Length
                             </a>
@@ -190,6 +195,11 @@
                 <a href="{{ $analyticsUrl }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">
                     <i class="fas fa-chart-line w-5 mr-2 text-gray-400"></i>Dashboard
                 </a>
+                @if($org && $org->slug === \App\Models\Organization::SUMMER_PRACTICE_PAL_SLUG)
+                    <a href="{{ route('org.admin.summer-analytics', ['organization' => $org->slug]) }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">
+                        <i class="fas fa-sun w-5 mr-2 text-gray-400"></i>Summer Analytics
+                    </a>
+                @endif
                 <a href="{{ route('admin.session-length') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 transition-all duration-200">
                     <i class="fas fa-clock w-5 mr-2 text-gray-400"></i>Session Length
                 </a>

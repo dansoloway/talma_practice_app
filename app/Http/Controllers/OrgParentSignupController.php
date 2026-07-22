@@ -9,6 +9,7 @@ use App\Models\StudentIdentity;
 use App\Models\TermsAndCondition;
 use App\Models\User;
 use App\Services\LearnerSessionService;
+use App\Services\LearnerVisitTracker;
 use App\Services\StudentProfileService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ class OrgParentSignupController extends Controller
     public function __construct(
         protected StudentProfileService $studentService,
         protected LearnerSessionService $learnerSession,
+        protected LearnerVisitTracker $visitTracker,
     ) {}
 
     public function showRegister(Organization $organization): View
@@ -212,6 +214,7 @@ class OrgParentSignupController extends Controller
 
         Auth::guard('admin')->login($parent);
         $request->session()->regenerate();
+        $this->visitTracker->recordLogin($parent, $organization, $request);
 
         return $this->learnerSession->redirectAfterAuth($parent, $organization)
             ->with('success', __('parent-signup.welcome'));

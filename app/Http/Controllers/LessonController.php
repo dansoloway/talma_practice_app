@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\GuardsRestrictedCourseAccess;
 use App\Models\Lesson;
 use App\Models\Organization;
 use App\Services\CourseAccess;
+use App\Services\LearnerVisitTracker;
 use App\Services\LessonFlowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ class LessonController extends Controller
     public function __construct(
         CourseAccess $courseAccess,
         protected LessonFlowService $flowService,
+        protected LearnerVisitTracker $visitTracker,
     ) {
         $this->courseAccess = $courseAccess;
     }
@@ -117,6 +119,10 @@ class LessonController extends Controller
         $user = auth('admin')->check() ? auth('admin')->user() : null;
         if (!$this->courseAccess->canAccessLesson($user, $lesson, $org)) {
             abort(403, 'You do not have access to this lesson.');
+        }
+
+        if ($organization instanceof Organization) {
+            $this->visitTracker->touch($organization, $lesson->id);
         }
         
         // Add full URLs for audio paths in prompts

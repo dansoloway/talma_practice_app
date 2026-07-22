@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\PhoneRules;
 use App\Models\Organization;
 use App\Models\TermsAndCondition;
 use App\Models\User;
 use App\Services\LearnerSessionService;
+use App\Services\LearnerVisitTracker;
 use App\Support\SignupLocale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +21,7 @@ class StudentAuthController extends Controller
     public function __construct(
         protected LearnerSessionService $learnerSession,
         protected OrgParentSignupController $parentSignup,
+        protected LearnerVisitTracker $visitTracker,
     ) {}
 
     public function showLogin(Organization $organization)
@@ -89,6 +92,7 @@ class StudentAuthController extends Controller
         Auth::guard('admin')->login($loginUser, $request->boolean('remember'));
         RateLimiter::clear($key);
         $request->session()->regenerate();
+        $this->visitTracker->recordLogin($loginUser, $organization, $request);
 
         return $this->learnerSession->redirectAfterAuth($loginUser, $organization);
     }
@@ -191,6 +195,7 @@ class StudentAuthController extends Controller
 
         Auth::guard('admin')->login($user);
         $request->session()->regenerate();
+        $this->visitTracker->recordLogin($user, $organization, $request);
 
         return redirect()->route('org.student.index', $organization)
             ->with('success', 'Welcome! Your account has been created.');
@@ -198,6 +203,11 @@ class StudentAuthController extends Controller
 
     public function logout(Request $request, Organization $organization)
     {
+        $user = Auth::guard('admin')->user();
+        if ($user instanceof User) {
+            $this->visitTracker->endCurrentVisit($user, $organization);
+        }
+
         Auth::guard('admin')->logout();
         $request->session()->forget('selected_student_id');
         $request->session()->invalidate();

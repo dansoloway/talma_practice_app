@@ -8,6 +8,7 @@ use App\Http\Controllers\Concerns\ProvidesGuidedFlowContext;
 use App\Models\Lesson;
 use App\Models\Organization;
 use App\Services\CourseAccess;
+use App\Services\LearnerVisitTracker;
 use App\Services\LessonFlowService;
 use App\Services\VoiceSampleLearnerProfile;
 use Illuminate\Http\RedirectResponse;
@@ -22,6 +23,7 @@ class GuidedLessonController extends Controller
     public function __construct(
         protected CourseAccess $courseAccess,
         protected LessonFlowService $flowService,
+        protected LearnerVisitTracker $visitTracker,
     ) {}
 
     public function vocabulary(Request $request, $organizationOrLesson = null, ?Lesson $lesson = null)
@@ -53,6 +55,7 @@ class GuidedLessonController extends Controller
             if (! $this->courseAccess->canAccessLesson($user, $lesson, $org)) {
                 abort(403);
             }
+            $this->visitTracker->touch($org, $lesson->id);
         } else {
             $gate = $this->ensureLegacyCourseAccess($lesson);
             if ($gate instanceof RedirectResponse) {
