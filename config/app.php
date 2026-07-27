@@ -27,6 +27,12 @@ return [
     ))),
     'practice_session_cookie' => env('PRACTICE_SESSION_COOKIE', 'talma_session_id'),
 
+    'summer_daily_report_emails' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', env('SUMMER_DAILY_REPORT_EMAILS', 'daniel@talmaisrael.com'))
+    ))),
+    'summer_daily_report_timezone' => env('SUMMER_DAILY_REPORT_TIMEZONE', 'Asia/Jerusalem'),
+
     'maintenance' => [
         'driver' => 'file',
     ],

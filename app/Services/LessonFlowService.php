@@ -7,6 +7,7 @@ use App\Models\ActivityEvent;
 use App\Models\Lesson;
 use App\Models\Organization;
 use App\Support\SignupLocale;
+use DateTimeInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -142,9 +143,9 @@ class LessonFlowService
         return $relations;
     }
 
-    public function isLessonComplete(Lesson $lesson, ?string $practiceSessionId): bool
+    public function isLessonComplete(Lesson $lesson, ?string $practiceSessionId, ?DateTimeInterface $asOf = null): bool
     {
-        $summary = $this->completionSummary($lesson, $practiceSessionId);
+        $summary = $this->completionSummary($lesson, $practiceSessionId, $asOf);
 
         return $summary['isComplete'];
     }
@@ -152,11 +153,11 @@ class LessonFlowService
     /**
      * @return array{isComplete: bool, completed: int, total: int, percent: int, completedKeys: array<int, string>}
      */
-    public function completionSummary(Lesson $lesson, ?string $practiceSessionId): array
+    public function completionSummary(Lesson $lesson, ?string $practiceSessionId, ?DateTimeInterface $asOf = null): array
     {
         $steps = $this->studentSteps($lesson);
         $total = $steps->count();
-        $completedKeys = $this->completedStepKeys($lesson, $practiceSessionId);
+        $completedKeys = $this->completedStepKeys($lesson, $practiceSessionId, $asOf);
         $completed = $steps->filter(
             fn (LessonFlowStep $step) => $completedKeys->contains($step->isCompletedKey())
         )->count();
@@ -175,15 +176,15 @@ class LessonFlowService
      *
      * @return Collection<int, string>
      */
-    public function completedStepKeys(Lesson $lesson, ?string $practiceSessionId): Collection
+    public function completedStepKeys(Lesson $lesson, ?string $practiceSessionId, ?DateTimeInterface $asOf = null): Collection
     {
         $steps = $this->studentSteps($lesson);
-        $eventKeys = $this->completedKeys($lesson, $practiceSessionId);
+        $eventKeys = $this->completedKeys($lesson, $practiceSessionId, $asOf);
 
         return $steps
-            ->filter(function (LessonFlowStep $step) use ($lesson, $practiceSessionId, $eventKeys) {
+            ->filter(function (LessonFlowStep $step) use ($lesson, $practiceSessionId, $eventKeys, $asOf) {
                 if ($step->type === 'vocabulary') {
-                    return $this->isVocabularyStepComplete($lesson, $practiceSessionId);
+                    return $this->isVocabularyStepComplete($lesson, $practiceSessionId, $asOf);
                 }
 
                 return $eventKeys->contains($step->isCompletedKey());
@@ -331,7 +332,7 @@ class LessonFlowService
     /**
      * @return Collection<int, string>
      */
-    private function completedKeys(Lesson $lesson, ?string $practiceSessionId): Collection
+    private function completedKeys(Lesson $lesson, ?string $practiceSessionId, ?DateTimeInterface $asOf = null): Collection
     {
         if (! $practiceSessionId) {
             return collect();
@@ -341,6 +342,7 @@ class LessonFlowService
             ->where('session_id', $practiceSessionId)
             ->where('lesson_id', $lesson->id)
             ->where('status', 'completed')
+            ->when($asOf, fn ($query) => $query->where('created_at', '<', $asOf))
             ->get(['activity_type', 'activity_id'])
             ->map(fn (ActivityEvent $event) => $event->activity_type . ':' . ($event->activity_id ?? 0))
             ->unique()
@@ -437,7 +439,7 @@ class LessonFlowService
      *
      * @return Collection<int, int>
      */
-    public function visitedVocabularyIds(Lesson $lesson, ?string $practiceSessionId): Collection
+    public function visitedVocabularyIds(Lesson $lesson, ?string $practiceSessionId, ?DateTimeInterface $asOf = null): Collection
     {
         if (! $practiceSessionId) {
             return collect();
@@ -449,6 +451,7 @@ class LessonFlowService
             ->where('activity_type', 'vocabulary')
             ->where('status', 'completed')
             ->whereNotNull('activity_id')
+            ->when($asOf, fn ($query) => $query->where('created_at', '<', $asOf))
             ->pluck('activity_id')
             ->unique()
             ->values();
@@ -494,7 +497,7 @@ class LessonFlowService
         return $this->visitedVocabularyIds($lesson, $practiceSessionId);
     }
 
-    public function isVocabularyStepComplete(Lesson $lesson, ?string $practiceSessionId): bool
+    public function isVocabularyStepComplete(Lesson $lesson, ?string $practiceSessionId, ?DateTimeInterface $asOf = null): bool
     {
         $wordIds = $lesson->vocabulary->where('is_active', true)->pluck('id');
 
@@ -502,7 +505,7 @@ class LessonFlowService
             return true;
         }
 
-        $visited = $this->visitedVocabularyIds($lesson, $practiceSessionId);
+        $visited = $this->visitedVocabularyIds($lesson, $practiceSessionId, $asOf);
 
         return $wordIds->every(fn ($id) => $visited->contains($id));
     }
