@@ -1,7 +1,7 @@
 {
     "name": "talma/practice-pal",
     "type": "project",
-    "description": "TALMA Practice Pal - Sentence Speaking Practice Application",
+    "description": "TALMA - Sentence Speaking Practice Application",
     "keywords": ["laravel", "education", "tts", "language-learning"],
     "license": "MIT",
     "require": {

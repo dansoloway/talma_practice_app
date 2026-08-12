@@ -13,7 +13,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'TALMA Practice Pal')</title>
+    <title>@yield('title', config('app.name'))</title>
     
     <!-- Favicons -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
@@ -47,7 +47,7 @@
     <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200/60 shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center">
-                <a href="{{ $showOrgPortalNav ? $orgPortalHomeUrl : route('student.index') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="TALMA Practice Pal home">
+                <a href="{{ $showOrgPortalNav ? $orgPortalHomeUrl : route('student.index') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200" aria-label="{{ config('app.name') }} home">
                     <img src="{{ asset('talma-logo-new.svg') }}" alt="TALMA — English for Change" class="h-9 w-auto">
                 </a>
                 @if($showOrgPortalNav)

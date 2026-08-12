@@ -52,7 +52,7 @@ class SummerPracticePalPreA1CsvImportTest extends TestCase
         }
 
         $course = Course::create([
-            'title' => 'Summer Practice Pal — Pre-A1',
+            'title' => 'TALMA Summer — Pre-A1',
             'slug' => SummerVocabAssetArchiver::COURSE_SLUGS['Pre-A1'],
             'sort_order' => 1,
             'is_active' => true,

@@ -44,13 +44,13 @@ class AdminPasswordResetNotification extends Notification
         $url = url('/admin/password/reset/' . $this->token . '?email=' . urlencode($notifiable->email));
 
         return (new MailMessage)
-            ->subject('Reset Password - TALMA Practice Pal')
+            ->subject('Reset Password - '.config('app.name'))
             ->greeting('Hello ' . $notifiable->name . ',')
             ->line('You are receiving this email because we received a password reset request for your account.')
             ->action('Reset Password', $url)
             ->line('This password reset link will expire in 24 hours.')
             ->line('If you did not request a password reset, no further action is required.')
-            ->salutation('Regards, TALMA Practice Pal');
+            ->salutation('Regards, '.config('app.name'));
     }
 
     /**

@@ -20,10 +20,10 @@ class SummerPracticePalImporter
 
     /** @var array<string, array{title: string, slug: string, sort_order: int}> */
     private const COURSE_DEFINITIONS = [
-        'Pre-A1' => ['title' => 'Summer Practice Pal — Pre-A1', 'slug' => 'summer-practice-pal-pre-a1', 'sort_order' => 1],
-        'A1' => ['title' => 'Summer Practice Pal — A1', 'slug' => 'summer-practice-pal-a1', 'sort_order' => 2],
-        'A2' => ['title' => 'Summer Practice Pal — A2', 'slug' => 'summer-practice-pal-a2', 'sort_order' => 3],
-        'B1' => ['title' => 'Summer Practice Pal — B1', 'slug' => 'summer-practice-pal-b1', 'sort_order' => 4],
+        'Pre-A1' => ['title' => 'TALMA Summer — Pre-A1', 'slug' => 'summer-practice-pal-pre-a1', 'sort_order' => 1],
+        'A1' => ['title' => 'TALMA Summer — A1', 'slug' => 'summer-practice-pal-a1', 'sort_order' => 2],
+        'A2' => ['title' => 'TALMA Summer — A2', 'slug' => 'summer-practice-pal-a2', 'sort_order' => 3],
+        'B1' => ['title' => 'TALMA Summer — B1', 'slug' => 'summer-practice-pal-b1', 'sort_order' => 4],
     ];
 
     /** @var list<array<string, string>> */
@@ -486,8 +486,8 @@ class SummerPracticePalImporter
         $summerOrg = Organization::firstOrCreate(
             ['slug' => Organization::SUMMER_PRACTICE_PAL_SLUG],
             [
-                'name' => 'Summer Practice Pal',
-                'description' => 'Summer Practice Pal — login required for CEFR practice courses',
+                'name' => 'TALMA Summer',
+                'description' => 'TALMA Summer — login required for CEFR practice courses',
                 'is_active' => true,
                 'access_mode' => 'restricted',
                 'allow_self_registration' => true,
@@ -496,7 +496,7 @@ class SummerPracticePalImporter
             ]
         );
         $summerOrg->update([
-            'name' => 'Summer Practice Pal',
+            'name' => 'TALMA Summer',
             'access_mode' => 'restricted',
             'allow_self_registration' => true,
             'registration_type' => Organization::REGISTRATION_TYPE_PARENT_SIGNUP,
@@ -521,7 +521,7 @@ class SummerPracticePalImporter
 
                 $course->fill([
                     'title' => $courseDef['title'],
-                    'description' => "Summer Practice Pal content for {$cefr} learners.",
+                    'description' => "TALMA Summer content for {$cefr} learners.",
                     'sort_order' => $courseDef['sort_order'],
                     'is_active' => true,
                     'guided_mode_enabled' => true,

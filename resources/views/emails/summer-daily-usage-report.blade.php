@@ -1,5 +1,5 @@
 <x-mail::message>
-# Summer Practice Pal — daily usage
+# TALMA Summer — daily usage
 
 Report for **{{ $date }}** ({{ $timezone }}).
 

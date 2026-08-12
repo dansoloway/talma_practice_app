@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'TALMA Practice Pal - Choose Your Course')
+@section('title', config('app.name').' - Choose Your Course')
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
@@ -11,7 +11,7 @@
                 @if(isset($currentOrganization))
                     {{ $currentOrganization->display_name }}
                 @else
-                    Welcome to TALMA Practice Pal!
+                    Welcome to {{ config('app.name') }}!
                 @endif
             </h1>
             <p class="text-lg md:text-xl text-gray-600 font-medium">

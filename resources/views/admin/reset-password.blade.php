@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Reset Password - TALMA Practice Pal')
+@section('title', 'Reset Password - '.config('app.name'))
 
 @section('content')
 <div class="container">

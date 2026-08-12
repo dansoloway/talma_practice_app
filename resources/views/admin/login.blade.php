@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Admin Login - TALMA Practice Pal')
+@section('title', 'Admin Login - '.config('app.name'))
 
 @section('content')
 <div class="min-h-screen flex items-center justify-center py-12 px-4">

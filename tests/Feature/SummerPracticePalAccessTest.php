@@ -26,7 +26,7 @@ class SummerPracticePalAccessTest extends TestCase
     protected function summerOrg(array $overrides = []): Organization
     {
         return Organization::create(array_merge([
-            'name' => 'Summer Practice Pal',
+            'name' => 'TALMA Summer',
             'slug' => Organization::SUMMER_PRACTICE_PAL_SLUG,
             'access_mode' => 'restricted',
             'allow_self_registration' => true,
@@ -152,7 +152,7 @@ class SummerPracticePalAccessTest extends TestCase
         $org = $this->summerOrg();
 
         $course = Course::create([
-            'title' => 'Summer Practice Pal — Pre-A1',
+            'title' => 'TALMA Summer — Pre-A1',
             'slug' => 'summer-practice-pal-pre-a1',
             'is_active' => true,
         ]);
@@ -201,7 +201,7 @@ class SummerPracticePalAccessTest extends TestCase
 
         $this->get(route('org.student.index', $org))
             ->assertOk()
-            ->assertSee('Summer Practice Pal — Pre-A1');
+            ->assertSee('TALMA Summer — Pre-A1');
     }
 
     public function test_student_self_signup_org_still_works_with_terms(): void
@@ -241,7 +241,7 @@ class SummerPracticePalAccessTest extends TestCase
         $org = $this->summerOrg();
 
         $course = Course::create([
-            'title' => 'Summer Practice Pal — Pre-A1',
+            'title' => 'TALMA Summer — Pre-A1',
             'slug' => 'summer-practice-pal-pre-a1',
             'is_active' => true,
         ]);

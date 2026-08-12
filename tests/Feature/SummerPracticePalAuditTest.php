@@ -16,7 +16,7 @@ class SummerPracticePalAuditTest extends TestCase
     public function test_audit_flags_invalid_vocabulary_and_lists_words(): void
     {
         $course = Course::create([
-            'title' => 'Summer Practice Pal — A2',
+            'title' => 'TALMA Summer — A2',
             'slug' => SummerVocabAssetArchiver::COURSE_SLUGS['A2'],
             'sort_order' => 1,
             'is_active' => true,

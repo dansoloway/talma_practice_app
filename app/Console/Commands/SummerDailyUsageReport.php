@@ -14,7 +14,7 @@ class SummerDailyUsageReport extends Command
                             {--date= : Report date in Asia/Jerusalem (YYYY-MM-DD); defaults to yesterday}
                             {--dry-run : Print counts without sending email}';
 
-    protected $description = 'Email yesterday\'s Summer Practice Pal usage (logins, lessons completed, voice recordings)';
+    protected $description = 'Email yesterday\'s TALMA Summer usage (logins, lessons completed, voice recordings)';
 
     public function handle(SummerDailyUsageReportService $reports): int
     {
@@ -35,7 +35,7 @@ class SummerDailyUsageReport extends Command
         $report = $reports->forDate($dateOption);
 
         if (! $report['organization']) {
-            $this->warn('Summer Practice Pal organization not found; skipping report.');
+            $this->warn('TALMA Summer organization not found; skipping report.');
 
             return self::SUCCESS;
         }

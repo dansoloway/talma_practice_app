@@ -26,14 +26,14 @@ class StudentFlowTest extends TestCase
     {
         $response = $this->get('/');
         $response->assertOk();
-        $response->assertSee('TALMA Practice Pal');
+        $response->assertSee('Welcome to TALMA');
         $response->assertSee('Choose Your Course');
     }
 
     public function test_homepage_shows_summer_practice_pal_auth_links_when_org_exists(): void
     {
         Organization::create([
-            'name' => 'Summer Practice Pal',
+            'name' => 'TALMA Summer',
             'slug' => Organization::SUMMER_PRACTICE_PAL_SLUG,
             'access_mode' => 'restricted',
             'allow_self_registration' => true,

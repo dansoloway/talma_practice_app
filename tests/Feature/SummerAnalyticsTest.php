@@ -29,7 +29,7 @@ class SummerAnalyticsTest extends TestCase
     protected function summerOrg(array $overrides = []): Organization
     {
         return Organization::create(array_merge([
-            'name' => 'Summer Practice Pal',
+            'name' => 'TALMA Summer',
             'slug' => Organization::SUMMER_PRACTICE_PAL_SLUG,
             'access_mode' => 'restricted',
             'allow_self_registration' => true,

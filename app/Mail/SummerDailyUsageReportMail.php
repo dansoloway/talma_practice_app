@@ -28,7 +28,7 @@ class SummerDailyUsageReportMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Summer Practice Pal — daily usage ('.$this->report['date'].')',
+            subject: 'TALMA Summer — daily usage ('.$this->report['date'].')',
         );
     }
 

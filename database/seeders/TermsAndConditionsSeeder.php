@@ -14,18 +14,18 @@ class TermsAndConditionsSeeder extends Seeder
             [
                 'title' => 'Terms of Use and Privacy Policy',
                 'content' => <<<'EN'
-TALMA Practice Pal — Terms of Use and Privacy Policy
+TALMA — Terms of Use and Privacy Policy
 
-By registering for Practice Pal, you (or your parent/guardian on your behalf) agree to the following terms.
+By registering for TALMA, you (or your parent/guardian on your behalf) agree to the following terms.
 
 General
-Practice Pal is an online English practice platform operated by TALMA. The platform provides self-paced lessons, vocabulary activities, and games for learners. Access to some programs requires registration.
+TALMA is an online English practice platform operated by TALMA. The platform provides self-paced lessons, vocabulary activities, and games for learners. Access to some programs requires registration.
 
 Eligibility and accounts
 You agree to provide accurate information during registration. If you are under 18, a parent or legal guardian must complete registration and accept these terms on your behalf.
 
 Use of the platform
-You agree to use Practice Pal for personal learning only. You may not attempt to access other users' accounts, scrape content, or misuse the service.
+You agree to use TALMA for personal learning only. You may not attempt to access other users' accounts, scrape content, or misuse the service.
 
 Privacy
 We collect registration information such as names, email addresses, phone numbers, and learner profile details needed to operate the program you join. We use this information to provide access, support learners, and improve our educational content.
@@ -37,10 +37,10 @@ We do not sell personal information. We may share data with service providers wh
 You may contact us to request access to or correction of personal information we hold about you.
 
 Content and intellectual property
-Lesson content, images, audio, and materials on Practice Pal are owned by TALMA and its partners. You may not copy, redistribute, or commercially exploit platform content without written permission.
+Lesson content, images, audio, and materials on TALMA are owned by TALMA and its partners. You may not copy, redistribute, or commercially exploit platform content without written permission.
 
 Limitation of liability
-Practice Pal is provided as an educational supplement. TALMA is not liable for indirect or consequential damages arising from use of the platform or third-party services integrated with it.
+TALMA is provided as an educational supplement. TALMA is not liable for indirect or consequential damages arising from use of the platform or third-party services integrated with it.
 
 Changes
 We may update these terms from time to time. The version shown at registration applies to your signup.
@@ -52,18 +52,18 @@ EN,
                     'he' => [
                         'title' => 'תנאי שימוש ומדיניות פרטיות',
                         'content' => <<<'HE'
-TALMA Practice Pal — תנאי שימוש ומדיניות פרטיות
+TALMA — תנאי שימוש ומדיניות פרטיות
 
-בעת ההרשמה ל-Practice Pal, אתם (או הוריכם/אפוטרופוסיכם בשמכם) מסכימים לתנאים הבאים.
+בעת ההרשמה ל-TALMA, אתם (או הוריכם/אפוטרופוסיכם בשמכם) מסכימים לתנאים הבאים.
 
 כללי
-Practice Pal היא פלטפורמת תרגול אנגלית מקוונת המופעלת על ידי TALMA. הפלטפורמה מספקת שיעורים בקצב אישי, פעילויות אוצר מילים ומשחקים ללומדים. גישה לתוכניות מסוימות מחייבת הרשמה.
+TALMA היא פלטפורמת תרגול אנגלית מקוונת המופעלת על ידי TALMA. הפלטפורמה מספקת שיעורים בקצב אישי, פעילויות אוצר מילים ומשחקים ללומדים. גישה לתוכניות מסוימות מחייבת הרשמה.
 
 זכאות וחשבונות
 אתם מתחייבים לספק מידע מדויק במהלך ההרשמה. אם אתם מתחת לגיל 18, הורה או אפוטרופוס חוקי חייבים להשלים את ההרשמה ולקבל תנאים אלה בשמכם.
 
 שימוש בפלטפורמה
-אתם מסכימים להשתמש ב-Practice Pal ללמידה אישית בלבד. אין לנסות לגשת לחשבונות של משתמשים אחרים, לגרד תוכן או לעשות שימוש לרעה בשירות.
+אתם מסכימים להשתמש ב-TALMA ללמידה אישית בלבד. אין לנסות לגשת לחשבונות של משתמשים אחרים, לגרד תוכן או לעשות שימוש לרעה בשירות.
 
 פרטיות
 אנו אוספים מידע הרשמה כגון שמות, כתובות דוא"ל, מספרי טלפון ופרטי פרופיל לומד הנדרשים להפעלת התוכנית שאליה אתם מצטרפים. אנו משתמשים במידע זה כדי לספק גישה, לתמוך בלומדים ולשפר את התוכן החינוכי שלנו.
@@ -75,10 +75,10 @@ Practice Pal היא פלטפורמת תרגול אנגלית מקוונת המו
 ניתן לפנות אלינו כדי לבקש גישה לתיקון מידע אישי שמוחזק עליכם.
 
 תוכן וקניין רוחני
-תוכן שיעורים, תמונות, אודיו וחומרים ב-Practice Pal שייכים ל-TALMA ולשותפיה. אין להעתיק, להפיץ מחדש או לנצל לצרכים מסחריים תוכן מהפלטפורמה ללא אישור בכתב.
+תוכן שיעורים, תמונות, אודיו וחומרים ב-TALMA שייכים ל-TALMA ולשותפיה. אין להעתיק, להפיץ מחדש או לנצל לצרכים מסחריים תוכן מהפלטפורמה ללא אישור בכתב.
 
 הגבלת אחריות
-Practice Pal מסופקת כתוספת חינוכית. TALMA אינה אחראית לנזקים עקיפים או תוצאתיים הנובעים משימוש בפלטפורמה או בשירותי צד שלישי המשולבים בה.
+TALMA מסופקת כתוספת חינוכית. TALMA אינה אחראית לנזקים עקיפים או תוצאתיים הנובעים משימוש בפלטפורמה או בשירותי צד שלישי המשולבים בה.
 
 שינויים
 אנו עשויים לעדכן תנאים אלה מעת לעת. הגרסה המוצגת בעת ההרשמה חלה על ההרשמה שלכם.
@@ -90,18 +90,18 @@ HE,
                     'ar' => [
                         'title' => 'شروط الاستخدام وسياسة الخصوصية',
                         'content' => <<<'AR'
-TALMA Practice Pal — شروط الاستخدام وسياسة الخصوصية
+TALMA — شروط الاستخدام وسياسة الخصوصية
 
-بالتسجيل في Practice Pal، أنت (أو ولي أمرك/وصيك نيابةً عنك) توافق على الشروط التالية.
+بالتسجيل في TALMA، أنت (أو ولي أمرك/وصيك نيابةً عنك) توافق على الشروط التالية.
 
 عام
-Practice Pal هي منصة تدريب إنجليزي عبر الإنترنت تديرها TALMA. توفر المنصة دروساً ذاتية الإيقاع وأنشطة مفردات وألعاب للمتعلمين. يتطلب الوصول إلى بعض البرامج التسجيل.
+TALMA هي منصة تدريب إنجليزي عبر الإنترنت تديرها TALMA. توفر المنصة دروساً ذاتية الإيقاع وأنشطة مفردات وألعاب للمتعلمين. يتطلب الوصول إلى بعض البرامج التسجيل.
 
 الأهلية والحسابات
 توافق على تقديم معلومات دقيقة أثناء التسجيل. إذا كان عمرك أقل من 18 عاماً، يجب على ولي الأمر أو الوصي القانوني إكمال التسجيل وقبول هذه الشروط نيابةً عنك.
 
 استخدام المنصة
-توافق على استخدام Practice Pal للتعلم الشخصي فقط. لا يجوز محاولة الوصول إلى حسابات مستخدمين آخرين أو استخراج المحتوى أو إساءة استخدام الخدمة.
+توافق على استخدام TALMA للتعلم الشخصي فقط. لا يجوز محاولة الوصول إلى حسابات مستخدمين آخرين أو استخراج المحتوى أو إساءة استخدام الخدمة.
 
 الخصوصية
 نجمع معلومات التسجيل مثل الأسماء وعناوين البريد الإلكتروني وأرقام الهاتف وتفاصيل ملف المتعلم اللازمة لتشغيل البرنامج الذي تنضم إليه. نستخدم هذه المعلومات لتوفير الوصول ودعم المتعلمين وتحسين المحتوى التعليمي.
@@ -113,10 +113,10 @@ Practice Pal هي منصة تدريب إنجليزي عبر الإنترنت ت�
 يمكنك التواصل معنا لطلب الوصول إلى معلوماتك الشخصية أو تصحيحها.
 
 المحتوى والملكية الفكرية
-محتوى الدروس والصور والصوت والمواد في Practice Pal مملوكة لـ TALMA وشركائها. لا يجوز نسخ أو إعادة توزيع أو استغلال محتوى المنصة تجارياً دون إذن كتابي.
+محتوى الدروس والصور والصوت والمواد في TALMA مملوكة لـ TALMA وشركائها. لا يجوز نسخ أو إعادة توزيع أو استغلال محتوى المنصة تجارياً دون إذن كتابي.
 
 تحديد المسؤولية
-تُقدَّم Practice Pal كمكمل تعليمي. لا تتحمل TALMA مسؤولية الأضرار غير المباشرة أو التبعية الناشئة عن استخدام المنصة أو خدمات طرف ثالث مدمجة معها.
+تُقدَّم TALMA كمكمل تعليمي. لا تتحمل TALMA مسؤولية الأضرار غير المباشرة أو التبعية الناشئة عن استخدام المنصة أو خدمات طرف ثالث مدمجة معها.
 
 التغييرات
 قد نحدّث هذه الشروط من وقت لآخر. ينطبق الإصدار المعروض عند التسجيل على تسجيلك.

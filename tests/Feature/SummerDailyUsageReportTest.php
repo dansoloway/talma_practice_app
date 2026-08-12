@@ -27,7 +27,7 @@ class SummerDailyUsageReportTest extends TestCase
         config(['app.summer_daily_report_emails' => ['daniel@talmaisrael.com']]);
 
         $org = Organization::create([
-            'name' => 'Summer Practice Pal',
+            'name' => 'TALMA Summer',
             'slug' => Organization::SUMMER_PRACTICE_PAL_SLUG,
             'access_mode' => 'restricted',
             'allow_self_registration' => true,
@@ -37,7 +37,7 @@ class SummerDailyUsageReportTest extends TestCase
         ]);
 
         $course = Course::create([
-            'title' => 'Summer Practice Pal — Pre-A1',
+            'title' => 'TALMA Summer — Pre-A1',
             'slug' => 'summer-practice-pal-pre-a1',
             'is_active' => true,
             'guided_mode_enabled' => true,
@@ -150,7 +150,7 @@ class SummerDailyUsageReportTest extends TestCase
         Mail::fake();
 
         Organization::create([
-            'name' => 'Summer Practice Pal',
+            'name' => 'TALMA Summer',
             'slug' => Organization::SUMMER_PRACTICE_PAL_SLUG,
             'access_mode' => 'restricted',
             'is_active' => true,

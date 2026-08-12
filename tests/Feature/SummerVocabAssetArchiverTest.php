@@ -21,7 +21,7 @@ class SummerVocabAssetArchiverTest extends TestCase
         Storage::disk('public')->put('vocabulary-audio/test-word.mp3', 'fake-audio');
 
         $course = Course::create([
-            'title' => 'Summer Practice Pal — Pre-A1',
+            'title' => 'TALMA Summer — Pre-A1',
             'slug' => 'summer-practice-pal-pre-a1',
             'sort_order' => 1,
             'is_active' => true,
